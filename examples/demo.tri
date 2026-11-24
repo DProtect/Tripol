@@ -1,0 +1,10 @@
+func sumar(a, b) { return a + b }
+const nombre = "TRIPOL"
+show nombre
+show sumar(10, 20)
+i = 0
+while i < 3 {
+    show i
+    i = i + 1
+}
+if true && (nombre == "TRIPOL") { show "Nativo" } else { show "Error" }
