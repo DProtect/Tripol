@@ -1,0 +1,898 @@
+package main
+
+import (
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+	"runtime"
+	"strconv"
+	"strings"
+)
+
+const version = "0.2.0"
+
+type token struct {
+	s, k string
+	line int
+}
+
+var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+)|([A-Za-z_][A-Za-z_0-9]*)|(==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){},:;\-]))`)
+
+func die(f string, a ...any) { panic(fmt.Errorf(f, a...)) }
+func lex(s string) []token {
+	var ts []token
+	line := 1
+	for len(s) > 0 {
+		m := lexRE.FindStringSubmatch(s)
+		if m == nil {
+			die("line %d: unexpected character %q", line, s[0])
+		}
+		k := 0
+		for i := 1; i < len(m); i++ {
+			if m[i] != "" {
+				k = i
+				break
+			}
+		}
+		if k > 2 {
+			ts = append(ts, token{m[0], []string{"", "", "", "nl", "str", "int", "id", "op"}[k], line})
+		}
+		if k == 3 {
+			line++
+		}
+		s = s[len(m[0]):]
+	}
+	return append(ts, token{"<eof>", "eof", line})
+}
+
+type expr struct {
+	op, s string
+	n     int64
+	args  []*expr
+}
+type stmt struct {
+	op, name, typ string
+	e             *expr
+	yes, no       []stmt
+	line          int
+	mut           bool
+}
+type param struct{ name, typ string }
+type fn struct {
+	name, ret string
+	args      []param
+	body      []stmt
+}
+type parser struct {
+	ts    []token
+	i     int
+	depth int
+}
+
+func (p *parser) t() token     { return p.ts[p.i] }
+func (p *parser) err(s string) { die("line %d: %s (got %q)", p.t().line, s, p.t().s) }
+func (p *parser) take() token {
+	t := p.t()
+	if t.k == "eof" {
+		p.err("unexpected end of input")
+	}
+	p.i++
+	return t
+}
+func (p *parser) eat(s string) bool {
+	if p.t().s == s {
+		p.take()
+		return true
+	}
+	return false
+}
+func (p *parser) need(s string) {
+	if !p.eat(s) {
+		p.err("expected " + s)
+	}
+}
+func (p *parser) skip() {
+	for p.eat("\n") || p.eat(";") {
+	}
+}
+func (p *parser) end() {
+	switch p.t().s {
+	case "\n", ";", "}", "<eof>":
+	default:
+		p.err("expected statement separator")
+	}
+	p.skip()
+}
+func (p *parser) name() string {
+	t := p.t()
+	if t.k != "id" || strings.Contains("|func|return|show|let|const|if|else|while|true|false|int|bool|string|void|", "|"+t.s+"|") {
+		p.err("expected identifier")
+	}
+	return p.take().s
+}
+func (p *parser) typ() string {
+	switch p.t().s {
+	case "int", "bool", "string":
+		return p.take().s
+	}
+	p.err("expected type")
+	return ""
+}
+func (p *parser) block() []stmt {
+	p.skip()
+	p.need("{")
+	p.skip()
+	var ss []stmt
+	p.depth++
+	if p.depth > 256 {
+		p.err("nesting limit")
+	}
+	defer func() { p.depth-- }()
+	for !p.eat("}") {
+		ss = append(ss, p.statement())
+		p.skip()
+	}
+	return ss
+}
+func (p *parser) statement() stmt {
+	t := p.t()
+	s := stmt{line: t.line}
+	switch t.s {
+	case "show", "return":
+		s.op = p.take().s
+		s.e = p.expression(1)
+	case "if", "while":
+		s.op = p.take().s
+		s.e = p.expression(1)
+		s.yes = p.block()
+		if s.op == "if" {
+			p.skip()
+			if p.eat("else") {
+				s.no = p.block()
+			}
+		}
+		return s
+	case "let", "const":
+		s.op = "decl"
+		s.mut = p.take().s == "let"
+		s.name = p.name()
+		if p.eat(":") {
+			s.typ = p.typ()
+		}
+		p.need("=")
+		s.e = p.expression(1)
+	default:
+		if t.k == "id" && p.ts[p.i+1].s == "=" {
+			s.op = "assign"
+			s.name = p.name()
+			p.need("=")
+			s.e = p.expression(1)
+		} else {
+			s.op = "expr"
+			s.e = p.expression(1)
+		}
+	}
+	p.end()
+	return s
+}
+
+var prec = map[string]int{"||": 1, "&&": 2, "==": 3, "!=": 3, "<": 4, ">": 4, "<=": 4, ">=": 4, "+": 5, "-": 5, "*": 6, "/": 6, "%": 6}
+
+func (p *parser) expression(min int) *expr {
+	p.depth++
+	if p.depth > 256 {
+		p.err("nesting limit")
+	}
+	defer func() { p.depth-- }()
+	t := p.take()
+	e := &expr{s: t.s}
+	switch {
+	case t.s == "-" || t.s == "!":
+		e.op = "un"
+		e.args = []*expr{p.expression(7)}
+	case t.s == "(":
+		e = p.expression(1)
+		p.need(")")
+	case t.k == "int":
+		e.op = "int"
+		n, err := strconv.ParseInt(t.s, 10, 64)
+		if err != nil {
+			die("line %d: integer outside signed 64-bit range", t.line)
+		}
+		e.n = n
+	case t.k == "str":
+		e.op = "string"
+		if json.Unmarshal([]byte(t.s), &e.s) != nil || strings.ContainsRune(e.s, 0) {
+			die("line %d: invalid string", t.line)
+		}
+	case t.s == "true" || t.s == "false":
+		e.op = "bool"
+		if t.s == "true" {
+			e.n = 1
+		}
+	case t.k == "id":
+		e.op = "var"
+		if p.eat("(") {
+			e.op = "call"
+			if !p.eat(")") {
+				for {
+					e.args = append(e.args, p.expression(1))
+					if p.eat(")") {
+						break
+					}
+					p.need(",")
+				}
+			}
+		}
+	default:
+		die("line %d: expected expression", t.line)
+	}
+	for prec[p.t().s] >= min {
+		op := p.take().s
+		e = &expr{op: "bin", s: op, args: []*expr{e, p.expression(prec[op] + 1)}}
+	}
+	return e
+}
+func parse(s string) ([]fn, []stmt) {
+	p := parser{ts: lex(s)}
+	var fs []fn
+	var ss []stmt
+	p.skip()
+	for p.t().k != "eof" {
+		if p.eat("func") {
+			f := fn{name: p.name(), ret: "int"}
+			p.need("(")
+			if !p.eat(")") {
+				for {
+					a := param{p.name(), "int"}
+					if p.eat(":") {
+						a.typ = p.typ()
+					}
+					f.args = append(f.args, a)
+					if p.eat(")") {
+						break
+					}
+					p.need(",")
+				}
+			}
+			if p.eat("->") {
+				f.ret = p.typ()
+			}
+			f.body = p.block()
+			fs = append(fs, f)
+		} else {
+			ss = append(ss, p.statement())
+		}
+		p.skip()
+	}
+	return fs, ss
+}
+
+// Direct x86-64 assembler with relative relocations. No external toolchain.
+type fix struct {
+	at    int
+	label string
+}
+type asm struct {
+	b      []byte
+	labels map[string]int
+	fixes  []fix
+	serial int
+	data   map[string]string
+	target string
+}
+
+func (a *asm) emit(b ...byte) { a.b = append(a.b, b...) }
+func (a *asm) u32(n int)      { a.b = binary.LittleEndian.AppendUint32(a.b, uint32(n)) }
+func (a *asm) imm(n int64) {
+	a.emit(0x48, 0xb8)
+	a.b = binary.LittleEndian.AppendUint64(a.b, uint64(n))
+}
+func (a *asm) label(s string) {
+	if _, ok := a.labels[s]; ok {
+		die("internal: duplicate label %s", s)
+	}
+	a.labels[s] = len(a.b)
+}
+func (a *asm) fresh() string { a.serial++; return fmt.Sprintf("@%d", a.serial) }
+func (a *asm) rel(s string, b ...byte) {
+	a.emit(b...)
+	a.fixes = append(a.fixes, fix{len(a.b), s})
+	a.u32(0)
+}
+func (a *asm) call(s string)      { a.rel(s, 0xe8) }
+func (a *asm) jmp(s string)       { a.rel(s, 0xe9) }
+func (a *asm) j(c byte, s string) { a.rel(s, 0x0f, c) }
+func (a *asm) str(s string) {
+	l, ok := a.data[s]
+	if !ok {
+		l = a.fresh()
+		a.data[s] = l
+	}
+	a.rel(l, 0x48, 0x8d, 0x05)
+}
+func (a *asm) load(off int)  { a.emit(0x48, 0x8b, 0x85); a.u32(off) }
+func (a *asm) store(off int) { a.emit(0x48, 0x89, 0x85); a.u32(off) }
+func (a *asm) finish() {
+	for _, f := range a.fixes {
+		v, ok := a.labels[f.label]
+		if !ok {
+			die("internal missing label %s", f.label)
+		}
+		binary.LittleEndian.PutUint32(a.b[f.at:], uint32(v-f.at-4))
+	}
+}
+
+type variable struct {
+	typ string
+	off int
+	mut bool
+}
+type compiler struct {
+	a           *asm
+	fs          map[string]fn
+	scopes      []map[string]variable
+	slots, line int
+	ret         string
+}
+
+func (c *compiler) err(s string) { die("line %d: %s", c.line, s) }
+func (c *compiler) lookup(n string) (variable, bool) {
+	for i := len(c.scopes) - 1; i >= 0; i-- {
+		if v, ok := c.scopes[i][n]; ok {
+			return v, true
+		}
+	}
+	return variable{}, false
+}
+func (c *compiler) require(a, b string) {
+	if a != b {
+		c.err("expected " + b + ", got " + a)
+	}
+}
+func (c *compiler) expression(e *expr) string {
+	a := c.a
+	switch e.op {
+	case "int", "bool":
+		a.imm(e.n)
+		return e.op
+	case "string":
+		a.str(e.s)
+		return "string"
+	case "var":
+		v, ok := c.lookup(e.s)
+		if !ok {
+			c.err("unknown variable " + e.s)
+		}
+		a.load(v.off)
+		return v.typ
+	case "call":
+		f, ok := c.fs[e.s]
+		if !ok {
+			c.err("unknown function " + e.s)
+		}
+		if len(f.args) != len(e.args) {
+			c.err("wrong argument count: " + e.s)
+		}
+		for i, x := range e.args {
+			c.require(c.expression(x), f.args[i].typ)
+			a.emit(0x50)
+		}
+		a.call("fn:" + e.s)
+		if len(e.args) > 0 {
+			a.emit(0x48, 0x81, 0xc4)
+			a.u32(8 * len(e.args))
+		}
+		return f.ret
+	case "un":
+		t := c.expression(e.args[0])
+		if e.s == "!" {
+			c.require(t, "bool")
+			a.emit(0x48, 0x83, 0xf0, 1)
+		} else {
+			c.require(t, "int")
+			a.emit(0x48, 0xf7, 0xd8)
+			a.j(0x80, "err")
+		}
+		return t
+	}
+	t := c.expression(e.args[0])
+	op := e.s
+	if op == "&&" || op == "||" {
+		c.require(t, "bool")
+		end := a.fresh()
+		a.emit(0x48, 0x85, 0xc0)
+		if op == "&&" {
+			a.j(0x84, end)
+		} else {
+			a.j(0x85, end)
+		}
+		c.require(c.expression(e.args[1]), "bool")
+		a.label(end)
+		return "bool"
+	}
+	a.emit(0x50)
+	u := c.expression(e.args[1])
+	c.require(u, t)
+	a.emit(0x48, 0x89, 0xc1, 0x58)
+	if op == "==" || op == "!=" {
+		if t == "string" {
+			a.call("streq")
+			if op == "!=" {
+				a.emit(0x48, 0x83, 0xf0, 1)
+			}
+			return "bool"
+		}
+	} else {
+		c.require(t, "int")
+	}
+	switch op {
+	case "+":
+		a.emit(0x48, 0x01, 0xc8)
+		a.j(0x80, "err")
+	case "-":
+		a.emit(0x48, 0x29, 0xc8)
+		a.j(0x80, "err")
+	case "*":
+		a.emit(0x48, 0x0f, 0xaf, 0xc1)
+		a.j(0x80, "err")
+	case "/", "%":
+		a.emit(0x48, 0x85, 0xc9)
+		a.j(0x84, "err")
+		ok := a.fresh()
+		a.emit(0x48, 0x83, 0xf9, 0xff)
+		a.j(0x85, ok)
+		a.emit(0x48, 0xba)
+		a.b = binary.LittleEndian.AppendUint64(a.b, 1<<63)
+		a.emit(0x48, 0x39, 0xd0)
+		a.j(0x84, "err")
+		a.label(ok)
+		a.emit(0x48, 0x99, 0x48, 0xf7, 0xf9)
+		if op == "%" {
+			a.emit(0x48, 0x89, 0xd0)
+		}
+	default:
+		cc, ok := map[string]byte{"==": 0x94, "!=": 0x95, "<": 0x9c, ">": 0x9f, "<=": 0x9e, ">=": 0x9d}[op]
+		if !ok {
+			c.err("unknown operator")
+		}
+		a.emit(0x48, 0x39, 0xc8, 0x0f, cc, 0xc0, 0x48, 0x0f, 0xb6, 0xc0)
+		return "bool"
+	}
+	return "int"
+}
+func (c *compiler) block(ss []stmt, nested bool) {
+	if nested {
+		c.scopes = append(c.scopes, map[string]variable{})
+		defer func() { c.scopes = c.scopes[:len(c.scopes)-1] }()
+	}
+	a := c.a
+	for _, s := range ss {
+		c.line = s.line
+		switch s.op {
+		case "decl", "assign":
+			t := c.expression(s.e)
+			v, ok := c.lookup(s.name)
+			if s.op == "decl" && ok {
+				c.err("duplicate or shadowed variable " + s.name)
+			}
+			if s.typ != "" {
+				c.require(t, s.typ)
+			}
+			if ok {
+				if !v.mut {
+					c.err("cannot modify constant " + s.name)
+				}
+				c.require(t, v.typ)
+			} else {
+				c.slots++
+				if c.slots > 400 {
+					c.err("too many local variables (maximum 400)")
+				}
+				v = variable{t, -8 * c.slots, s.mut || s.op == "assign"}
+				c.scopes[len(c.scopes)-1][s.name] = v
+			}
+			a.store(v.off)
+		case "show":
+			t := c.expression(s.e)
+			a.call("print:" + t)
+		case "expr":
+			c.expression(s.e)
+		case "return":
+			if c.ret == "" {
+				c.err("return outside function")
+			}
+			c.require(c.expression(s.e), c.ret)
+			a.emit(0xc9, 0xc3)
+		case "if", "while":
+			start, end := a.fresh(), a.fresh()
+			a.label(start)
+			c.require(c.expression(s.e), "bool")
+			a.emit(0x48, 0x85, 0xc0)
+			other := end
+			if len(s.no) > 0 {
+				other = a.fresh()
+			}
+			a.j(0x84, other)
+			c.block(s.yes, true)
+			if s.op == "while" {
+				a.jmp(start)
+			}
+			if len(s.no) > 0 {
+				a.jmp(end)
+				a.label(other)
+				c.block(s.no, true)
+			}
+			a.label(end)
+		}
+	}
+}
+func returns(ss []stmt) bool {
+	for _, s := range ss {
+		if s.op == "return" || (s.op == "if" && returns(s.yes) && returns(s.no)) {
+			return true
+		}
+	}
+	return false
+}
+func (c *compiler) function(f fn, main bool) {
+	a := c.a
+	c.slots = 0
+	c.ret = f.ret
+	c.scopes = []map[string]variable{{}}
+	for i, p := range f.args {
+		if _, ok := c.scopes[0][p.name]; ok {
+			die("duplicate parameter %s", p.name)
+		}
+		c.scopes[0][p.name] = variable{p.typ, 16 + 8*(len(f.args)-1-i), true}
+	}
+	a.label("fn:" + f.name)
+	a.emit(0x55, 0x48, 0x89, 0xe5, 0x48, 0x81, 0xec)
+	at := len(a.b)
+	a.u32(0)
+	c.block(f.body, false)
+	if main {
+		a.imm(0)
+		a.jmp("exit")
+	} else if !returns(f.body) {
+		die("function %s may finish without return", f.name)
+	}
+	binary.LittleEndian.PutUint32(a.b[at:], uint32(c.slots*8))
+}
+
+// Runtime helpers use rax for value; write uses rsi=buffer, rdx=length.
+func (a *asm) rt() {
+	a.label("streq")
+	l, n := a.fresh(), a.fresh()
+	a.label(l)
+	a.emit(0x8a, 0x10, 0x3a, 0x11)
+	a.j(0x85, n)
+	a.emit(0x84, 0xd2)
+	eq := a.fresh()
+	a.j(0x84, eq)
+	a.emit(0x48, 0xff, 0xc0, 0x48, 0xff, 0xc1)
+	a.jmp(l)
+	a.label(n)
+	a.emit(0x31, 0xc0, 0xc3)
+	a.label(eq)
+	a.emit(0xb8, 1, 0, 0, 0, 0xc3)
+	a.label("print:bool")
+	a.emit(0x48, 0x85, 0xc0)
+	f := a.fresh()
+	a.j(0x84, f)
+	a.str("true")
+	a.jmp("print:string")
+	a.label(f)
+	a.str("false")
+	a.jmp("print:string")
+	a.label("print:string")
+	a.emit(0x48, 0x89, 0xc6, 0x31, 0xd2)
+	loop, done := a.fresh(), a.fresh()
+	a.label(loop)
+	a.emit(0x80, 0x3c, 0x16, 0)
+	a.j(0x84, done)
+	a.emit(0x48, 0xff, 0xc2)
+	a.jmp(loop)
+	a.label(done)
+	a.call("write")
+	a.str("\n")
+	a.emit(0x48, 0x89, 0xc6, 0xba, 1, 0, 0, 0)
+	a.jmp("write")
+	a.label("print:int")
+	a.emit(0x55, 0x48, 0x89, 0xe5, 0x48, 0x83, 0xec, 0x30, 0x48, 0x8d, 0x75, 0xff, 0xc6, 0x06, 0x0a, 0x41, 0xb8, 1, 0, 0, 0, 0x45, 0x31, 0xc9, 0x48, 0x85, 0xc0)
+	pos := a.fresh()
+	a.j(0x89, pos)
+	a.emit(0x41, 0xb1, 1, 0x48, 0xf7, 0xd8)
+	a.label(pos)
+	a.emit(0xb9, 10, 0, 0, 0)
+	digits := a.fresh()
+	a.label(digits)
+	a.emit(0x31, 0xd2, 0x48, 0xf7, 0xf1, 0x80, 0xc2, 0x30, 0x48, 0xff, 0xce, 0x88, 0x16, 0x49, 0xff, 0xc0, 0x48, 0x85, 0xc0)
+	a.j(0x85, digits)
+	sign := a.fresh()
+	a.emit(0x45, 0x84, 0xc9)
+	a.j(0x84, sign)
+	a.emit(0x48, 0xff, 0xce, 0xc6, 0x06, 0x2d, 0x49, 0xff, 0xc0)
+	a.label(sign)
+	a.emit(0x4c, 0x89, 0xc2)
+	a.call("write")
+	a.emit(0xc9, 0xc3)
+	a.label("err")
+	a.str("TRIPOL runtime error: invalid integer arithmetic\n")
+	a.emit(0x48, 0x89, 0xc6, 0xba)
+	a.u32(len("TRIPOL runtime error: invalid integer arithmetic\n"))
+	a.call("writeerr")
+	a.imm(1)
+	a.jmp("exit")
+	for _, s := range []string{"write", "writeerr"} {
+		a.label(s)
+		fd := byte(1)
+		if s == "writeerr" {
+			fd = 2
+		}
+		if a.target == "linux" {
+			a.emit(0xb8, 1, 0, 0, 0, 0xbf, fd, 0, 0, 0, 0x0f, 0x05, 0xc3)
+		} else { // Save buffer/length across GetStdHandle, align stack, reserve Win64 shadow space.
+			a.emit(0x55, 0x48, 0x89, 0xe5, 0x48, 0x83, 0xe4, 0xf0, 0x48, 0x83, 0xec, 0x50, 0x48, 0x89, 0x74, 0x24, 0x30, 0x48, 0x89, 0x54, 0x24, 0x38, 0xb9)
+			a.u32(-10 - int(fd))
+			a.rel("iat:0", 0xff, 0x15)
+			a.emit(0x48, 0x89, 0xc1, 0x48, 0x8b, 0x54, 0x24, 0x30, 0x44, 0x8b, 0x44, 0x24, 0x38, 0x4c, 0x8d, 0x4c, 0x24, 0x40, 0x48, 0xc7, 0x44, 0x24, 0x20, 0, 0, 0, 0)
+			a.rel("iat:1", 0xff, 0x15)
+			a.emit(0xc9, 0xc3)
+		}
+	}
+	a.label("exit")
+	if a.target == "linux" {
+		a.emit(0x48, 0x89, 0xc7, 0xb8, 60, 0, 0, 0, 0x0f, 0x05)
+	} else {
+		a.emit(0x89, 0xc1, 0x48, 0x83, 0xe4, 0xf0, 0x48, 0x83, 0xec, 0x20)
+		a.rel("iat:2", 0xff, 0x15)
+	}
+	a.emit(0x0f, 0x0b)
+}
+func align(n, a int) int              { return (n + a - 1) &^ (a - 1) }
+func put16(b []byte, o int, v int)    { binary.LittleEndian.PutUint16(b[o:], uint16(v)) }
+func put32(b []byte, o int, v int)    { binary.LittleEndian.PutUint32(b[o:], uint32(v)) }
+func put64(b []byte, o int, v uint64) { binary.LittleEndian.PutUint64(b[o:], v) }
+func elf(a *asm) []byte {
+	a.finish()
+	const base = 0x400000
+	const off = 0x100
+	b := make([]byte, off+len(a.b))
+	copy(b, []byte{0x7f, 'E', 'L', 'F', 2, 1, 1})
+	put16(b, 16, 2)
+	put16(b, 18, 62)
+	put32(b, 20, 1)
+	put64(b, 24, base+off)
+	put64(b, 32, 64)
+	put16(b, 52, 64)
+	put16(b, 54, 56)
+	put16(b, 56, 2)
+	put32(b, 64, 1)
+	put32(b, 68, 5)
+	put64(b, 80, base)
+	put64(b, 88, base)
+	put64(b, 96, uint64(len(b)))
+	put64(b, 104, uint64(len(b)))
+	put64(b, 112, 0x1000)
+	put32(b, 120, 0x6474e551)
+	put32(b, 124, 6)
+	put64(b, 168, 16)
+	copy(b[off:], a.b)
+	return b
+}
+func pe(a *asm) []byte {
+	const textRVA = 0x1000
+	const header = 0x200
+	raw := align(len(a.b), 0x200)
+	idRVA := align(textRVA+len(a.b), 0x1000)
+	id := make([]byte, 0x200)
+	const ilt = 40
+	const iat = 72
+	const dll = 104
+	copy(id[dll:], "KERNEL32.dll\x00")
+	cursor := 120
+	for i, s := range []string{"GetStdHandle", "WriteFile", "ExitProcess"} {
+		put64(id, ilt+8*i, uint64(idRVA+cursor))
+		put64(id, iat+8*i, uint64(idRVA+cursor))
+		copy(id[cursor+2:], s+"\x00")
+		cursor = align(cursor+2+len(s)+1, 2)
+		a.labels[fmt.Sprintf("iat:%d", i)] = idRVA - textRVA + iat + 8*i
+	}
+	put32(id, 0, idRVA+ilt)
+	put32(id, 12, idRVA+dll)
+	put32(id, 16, idRVA+iat)
+	a.finish()
+	b := make([]byte, header+raw+len(id))
+	copy(b, "MZ")
+	put32(b, 0x3c, 0x80)
+	copy(b[0x80:], "PE\x00\x00")
+	co := 0x84
+	put16(b, co, 0x8664)
+	put16(b, co+2, 2)
+	put16(b, co+16, 240)
+	put16(b, co+18, 0x23)
+	o := co + 20
+	put16(b, o, 0x20b)
+	put32(b, o+4, raw)
+	put32(b, o+8, len(id))
+	put32(b, o+16, textRVA)
+	put32(b, o+20, textRVA)
+	put64(b, o+24, 0x140000000)
+	put32(b, o+32, 0x1000)
+	put32(b, o+36, 0x200)
+	put16(b, o+40, 6)
+	put16(b, o+48, 6)
+	put32(b, o+56, align(idRVA+len(id), 0x1000))
+	put32(b, o+60, header)
+	put16(b, o+68, 3)
+	put16(b, o+70, 0x100)
+	put64(b, o+72, 1<<20)
+	put64(b, o+80, 4096)
+	put64(b, o+88, 1<<20)
+	put64(b, o+96, 4096)
+	put32(b, o+108, 16)
+	put32(b, o+120, idRVA)
+	put32(b, o+124, 40)
+	put32(b, o+208, idRVA+iat)
+	put32(b, o+212, 32)
+	s := o + 240
+	copy(b[s:], ".text")
+	put32(b, s+8, len(a.b))
+	put32(b, s+12, textRVA)
+	put32(b, s+16, raw)
+	put32(b, s+20, header)
+	put32(b, s+36, 0x60000020)
+	s += 40
+	copy(b[s:], ".idata")
+	put32(b, s+8, len(id))
+	put32(b, s+12, idRVA)
+	put32(b, s+16, len(id))
+	put32(b, s+20, header+raw)
+	put32(b, s+36, 0xc0000040)
+	copy(b[header:], a.b)
+	copy(b[header+raw:], id)
+	return b
+}
+func compile(src, target string) []byte {
+	fs, ss := parse(src)
+	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target}
+	c := compiler{a: a, fs: map[string]fn{}}
+	for _, f := range fs {
+		if _, ok := c.fs[f.name]; ok {
+			die("duplicate function %s", f.name)
+		}
+		c.fs[f.name] = f
+	}
+	c.function(fn{name: "@main", body: ss}, true)
+	for _, f := range fs {
+		c.function(f, false)
+	}
+	a.rt() // deterministic string order by assigned label
+	for i := 1; i <= a.serial; i++ {
+		l := fmt.Sprintf("@%d", i)
+		for s, k := range a.data {
+			if k == l {
+				a.label(l)
+				a.b = append(a.b, []byte(s)...)
+				a.emit(0)
+			}
+		}
+	}
+	if target == "linux" {
+		return elf(a)
+	}
+	if target == "windows" {
+		return pe(a)
+	}
+	die("unsupported target %s", target)
+	return nil
+}
+func cli() {
+	args := os.Args[1:]
+	if len(args) == 0 || args[0] == "--help" {
+		fmt.Println("TRIPOL 0.2.0 — FORGE\ntripol run FILE.tri\ntripol build FILE.tri [-o OUTPUT] [--target windows|linux]\ntripol check FILE.tri\ntripol --version")
+		return
+	}
+	if args[0] == "--version" {
+		fmt.Println("TRIPOL " + version)
+		return
+	}
+	if len(args) < 2 {
+		die("source file required")
+	}
+	cmd, src := args[0], args[1]
+	target := runtime.GOOS
+	out := ""
+	for i := 2; i < len(args); i++ {
+		switch args[i] {
+		case "-o", "--output", "--target", "--profile":
+			if i+1 >= len(args) {
+				die("missing option value")
+			}
+			v := args[i+1]
+			if args[i] == "--profile" {
+				if v != "nano" {
+					die("only nano profile is available in the new native backend")
+				}
+			} else if args[i] == "--target" {
+				target = v
+			} else {
+				out = v
+			}
+			i++
+		default:
+			die("unknown option %s", args[i])
+		}
+	}
+	if cmd != "build" && cmd != "run" && cmd != "check" {
+		die("unknown command %s", cmd)
+	}
+	if cmd == "run" && (target != runtime.GOOS || runtime.GOARCH != "amd64") {
+		die("run requires local x86-64 target")
+	}
+	b, e := os.ReadFile(src)
+	if e != nil {
+		die("%v", e)
+	}
+	if len(b) > 4<<20 {
+		die("source too large")
+	}
+	bin := compile(string(b), target)
+	if cmd == "check" {
+		fmt.Println("OK")
+		return
+	}
+	ext := ""
+	if target == "windows" {
+		ext = ".exe"
+	}
+	if cmd == "run" {
+		d, e := os.MkdirTemp("", "tripol-")
+		if e != nil {
+			die("%v", e)
+		}
+		defer os.RemoveAll(d)
+		out = filepath.Join(d, "program"+ext)
+		write(out, bin)
+		runNative(out)
+		return
+	}
+	if out == "" {
+		out = strings.TrimSuffix(src, filepath.Ext(src)) + ext
+	}
+	s, _ := filepath.Abs(src)
+	o, _ := filepath.Abs(out)
+	if strings.EqualFold(s, o) {
+		die("output must not overwrite source")
+	}
+	if si, e := os.Stat(src); e == nil {
+		if oi, e := os.Stat(out); e == nil && os.SameFile(si, oi) {
+			die("output aliases source")
+		}
+	}
+	write(out, bin)
+	fmt.Printf("Built %s (%d bytes)\n", out, len(bin))
+}
+func write(p string, b []byte) {
+	if e := os.WriteFile(p, b, 0755); e != nil {
+		die("%v", e)
+	}
+	if runtime.GOOS != "windows" {
+		if e := os.Chmod(p, 0755); e != nil {
+			die("%v", e)
+		}
+	}
+}
+func main() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Fprintln(os.Stderr, "tripol:", r)
+			os.Exit(1)
+		}
+	}()
+	cli()
+}

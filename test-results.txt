@@ -1,0 +1,100 @@
+=== RUN   TestPrograms
+=== RUN   TestPrograms/show_"Hola"
+=== RUN   TestPrograms/show_2_+_3_*_4_show_(2_+_3)_*_4
+=== RUN   TestPrograms/x=1_x=x+3_show_x
+=== RUN   TestPrograms/let_x:bool=true_const_s:string="ok"_show_x_show_s
+=== RUN   TestPrograms/func_f(a,b){return_a-b}_show_f(9,4)
+=== RUN   TestPrograms/func_f(x:string)->string{return_x}_show_f("yes")
+=== RUN   TestPrograms/func_fib(n){if_n<=1{return_n}_return_fib(n-1)+fib(n-2)}_show_fib(15)
+=== RUN   TestPrograms/show_foo(5)_func_foo(x){return_x*2}
+=== RUN   TestPrograms/i=0_while_i<3_{show_i;i=i+1}
+=== RUN   TestPrograms/if_false_{show_1}else{show_2}
+=== RUN   TestPrograms/show_!false_&&_true_show_false||true
+=== RUN   TestPrograms/show_false_&&_(1/0==1)_show_true_||_(1/0==1)
+=== RUN   TestPrograms/show_"a"=="a"_show_"a"!="b"
+=== RUN   TestPrograms/show_"a\nb\t\"c"
+=== RUN   TestPrograms/#_comment_show_5_//_comment
+=== RUN   TestPrograms/show_-7/3_show_-7%3
+=== RUN   TestPrograms/func_f(x){if_x==0{return_1}else{return_2}}_show_f(0)
+=== RUN   TestPrograms/x=0_if_true{let_y=3;x=y}_show_x
+=== RUN   TestPrograms/show_9223372036854775807_show_-9223372036854775807-1_show_0
+=== RUN   TestPrograms/show_1<2_show_2>=2_show_2>3
+=== RUN   TestPrograms/show_""
+=== RUN   TestPrograms/show_"¡Hola,_TRIPOL!"
+--- PASS: TestPrograms (0.02s)
+    --- PASS: TestPrograms/show_"Hola" (0.00s)
+    --- PASS: TestPrograms/show_2_+_3_*_4_show_(2_+_3)_*_4 (0.00s)
+    --- PASS: TestPrograms/x=1_x=x+3_show_x (0.00s)
+    --- PASS: TestPrograms/let_x:bool=true_const_s:string="ok"_show_x_show_s (0.00s)
+    --- PASS: TestPrograms/func_f(a,b){return_a-b}_show_f(9,4) (0.00s)
+    --- PASS: TestPrograms/func_f(x:string)->string{return_x}_show_f("yes") (0.00s)
+    --- PASS: TestPrograms/func_fib(n){if_n<=1{return_n}_return_fib(n-1)+fib(n-2)}_show_fib(15) (0.00s)
+    --- PASS: TestPrograms/show_foo(5)_func_foo(x){return_x*2} (0.00s)
+    --- PASS: TestPrograms/i=0_while_i<3_{show_i;i=i+1} (0.00s)
+    --- PASS: TestPrograms/if_false_{show_1}else{show_2} (0.00s)
+    --- PASS: TestPrograms/show_!false_&&_true_show_false||true (0.00s)
+    --- PASS: TestPrograms/show_false_&&_(1/0==1)_show_true_||_(1/0==1) (0.00s)
+    --- PASS: TestPrograms/show_"a"=="a"_show_"a"!="b" (0.00s)
+    --- PASS: TestPrograms/show_"a\nb\t\"c" (0.00s)
+    --- PASS: TestPrograms/#_comment_show_5_//_comment (0.00s)
+    --- PASS: TestPrograms/show_-7/3_show_-7%3 (0.00s)
+    --- PASS: TestPrograms/func_f(x){if_x==0{return_1}else{return_2}}_show_f(0) (0.00s)
+    --- PASS: TestPrograms/x=0_if_true{let_y=3;x=y}_show_x (0.00s)
+    --- PASS: TestPrograms/show_9223372036854775807_show_-9223372036854775807-1_show_0 (0.00s)
+    --- PASS: TestPrograms/show_1<2_show_2>=2_show_2>3 (0.00s)
+    --- PASS: TestPrograms/show_"" (0.00s)
+    --- PASS: TestPrograms/show_"¡Hola,_TRIPOL!" (0.00s)
+=== RUN   TestTraps
+=== RUN   TestTraps/show_1/0
+=== RUN   TestTraps/show_9223372036854775807+1
+=== RUN   TestTraps/show_(-9223372036854775807-1)/-1
+=== RUN   TestTraps/show_9223372036854775807*2
+=== RUN   TestTraps/show_-(-9223372036854775807-1)
+=== RUN   TestTraps/show_-9223372036854775807-2
+--- PASS: TestTraps (0.00s)
+    --- PASS: TestTraps/show_1/0 (0.00s)
+    --- PASS: TestTraps/show_9223372036854775807+1 (0.00s)
+    --- PASS: TestTraps/show_(-9223372036854775807-1)/-1 (0.00s)
+    --- PASS: TestTraps/show_9223372036854775807*2 (0.00s)
+    --- PASS: TestTraps/show_-(-9223372036854775807-1) (0.00s)
+    --- PASS: TestTraps/show_-9223372036854775807-2 (0.00s)
+=== RUN   TestReject
+=== RUN   TestReject/const_x=1_x=2
+=== RUN   TestReject/let_x:int="a"
+=== RUN   TestReject/show_x
+=== RUN   TestReject/show_f(1)
+=== RUN   TestReject/func_f(x){return_x}_show_f()
+=== RUN   TestReject/func_f(x){if_x==0{return_x}}
+=== RUN   TestReject/if_1{show_1}
+=== RUN   TestReject/x=1_if_true{let_x=2}
+=== RUN   TestReject/if_true{show_1
+=== RUN   TestReject/show_@_show_1
+=== RUN   TestReject/show_9223372036854775808
+=== RUN   TestReject/if_true{x=1}_show_x
+=== RUN   TestReject/return_1
+=== RUN   TestReject/func_f(x,x){return_x}
+=== RUN   TestReject/func_f(x){return_x}_func_f(x){return_x}
+=== RUN   TestReject/show_"\u0000"
+--- PASS: TestReject (0.00s)
+    --- PASS: TestReject/const_x=1_x=2 (0.00s)
+    --- PASS: TestReject/let_x:int="a" (0.00s)
+    --- PASS: TestReject/show_x (0.00s)
+    --- PASS: TestReject/show_f(1) (0.00s)
+    --- PASS: TestReject/func_f(x){return_x}_show_f() (0.00s)
+    --- PASS: TestReject/func_f(x){if_x==0{return_x}} (0.00s)
+    --- PASS: TestReject/if_1{show_1} (0.00s)
+    --- PASS: TestReject/x=1_if_true{let_x=2} (0.00s)
+    --- PASS: TestReject/if_true{show_1 (0.00s)
+    --- PASS: TestReject/show_@_show_1 (0.00s)
+    --- PASS: TestReject/show_9223372036854775808 (0.00s)
+    --- PASS: TestReject/if_true{x=1}_show_x (0.00s)
+    --- PASS: TestReject/return_1 (0.00s)
+    --- PASS: TestReject/func_f(x,x){return_x} (0.00s)
+    --- PASS: TestReject/func_f(x){return_x}_func_f(x){return_x} (0.00s)
+    --- PASS: TestReject/show_"\u0000" (0.00s)
+=== RUN   TestFormats
+--- PASS: TestFormats (0.00s)
+=== RUN   TestDeterminism
+--- PASS: TestDeterminism (0.00s)
+PASS
+ok  	tripol	0.023s
