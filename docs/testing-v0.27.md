@@ -44,7 +44,14 @@ tripol build compiler/file.tri --target windows -o genesis-stage.exe
 tripol genesis genesis-stage.exe examples/projects/genesis_r3.tri -o genesis-demo
 ```
 
-Expected: an ELF64 Linux x86-64 executable. On a Linux x86-64 system run `chmod +x genesis-demo && ./genesis-demo`; expected output 30. The stage is written in TRIPOL; Go CLI transports hexadecimal bytes to disk (no Python). Linux can execute the emitted ELF; Windows only hosts the compiler. No Windows PE generation from GENESIS or full self-hosting yet.
+Expected: an ELF64 Linux x86-64 executable. On a Linux x86-64 system run `chmod +x genesis-demo && ./genesis-demo`; expected output 30. The stage is written in TRIPOL; Go CLI transports hexadecimal bytes to disk (no Python). Linux executes the emitted ELF. A separate native PE stage now produces Windows executables directly. Full self-hosting remains pending.
+
+```cmd
+tripol build compiler/windows.tri --target windows -o genesis-win.exe
+genesis-win.exe
+```
+
+Enter `examples/projects/genesis_control.tri` and `genesis-control.exe` on separate lines, using a new output path. Then run `genesis-control.exe`. Expected four lines: 4, 42, 2, 1. This exercises forward calls, mutual recursion, else-if, and short-circuit evaluation.
 
 ## Libraries and memory
 
@@ -53,7 +60,7 @@ tripol run examples/projects/quantum_x_libraries.tri
 tripol run examples/projects/memory_stress.tri
 ```
 
-Library output: 10 20 30, then 8, then 3. The stress example performs one million push/pop pairs on a bounded heap and verifies unchanged used arena bytes. Arena bytes are not total process RSS; use Task Manager separately. This does not demonstrate general automatic reclamation.
+Library output: 10 20 30, then 8, then 3. The stress example performs one million push/pop pairs on a bounded heap and verifies unchanged used arena bytes. Arena bytes are not total process RSS; use Task Manager separately. Also run `tripol run examples/projects/memory_temporaries.tri` to check one million string iterations and 100,000 list iterations. Expected equality checks are true. These examples demonstrate scoped automatic reclamation, not general garbage collection.
 
 ## Graphics
 
@@ -62,15 +69,15 @@ tripol build examples/projects/quantum_x/main.tri -o quantum-x.exe
 quantum-x.exe
 ```
 
-Use WASD/arrows, collect the gold squares, ESC to quit. The console prints score, frames and elapsed nanoseconds. Check controls and stability. CPU software renderer; no GPU acceleration claimed.
+Space/click/XInput A starts. Move with WASD/arrows or the left stick; collect golden lights; M toggles optional system tones; ESC exits. Check camera, particles, mouse, controls, stability and average paced FPS. The main demo uses CPU software rendering; the separate OpenGL demo below is experimental.
 
 ## Editor
 
-Install the official v0.27.1 VSIX through VS Code's Extensions: Install from VSIX command. Open a .tri file, try import completion, function completion/hover and local function definition lookup. Save, then run TRIPOL: Check source. Try invalid code and inspect Problems. Explicit Build/Run commands require trusted workspace; check-on-save is optional and off by default. No formatter/full LSP yet.
+Install the official v0.27.1 VSIX through VS Code's Extensions: Install from VSIX command. Open a .tri file, try import completion, function completion/hover and local function definition lookup. Save, then run TRIPOL: Check source. Try invalid code and inspect Problems. Explicit Build/Run commands require trusted workspace; check-on-save is optional and off by default. Use Format Document (or `tripol fmt main.tri`) and try the experimental `tripol lsp` stdio server. Cross-file indexing is still pending.
 
 ## Updates and offline
 
-Run `tripol update --check`, `tripol update --history`, and (when a newer release exists) `tripol update --download-only`. Disconnect the network and build a local program: compilation must remain independent of the network. Explicit online checks may fail cleanly. Installation remains manual in this implementation; no automatic rollback. Use local Go HTTP tests to exercise invalid metadata, tampered assets and interrupted downloads; do not publish fake releases.
+Run `tripol update --check`, `tripol update --history`, and (when a newer release exists) `tripol update --download-only`. Disconnect the network and build a local program: compilation must remain independent of the network. Explicit online checks may fail cleanly. For supported per-user installations with a newer official compiler asset, UPDATE R2 offers `tripol update --install` and `tripol update --rollback` with confirmation. Older updaters and portable/system installations remain manual. Test rollback in an isolated installation, not on your only working compiler. Use local Go HTTP tests to exercise invalid metadata, tampered assets and interrupted downloads; do not publish fake releases.
 
 ## Repeat measurements and source tests
 

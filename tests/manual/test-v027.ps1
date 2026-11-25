@@ -122,6 +122,45 @@ show b.size()
         if ($LASTEXITCODE -ne 0) { throw "Native program exited $LASTEXITCODE" }
         Assert-Output ($actual -join "`n") "100 7`n99"
     }
+    Test-Case 'SHA-256 and syntax R2' {
+        $source2 = Join-Path $root 'crypto-syntax.tri'
+        @'
+import tripol.crypto
+struct Player {score:int=7}
+p=Player()
+a=list()
+a.add(p.score)
+a[0]+=2
+for i,v in a {show i,v}
+show crypto.sha256_text("abc")
+'@ | Set-Content -LiteralPath $source2 -Encoding ASCII
+        $exe = Join-Path $root 'crypto-syntax.exe'
+        Invoke-Tripol @('build',$source2,'--target','windows','--profile','turbo','-o',$exe) | Out-Null
+        $actual = & $exe
+        if ($LASTEXITCODE -ne 0) { throw "Native program exited $LASTEXITCODE" }
+        Assert-Output ($actual -join "`n") "0 9`nba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    }
+    Test-Case 'Temporary string and list reuse' {
+        $source2 = Join-Path $root 'temporary-reuse.tri'
+        @'
+import tripol.memory
+before=memory.used()
+total=0
+repeat 100000 {
+ temp="id:"+text(17)
+ total+=len(temp)
+ data=list(0)
+ data.add(2)
+ total+=data[0]
+}
+show total,before==memory.used()
+'@ | Set-Content -LiteralPath $source2 -Encoding ASCII
+        $exe = Join-Path $root 'temporary-reuse.exe'
+        Invoke-Tripol @('build',$source2,'--target','windows','--profile','balanced','-o',$exe) | Out-Null
+        $actual = & $exe
+        if ($LASTEXITCODE -ne 0) { throw "Native program exited $LASTEXITCODE" }
+        Assert-Output ($actual -join "`n") "700000 true"
+    }
     if ($CheckUpdates) { Test-Case 'Live update detection' { Invoke-Tripol @('update','--check') } }
     else { $results.Add([pscustomobject]@{name='Live update detection';status='SKIP';detail='Use -CheckUpdates'}) }
     if ($Benchmark) { Test-Case 'Arena' { Invoke-Tripol @('arena','--runs','20','--profile','turbo','--tripol-only','--json',$benchmarkPath) } }
