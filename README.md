@@ -16,24 +16,25 @@ The `gh-pages` branch hosts the official static website for TRIPOL, a free exper
 
 The compiler and standard library source code live in [`main`](https://github.com/Tripollas/Tripol/tree/main).
 
-## ASCENSION — v0.24.0
+## EVOLUTION — v0.25.0
 
 - Official landing page with a monochrome glassmorphism design and the TRIPOL emblem.
 - English by default, with Spanish navigation and library overviews. Code examples remain in English.
-- Reference pages for all 48 standard libraries and 297 callable functions.
-- Searchable documentation, benchmark results, install scripts and downloadable distributions.
+- Reference pages for all 50 standard libraries and 311 callable functions.
+- Searchable documentation, benchmark results, install scripts and official GitHub Releases downloads, GENESIS R1 and new Stack/Queue guides.
 
 ## Downloads
 
 | Platform | Distribution |
 | --- | --- |
-| Windows x64 | [Installer ZIP](downloads/TRIPOL-v0.24-Installer.zip) |
-| Windows x64 | [Portable ZIP](downloads/TRIPOL-v0.24-Windows-x64.zip) |
-| Linux x64 | [Tarball](downloads/TRIPOL-v0.24-Linux-x64.tar.gz) |
-| Source | [Source ZIP](downloads/TRIPOL-v0.24-source.zip) |
-| Integrity | [SHA-256 checksums](downloads/TRIPOL-v0.24-SHA256.txt) |
+| Windows x64 | [Installer ZIP](https://github.com/Tripollas/Tripol/releases/download/v0.25.0/TRIPOL-v0.25-Installer.zip) |
+| Windows x64 | [Setup EXE](https://github.com/Tripollas/Tripol/releases/download/v0.25.0/TRIPOL-v0.25-Setup-x64.exe) |
+| Linux x64 | [Tarball](https://github.com/Tripollas/Tripol/releases/download/v0.25.0/TRIPOL-v0.25-Linux-x64.tar.gz) |
+| Source | [Source ZIP](https://github.com/Tripollas/Tripol/archive/refs/tags/v0.25.0.zip) |
+| VS Code | [VSIX](https://github.com/Tripollas/Tripol/releases/download/v0.25.0/tripol-language-0.25.0.vsix) |
+| Integrity | [SHA-256 checksums](https://github.com/Tripollas/Tripol/releases/download/v0.25.0/SHA256SUMS.txt) |
 
-The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
+EVOLUTION is a pre-release. The previous v0.24 downloads remain archived in downloads/. The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
 
 ## Local development
 

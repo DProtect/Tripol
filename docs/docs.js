@@ -5,6 +5,15 @@ let lang='en';try{if(localStorage.getItem('tripol-language')==='es')lang='es'}ca
 const chosen=new URLSearchParams(location.search).get('lang');if(chosen==='en'||chosen==='es')lang=chosen;
 const root=document.body.dataset.docRoot||'./';
 function localLinks(){for(const a of $$('a[href]')){const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||/^(https?:|mailto:)/i.test(raw)&&a.origin!==location.origin)continue;const u=new URL(raw,location.href);if(!u.pathname.endsWith('.html'))continue;u.searchParams.set('lang',lang);a.href=u.href;}}
+// Keep shared navigation consistent on all historical reference pages.
+const side=document.querySelector('#doc-side');
+side.querySelector('.side-kicker').textContent='EVOLUTION / 0.25.0';
+const crumb=document.querySelector('.crumb > span:last-child');if(crumb&&crumb.textContent==='0.24')crumb.textContent='0.25';
+const meta=document.querySelector('.lib-meta > span:first-child');if(meta&&meta.textContent==='ASCENSION 0.24')meta.textContent='EVOLUTION 0.25';
+const guide=side.querySelector('nav[aria-label="Guides"]');if(!guide.querySelector('a[href$="genesis.html"]')){const a=document.createElement('a');a.href=root+'genesis.html';a.textContent='GENESIS R1';guide.append(a);}
+const libs=side.querySelector('.side-libs');
+for(const [name,before] of [['queue','random'],['stack','stats']]){if(!libs.querySelector('a[href$="/'+name+'.html"]')){const a=document.createElement('a');a.href=root+'libraries/'+name+'.html';const label=document.createElement('span');label.textContent=name;const n=document.createElement('small');n.textContent='7';a.append(label,n);libs.insertBefore(a,libs.querySelector('a[href$="/'+before+'.html"]'));}}
+for(const a of side.querySelectorAll('nav a')){a.removeAttribute('aria-current');if(new URL(a.href,location.href).pathname===location.pathname)a.setAttribute('aria-current','page');}
 const translate=(en,es)=>lang==='es'?es:en;
 let labels=[], placeholders=[];
 function registerLabels(){labels=$$('[data-es]').map(el=>({el,en:el.textContent,es:el.dataset.es}));placeholders=$$('[data-placeholder-es]').map(el=>({el,en:el.placeholder,es:el.dataset.placeholderEs}));}
@@ -13,7 +22,7 @@ let timer;function toast(msg){const t=$('#doc-toast');t.textContent=msg;t.classL
 $$('.docs-article pre').forEach(pre=>{if(pre.classList.contains('signature'))return;const shell=document.createElement('div');shell.className='code-shell';const head=document.createElement('div');head.className='code-head';const title=document.createElement('span');title.textContent=pre.querySelector('.language-tripol')?'TRIPOL':pre.querySelector('.language-cmd')?'TERMINAL':'CODE';const copy=document.createElement('button');copy.className='doc-copy';copy.dataset.es='Copiar';copy.textContent='Copy';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(pre.textContent);toast(translate('Copied to clipboard','Copiado al portapapeles'))}catch{const range=document.createRange();range.selectNodeContents(pre);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);toast(translate('Selected — copy manually','Seleccionado — copia manualmente'))}});head.append(title,copy);pre.before(shell);shell.append(head,pre)});
 function buildToc(){const target=$('#toc-links');target.replaceChildren();$$('.docs-article h2,.docs-article .function-card h3').forEach((h,i)=>{const id=h.id||h.closest('.function-card')?.id||('section-'+i);if(!h.id&&!h.closest('.function-card'))h.id=id;const a=document.createElement('a');a.href='#'+id;a.textContent=h.textContent.replace(/\s*#\s*$/,'');if(h.tagName==='H3')a.className='sub';target.append(a)});}
 registerLabels();apply();$('#doc-lang').addEventListener('click',()=>{lang=lang==='en'?'es':'en';apply()});
-const side=$('#doc-side');$('#doc-menu').addEventListener('click',()=>{$('#doc-menu').setAttribute('aria-expanded',String(side.classList.toggle('open')))});
+$('#doc-menu').addEventListener('click',()=>{$('#doc-menu').setAttribute('aria-expanded',String(side.classList.toggle('open')))});
 $('#side-filter').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();$$('.side-libs a').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
 const lf=$('#library-filter');if(lf)lf.addEventListener('input',()=>{let n=0;const q=lf.value.trim().toLowerCase();$$('.library-card').forEach(a=>{a.hidden=!a.dataset.filter.toLowerCase().includes(q);if(!a.hidden)n++});$('#library-empty').hidden=!!n});
 const dialog=$('#doc-search'),input=$('#global-search');
