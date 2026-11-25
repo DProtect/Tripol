@@ -1,0 +1,43 @@
+name: Import repository social card
+on:
+  push:
+    branches: [gh-pages]
+    paths:
+      - '.github/workflows/import-social-card.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Resolve the uploaded public repository card
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api graphql -f query='{repository(owner:"Tripollas",name:"Tripol"){usesCustomOpenGraphImage openGraphImageUrl}}' > card.json
+          python -m pip install --disable-pip-version-check Pillow
+          python - <<'PY'
+          import json, urllib.request, urllib.parse, io
+          from PIL import Image
+          d=json.load(open("card.json"))["data"]["repository"]
+          assert d["usesCustomOpenGraphImage"], "No custom repository card published"
+          url=d["openGraphImageUrl"]
+          u=urllib.parse.urlparse(url)
+          assert u.scheme=="https" and (u.hostname.endswith(".githubusercontent.com") or u.hostname.endswith(".githubassets.com")), "Unexpected image host"
+          with urllib.request.urlopen(url,timeout=25) as response:
+              final=urllib.parse.urlparse(response.geturl())
+              assert final.scheme=="https" and (final.hostname.endswith(".githubusercontent.com") or final.hostname.endswith(".githubassets.com"))
+              data=response.read(6*1024*1024+1)
+          assert len(data)<=6*1024*1024
+          im=Image.open(io.BytesIO(data))
+          assert im.width>=640 and im.height>=320 and abs(im.width/im.height-2)<0.06
+          expected=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,40,20,11,8,13,46,9,28,26,14,21,24,10,0,0,0,49,147,144,171,120,92,5,90,172,117,116,123,141,19,0,0,3,3,68,120,0,5,6,29,34,29,27,33,37,36,0,0,0,0,53,106,0,0,3,24,16,34,33,22,0,0,0,0,0,0,24,81,0,0,5,28,23,29,23,25,18,22,2,0,0,0,0,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+          actual=list(im.convert("L").resize((16,8),Image.Resampling.BOX).getdata())
+          mae=sum(abs(a-b) for a,b in zip(actual,expected))/128
+          assert mae<5, f"Repository card differs from the supplied design (MAE {mae:.2f})"
+          print("VERIFIED_SOCIAL_CARD_URL="+url)
+          print(f"VERIFIED_SOCIAL_CARD_SIZE={im.width}x{im.height}; MAE={mae:.2f}")
+          PY
