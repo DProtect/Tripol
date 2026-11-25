@@ -1,0 +1,20 @@
+import tripol.memory
+prefix="TRIPOL"
+before=memory.used()
+total=0
+repeat 1000000 {
+ label=prefix+text(27)
+ part=slice(label,0,6)
+ total+=len(part)
+}
+show total,before==memory.used()
+repeat 100000 {
+ a=list(0)
+ a.add(9)
+ a.add(10)
+ total+=a[0]
+}
+show total,before==memory.used()
+show "reserved",memory.capacity()
+show "committed",memory.committed()
+show "used",memory.used()
