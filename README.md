@@ -28,7 +28,7 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 - Native byte I/O (`tripol.io`), bounded binary cursor (`tripol.stream`) and bounded literal/dot/star matching (`tripol.regex`).
 - Growable integer lists: `list()`, `add`, `get`, `set`, `remove_at`, `clear`, `size`, `capacity`; stable reference semantics across growth.
-- GENESIS R3 extends the experimental Linux ELF subset with typed integer functions, calls, recursion, `for`/range, repeated `show`, and direct binary output in `compiler/direct.tri`. Not a self-hosting compiler or Windows PE backend yet.
+- GENESIS R3 extends the experimental Linux ELF subset with typed integer functions, calls, recursion, `for`/range, repeated `show`, and direct binary output in `compiler/direct.tri`. Experimental PE32+ console backend also emits Windows executables; not self-hosting yet.
 
 ### 0.27.0 foundation
 

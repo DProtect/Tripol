@@ -1,5 +1,6 @@
 # v0.27.1 QUANTUM X (development)
 
+- GENESIS PE R1 console output and native Windows executable generation.
 - GENESIS integer functions, direct calls, range loops, repeated show, native ELF output without host byte transport via compiler/direct.tri.
 - Bounded native binary file operations, byte cursor, limited regex matching.
 - Growable integer lists with stable aliases and checked methods.

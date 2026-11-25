@@ -1,0 +1,46 @@
+import "elf64.tri"
+// Minimal deterministic PE32+ console image, RX code and RW import table.
+// Only RIP-relative addresses; fixed image base, no relocation directory.
+func genesis_align(n:int,a:int)->int {return (n+a-1)/a*a}
+func genesis_string(data:ints,off:int,value:string)->int {
+ assert off>=0 and off+len(value)<len(data),"PE string offset"
+ for i in range(len(value)) {data[off+i]=byte_at(value,i)}
+ data[off+len(value)]=0;return 0
+}
+func genesis_code_pe(code:ints)->ints {
+ raw=genesis_align(len(code),512);assert raw>0 and raw<=64512,"PE code limit"
+ idrva=genesis_align(4096+len(code),4096);id=512+raw
+ b=ints(id+512)
+ b[0]=77;b[1]=90;genesis_put_le(b,60,128,4)
+ b[128]=80;b[129]=69
+ co=132;o=152
+ genesis_put_le(b,co,34404,2);genesis_put_le(b,co+2,2,2);genesis_put_le(b,co+16,240,2);genesis_put_le(b,co+18,35,2)
+ genesis_put_le(b,o,523,2);genesis_put_le(b,o+4,raw,4);genesis_put_le(b,o+8,512,4)
+ genesis_put_le(b,o+16,4096,4);genesis_put_le(b,o+20,4096,4);genesis_put_le(b,o+24,5368709120,8)
+ genesis_put_le(b,o+32,4096,4);genesis_put_le(b,o+36,512,4)
+ genesis_put_le(b,o+40,6,2);genesis_put_le(b,o+48,6,2)
+ genesis_put_le(b,o+56,idrva+4096,4);genesis_put_le(b,o+60,512,4)
+ genesis_put_le(b,o+68,3,2);genesis_put_le(b,o+70,256,2)
+ genesis_put_le(b,o+72,1048576,8);genesis_put_le(b,o+80,4096,8)
+ genesis_put_le(b,o+88,1048576,8);genesis_put_le(b,o+96,4096,8)
+ genesis_put_le(b,o+108,16,4);genesis_put_le(b,o+120,idrva,4);genesis_put_le(b,o+124,40,4)
+ genesis_put_le(b,o+208,idrva+72,4);genesis_put_le(b,o+212,32,4)
+ sec=o+240
+ genesis_string(b,sec,".text");genesis_put_le(b,sec+8,len(code),4);genesis_put_le(b,sec+12,4096,4)
+ genesis_put_le(b,sec+16,raw,4);genesis_put_le(b,sec+20,512,4);genesis_put_le(b,sec+36,1610612768,4)
+ sec+=40
+ genesis_string(b,sec,".idata");genesis_put_le(b,sec+8,512,4);genesis_put_le(b,sec+12,idrva,4)
+ genesis_put_le(b,sec+16,512,4);genesis_put_le(b,sec+20,id,4);genesis_put_le(b,sec+36,3221225536,4)
+ for i in range(len(code)) {b[512+i]=code[i]}
+ genesis_put_le(b,id,idrva+40,4);genesis_put_le(b,id+12,idrva+104,4);genesis_put_le(b,id+16,idrva+72,4)
+ names=[118,134,146]
+ for i in range(3) {
+  genesis_put_le(b,id+40+8*i,idrva+names[i],8)
+  genesis_put_le(b,id+72+8*i,idrva+names[i],8)
+ }
+ genesis_string(b,id+104,"KERNEL32.dll")
+ genesis_string(b,id+120,"GetStdHandle")
+ genesis_string(b,id+136,"WriteFile")
+ genesis_string(b,id+148,"ExitProcess")
+ return b
+}

@@ -1,5 +1,6 @@
 import "parser.tri"
 import "elf64.tri"
+import "pe64.tri"
 import tripol.buffer
 import tripol.dictionary
 import tripol.validate
@@ -22,9 +23,12 @@ func gen_imm(code:ints,value:int,width:int)->int {
  for i in range(width) {assert buffer.size(code)<buffer.capacity(code),"Code limit";buffer.push(code,value%256);value/=256}
  return 0
 }
+func gen_trap(code:ints)->int {
+ gen_bytes(code,"b80a000000")
+ at=gen_jump(code,"e9");gen_patch(code,at,10);return 0
+}
 func gen_guard(code:ints)->int {
- // jno +12; exit(10) on overflow.
- return gen_bytes(code,"710cb83c000000bf0a0000000f05")
+ ok=gen_jump(code,"0f81");gen_trap(code);gen_patch(code,ok,buffer.size(code));return 0
 }
 func gen_factor(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int)->int {
  assert depth<=64 and c[0]<len(tok),"Expected operand"
@@ -70,8 +74,11 @@ func gen_term(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:in
   c[0]=c[0]+3;gen_bytes(code,"50");gen_factor(src,tok,c,code,syms,funcs,depth)
   if op=="*" {gen_bytes(code,"59480fafc1");gen_guard(code)}
   else {
-   gen_bytes(code,"4889c1584885c9750cb83c000000bf0a0000000f05")
-   gen_bytes(code,"4883f9ff751b48ba00000000000000804839d0750cb83c000000bf0a0000000f05")
+   gen_bytes(code,"4889c1584885c9")
+   nonzero=gen_jump(code,"0f85");gen_trap(code);gen_patch(code,nonzero,buffer.size(code))
+   gen_bytes(code,"4883f9ff");normal=gen_jump(code,"0f85")
+   gen_bytes(code,"48ba00000000000000804839d0");nonmin=gen_jump(code,"0f85")
+   gen_trap(code);gen_patch(code,normal,buffer.size(code));gen_patch(code,nonmin,buffer.size(code))
    gen_bytes(code,"489948f7f9")
    if op=="%" {gen_bytes(code,"4889d0")}
   }
@@ -216,16 +223,32 @@ func gen_function(src:string,tok:ints,c:ints,code:ints,funcs:ints)->int {
  assert gen_statements(src,tok,c,code,syms,funcs,0,true)==1,"Function requires final return"
  gen_expect(src,tok,c,"}");gen_separators(src,tok,c);return 0
 }
-func gen_runtime(source:string)->ints {
+func gen_runtime(source:string,target:string="linux")->ints {
+ assert target=="linux" or target=="windows","Unsupported target"
  tok=boot_lex(source);c=ints(1);code=buffer.create(65536);syms=dictionary.create(32);funcs=dictionary.create(32)
- entry=gen_jump(code,"e9")
- // Print routine at byte 5: signed decimal output plus newline, returns.
- gen_bytes(code,"4883ec20488d74241fc6060a4989f04989c14531d24885c0790948f7d841ba01000000b90a00000031d248f7f180c23048ffce88164885c075ee4585d2740648ffcec6062d4c89c24829f248ffc2b801000000bf010000000f054883c420c3")
+ entry=gen_jump(code,"e9");print_jump=gen_jump(code,"e9");exit_jump=gen_jump(code,"e9")
+ gen_patch(code,print_jump,buffer.size(code));print_start=buffer.size(code)
+ if target=="linux" {
+  gen_bytes(code,"4883ec20488d74241fc6060a4989f04989c14531d24885c0790948f7d841ba01000000b90a00000031d248f7f180c23048ffce88164885c075ee4585d2740648ffcec6062d4c89c24829f248ffc2b801000000bf010000000f054883c420c3")
+ } else {
+  // Windows x64 ABI: aligned stack, shadow space, explicit WriteFile length.
+  gen_bytes(code,"554889e54883e4f04883ec60488d74245fc6060a4989f14531c04885c0790948f7d841b801000000b90a00000031d248f7f180c23048ffce88164885c075ee4585c0740648ffcec6062d4929f149ffc148897424304c894c2438b9f5ffffffff15000000004889c1488b5424304c8b4424384c8d4c242848c744242000000000ff1500000000c9c3")
+ }
+ gen_patch(code,exit_jump,buffer.size(code));exit_start=buffer.size(code)
+ if target=="linux" {gen_bytes(code,"89c7b83c0000000f050f0b")}
+ else {gen_bytes(code,"89c14883e4f04883ec20ff15000000000f0b")}
  gen_separators(source,tok,c)
  while boot_peek(source,tok,c)=="func" {gen_function(source,tok,c,code,funcs)}
  gen_patch(code,entry,buffer.size(code));gen_bytes(code,"4889e54881ec00010000")
  gen_statements(source,tok,c,code,syms,funcs,0,false)
  assert c[0]==len(tok),"Unexpected trailing token"
- gen_bytes(code,"b83c00000031ff0f05")
+ gen_bytes(code,"31c0");last=gen_jump(code,"e9");gen_patch(code,last,10)
+ if target=="windows" {
+  idrva=genesis_align(4096+buffer.size(code),4096)
+  gen_patch(code,print_start+97,idrva-4096+72)
+  gen_patch(code,print_start+130,idrva-4096+80)
+  gen_patch(code,exit_start+12,idrva-4096+88)
+  return genesis_code_pe(buffer.values(code))
+ }
  return genesis_code_elf(buffer.values(code))
 }
