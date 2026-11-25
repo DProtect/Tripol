@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><meta content="#000000" name="theme-color"/><title>tripol.discord — TRIPOL Docs</title><link href="../../assets/tripol-emblem.png" rel="icon"/><link href="../../style.css" rel="stylesheet"/><link href="../../docs/docs.css" rel="stylesheet"/><script defer="" src="../../docs/search-data.js"></script><script defer="" src="../../docs/docs.js"></script></head><body class="docs-page" data-doc-root="../"><a class="skip" href="#article"><span data-es="Saltar al contenido">Skip to content</span></a><header class="docs-header"><nav class="docs-top"><a class="brand" href="../../index.html"><img alt="" height="36" src="../../assets/tripol-emblem.png" width="36"/>TRIPOL <small>DOCS</small></a><button aria-controls="doc-side" aria-expanded="false" class="doc-action" id="doc-menu"><span data-es="Menú">Menu</span></button><button class="doc-search-trigger" id="search-open"><span>⌕</span> <span data-es="Buscar documentación">Search documentation</span> <kbd>Ctrl K</kbd></button><div class="docs-top-right"><a href="../../index.html#download"><span data-es="Instalar">Install</span></a><button aria-label="Switch language" class="doc-action" id="doc-lang">ES</button></div></nav></header><main class="docs-shell"><aside class="docs-sidebar" id="doc-side"><div class="side-kicker">ASCENSION / 0.24.0</div><h2><span data-es="Primeros pasos">Getting started</span></h2><nav aria-label="Guides"><a href="../index.html"><span data-es="Introducción">Overview</span></a><a href="../inicio.html"><span data-es="Inicio rápido">Quick start</span></a><a href="../language.html"><span data-es="Lenguaje">Language</span></a><a href="../libraries.html"><span data-es="Biblioteca estándar">Standard library</span></a><a href="../build.html"><span data-es="Compilación y arquitectura">Build &amp; architecture</span></a><a href="../discord.html"><span data-es="Guía de Discord">Discord guide</span></a><a href="../graphics.html"><span data-es="Gráficos">Graphics</span></a><a href="../arena.html"><span data-es="Benchmark Arena">Benchmark Arena</span></a><a href="../errors.html"><span data-es="Errores">Errors</span></a><a href="../website.html"><span data-es="Publicación web">Web publishing</span></a><a href="../open-core.html"><span data-es="Núcleo abierto">Open Core</span></a><a href="../public-release.html"><span data-es="Lanzamiento público">Public launch</span></a></nav><h2><span data-es="Referencia de bibliotecas">Library reference</span></h2><div class="side-filter"><input aria-label="Filter libraries" data-placeholder-es="Filtrar bibliotecas" id="side-filter" placeholder="Filter libraries" type="search"/></div><nav aria-label="Libraries" class="side-libs"><a href="../libraries/animation.html"><span>animation</span><small>6</small></a><a href="../libraries/arrays.html"><span>arrays</span><small>8</small></a><a href="../libraries/binary.html"><span>binary</span><small>8</small></a><a href="../libraries/bits.html"><span>bits</span><small>6</small></a><a href="../libraries/buffer.html"><span>buffer</span><small>8</small></a><a href="../libraries/camera.html"><span>camera</span><small>4</small></a><a href="../libraries/canvas.html"><span>canvas</span><small>9</small></a><a href="../libraries/checksum.html"><span>checksum</span><small>3</small></a><a href="../libraries/collections.html"><span>collections</span><small>6</small></a><a href="../libraries/colors.html"><span>colors</span><small>8</small></a><a href="../libraries/compression.html"><span>compression</span><small>3</small></a><a href="../libraries/console.html"><span>console</span><small>3</small></a><a href="../libraries/convert.html"><span>convert</span><small>8</small></a><a href="../libraries/datetime.html"><span>datetime</span><small>7</small></a><a href="../libraries/dictionary.html"><span>dictionary</span><small>8</small></a><a aria-current="page" href="../libraries/discord.html"><span>discord</span><small>34</small></a><a href="../libraries/encoding.html"><span>encoding</span><small>4</small></a><a href="../libraries/env.html"><span>env</span><small>1</small></a><a href="../libraries/errors.html"><span>errors</span><small>5</small></a><a href="../libraries/events.html"><span>events</span><small>7</small></a><a href="../libraries/files.html"><span>files</span><small>5</small></a><a href="../libraries/game.html"><span>game</span><small>6</small></a><a href="../libraries/geometry.html"><span>geometry</span><small>6</small></a><a href="../libraries/http.html"><span>http</span><small>3</small></a><a href="../libraries/https.html"><span>https</span><small>1</small></a><a href="../libraries/image.html"><span>image</span><small>6</small></a><a href="../libraries/json.html"><span>json</span><small>15</small></a><a href="../libraries/math.html"><span>math</span><small>12</small></a><a href="../libraries/matrix.html"><span>matrix</span><small>6</small></a><a href="../libraries/memory.html"><span>memory</span><small>4</small></a><a href="../libraries/network.html"><span>network</span><small>3</small></a><a href="../libraries/particles.html"><span>particles</span><small>4</small></a><a href="../libraries/path.html"><span>path</span><small>6</small></a><a href="../libraries/physics.html"><span>physics</span><small>5</small></a><a href="../libraries/random.html"><span>random</span><small>3</small></a><a href="../libraries/search.html"><span>search</span><small>4</small></a><a href="../libraries/sequences.html"><span>sequences</span><small>4</small></a><a href="../libraries/simd.html"><span>simd</span><small>1</small></a><a href="../libraries/sort.html"><span>sort</span><small>4</small></a><a href="../libraries/sprite.html"><span>sprite</span><small>3</small></a><a href="../libraries/stats.html"><span>stats</span><small>6</small></a><a href="../libraries/system.html"><span>system</span><small>5</small></a><a href="../libraries/testing.html"><span>testing</span><small>4</small></a><a href="../libraries/text.html"><span>text</span><small>9</small></a><a href="../libraries/time.html"><span>time</span><small>6</small></a><a href="../libraries/ui.html"><span>ui</span><small>7</small></a><a href="../libraries/validate.html"><span>validate</span><small>6</small></a><a href="../libraries/vector.html"><span>vector</span><small>7</small></a></nav></aside><article class="docs-article" id="article"><div class="crumb"><a href="../index.html"><span data-es="Documentación">Documentation</span></a> / <span>0.24</span></div><h1>tripol.discord</h1><p class="doc-lead"><span data-es="API experimental de bots Gateway y REST en Windows.">Experimental Windows Gateway and REST bot API.</span></p><div class="lib-meta"><span>ASCENSION 0.24</span><span>34 <span data-es="funciones">functions</span></span></div><h2 id="example"><span data-es="Ejemplo">Example</span></h2><pre><code class="language-tripol">import tripol.discord
+
+discord.reply("!hello", "Hello!")
+show discord.preview("!hello")</code></pre><div class="doc-note"><strong><span data-es="Notas importantes">Important notes</span></strong><p>Windows only for live networking. Up to 16 exact commands. Enable Message Content Intent and channel permissions. Gateway replies can route to any permitted channel; say and welcome require a selected channel. Automatic reconnect/Resume and slash commands are not supported. Never publish a token or an executable containing it. identify_payload contains the token; never log it. HTTP failures can stop the program.</p></div><h2 id="functions"><span data-es="Referencia de funciones">Function reference</span></h2><div class="function-index"><a href="#gateway">gateway</a><a href="#api_host">api_host</a><a href="#token">token</a><a href="#channel_path">channel_path</a><a href="#send">send</a><a href="#latest">latest</a><a href="#message_id">message_id</a><a href="#matches">matches</a><a href="#listen">listen</a><a href="#login">login</a><a href="#login_env">login_env</a><a href="#channel">channel</a><a href="#reply">reply</a><a href="#reset">reset</a><a href="#configured">configured</a><a href="#preview">preview</a><a href="#dispatch">dispatch</a><a href="#send_to">send_to</a><a href="#has_channel">has_channel</a><a href="#all_channels">all_channels</a><a href="#say">say</a><a href="#parse_latest">parse_latest</a><a href="#run_rest">run_rest</a><a href="#setup">setup</a><a href="#status">status</a><a href="#activity">activity</a><a href="#welcome">welcome</a><a href="#connected">connected</a><a href="#ping">ping</a><a href="#identify_payload">identify_payload</a><a href="#heartbeat_payload">heartbeat_payload</a><a href="#event_channel">event_channel</a><a href="#gateway_reply">gateway_reply</a><a href="#run">run</a></div><section class="function-card" id="gateway"><h3>discord.gateway <a aria-label="Permalink" href="#gateway">#</a></h3><p>Discover public Gateway via HTTPS</p><pre class="signature"><code>func discord.gateway()-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func gateway()-&gt;string {return https.get("discord.com","/api/v10/gateway")}</code></pre></details></section><section class="function-card" id="api_host"><h3>discord.api_host <a aria-label="Permalink" href="#api_host">#</a></h3><p>Return Discord API hostname</p><pre class="signature"><code>func discord.api_host()-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func api_host()-&gt;string {return "discord.com"}</code></pre></details></section><section class="function-card" id="token"><h3>discord.token <a aria-label="Permalink" href="#token">#</a></h3><p>Read token from environment (secret)</p><pre class="signature"><code>func discord.token()-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func token()-&gt;string {
+ t=env.get("DISCORD_TOKEN")
+ assert len(t)&gt;0 and len(t)&lt;=512,"Set DISCORD_TOKEN in your environment"
+ return t
+}</code></pre></details></section><section class="function-card" id="channel_path"><h3>discord.channel_path <a aria-label="Permalink" href="#channel_path">#</a></h3><p>Build channel message route</p><pre class="signature"><code>func discord.channel_path(channel:string)-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func channel_path(channel:string)-&gt;string {
+ assert len(channel)&gt;0 and len(channel)&lt;=20,"Invalid Discord channel ID"
+ for i in range(len(channel)) {b=byte_at(channel,i);assert b&gt;=48 and b&lt;=57,"Channel ID must contain digits only"}
+ return "/api/v10/channels/"+channel+"/messages"
+}</code></pre></details></section><section class="function-card" id="send"><h3>discord.send <a aria-label="Permalink" href="#send">#</a></h3><p>Send using environment token</p><pre class="signature"><code>func discord.send(channel:string,message:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func send(channel:string,message:string)-&gt;bool {
+ assert len(message)&gt;0 and len(message)&lt;=512,"Discord message limit: 512 UTF-8 bytes"
+ body="{\"content\":"+json.quote(message)+",\"allowed_mentions\":{\"parse\":[]}}"
+ result=discord_request(channel_path(channel),token(),body)
+ return len(result)&gt;0
+}</code></pre></details></section><section class="function-card" id="latest"><h3>discord.latest <a aria-label="Permalink" href="#latest">#</a></h3><p>Fetch newest message using environment token</p><pre class="signature"><code>func discord.latest(channel:string)-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func latest(channel:string)-&gt;string {
+ result=discord_request(channel_path(channel)+"?limit=1",token(),"")
+ if not json.valid(result) {return ""}
+ if len(result)&lt;3 {return ""}
+ if byte_at(result,0)!=91 {return ""}
+ start=json.ws(result,1,len(result))
+ end=json.value(result,start,len(result),0)
+ if end&lt;0 {return ""}
+ if byte_at(result,start)!=123 {return ""}
+ return slice(result,start,end)
+}</code></pre></details></section><section class="function-card" id="message_id"><h3>discord.message_id <a aria-label="Permalink" href="#message_id">#</a></h3><p>Extract numeric message ID or zero</p><pre class="signature"><code>func discord.message_id(message:string)-&gt;int</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func message_id(message:string)-&gt;int {
+ raw=json.get_raw(message,"id")
+ if len(raw)&lt;3 or len(raw)&gt;21 {return 0}
+ if byte_at(raw,0)!=34 or byte_at(raw,len(raw)-1)!=34 {return 0}
+ for i in range(1,len(raw)-1) {b=byte_at(raw,i);if b&lt;48 or b&gt;57 {return 0}}
+ return errors.int_or(slice(raw,1,len(raw)-1),0)
+}</code></pre></details></section><section class="function-card" id="matches"><h3>discord.matches <a aria-label="Permalink" href="#matches">#</a></h3><p>Match exact command from non-bot non-webhook author</p><pre class="signature"><code>func discord.matches(message:string,command:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func matches(message:string,command:string)-&gt;bool {
+ if len(message)==0 {return false}
+ author=json.get_raw(message,"author")
+ if len(author)==0 {return false}
+ if json.get_raw(author,"bot")=="true" {return false}
+ if len(json.get_raw(message,"webhook_id"))&gt;0 {return false}
+ return json.get_raw(message,"content")==json.quote(command)
+}</code></pre></details></section><section class="function-card" id="listen"><h3>discord.listen <a aria-label="Permalink" href="#listen">#</a></h3><p>Legacy single-command REST polling loop</p><pre class="signature"><code>func discord.listen(channel:string,command:string,response:string)-&gt;int</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func listen(channel:string,command:string,response:string)-&gt;int {
+ assert len(command)&gt;0 and len(command)&lt;=128,"Invalid command"
+ assert len(response)&gt;0 and len(response)&lt;=512,"Invalid response"
+ last=0
+ scratch {last=message_id(latest(channel))}
+ show "TRIPOL Discord bot listening (REST). Ctrl+C to stop."
+ while true {
+  time.sleep(2500)
+  scratch {
+   message=latest(channel)
+   id=message_id(message)
+   if id&gt;last {
+    last=id
+    if matches(message,command) {send(channel,response)}
+   }
+  }
+ }
+ return 0
+}</code></pre></details></section><section class="function-card" id="login"><h3>discord.login <a aria-label="Permalink" href="#login">#</a></h3><p>Configure token in private storage</p><pre class="signature"><code>func discord.login(secret:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func login(secret:string)-&gt;bool {
+ assert len(secret)&gt;0 and len(secret)&lt;=512,"Invalid bot token length"
+ for i in range(len(secret)) {
+  b=byte_at(secret,i)
+  assert (b&gt;=48 and b&lt;=57) or (b&gt;=65 and b&lt;=90) or (b&gt;=97 and b&lt;=122) or b==45 or b==46 or b==95,"Invalid bot token characters"
+ }
+ return bot_slot_set(0,secret)
+}</code></pre></details></section><section class="function-card" id="login_env"><h3>discord.login_env <a aria-label="Permalink" href="#login_env">#</a></h3><p>Configure token from environment</p><pre class="signature"><code>func discord.login_env()-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func login_env()-&gt;bool {
+ ok=false
+ scratch {ok=login(token())}
+ return ok
+}</code></pre></details></section><section class="function-card" id="channel"><h3>discord.channel <a aria-label="Permalink" href="#channel">#</a></h3><p>Select a channel filter</p><pre class="signature"><code>func discord.channel(id:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func channel(id:string)-&gt;bool {
+ assert len(id)&gt;0 and len(id)&lt;=20,"Invalid Discord channel ID"
+ for i in range(len(id)) {b=byte_at(id,i);assert b&gt;=48 and b&lt;=57,"Channel ID must contain digits only"}
+ return bot_slot_set(1,id)
+}</code></pre></details></section><section class="function-card" id="reply"><h3>discord.reply <a aria-label="Permalink" href="#reply">#</a></h3><p>Register or replace exact command (maximum 16)</p><pre class="signature"><code>func discord.reply(command:string,response:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func reply(command:string,response:string)-&gt;bool {
+ assert len(command)&gt;0 and len(command)&lt;=128,"Invalid command"
+ assert len(response)&gt;0 and len(response)&lt;=512,"Invalid response"
+ found=false
+ scratch {
+  for i in range(16) {
+   slot=2+i*2
+   existing=bot_slot_get(slot)
+   if existing==command or existing=="" {
+    bot_slot_set(slot,command)
+    bot_slot_set(slot+1,response)
+    found=true
+    break
+   }
+  }
+ }
+ assert found,"Maximum 16 Discord commands"
+ return found
+}</code></pre></details></section><section class="function-card" id="reset"><h3>discord.reset <a aria-label="Permalink" href="#reset">#</a></h3><p>Clear local bot configuration</p><pre class="signature"><code>func discord.reset()-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func reset()-&gt;bool {
+ for i in range(39) {bot_slot_set(i,"")}
+ return true
+}</code></pre></details></section><section class="function-card" id="configured"><h3>discord.configured <a aria-label="Permalink" href="#configured">#</a></h3><p>Test whether token is configured</p><pre class="signature"><code>func discord.configured()-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func configured()-&gt;bool {
+ ok=false
+ scratch {ok=len(bot_slot_get(0))&gt;0}
+ return ok
+}</code></pre></details></section><section class="function-card" id="preview"><h3>discord.preview <a aria-label="Permalink" href="#preview">#</a></h3><p>Look up command response offline</p><pre class="signature"><code>func discord.preview(command:string)-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func preview(command:string)-&gt;string {
+ match=-1
+ scratch {
+  for i in range(16) {
+   slot=2+i*2
+   existing=bot_slot_get(slot)
+   if existing=="" {break}
+   if existing==command {match=slot+1;break}
+  }
+ }
+ if match&lt;0 {return ""}
+ return bot_slot_get(match)
+}</code></pre></details></section><section class="function-card" id="dispatch"><h3>discord.dispatch <a aria-label="Permalink" href="#dispatch">#</a></h3><p>Resolve raw message response offline</p><pre class="signature"><code>func discord.dispatch(message:string)-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func dispatch(message:string)-&gt;string {
+ match=-1
+ scratch {
+  for i in range(16) {
+   slot=2+i*2
+   command=bot_slot_get(slot)
+   if command=="" {break}
+   if matches(message,command) {match=slot+1;break}
+  }
+ }
+ if match&lt;0 {return ""}
+ return bot_slot_get(match)
+}</code></pre></details></section><section class="function-card" id="send_to"><h3>discord.send_to <a aria-label="Permalink" href="#send_to">#</a></h3><p>Send to specified channel using configured token</p><pre class="signature"><code>func discord.send_to(id:string,message:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func send_to(id:string,message:string)-&gt;bool {
+ assert len(message)&gt;0 and len(message)&lt;=512,"Invalid Discord message"
+ ok=false
+ scratch {
+  secret=bot_slot_get(0)
+  assert len(secret)&gt;0,"Call discord.login first"
+  body="{\"content\":"+json.quote(message)+",\"allowed_mentions\":{\"parse\":[]}}"
+  result=discord_request(channel_path(id),secret,body)
+  ok=len(result)&gt;0
+ }
+ return ok
+}</code></pre></details></section><section class="function-card" id="has_channel"><h3>discord.has_channel <a aria-label="Permalink" href="#has_channel">#</a></h3><p>Check whether channel selected</p><pre class="signature"><code>func discord.has_channel()-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func has_channel()-&gt;bool {
+ ok=false
+ scratch {ok=len(bot_slot_get(1))&gt;0}
+ return ok
+}</code></pre></details></section><section class="function-card" id="all_channels"><h3>discord.all_channels <a aria-label="Permalink" href="#all_channels">#</a></h3><p>Clear channel filter</p><pre class="signature"><code>func discord.all_channels()-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func all_channels()-&gt;bool {return bot_slot_set(1,"")}</code></pre></details></section><section class="function-card" id="say"><h3>discord.say <a aria-label="Permalink" href="#say">#</a></h3><p>Send to selected channel</p><pre class="signature"><code>func discord.say(message:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func say(message:string)-&gt;bool {
+ ok=false
+ scratch {
+  assert has_channel(),"Select a channel before calling discord.say"
+  ok=send_to(bot_slot_get(1),message)
+ }
+ return ok
+}</code></pre></details></section><section class="function-card" id="parse_latest"><h3>discord.parse_latest <a aria-label="Permalink" href="#parse_latest">#</a></h3><p>Extract first message from REST response</p><pre class="signature"><code>func discord.parse_latest(result:string)-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func parse_latest(result:string)-&gt;string {
+ if not json.valid(result) or len(result)&lt;3 {return ""}
+ if byte_at(result,0)!=91 {return ""}
+ start=json.ws(result,1,len(result))
+ end=json.value(result,start,len(result),0)
+ if end&lt;0 {return ""}
+ if byte_at(result,start)!=123 {return ""}
+ return slice(result,start,end)
+}</code></pre></details></section><section class="function-card" id="run_rest"><h3>discord.run_rest <a aria-label="Permalink" href="#run_rest">#</a></h3><p>Start legacy REST polling with selected channel</p><pre class="signature"><code>func discord.run_rest()-&gt;int</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func run_rest()-&gt;int {
+ assert configured() and has_channel(),"REST requires login and a selected channel"
+ last=0
+ scratch {
+  raw=discord_request(channel_path(bot_slot_get(1))+"?limit=1",bot_slot_get(0),"")
+  last=message_id(parse_latest(raw))
+ }
+ show "TRIPOL Discord R3 (REST) - Ctrl+C to stop."
+ while true {
+  time.sleep(2500)
+  scratch {
+   raw=discord_request(channel_path(bot_slot_get(1))+"?limit=1",bot_slot_get(0),"")
+   message=parse_latest(raw)
+   id=message_id(message)
+   if id&gt;last {
+    last=id
+    response=dispatch(message)
+    if len(response)&gt;0 {say(response)}
+   }
+  }
+ }
+ return 0
+}</code></pre></details></section><section class="function-card" id="setup"><h3>discord.setup <a aria-label="Permalink" href="#setup">#</a></h3><p>Configure token and channel</p><pre class="signature"><code>func discord.setup(secret:string,id:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func setup(secret:string,id:string)-&gt;bool {
+ login(secret)
+ return channel(id)
+}</code></pre></details></section><section class="function-card" id="status"><h3>discord.status <a aria-label="Permalink" href="#status">#</a></h3><p>Set initial presence status</p><pre class="signature"><code>func discord.status(value:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func status(value:string)-&gt;bool {
+ assert value=="online" or value=="idle" or value=="dnd" or value=="invisible","Invalid Discord status"
+ return bot_slot_set(34,value)
+}</code></pre></details></section><section class="function-card" id="activity"><h3>discord.activity <a aria-label="Permalink" href="#activity">#</a></h3><p>Set initial activity</p><pre class="signature"><code>func discord.activity(value:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func activity(value:string)-&gt;bool {
+ assert len(value)&lt;=128,"Activity limit 128 bytes"
+ return bot_slot_set(35,value)
+}</code></pre></details></section><section class="function-card" id="welcome"><h3>discord.welcome <a aria-label="Permalink" href="#welcome">#</a></h3><p>Set greeting after READY (channel required)</p><pre class="signature"><code>func discord.welcome(value:string)-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func welcome(value:string)-&gt;bool {
+ assert len(value)&lt;=512,"Welcome limit 512 bytes"
+ return bot_slot_set(36,value)
+}</code></pre></details></section><section class="function-card" id="connected"><h3>discord.connected <a aria-label="Permalink" href="#connected">#</a></h3><p>Test local ready state</p><pre class="signature"><code>func discord.connected()-&gt;bool</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func connected()-&gt;bool {
+ ok=false
+ scratch {ok=bot_slot_get(38)=="ready"}
+ return ok
+}</code></pre></details></section><section class="function-card" id="ping"><h3>discord.ping <a aria-label="Permalink" href="#ping">#</a></h3><p>Last heartbeat round-trip in ms or -1</p><pre class="signature"><code>func discord.ping()-&gt;int</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func ping()-&gt;int {
+ result=-1
+ scratch {result=errors.int_or(bot_slot_get(37),-1)}
+ return result
+}</code></pre></details></section><section class="function-card" id="identify_payload"><h3>discord.identify_payload <a aria-label="Permalink" href="#identify_payload">#</a></h3><p>Build identify payload containing secret token</p><pre class="signature"><code>func discord.identify_payload()-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func identify_payload()-&gt;string {
+ secret=bot_slot_get(0)
+ state=bot_slot_get(34)
+ if state=="" {state="online"}
+ act=bot_slot_get(35)
+ activities="[]"
+ if len(act)&gt;0 {activities="[{\"name\":"+json.quote(act)+",\"type\":0}]"}
+ // GUILDS | GUILD_MESSAGES | MESSAGE_CONTENT (privileged).
+ return "{\"op\":2,\"d\":{\"token\":"+json.quote(secret)+",\"intents\":33281,\"properties\":{\"os\":\"windows\",\"browser\":\"TRIPOL\",\"device\":\"TRIPOL\"},\"presence\":{\"since\":null,\"activities\":"+activities+",\"status\":"+json.quote(state)+",\"afk\":false}}}"
+}</code></pre></details></section><section class="function-card" id="heartbeat_payload"><h3>discord.heartbeat_payload <a aria-label="Permalink" href="#heartbeat_payload">#</a></h3><p>Build heartbeat JSON payload</p><pre class="signature"><code>func discord.heartbeat_payload(sequence:int)-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func heartbeat_payload(sequence:int)-&gt;string {
+ if sequence&lt;0 {return "{\"op\":1,\"d\":null}"}
+ return "{\"op\":1,\"d\":"+text(sequence)+"}"
+}</code></pre></details></section><section class="function-card" id="event_channel"><h3>discord.event_channel <a aria-label="Permalink" href="#event_channel">#</a></h3><p>Extract accepted channel from Gateway event</p><pre class="signature"><code>func discord.event_channel(event:string)-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func event_channel(event:string)-&gt;string {
+ if json.get_raw_large(event,"op")!="0" or json.get_raw_large(event,"t")!="\"MESSAGE_CREATE\"" {return ""}
+ d=json.get_raw_large(event,"d")
+ raw=json.get_raw_large(d,"channel_id")
+ if len(raw)&lt;3 or len(raw)&gt;22 {return ""}
+ if byte_at(raw,0)!=34 or byte_at(raw,len(raw)-1)!=34 {return ""}
+ for i in range(1,len(raw)-1) {b=byte_at(raw,i);if b&lt;48 or b&gt;57 {return ""}}
+ id=slice(raw,1,len(raw)-1)
+ filter=bot_slot_get(1)
+ if len(filter)&gt;0 and filter!=id {return ""}
+ return id
+}</code></pre></details></section><section class="function-card" id="gateway_reply"><h3>discord.gateway_reply <a aria-label="Permalink" href="#gateway_reply">#</a></h3><p>Resolve Gateway event response offline</p><pre class="signature"><code>func discord.gateway_reply(event:string)-&gt;string</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func gateway_reply(event:string)-&gt;string {
+ slot_found=-1
+ scratch {
+  if json.get_raw_large(event,"op")=="0" and json.get_raw_large(event,"t")=="\"MESSAGE_CREATE\"" {
+   d=json.get_raw_large(event,"d")
+   if len(event_channel(event))&gt;0 {
+    author=json.get_raw_large(d,"author")
+    if len(author)&gt;0 and json.get_raw_large(author,"bot")!="true" and len(json.get_raw_large(d,"webhook_id"))==0 {
+     content=json.get_raw_large(d,"content")
+     for i in range(16) {
+      slot=2+i*2
+      command=bot_slot_get(slot)
+      if command=="" {break}
+      if content==json.quote(command) {slot_found=slot+1;break}
+     }
+    }
+   }
+  }
+ }
+ if slot_found&lt;0 {return ""}
+ return bot_slot_get(slot_found)
+}</code></pre></details></section><section class="function-card" id="run"><h3>discord.run <a aria-label="Permalink" href="#run">#</a></h3><p>Start Windows Gateway loop</p><pre class="signature"><code>func discord.run()-&gt;int</code></pre><details><summary><span data-es="Ver implementación">View implementation</span></summary><pre><code class="language-tripol">func run()-&gt;int {
+ assert configured(),"Call discord.login first"
+ scratch {assert has_channel() or len(bot_slot_get(36))==0,"Welcome requires a selected channel"}
+ assert gw_open(),"Gateway TLS/WebSocket open failed (Windows only)"
+ bot_slot_set(37,"");bot_slot_set(38,"")
+ show "TRIPOL Discord Gateway connecting..."
+ interval=0; sequence=-1; next_heartbeat=0; sent=0; awaiting=false; done=false
+ started=time.now_ms(); ready=false
+ while not done {
+  scratch {
+   // Wait on a local thread handle, not a REST request. Wakes on data arrival.
+   event=gw_receive(100)
+   if event=="!" {done=true;show "Gateway closed or receive failed."}
+   else if len(event)&gt;0 {
+    op=errors.int_or(json.get_raw_large(event,"op"),-1)
+    if op==10 and interval==0 {
+     d=json.get_raw_large(event,"d")
+     interval=errors.int_or(json.get_raw_large(d,"heartbeat_interval"),0)
+     if interval&lt;1000 or interval&gt;300000 {gw_abort()}
+     next_heartbeat=time.now_ms()+time.now_ns()%interval
+     gw_send(identify_payload())
+    } else if op==0 {
+     seq=errors.int_or(json.get_raw_large(event,"s"),-1)
+     if seq&gt;=0 {sequence=seq}
+     kind=json.get_raw_large(event,"t")
+     if kind=="\"READY\"" and not ready {
+      ready=true;bot_slot_set(38,"ready")
+      show "TRIPOL Discord Gateway READY - Ctrl+C to stop."
+      greeting=bot_slot_get(36)
+      if len(greeting)&gt;0 {say(greeting)}
+     } else if ready and kind=="\"MESSAGE_CREATE\"" {
+      response=gateway_reply(event)
+      if len(response)&gt;0 {send_to(event_channel(event),response)}
+     }
+    } else if op==11 {
+     if awaiting {bot_slot_set(37,text(time.now_ms()-sent));awaiting=false}
+    } else if op==1 {
+     gw_send(heartbeat_payload(sequence));sent=time.now_ms();awaiting=true
+    } else if op==7 or op==9 {
+     done=true;show "Gateway requested reconnect or invalidated the session. Stopped safely."
+    }
+   }
+   if not done {
+    now=time.now_ms()
+    if not ready and now-started&gt;30000 {gw_abort()}
+    if interval&gt;0 and now&gt;=next_heartbeat {
+     if awaiting {gw_abort()}
+     gw_send(heartbeat_payload(sequence));sent=now;awaiting=true
+     next_heartbeat=now+interval
+    }
+   }
+  }
+ }
+ gw_close();bot_slot_set(38,"")
+ return 1
+}</code></pre></details></section><h2 id="cli"><span data-es="Consultar el módulo localmente">Inspect the module locally</span></h2><pre><code>tripol docs discord</code></pre><a class="textlink" href="../libraries.html">← <span data-es="Todas las bibliotecas">All libraries</span></a></article><aside class="docs-toc"><div class="side-kicker"><span data-es="En esta página">On this page</span></div><nav id="toc-links"></nav></aside></main><dialog id="doc-search"><div class="search-head"><input aria-label="Search documentation" data-placeholder-es="Buscar guías, bibliotecas, funciones..." id="global-search" placeholder="Search guides, libraries, functions..." type="search"/><button aria-label="Close" class="doc-action" id="search-close">Esc</button></div><div aria-live="polite" id="search-results"></div></dialog><div class="docs-toast" id="doc-toast" role="status"></div></body></html>
