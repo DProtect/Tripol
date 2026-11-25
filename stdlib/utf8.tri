@@ -1,0 +1,25 @@
+// Strict UTF-8 scalar validation; NUL is not representable in TRIPOL strings.
+func continuation(b:int)->bool {return b>=128 and b<=191}
+func width_at(s:string,i:int)->int {
+ if i<0 or i>=len(s) {return 0}
+ b=byte_at(s,i)
+ if b<128 {return 1}
+ n=0
+ if b>=194 and b<=223 {n=2}
+ else if b>=224 and b<=239 {n=3}
+ else if b>=240 and b<=244 {n=4}
+ if n==0 or i+n>len(s) {return 0}
+ for j in range(1,n) {if not continuation(byte_at(s,i+j)) {return 0}}
+ b2=byte_at(s,i+1)
+ if (b==224 and b2<160) or (b==237 and b2>=160) or (b==240 and b2<144) or (b==244 and b2>=144) {return 0}
+ return n
+}
+func valid(s:string)->bool {i=0;while i<len(s) {n=width_at(s,i);if n==0 {return false};i+=n};return true}
+func count(s:string)->int {i=0;total=0;while i<len(s) {n=width_at(s,i);assert n>0,"Invalid UTF-8";i+=n;total+=1};return total}
+func scalar_at(s:string,i:int)->int {
+ n=width_at(s,i);assert n>0,"Invalid UTF-8 offset";b=byte_at(s,i)
+ if n==1 {return b}
+ if n==2 {b=b-192} else if n==3 {b=b-224} else {b=b-240}
+ for j in range(1,n) {b=b*64+byte_at(s,i+j)-128}
+ return b
+}

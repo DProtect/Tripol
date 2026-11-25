@@ -235,7 +235,7 @@ func (n *tirNode) String() string {
 func inspectTIR(file string) {
 	fs, ss, _ := loadProject(file)
 	generate(fs, ss, "linux", false, nil)
-	fmt.Println("TRIPOL TIR R5 — lowered scalar functions")
+	fmt.Println("TRIPOL TIR R6 — scalar lowering and experimental control-flow inspection")
 	n := 0
 	for _, f := range fs {
 		if ir, ok := lowerTIR(f); ok {
@@ -244,4 +244,7 @@ func inspectTIR(file string) {
 		}
 	}
 	fmt.Printf("%d lowered functions; nano: zero/one argument; balanced: register leaf ABI; turbo: up to four arguments may inline.\n", n)
+	fmt.Println("Control-flow inspection (analysis only; existing checked backend retained):")
+	printFlow("@main", ss)
+	for _, f := range fs { if !f.record { printFlow(f.name, f.body) } }
 }

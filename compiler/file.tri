@@ -1,0 +1,8 @@
+import "runtime.tri"
+import tripol.encoding
+// Read source path on stdin; emit hexadecimal ELF transport to stdout.
+source=read_text(input())
+image=gen_runtime(source)
+encoded=""
+for b in image {encoded+=encoding.hex_byte(b)}
+show encoded

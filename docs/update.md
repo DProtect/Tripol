@@ -1,4 +1,4 @@
-# TRIPOL UPDATE R1
+# TRIPOL UPDATE R2 — first stage
 
 Interactive commands can print a notice on stderr when a newer numbered release is available. Checks are cached for 24 hours (including failed offline attempts), with a 700 ms HTTP deadline on a cache miss. Redirected output, CI, benchmarks, machine-oriented commands and --version are unaffected. Set TRIPOL_NO_UPDATE=1 to disable automatic checks. Explicit commands still work.
 
@@ -7,3 +7,5 @@ Interactive commands can print a notice on stderr when a newer numbered release 
 - No installation, execution or source-code changes occur automatically. Windows setup remains unsigned. Numbered public pre-releases are eligible because TRIPOL is a public preview; drafts and unrecognized version tags are excluded.
 
 No tokens are required. Release checks contact api.github.com and explicit downloads contact GitHub release assets. No source files are sent. The cache holds public release metadata. SHA-256 detects changes to the downloaded asset relative to GitHub's release metadata; it does not replace code signing.
+
+New in QUANTUM X: interactive transfer progress, `tripol update --download-only` (verified download without installation instructions), and `tripol update --history` (local verified download receipts, not installed-version history). Default `tripol update` still prints manual installation instructions. Automated installation, backup and rollback are not yet implemented. Receipts contain public asset name/digest and local path; they remain on the user's machine.

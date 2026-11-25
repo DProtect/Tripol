@@ -1,3 +1,14 @@
+# v0.27 QUANTUM X (development)
+
+- Experimental GENESIS R3: checked division/remainder, native conditional branches and loops, multiline file driver; Go CLI transports ELF bytes without Python.
+- Checked compound indexed assignments, including single evaluation of the index and recoverable arithmetic/bounds failures.
+- 55 standard modules: heap, utf8 and csv added; new reuse stress example.
+- UPDATE R2 first stage: download progress and verified receipt history. Manual installation remains required.
+- TIR R6 first-stage control-flow graph inspection; existing native backend retained.
+- Editor completion, hover, local definitions and saved-file compiler commands; software-rendered game example.
+- Windows Validation Center, new native regression tests and release workflow.
+- No claim of full SSA, general reclamation, self-hosting, PE generation by GENESIS, GPU acceleration, automatic installation/rollback or benchmark gains.
+
 # v0.26 OVERDRIVE (development)
 
 - UPDATE R1: opt-out interactive release notices, daily cache, explicit checks and verified downloads. No background installation.

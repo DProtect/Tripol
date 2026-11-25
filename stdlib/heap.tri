@@ -1,0 +1,23 @@
+// Bounded min-heap of signed integers. Operations reuse storage.
+func create(limit=32)->ints {assert limit>=1 and limit<=65535,"Invalid heap capacity";return ints(limit+1)}
+func capacity(h:ints)->int {assert len(h)>=2 and len(h)<=65536,"Invalid heap";return len(h)-1}
+func size(h:ints)->int {assert h[0]>=0 and h[0]<=capacity(h),"Invalid heap size";return h[0]}
+func push(h:ints,value:int)->bool {
+ n=size(h);if n==capacity(h) {return false}
+ i=n+1
+ while i>1 and h[i/2]>value {h[i]=h[i/2];i/=2}
+ h[i]=value;h[0]=n+1;return true
+}
+func peek(h:ints)->int {assert size(h)>0,"Empty heap";return h[1]}
+func pop(h:ints)->int {
+ n=size(h);assert n>0,"Empty heap"
+ result=h[1];last=h[n];n-=1;h[0]=n;i=1
+ while i*2<=n {
+  child=i*2
+  if child<n and h[child+1]<h[child] {child+=1}
+  if h[child]>=last {break}
+  h[i]=h[child];i=child
+ }
+ if n>0 {h[i]=last}
+ return result
+}

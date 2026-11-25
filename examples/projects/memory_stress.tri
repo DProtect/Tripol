@@ -1,0 +1,10 @@
+import tripol.heap
+import tripol.memory
+h=heap.create(8)
+before=memory.used()
+repeat 1000000 {
+ assert heap.push(h,42)
+ assert heap.pop(h)==42
+}
+show before,memory.used(),memory.committed()
+assert before==memory.used()

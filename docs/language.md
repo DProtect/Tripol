@@ -63,3 +63,7 @@ OMEGA adds no grammar changes. ArrayCore specializes eligible dynamic integer ar
 ECLIPSE adds the stateful Discord REST API (see [Discord guide](discord.md)) and native array copy/search; no new grammar.
 
 Direct self tail calls with full argument lists reuse the frame in all profiles unless tracing. Other recursion remains subject to the OS stack limit.
+
+## Indexed compound assignment (v0.27)
+
+Mutable fixed and dynamic integer arrays support `a[i] += x`, `-=`, `*=`, `/=`, `%=`. The index is checked and evaluated exactly once before loading the old value, then the RHS is evaluated once. Checked arithmetic and recoverable traps are unchanged. Constant arrays cannot be modified. Dynamic collection method syntax remains pending.

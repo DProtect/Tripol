@@ -1,23 +1,15 @@
-# GENESIS R2 — bootstrap compiler
+# GENESIS R3 — bootstrap compiler
 
-The production compiler remains Go. GENESIS is a native executable built from TRIPOL source in compiler/. It reads one line of source and emits Linux x86-64 ELF bytes as hex. Python only decodes the hex transport and writes a new file.
-
-On Linux x86-64:
+The production compiler remains Go. GENESIS is written in TRIPOL and emits Linux x86-64 ELF machine code. The file driver reads a source path on stdin and outputs hex transport; the Go CLI writes those bytes to a new file. No Python is needed for the new command, but standalone binary I/O in TRIPOL remains pending.
 
 ```sh
-tripol build compiler/main.tri --target linux -o genesis
-printf 'a=20;b=30;show a*b\n' | ./genesis | python3 compiler/unpack.py demo
-./demo
+tripol build compiler/file.tri --target linux -o genesis-stage
+tripol genesis ./genesis-stage examples/projects/genesis_r3.tri -o genesis-demo
+./genesis-demo
 ```
 
-Expected output: 600. The assignment mode emits native machine instructions for integer variables and arithmetic evaluated when the generated binary runs. The older single constant show expression mode remains supported, including division and remainder.
+Expected: 30. On Windows use `--target windows -o genesis-stage.exe` and `tripol genesis genesis-stage.exe examples/projects/genesis_r3.tri -o genesis-demo`. The emitted program still requires Linux x86-64. Use a new output file; overwrite is rejected.
 
-## R2 subset
+R3 supports up to 32 predeclared integer variables, reassignment, multiline/semicolon separators, integer comparisons, nested if/else and while blocks, checked runtime + - * / % and one final show expression. Variable declarations are required before control flow, avoiding uninitialized slots; nesting limited to 16 statement levels and 64 expression levels, source max 4096 bytes subject to host file limits. Runtime divide-by-zero and signed overflow exit 10. The old stdin driver and R1 constant show mode remain available for compatibility.
 
-- One line with semicolon-separated assignments followed by one show expression, at most 32 integer variables; ASCII identifiers up to 32 bytes.
-- Runtime assignment expressions support integer literals, known variables, parentheses, unary signs, +, - and *. Overflow exits with status 10.
-- Source lexer limit 4096 bytes, subject to the input intrinsic's own limit. No functions, control flow, arbitrary input, runtime division, Windows PE output or self-compilation in R2.
-- Windows can host GENESIS but emitted programs target Linux. The unpack script does not compile anything.
-- No direct binary file I/O yet; the compiler itself still needs the Go implementation for bootstrapping.
-
-Next: runtime division, binary file I/O, typed statements, control flow, functions, PE output and multi-generation self-compilation.
+No functions, for loops, boolean short-circuit expressions, general type system, AST/SSA backend, PE emission, direct binary writes or self-compilation yet. The host driver invokes an explicitly selected local stage executable; use a trusted stage. Full bootstrap parity and multi-generation verification remain future work.

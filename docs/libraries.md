@@ -1,4 +1,4 @@
-# Standard library — 52 modules
+# Standard library — 55 modules
 
 Exact source and signatures: `tripol docs NAME`, `tripol libs`, or [stdlib](../stdlib). Counts include seven JSON scanner helper functions; use the documented high-level APIs for stable behavior. Modules are embedded and offline. In nano mode unused routines are eliminated; imports do not imply runtime dependencies.
 
@@ -95,3 +95,11 @@ Both modules expose `create(limit=32)`, `capacity`, `size`, `push`, `peek`, `pop
 ## bitset / profiler (OVERDRIVE)
 
 `bitset.create(count)` allocates a compact bounded bitset (63 bits per word, at most 1,048,576 bits). `capacity`, `contains`, `add`, `remove`, `count` expose checked operations. `add` and `remove` report whether membership changed. `profiler.start()` and `profiler.elapsed(started)` measure elapsed monotonic nanoseconds, not CPU sampling.
+
+## QUANTUM X modules
+
+- `heap`: bounded signed integer min-heap, create/capacity/size/push/peek/pop. No allocation after creation during valid operations. Full push returns false; empty peek/pop assert.
+- `utf8`: continuation, width_at, valid, count, scalar_at. Byte offsets, strict scalar validation (overlong encodings, surrogates and out-of-range code points rejected). NUL is not representable in current strings. No normalization or grapheme segmentation.
+- `csv`: escape a single field, fields/valid for a single comma-separated record with quoted fields and doubled quotes. No file/stream parser yet.
+
+See `examples/projects/quantum_x_libraries.tri` and `memory_stress.tri`.

@@ -1,6 +1,6 @@
 # Roadmap
 
-ORIGIN is a public-preview candidate, not stable v1.0. Goals, not promised versions or dates.
+QUANTUM X is a public-preview candidate, not stable v1.0. Goals, not promised versions or dates.
 
 - Public release gate: sync complete source, audit history and credentials, review Apache-2.0 boundaries, Windows/Linux CI, verify downloadable assets.
 - Gateway reliability: reconnect/resume, rate limits, slash interactions, Unicode and bounded queue; preserve simple API.
@@ -11,4 +11,4 @@ ORIGIN is a public-preview candidate, not stable v1.0. Goals, not promised versi
 
 ## GENESIS self-hosting
 
-R1: native ELF emission from one constant integer statement. R2: runtime integer assignment and expression emission; direct binary output remains pending; R3: statements and typed functions; R4: bootstrap compiler capable of compiling itself, with multi-generation equivalence tests. Preserve the Go compiler until parity is verified.
+R1: native ELF emission from one constant integer statement. R2: runtime integer assignment and expression emission; direct binary output remains pending; R3 first stage: multiline integer statements, checked division, comparisons and native control-flow branches; typed functions, PE emission and direct binary writes remain pending. Future stages: bootstrap compiler capable of compiling itself, with multi-generation equivalence tests. Preserve the Go compiler until parity is verified.

@@ -131,7 +131,9 @@ func downloadUpdate(client *http.Client,a updateAsset,root string)(string,error)
  f,e:=os.CreateTemp(root,"download-");if e!=nil{return "",e}
  name:=f.Name();defer os.Remove(name);defer f.Close()
  h:=sha256.New()
- n,e:=io.Copy(io.MultiWriter(f,h),io.LimitReader(resp.Body,a.Size+1))
+ progress:=&updateProgress{total:a.Size,enabled:interactiveUpdate()}
+ n,e:=io.Copy(io.MultiWriter(f,h,progress),io.LimitReader(resp.Body,a.Size+1))
+ if progress.enabled {fmt.Fprintln(os.Stderr)}
  if e!=nil{return "",e}
  if n!=a.Size||"sha256:"+hex.EncodeToString(h.Sum(nil))!=strings.ToLower(a.Digest){return "",fmt.Errorf("SHA-256 or size mismatch; update rejected")}
  if e=f.Close();e!=nil{return "",e}
@@ -142,11 +144,12 @@ func downloadUpdate(client *http.Client,a updateAsset,root string)(string,error)
  return path,nil
 }
 func updateCLI(args []string){
- if len(args)>1||(len(args)==1&&args[0]!="--check"){die("usage: tripol update [--check]")}
+ if len(args)>1||(len(args)==1&&args[0]!="--check"&&args[0]!="--download-only"&&args[0]!="--history"){die("usage: tripol update [--check|--download-only|--history]")}
+ if len(args)==1&&args[0]=="--history"{updateHistoryCLI();return}
  r,e:=updateLookup(true,8*time.Second);if e!=nil{die("update check failed: %v",e)}
  if !newerVersion(r.Tag,version){fmt.Println("TRIPOL is up to date:",version);return}
  fmt.Printf("TRIPOL update available: %s -> %s\n",version,r.Tag)
- if len(args)==1{return}
+ if len(args)==1&&args[0]=="--check"{return}
  if runtime.GOARCH!="amd64"{die("updates require x86-64")}
  a,e:=updateAssetFor(r,runtime.GOOS);if e!=nil{die("%v",e)}
  root,e:=updateRoot();if e!=nil{die("%v",e)}
@@ -155,6 +158,8 @@ func updateCLI(args []string){
  }}
  path,e:=downloadUpdate(client,a,root);if e!=nil{die("update download failed: %v",e)}
  fmt.Println("Verified SHA-256. Downloaded:",path)
+ if e:=recordUpdate(root,r.Tag,a,path);e!=nil{fmt.Fprintln(os.Stderr,"Update history:",e)}
+ if len(args)==1&&args[0]=="--download-only"{return}
  if runtime.GOOS=="windows"{fmt.Println("Close TRIPOL processes and run the unsigned setup EXE above to install the update.")}else{fmt.Println("Extract tripol from the archive and replace your installed compiler after closing running processes.")}
  fmt.Println("No files were installed automatically. Release:", "https://github.com/Tripollas/Tripol/releases/tag/"+r.Tag)
 }

@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-const version = "0.26.0"
+const version = "0.27.0"
 
 type token struct {
 	s, k      string
@@ -250,7 +250,9 @@ func (p *parser) statement() stmt {
 		} else {
 			s.op = "expr"
 			s.e = p.expression(1)
-			if s.e.op == "index" && p.eat("=") {
+			if s.e.op == "index" && strings.Contains("|=|+=|-=|*=|/=|%=|", "|"+p.t().s+"|") && p.t().s != "|" {
+				op := p.take().s
+				if op != "=" { s.typ = op[:1] }
 				s.op = "indexassign"
 				s.name = s.e.s
 				s.bound = s.e.args[0]
@@ -967,8 +969,13 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				c.err("cannot modify constant " + s.name)
 			}
 			c.arrayIndex(v, s.bound)
-			a.emit(0x50)
+			a.emit(0x50) // preserve the single evaluated index
+			if s.typ != "" {
+				if v.typ == "ints" { a.emit(0x48, 0x8b, 0x44, 0xc1, 0x08) } else { a.emit(0x48, 0x8b, 0x84, 0xc5); a.u32(v.off) }
+				a.emit(0x50) // old element before RHS
+			}
 			c.require(c.expression(s.e), "int")
+			if s.typ != "" { a.emit(0x48, 0x89, 0xc1, 0x58); c.compoundInteger(s.typ) }
 			a.emit(0x59)
 			if v.typ == "ints" {
 				// Preserve value while loading the array reference in rdx.
@@ -1575,6 +1582,7 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool,
 func cli() {
 	diagnosticOptions()
 	args := os.Args[1:]
+	if len(args) > 0 && args[0] == "genesis" { genesisCLI(args[1:]); return }
 	if len(args) > 0 && args[0] == "update" {
 		updateCLI(args[1:])
 		return
@@ -1588,7 +1596,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.26.0 — OVERDRIVE\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL 0.27.0 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {

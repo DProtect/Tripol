@@ -1,0 +1,10 @@
+import tripol.heap
+import tripol.utf8
+import tripol.csv
+h=heap.create(4)
+assert heap.push(h,30)
+assert heap.push(h,10)
+assert heap.push(h,20)
+show heap.pop(h),heap.pop(h),heap.pop(h)
+show utf8.count("TRIPOL é")
+show csv.fields("a,\"b,c\",d")

@@ -8,7 +8,7 @@
 
 A free, experimental programming language that turns readable code directly into native x86-64 executables.
 
-![Version](https://img.shields.io/badge/version-0.26.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
+![Version](https://img.shields.io/badge/version-0.27.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
 
 [Official website](https://tripollas.github.io/Tripol/) · [Online docs](https://tripollas.github.io/Tripol/docs/) · [Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
 
@@ -20,11 +20,20 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 | Current release | Built-in modules | Callable library functions* | Hello world (Windows / Linux) |
 |---|---:|---:|---:|
-| **0.26.0 — OVERDRIVE (development)** | 52 | 319 (including scanner helpers) | see v0.24 baseline |
+| **0.27.0 — QUANTUM X (development)** | 55 | 333 (including scanner helpers) | see v0.24 baseline |
 
 *Includes JSON scanner helpers. Sizes are measured for `examples/hello.tri` in nano mode, not a promise for arbitrary programs. TRIPOL is pre-1.0 and is not yet a replacement for mature production languages.*
 
-## OVERDRIVE
+## QUANTUM X
+
+- GENESIS R3 experimental multiline ELF generation: checked runtime division/remainder, comparisons, `if`/`else`, `while`, and a file driver. `tripol genesis` removes the Python transport dependency but the host Go CLI still writes the output; no PE emission or self-hosting yet. [GENESIS](docs/genesis.md).
+- SYNTAX R2: checked indexed compound assignments `+=`, `-=`, `*=`, `/=`, `%=`; index evaluated once.
+- Three new standard modules: bounded `heap`, strict UTF-8 scalar helpers and single-record `csv` helpers. [Libraries](docs/libraries.md).
+- UPDATE R2 first stage: verified download progress, `--download-only` and receipt history; installation remains manual.
+- TIR R6 first stage: statement-level CFG inspection; existing checked optimizer remains the production backend. No full SSA/register allocation.
+- VS Code completion, hover, local definition lookup and explicit compiler commands; Windows software-rendered game demo and [Validation Center](docs/testing-v0.27.md).
+
+## OVERDRIVE (v0.26)
 
 - UPDATE R1: interactive update notices, 24-hour cache, `tripol update --check` and verified official release downloads with `tripol update`. No automatic installation. [Update guide](docs/update.md).
 - GENESIS R2: integer assignments and runtime x86-64 arithmetic with overflow checks, emitting Linux ELF. Still not self-hosting or a full compiler. [GENESIS guide](docs/genesis.md).
@@ -42,7 +51,7 @@ New: `arrays.copy_into(destination, source)` reuses equal-sized storage and retu
 
 - `core/`: production Go compiler and white-box regression tests.
 - `compiler/`: GENESIS compiler and demos written in TRIPOL.
-- `stdlib/`: the 52 standard-library modules, embedded at build time.
+- `stdlib/`: the 55 standard-library modules, embedded at build time.
 - `native/`: assembly source and code generator.
 - `tests/`: CLI integration tests and archived test evidence.
 - `examples/`, `benchmarks/`, `installer/`, `vscode/`, `docs/`: samples, reproducible measurements, distribution and documentation.
@@ -55,7 +64,7 @@ The small root `main.go` keeps `go build -o tripol .` compatible. Run the comple
 
 ## Quick start
 
-Install the Windows x64 distribution (`TRIPOL-v0.26-Setup-x64.exe`) when provided by the project maintainer, or [build from source](docs/build.md). The installer is unsigned, per-user and configures PATH. Check GitHub Releases for published assets; the installer is not available there until the release draft has been reviewed and published.
+Install the Windows x64 distribution (`TRIPOL-v0.27-Setup-x64.exe`) when provided by the project maintainer, or [build from source](docs/build.md). The installer is unsigned, per-user and configures PATH. Check GitHub Releases for published assets; the installer is not available there until the release draft has been reviewed and published.
 
 ```cmd
 tripol --version

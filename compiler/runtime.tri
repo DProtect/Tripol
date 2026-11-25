@@ -49,9 +49,17 @@ func gen_factor(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
 }
 func gen_term(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
  gen_factor(src,tok,c,code,syms,depth)
- while boot_peek(src,tok,c)=="*" {
+ op=boot_peek(src,tok,c)
+ while op=="*" or op=="/" or op=="%" {
   c[0]=c[0]+3;gen_bytes(code,"50");gen_factor(src,tok,c,code,syms,depth)
-  gen_bytes(code,"59480fafc1");gen_guard(code)
+  if op=="*" {gen_bytes(code,"59480fafc1");gen_guard(code)}
+  else {
+   gen_bytes(code,"4889c1584885c9750cb83c000000bf0a0000000f05")
+   gen_bytes(code,"4883f9ff751b48ba00000000000000804839d0750cb83c000000bf0a0000000f05")
+   gen_bytes(code,"489948f7f9")
+   if op=="%" {gen_bytes(code,"4889d0")}
+  }
+  op=boot_peek(src,tok,c)
  }
  return 0
 }
@@ -66,22 +74,74 @@ func gen_expr(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
  }
  return 0
 }
+// Branch offsets are relative to the instruction immediately after rel32.
+func gen_patch(code:ints,at:int,target:int)->int {
+ delta=target-at-4
+ if delta<0 {delta+=4294967296}
+ for i in range(4) {buffer.set(code,at+i,delta%256);delta/=256}
+ return 0
+}
+func gen_jump(code:ints,opcode:string)->int {
+ gen_bytes(code,opcode);at=buffer.size(code);gen_imm(code,0,4);return at
+}
+func gen_condition(src:string,tok:ints,c:ints,code:ints,syms:ints)->int {
+ gen_expr(src,tok,c,code,syms,0)
+ op=boot_peek(src,tok,c);c[0]=c[0]+3;gen_bytes(code,"50")
+ gen_expr(src,tok,c,code,syms,0);gen_bytes(code,"4889c1584839c8")
+ if op=="==" {return gen_jump(code,"0f85")}
+ if op=="!=" {return gen_jump(code,"0f84")}
+ if op=="<" {return gen_jump(code,"0f8d")}
+ if op=="<=" {return gen_jump(code,"0f8f")}
+ if op==">" {return gen_jump(code,"0f8e")}
+ assert op==">=","Expected integer comparison"
+ return gen_jump(code,"0f8c")
+}
+func gen_separators(src:string,tok:ints,c:ints)->int {
+ while boot_peek(src,tok,c)==";" or boot_peek(src,tok,c)=="\n" {c[0]=c[0]+3}
+ return 0
+}
+func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
+ assert depth<=16,"Statement nesting limit"
+ gen_separators(src,tok,c)
+ while c[0]<len(tok) and boot_peek(src,tok,c)!="show" and boot_peek(src,tok,c)!="}" {
+  name=boot_peek(src,tok,c);i=c[0];c[0]=c[0]+3
+  if name=="if" or name=="while" {
+   start=buffer.size(code);skip=gen_condition(src,tok,c,code,syms)
+   assert boot_peek(src,tok,c)=="{","Expected {";c[0]=c[0]+3
+   gen_statements(src,tok,c,code,syms,depth+1)
+   assert boot_peek(src,tok,c)=="}","Expected }";c[0]=c[0]+3
+   if name=="while" {back=gen_jump(code,"e9");gen_patch(code,back,start)}
+   gen_separators(src,tok,c)
+   if name=="if" and boot_peek(src,tok,c)=="else" {
+    done=gen_jump(code,"e9");gen_patch(code,skip,buffer.size(code));c[0]=c[0]+3
+    assert boot_peek(src,tok,c)=="{","Expected {";c[0]=c[0]+3
+    gen_statements(src,tok,c,code,syms,depth+1)
+    assert boot_peek(src,tok,c)=="}","Expected }";c[0]=c[0]+3
+    gen_patch(code,done,buffer.size(code))
+   } else {gen_patch(code,skip,buffer.size(code))}
+  } else {
+   assert tok[i]==1 and len(name)<=32,"Expected assignment"
+   assert boot_peek(src,tok,c)=="=","Expected =";c[0]=c[0]+3
+   gen_expr(src,tok,c,code,syms,0)
+   if not dictionary.contains(syms,name) {
+    assert depth==0,"Declare variables before control flow"
+    slot=dictionary.size(syms)+1;assert dictionary.set(syms,name,slot),"Variable limit"
+   }
+   gen_bytes(code,"488985");gen_imm(code,4294967296-dictionary.get(syms,name)*8,4)
+   sep=boot_peek(src,tok,c)
+   assert sep==";" or sep=="\n" or sep=="}","Expected separator"
+  }
+  gen_separators(src,tok,c)
+ }
+ return 0
+}
 func gen_runtime(source:string)->ints {
  tok=boot_lex(source);c=ints(1);code=buffer.create(65536);syms=dictionary.create(32)
  gen_bytes(code,"4889e54881ec00010000")
- while boot_peek(source,tok,c)!="show" {
-  i=c[0];assert i<len(tok) and tok[i]==1,"Expected assignment"
-  name=boot_peek(source,tok,c);assert len(name)<=32,"Name limit";c[0]=c[0]+3
-  assert boot_peek(source,tok,c)=="=","Expected =";c[0]=c[0]+3
-  gen_expr(source,tok,c,code,syms,0)
-  if not dictionary.contains(syms,name) {
-   slot=dictionary.size(syms)+1;assert dictionary.set(syms,name,slot),"Variable limit"
-  }
-  gen_bytes(code,"488985");gen_imm(code,4294967296-dictionary.get(syms,name)*8,4)
-  assert boot_peek(source,tok,c)==";","Expected ;";c[0]=c[0]+3
- }
+ gen_statements(source,tok,c,code,syms,0)
+ assert boot_peek(source,tok,c)=="show","Expected final show"
  c[0]=c[0]+3;gen_expr(source,tok,c,code,syms,0)
- assert c[0]==len(tok),"Unexpected trailing token"
+ gen_separators(source,tok,c);assert c[0]==len(tok),"Unexpected trailing token"
  // Signed decimal print and exit. Handles INT64_MIN using unsigned division.
  gen_bytes(code,"4883ec20488d74241fc6060a4989f04989c14531d24885c0790948f7d841ba01000000b90a00000031d248f7f180c23048ffce88164885c075ee4585d2740648ffcec6062d4c89c24829f248ffc2b801000000bf010000000f05b83c00000031ff0f05")
  return genesis_code_elf(buffer.values(code))

@@ -9,7 +9,7 @@ CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
 mkdir -p installer/payload
 cp examples/hello.tri installer/payload/hello.tri
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o installer/payload/tripol.exe .
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.26-Setup-x64.exe ./installer
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.27-Setup-x64.exe ./installer
 ```
 
 The installer is unsigned, installs under `%LOCALAPPDATA%\Programs\TRIPOL`, uses PowerShell to update user PATH, and supports `--quiet` and `--uninstall`. Close and reopen CMD. Linux x86-64 ELF uses direct syscalls; Windows PE32+ uses OS DLLs for selected functionality. There is no external language runtime in generated executables.
@@ -45,3 +45,5 @@ ORIGIN adds optional Discord channel filtering, validated binary byte-array code
 GENESIS R2: [experimental compiler written in TRIPOL](genesis.md). The Go compiler remains required to bootstrap it. It emits Linux ELF from constant expressions or bounded integer assignments and runtime arithmetic.
 
 See [UPDATE R1](update.md) for explicit update checks and downloads.
+
+TIR R6 adds experimental statement-level CFG inspection to `tripol ir`; protected control flow is skipped. The production optimizer remains the existing scalar/register backend. See [GENESIS R3](genesis.md), [UPDATE R2](update.md), and [Windows validation](testing-v0.27.md).

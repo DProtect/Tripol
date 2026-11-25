@@ -1,0 +1,12 @@
+i=0
+sum=0
+while i<10 {
+ sum=sum+i
+ i=i+1
+}
+if sum==45 {
+ sum=sum*2
+} else {
+ sum=0
+}
+show sum/3
