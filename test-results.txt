@@ -7,7 +7,7 @@
 === RUN   TestAtlasLibraries/5
 === RUN   TestAtlasLibraries/6
 === RUN   TestAtlasLibraries/7
---- PASS: TestAtlasLibraries (0.02s)
+--- PASS: TestAtlasLibraries (0.03s)
     --- PASS: TestAtlasLibraries/0 (0.00s)
     --- PASS: TestAtlasLibraries/1 (0.00s)
     --- PASS: TestAtlasLibraries/2 (0.00s)
@@ -61,7 +61,7 @@
 === RUN   TestConnectPE
 --- PASS: TestConnectPE (0.00s)
 === RUN   TestConnectHTTPParsing
---- PASS: TestConnectHTTPParsing (0.00s)
+--- PASS: TestConnectHTTPParsing (0.01s)
 === RUN   TestConnectRefused
 --- PASS: TestConnectRefused (0.00s)
 === RUN   TestConnectFindBytes
@@ -82,7 +82,7 @@
     --- PASS: TestEcosystemLibraries/3 (0.00s)
     --- PASS: TestEcosystemLibraries/4 (0.00s)
     --- PASS: TestEcosystemLibraries/5 (0.00s)
-    --- PASS: TestEcosystemLibraries/6 (0.00s)
+    --- PASS: TestEcosystemLibraries/6 (0.01s)
     --- PASS: TestEcosystemLibraries/7 (0.00s)
 === RUN   TestEcosystemBounds
 === RUN   TestEcosystemBounds/show_byte_at("abc",-1)
@@ -93,11 +93,11 @@
     --- PASS: TestEcosystemBounds/show_byte_at("abc",3) (0.00s)
     --- PASS: TestEcosystemBounds/show_byte_at("",0) (0.00s)
 === RUN   TestEcosystemNoAllocRead
---- PASS: TestEcosystemNoAllocRead (0.04s)
+--- PASS: TestEcosystemNoAllocRead (0.03s)
 === RUN   TestEcosystemNoUnused
 --- PASS: TestEcosystemNoUnused (0.01s)
 === RUN   TestVaultPackages
---- PASS: TestVaultPackages (0.00s)
+--- PASS: TestVaultPackages (0.01s)
 === RUN   TestVaultDependencies
 --- PASS: TestVaultDependencies (0.00s)
 === RUN   TestVaultReject
@@ -134,6 +134,12 @@
 --- PASS: TestEcosystemShowValues (0.00s)
 === RUN   TestVaultExplicitDependencies
 --- PASS: TestVaultExplicitDependencies (0.00s)
+=== RUN   TestGuardNested
+--- PASS: TestGuardNested (0.00s)
+=== RUN   TestGuardBounds
+--- PASS: TestGuardBounds (0.00s)
+=== RUN   TestGuardFatal
+--- PASS: TestGuardFatal (0.00s)
 === RUN   TestHorizonRecords
 === RUN   TestHorizonRecords/0
 === RUN   TestHorizonRecords/1
@@ -191,8 +197,8 @@
 === RUN   TestHorizonModulesPE
 --- PASS: TestHorizonModulesPE (0.00s)
 === RUN   TestHorizonTemplate
-Created /tmp/TestHorizonTemplate998819551/001/records (records)
-cd /tmp/TestHorizonTemplate998819551/001/records
+Created /tmp/TestHorizonTemplate4088799606/001/records (records)
+cd /tmp/TestHorizonTemplate4088799606/001/records
 tripol run
 --- PASS: TestHorizonTemplate (0.00s)
 === RUN   TestLibertyPrograms
@@ -236,7 +242,7 @@ tripol run
 === RUN   TestLibertyTraps/show_1.0/0.0
 === RUN   TestLibertyTraps/show_sqrt(-1.0)
 === RUN   TestLibertyTraps/show_10000000000000.0
---- PASS: TestLibertyTraps (0.00s)
+--- PASS: TestLibertyTraps (0.01s)
     --- PASS: TestLibertyTraps/show_parse_int("9223372036854775808") (0.00s)
     --- PASS: TestLibertyTraps/show_parse_int("-9223372036854775809") (0.00s)
     --- PASS: TestLibertyTraps/show_parse_int("12a") (0.00s)
@@ -302,7 +308,7 @@ tripol run
 === RUN   TestPrograms/show_1<2_show_2>=2_show_2>3
 === RUN   TestPrograms/show_""
 === RUN   TestPrograms/show_"¡Hola,_TRIPOL!"
---- PASS: TestPrograms (0.01s)
+--- PASS: TestPrograms (0.02s)
     --- PASS: TestPrograms/show_"Hola" (0.00s)
     --- PASS: TestPrograms/show_2_+_3_*_4_show_(2_+_3)_*_4 (0.00s)
     --- PASS: TestPrograms/x=1_x=x+3_show_x (0.00s)
@@ -393,7 +399,7 @@ tripol run
 === RUN   TestNanoPrograms/12
 === RUN   TestNanoPrograms/13
 === RUN   TestNanoPrograms/14
---- PASS: TestNanoPrograms (0.08s)
+--- PASS: TestNanoPrograms (0.09s)
     --- PASS: TestNanoPrograms/0 (0.00s)
     --- PASS: TestNanoPrograms/1 (0.00s)
     --- PASS: TestNanoPrograms/2 (0.00s)
@@ -507,21 +513,107 @@ tripol run
 --- PASS: TestNexusPE (0.00s)
 === RUN   TestNexusTemplates
 === RUN   TestNexusTemplates/basic
-Created /tmp/TestNexusTemplatesbasic2427566831/001/basic
-cd /tmp/TestNexusTemplatesbasic2427566831/001/basic
+Created /tmp/TestNexusTemplatesbasic3095454916/001/basic
+cd /tmp/TestNexusTemplatesbasic3095454916/001/basic
 tripol run main.tri
 === RUN   TestNexusTemplates/calculator
-Created /tmp/TestNexusTemplatescalculator216572810/001/calculator (calculator)
-cd /tmp/TestNexusTemplatescalculator216572810/001/calculator
+Created /tmp/TestNexusTemplatescalculator3016607907/001/calculator (calculator)
+cd /tmp/TestNexusTemplatescalculator3016607907/001/calculator
 tripol run
 === RUN   TestNexusTemplates/files
-Created /tmp/TestNexusTemplatesfiles3456687346/001/files (files)
-cd /tmp/TestNexusTemplatesfiles3456687346/001/files
+Created /tmp/TestNexusTemplatesfiles1118325010/001/files (files)
+cd /tmp/TestNexusTemplatesfiles1118325010/001/files
 tripol run
 --- PASS: TestNexusTemplates (0.00s)
     --- PASS: TestNexusTemplates/basic (0.00s)
     --- PASS: TestNexusTemplates/calculator (0.00s)
     --- PASS: TestNexusTemplates/files (0.00s)
+=== RUN   TestJSONRead
+=== RUN   TestJSONRead/"{\"a\":[1,true,null,{\"b\":-1.2e-4}],\"c\":\"hola\"}"
+=== RUN   TestJSONRead/"[]"
+=== RUN   TestJSONRead/"{}"
+=== RUN   TestJSONRead/"_\"a\\u00ff\"_"
+=== RUN   TestJSONRead/"\"é😃\""
+=== RUN   TestJSONRead/"0"
+=== RUN   TestJSONRead/"-0.2E+3"
+=== RUN   TestJSONRead/"true"
+=== RUN   TestJSONRead/"null"
+=== RUN   TestJSONRead/"[1,]"
+=== RUN   TestJSONRead/"{\"x\":1,}"
+=== RUN   TestJSONRead/"01"
+=== RUN   TestJSONRead/"1."
+=== RUN   TestJSONRead/"1e"
+=== RUN   TestJSONRead/"{\"a\"_1}"
+=== RUN   TestJSONRead/"\"\\q\""
+=== RUN   TestJSONRead/"\"\\u0x00\""
+=== RUN   TestJSONRead/""
+=== RUN   TestJSONRead/"true_false"
+=== RUN   TestJSONRead/"[[]]"
+--- PASS: TestJSONRead (0.06s)
+    --- PASS: TestJSONRead/"{\"a\":[1,true,null,{\"b\":-1.2e-4}],\"c\":\"hola\"}" (0.00s)
+    --- PASS: TestJSONRead/"[]" (0.00s)
+    --- PASS: TestJSONRead/"{}" (0.00s)
+    --- PASS: TestJSONRead/"_\"a\\u00ff\"_" (0.00s)
+    --- PASS: TestJSONRead/"\"é😃\"" (0.00s)
+    --- PASS: TestJSONRead/"0" (0.00s)
+    --- PASS: TestJSONRead/"-0.2E+3" (0.00s)
+    --- PASS: TestJSONRead/"true" (0.00s)
+    --- PASS: TestJSONRead/"null" (0.00s)
+    --- PASS: TestJSONRead/"[1,]" (0.00s)
+    --- PASS: TestJSONRead/"{\"x\":1,}" (0.00s)
+    --- PASS: TestJSONRead/"01" (0.00s)
+    --- PASS: TestJSONRead/"1." (0.00s)
+    --- PASS: TestJSONRead/"1e" (0.00s)
+    --- PASS: TestJSONRead/"{\"a\"_1}" (0.00s)
+    --- PASS: TestJSONRead/"\"\\q\"" (0.00s)
+    --- PASS: TestJSONRead/"\"\\u0x00\"" (0.00s)
+    --- PASS: TestJSONRead/"" (0.00s)
+    --- PASS: TestJSONRead/"true_false" (0.00s)
+    --- PASS: TestJSONRead/"[[]]" (0.00s)
+=== RUN   TestTraceFrames
+--- PASS: TestTraceFrames (0.00s)
+=== RUN   TestSentinelPE
+--- PASS: TestSentinelPE (0.00s)
+=== RUN   TestFixSuggestion
+--- PASS: TestFixSuggestion (0.00s)
+=== RUN   TestVectorLength
+=== RUN   TestVectorLength/0
+=== RUN   TestVectorLength/1
+=== RUN   TestVectorLength/15
+=== RUN   TestVectorLength/16
+=== RUN   TestVectorLength/17
+=== RUN   TestVectorLength/31
+=== RUN   TestVectorLength/32
+=== RUN   TestVectorLength/33
+=== RUN   TestVectorLength/255
+=== RUN   TestVectorLength/4095
+=== RUN   TestVectorLength/4096
+=== RUN   TestVectorLength/65535
+--- PASS: TestVectorLength (0.02s)
+    --- PASS: TestVectorLength/0 (0.00s)
+    --- PASS: TestVectorLength/1 (0.00s)
+    --- PASS: TestVectorLength/15 (0.00s)
+    --- PASS: TestVectorLength/16 (0.00s)
+    --- PASS: TestVectorLength/17 (0.00s)
+    --- PASS: TestVectorLength/31 (0.00s)
+    --- PASS: TestVectorLength/32 (0.00s)
+    --- PASS: TestVectorLength/33 (0.00s)
+    --- PASS: TestVectorLength/255 (0.00s)
+    --- PASS: TestVectorLength/4095 (0.00s)
+    --- PASS: TestVectorLength/4096 (0.00s)
+    --- PASS: TestVectorLength/65535 (0.01s)
+=== RUN   TestScratchMemory
+--- PASS: TestScratchMemory (0.03s)
+=== RUN   TestScratchEscape
+=== RUN   TestScratchEscape/s="a";scratch_{s="b"+"c"}
+=== RUN   TestScratchEscape/a=ints(2);scratch_{a[0]=1}
+=== RUN   TestScratchEscape/struct_R_{s:string};r=R("a");scratch_{r.s="b"}
+=== RUN   TestScratchEscape/func_f()->string_{scratch_{return_"a"};return_"b"}
+--- PASS: TestScratchEscape (0.00s)
+    --- PASS: TestScratchEscape/s="a";scratch_{s="b"+"c"} (0.00s)
+    --- PASS: TestScratchEscape/a=ints(2);scratch_{a[0]=1} (0.00s)
+    --- PASS: TestScratchEscape/struct_R_{s:string};r=R("a");scratch_{r.s="b"} (0.00s)
+    --- PASS: TestScratchEscape/func_f()->string_{scratch_{return_"a"};return_"b"} (0.00s)
 === RUN   TestVelocityText
 === RUN   TestVelocityText/show_text(0)_show_text(-123)_show_text(9223372036854775807)_show_text(-9223372036854775807-1)
 === RUN   TestVelocityText/show_slice("abcdef",1,4)_show_len(slice("a",1,1))_show_slice("hello",0,5)
@@ -574,7 +666,7 @@ tripol run
 === RUN   TestVelocityFrameAndRHS/func_f(a:float,b:float)->float{return_a/b}_show_f(9.0,2.0)
 === RUN   TestVelocityFrameAndRHS/func_f(a:string,b:string)->string{return_a+b}_show_f("a","b")
 === RUN   TestVelocityFrameAndRHS/func_f(a){if_a>0{let_b=2;return_b};return_0}_show_f(1)
---- PASS: TestVelocityFrameAndRHS (0.00s)
+--- PASS: TestVelocityFrameAndRHS (0.01s)
     --- PASS: TestVelocityFrameAndRHS/func_sub(a,b){return_a-b}_show_sub(9,3) (0.00s)
     --- PASS: TestVelocityFrameAndRHS/func_f(a,b){if_a==b{return_a*b};return_a+b}_show_f(4,4)_show_f(4,5) (0.00s)
     --- PASS: TestVelocityFrameAndRHS/func_f(a:float,b:float)->float{return_a/b}_show_f(9.0,2.0) (0.00s)
@@ -601,7 +693,7 @@ tripol run
     --- PASS: TestVelocityArrays/a=ints(2)_a[2]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(-1) (0.00s)
     --- PASS: TestVelocityArrays/a=ints(65536) (0.00s)
-    --- PASS: TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)} (0.00s)
+    --- PASS: TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)} (0.01s)
     --- PASS: TestVelocityArrays/a=ints(2);show_a==a (0.00s)
     --- PASS: TestVelocityArrays/const_a=ints(2);a[0]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);a[0]="s" (0.00s)
@@ -627,4 +719,6 @@ tripol run
 === RUN   TestVisionRecoverableOps
 --- PASS: TestVisionRecoverableOps (0.00s)
 PASS
-ok  	tripol	(cached)
+ok  	tripol	0.541s
+
+Go vet: PASS

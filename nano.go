@@ -151,6 +151,7 @@ func reachable(fs []fn, ss []stmt) map[string]bool {
 			ex(s.bound)
 			visit(s.yes)
 			visit(s.no)
+			visit(s.final)
 		}
 	}
 	visit(ss)

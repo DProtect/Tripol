@@ -35,12 +35,25 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 	if a.needed("iat:10") {
 		groups = append(groups, group{dll: "WS2_32.dll", names: []string{"WSAStartup", "socket", "connect", "setsockopt", "send", "shutdown", "recv", "closesocket", "WSACleanup"}, first: 10})
 	}
-	if a.needed("iat:19") {
-		groups = append(groups, group{dll: "USER32.dll", names: []string{"MessageBoxA"}, first: 19})
+	if a.needed("iat:19") || a.needed("iat:20") {
+		names := []string{"MessageBoxA", "DialogBoxIndirectParamW", "SetWindowLongPtrA", "GetWindowLongPtrA", "SetWindowTextA", "SetDlgItemTextA", "GetDlgItemTextA", "EndDialog"}
+		for i := range names {
+			if !a.needed(fmt.Sprintf("iat:%d", 19+i)) {
+				names[i] = ""
+			}
+		}
+		groups = append(groups, group{dll: "USER32.dll", names: names, first: 19})
 	}
+	if a.needed("iat:30") {
+		groups = append(groups, group{dll: "WINHTTP.dll", names: []string{"WinHttpOpen", "WinHttpConnect", "WinHttpOpenRequest", "WinHttpSendRequest", "WinHttpReceiveResponse", "WinHttpReadData", "WinHttpCloseHandle", "WinHttpSetTimeouts", "WinHttpSetOption", "WinHttpQueryHeaders"}, first: 30})
+	}
+
 	size := 1024
 	if len(groups) > 2 {
 		size = 1536
+	}
+	if a.needed("iat:20") || a.needed("iat:30") {
+		size = 3072
 	}
 	id := make([]byte, size)
 	cursor := align((len(groups)+1)*20, 16)
@@ -89,8 +102,9 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 	if cursor > len(id)-32 {
 		die("network import table overflow")
 	}
-	if a.needed("arena_state") {
+	if a.needed("arena_state") || a.needed("guard_state") {
 		a.labels["arena_state"] = rva - textRVA + len(id) - 32
+		a.labels["guard_state"] = rva - textRVA + len(id) - 8
 	}
 	return id, firstIAT, iatSize, (len(groups) + 1) * 20
 }

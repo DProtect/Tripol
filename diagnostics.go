@@ -18,6 +18,7 @@ type diagnostic struct {
 	Line       int    `json:"line,omitempty"`
 	Column     int    `json:"column,omitempty"`
 	Hint       string `json:"hint,omitempty"`
+	Suggestion string `json:"suggestion,omitempty"`
 	Detail     string `json:"detail,omitempty"`
 	ExitStatus int    `json:"exit_status,omitempty"`
 }
@@ -25,6 +26,7 @@ type diagnostic struct {
 func (d diagnostic) Error() string { return d.Message }
 
 var diagnosticJSON bool
+var diagnosticTrace bool
 var diagnosticSpanish bool
 var entryFile string
 var lineRE = regexp.MustCompile(`^line ([0-9]+): (.*)$`)
@@ -118,6 +120,7 @@ func tagSource(ss []stmt, file string) {
 		ss[i].source = file
 		tagSource(ss[i].yes, file)
 		tagSource(ss[i].no, file)
+		tagSource(ss[i].final, file)
 	}
 }
 func printDiagnostic(d diagnostic) {
@@ -198,6 +201,9 @@ func printDiagnostic(d diagnostic) {
 	if d.Hint != "" {
 		fmt.Fprintln(os.Stderr, "  Hint:", d.Hint)
 	}
+	if d.Suggestion != "" {
+		fmt.Fprintln(os.Stderr, "  Did you mean:", d.Suggestion+"?")
+	}
 }
 func diagnosticOptions() {
 	args := os.Args[:1]
@@ -205,6 +211,8 @@ func diagnosticOptions() {
 		switch s {
 		case "--diagnostics=json":
 			diagnosticJSON = true
+		case "--trace":
+			diagnosticTrace = true
 		case "--lang=es":
 			diagnosticSpanish = true
 		default:
@@ -243,12 +251,16 @@ func runtimeDiagnostic(status int) diagnostic {
 		d.Code = "TP2008"
 		d.Hint = "Dialogs require Windows and a working graphical session."
 	}
+	if status >= 100 && status <= 255 {
+		d.Code = "TP2009"
+		d.Hint = "An explicit exception was not caught."
+	}
 	return d
 }
 
 func explainDiagnostic(code string) {
 	codes := map[string]string{
-		"TP1000": "Compiler rejected the source or command.", "TP1001": "Unexpected source character or invalid quoted text.", "TP1002": "Invalid syntax or missing delimiter.", "TP1003": "Unknown variable, function or field.", "TP1004": "Type or argument mismatch.", "TP1005": "Import, module or package failure.", "TP1006": "File path or permission failure.", "TP1007": "Attempt to modify a constant.", "TP1008": "Invalid or missing return.", "TP2000": "Unhandled program failure.", "TP2001": "Invalid integer arithmetic (native exit 10).", "TP2002": "Index out of bounds (native exit 11).", "TP2003": "Assertion failure (native exit 12).", "TP2004": "Input, text or memory failure (native exit 13).", "TP2005": "File operation failure (native exit 14).", "TP2006": "Network operation failure (native exit 15).", "TP2007": "Float outside printable range (native exit 16).", "TP2008": "Graphical operation unavailable or failed (native exit 17).", "TP9000": "Unexpected internal compiler failure."}
+		"TP1000": "Compiler rejected the source or command.", "TP1001": "Unexpected source character or invalid quoted text.", "TP1002": "Invalid syntax or missing delimiter.", "TP1003": "Unknown variable, function or field.", "TP1004": "Type or argument mismatch.", "TP1005": "Import, module or package failure.", "TP1006": "File path or permission failure.", "TP1007": "Attempt to modify a constant.", "TP1008": "Invalid or missing return.", "TP2000": "Unhandled program failure.", "TP2001": "Invalid integer arithmetic (native exit 10).", "TP2002": "Index out of bounds (native exit 11).", "TP2003": "Assertion failure (native exit 12).", "TP2004": "Input, text or memory failure (native exit 13).", "TP2005": "File operation failure (native exit 14).", "TP2006": "Network operation failure (native exit 15).", "TP2007": "Float outside printable range (native exit 16).", "TP2008": "Graphical operation unavailable or failed (native exit 17).", "TP2009": "Unhandled explicit exception (native exit 100–255).", "TP9000": "Unexpected internal compiler failure."}
 	if s, ok := codes[strings.ToUpper(code)]; ok {
 		fmt.Printf("%s: %s\n", strings.ToUpper(code), s)
 		return

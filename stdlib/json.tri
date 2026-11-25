@@ -21,3 +21,91 @@ func integers(a:ints) -> string {
     for i in range(len(a)) {if i>0 {result+=","}; result+=text(a[i])}
     return result+"]"
 }
+// Bounded JSON grammar scanner. Byte offsets, no allocations while validating.
+func ws(s:string,i:int,n:int)->int {
+ while i<n {b=byte_at(s,i); if b!=32 and b!=9 and b!=10 and b!=13 {return i}; i+=1}
+ return i
+}
+func hex(b:int)->bool {return (b>=48 and b<=57) or (b>=65 and b<=70) or (b>=97 and b<=102)}
+func digit(b:int)->bool {return b>=48 and b<=57}
+func quoted(s:string,i:int,n:int)->int {
+ if i>=n or byte_at(s,i)!=34 {return -1}
+ i+=1
+ while i<n {
+  b=byte_at(s,i); i+=1
+  if b==34 {return i}
+  if b<32 {return -1}
+  if b==92 {
+   if i>=n {return -1}
+   b=byte_at(s,i);i+=1
+   if b==117 {repeat 4 {if i>=n or not hex(byte_at(s,i)) {return -1};i+=1}}
+   else if b!=34 and b!=92 and b!=47 and b!=98 and b!=102 and b!=110 and b!=114 and b!=116 {return -1}
+  } else if b>=128 {
+   // Reject invalid UTF-8 including overlong encodings and surrogate bytes.
+   count=0; lo=128; hi=191
+   if b>=194 and b<=223 {count=1}
+   else if b>=224 and b<=239 {count=2;if b==224 {lo=160};if b==237 {hi=159}}
+   else if b>=240 and b<=244 {count=3;if b==240 {lo=144};if b==244 {hi=143}}
+   else {return -1}
+   if i+count>n {return -1}
+   c=byte_at(s,i);if c<lo or c>hi {return -1};i+=1
+   repeat count-1 {c=byte_at(s,i);if c<128 or c>191 {return -1};i+=1}
+  }
+ }
+ return -1
+}
+func literal(s:string,i:int,n:int,w:string)->int {
+ k=len(w);if i+k>n {return -1}
+ for j in range(k) {if byte_at(s,i+j)!=byte_at(w,j) {return -1}}
+ return i+k
+}
+func number(s:string,i:int,n:int)->int {
+ if i<n and byte_at(s,i)==45 {i+=1}
+ if i>=n {return -1}
+ if byte_at(s,i)==48 {i+=1}
+ else {if not digit(byte_at(s,i)) {return -1};while i<n and digit(byte_at(s,i)) {i+=1}}
+ if i<n and byte_at(s,i)==46 {i+=1;start=i;while i<n and digit(byte_at(s,i)) {i+=1};if i==start {return -1}}
+ if i<n and (byte_at(s,i)==101 or byte_at(s,i)==69) {
+  i+=1;if i<n and (byte_at(s,i)==43 or byte_at(s,i)==45) {i+=1}
+  begin=i;while i<n and digit(byte_at(s,i)) {i+=1};if i==begin {return -1}
+ }
+ return i
+}
+func value(s:string,i:int,n:int,depth:int)->int {
+ if depth>32 {return -1}; i=ws(s,i,n);if i>=n {return -1}
+ b=byte_at(s,i)
+ if b==34 {return quoted(s,i,n)}
+ if b==116 {return literal(s,i,n,"true")}
+ if b==102 {return literal(s,i,n,"false")}
+ if b==110 {return literal(s,i,n,"null")}
+ if b==123 or b==91 {
+  closing=93;if b==123 {closing=125}
+  i=ws(s,i+1,n);if i<n and byte_at(s,i)==closing {return i+1}
+  while i<n {
+   if b==123 {i=quoted(s,i,n);if i<0 {return -1};i=ws(s,i,n);if i>=n or byte_at(s,i)!=58 {return -1};i+=1}
+   i=value(s,i,n,depth+1);if i<0 {return -1};i=ws(s,i,n)
+   if i>=n {return -1};if byte_at(s,i)==closing {return i+1}
+   if byte_at(s,i)!=44 {return -1};i=ws(s,i+1,n)
+  }
+  return -1
+ }
+ return number(s,i,n)
+}
+func valid(s:string)->bool {
+ n=len(s);if n>4096 {return false};i=value(s,0,n,0);return i>=0 and ws(s,i,n)==n
+}
+// Exact JSON key spelling (quoted, including escape sequences); empty on missing or invalid.
+func get_raw(s:string,key:string)->string {
+ if len(key)>512 or not valid(s) {return ""};n=len(s);i=ws(s,0,n)
+ if byte_at(s,i)!=123 {return ""};i=ws(s,i+1,n)
+ if byte_at(s,i)==125 {return ""}
+ wanted=quote(key)
+ while i<n {
+  end=quoted(s,i,n);if end<0 {return ""};match=end-i==len(wanted)
+  if match {for j in range(end-i) {if byte_at(s,i+j)!=byte_at(wanted,j) {match=false;break}}}
+  i=ws(s,end,n)+1;i=ws(s,i,n);end=value(s,i,n,1)
+  if match {return slice(s,i,end)}
+  i=ws(s,end,n);if byte_at(s,i)==125 {return ""};i=ws(s,i+1,n)
+ }
+ return ""
+}

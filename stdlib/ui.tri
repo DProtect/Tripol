@@ -9,3 +9,8 @@ func confirm(title:string, message:string)->bool {
  assert validate.ascii(title) and validate.ascii(message),"UI R1 requires ASCII text"
  return ui_dialog(title,message,36)==6
 }
+// Modal native form with title, label, editable text, submit/cancel. Windows only.
+func form(title:string,label:string,button:string)->string {
+ assert validate.ascii(title) and validate.ascii(label) and validate.ascii(button),"UI form requires ASCII labels"
+ return ui_form(title,label,button)
+}

@@ -90,7 +90,7 @@ func (c *compiler) nexusBuiltin(e *expr) (string, bool) {
 	return "", false
 }
 func learn() {
-	fmt.Print(`TRIPOL 0.11 — Learn in five minutes
+	fmt.Print(`TRIPOL 0.12 — Learn in five minutes
 
 1. Show values:
    show "Hello, TRIPOL!"

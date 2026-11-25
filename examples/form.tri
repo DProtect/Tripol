@@ -1,0 +1,3 @@
+import tripol.ui
+nombre=ui.form("TRIPOL SENTINEL","Escribe tu nombre:","Saludar")
+if len(nombre)>0 {show ui.message("TRIPOL","Hola "+nombre)}

@@ -51,13 +51,33 @@
  leave
  ret
 .section .text.strlen,"ax"
+ # SSE2 aligned scan: scalar prefix avoids crossing an unmapped page.
  mov rcx,rax
  xor eax,eax
-1: cmp byte ptr [rcx+rax],0
- je 2f
+ push r10
+ push r11
+ mov r11,rcx
+1: test r11b,15
+ jz 3f
+ cmp byte ptr [r11],0
+ je 5f
+ inc r11
  inc rax
  jmp 1b
-2: ret
+3: pxor xmm1,xmm1
+4: movdqa xmm0,[r11]
+ pcmpeqb xmm0,xmm1
+ pmovmskb r10d,xmm0
+ test r10d,r10d
+ jnz 6f
+ add r11,16
+ add rax,16
+ jmp 4b
+6: bsf r10d,r10d
+ add rax,r10
+5: pop r11
+ pop r10
+ ret
 .section .text.concat,"ax"
  push rbp
  mov rbp,rsp
@@ -1046,3 +1066,286 @@
 4: ret
 5: mov rax,-1
  ret
+
+# Windows modal form: title, label, button, returns ANSI edit text or empty on cancel.
+.section .text.ui_form_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,96
+ mov [rsp+48],rax
+ mov [rsp+56],rcx
+ mov [rsp+64],rdx
+ mov eax,4097
+ call alloc
+ mov byte ptr [rax],0
+ mov [rsp+72],rax
+ xor ecx,ecx
+ call qword ptr [rip+iat40]
+ mov rcx,rax
+ lea rdx,[rip+ui_form_template]
+ xor r8d,r8d
+ lea r9,[rip+ui_form_proc]
+ lea rax,[rsp+48]
+ mov [rsp+32],rax
+ call qword ptr [rip+iat20]
+ cmp rax,-1
+ je ui_error
+ mov rax,[rsp+72]
+ call strlen
+ mov edx,4096
+ sub rdx,rax
+ lea r8,[rip+arena_state]
+ sub [r8],rdx
+ add [r8+8],rdx
+ mov rax,[rsp+72]
+ leave
+ ret
+.section .text.ui_form_linux,"ax"
+ jmp ui_error
+.section .text.ui_form_proc,"ax"
+ # Microsoft x64 callback: hwnd, msg, wparam, lparam.
+ push rbp
+ mov rbp,rsp
+ sub rsp,64
+ mov [rsp+32],rcx
+ mov [rsp+40],r9
+ cmp edx,0x110
+ je 1f
+ cmp edx,0x111
+ je 2f
+ cmp edx,0x10
+ je 4f
+ xor eax,eax
+ leave
+ ret
+1: mov edx,16
+ mov r8,r9
+ call qword ptr [rip+iat21]
+ mov rcx,[rsp+32]
+ mov rax,[rsp+40]
+ mov rdx,[rax]
+ call qword ptr [rip+iat23]
+ mov rcx,[rsp+32]
+ mov edx,100
+ mov rax,[rsp+40]
+ mov r8,[rax+8]
+ call qword ptr [rip+iat24]
+ mov rcx,[rsp+32]
+ mov edx,1
+ mov rax,[rsp+40]
+ mov r8,[rax+16]
+ call qword ptr [rip+iat24]
+ mov eax,1
+ leave
+ ret
+2: movzx eax,r8w
+ cmp eax,2
+ je 4f
+ cmp eax,1
+ jne 5f
+ mov edx,16
+ call qword ptr [rip+iat22]
+ test rax,rax
+ jz 4f
+ mov rcx,[rsp+32]
+ mov edx,101
+ mov r8,[rax+24]
+ mov r9d,4097
+ call qword ptr [rip+iat25]
+ mov rcx,[rsp+32]
+ mov edx,1
+ call qword ptr [rip+iat26]
+ mov eax,1
+ leave
+ ret
+4: mov rcx,[rsp+32]
+ xor edx,edx
+ call qword ptr [rip+iat26]
+ mov eax,1
+ leave
+ ret
+5: xor eax,eax
+ leave
+ ret
+
+# Windows WinHTTP GET, strict OS certificate checks, bounded text, no redirects.
+.section .text.https_get_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,2880
+ mov [rsp+64],rax
+ mov [rsp+72],rcx
+ mov qword ptr [rsp+80],0
+ mov qword ptr [rsp+88],0
+ mov qword ptr [rsp+96],0
+ # ASCII host/path to UTF-16, bounded by 253/1024 bytes.
+ mov rsi,rax
+ lea rdi,[rsp+256]
+ xor ecx,ecx
+1: movzx eax,byte ptr [rsi+rcx]
+ mov [rdi+rcx*2],ax
+ test eax,eax
+ jz 2f
+ inc ecx
+ cmp ecx,253
+ jbe 1b
+ jmp 9f
+2: mov rsi,[rsp+72]
+ lea rdi,[rsp+768]
+ xor ecx,ecx
+3: movzx eax,byte ptr [rsi+rcx]
+ mov [rdi+rcx*2],ax
+ test eax,eax
+ jz 4f
+ inc ecx
+ cmp ecx,1024
+ jbe 3b
+ jmp 9f
+4: mov eax,65536
+ call alloc
+ mov [rsp+104],rax
+ # Open with default proxy policy. No custom certificate exceptions.
+ lea rcx,[rip+agent]
+ xor edx,edx
+ xor r8d,r8d
+ xor r9d,r9d
+ mov qword ptr [rsp+32],0
+ call qword ptr [rip+iat30]
+ test rax,rax
+ jz 9f
+ mov [rsp+80],rax
+ mov rcx,rax
+ mov edx,5000
+ mov r8d,5000
+ mov r9d,5000
+ mov qword ptr [rsp+32],5000
+ call qword ptr [rip+iat37]
+ test eax,eax
+ jz 9f
+ mov rcx,[rsp+80]
+ lea rdx,[rsp+256]
+ mov r8d,443
+ xor r9d,r9d
+ call qword ptr [rip+iat31]
+ test rax,rax
+ jz 9f
+ mov [rsp+88],rax
+ mov rcx,rax
+ lea rdx,[rip+method]
+ lea r8,[rsp+768]
+ xor r9d,r9d
+ mov qword ptr [rsp+32],0
+ mov qword ptr [rsp+40],0
+ mov qword ptr [rsp+48],0x00800000
+ call qword ptr [rip+iat32]
+ test rax,rax
+ jz 9f
+ mov [rsp+96],rax
+ # WINHTTP_OPTION_REDIRECT_POLICY=88, NEVER=0.
+ mov rcx,rax
+ mov edx,88
+ mov dword ptr [rsp+144],0
+ lea r8,[rsp+144]
+ mov r9d,4
+ call qword ptr [rip+iat38]
+ test eax,eax
+ jz 9f
+ mov rcx,[rsp+96]
+ xor edx,edx
+ xor r8d,r8d
+ xor r9d,r9d
+ mov qword ptr [rsp+32],0
+ mov qword ptr [rsp+40],0
+ mov qword ptr [rsp+48],0
+ call qword ptr [rip+iat33]
+ test eax,eax
+ jz 9f
+ mov rcx,[rsp+96]
+ xor edx,edx
+ call qword ptr [rip+iat34]
+ test eax,eax
+ jz 9f
+ # WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER.
+ mov rcx,[rsp+96]
+ mov edx,0x20000013
+ xor r8d,r8d
+ lea r9,[rsp+144]
+ mov dword ptr [rsp+148],4
+ lea rax,[rsp+148]
+ mov [rsp+32],rax
+ mov qword ptr [rsp+40],0
+ call qword ptr [rip+iat39]
+ test eax,eax
+ jz 9f
+ cmp dword ptr [rsp+144],200
+ jb 9f
+ cmp dword ptr [rsp+144],299
+ ja 9f
+ mov qword ptr [rsp+112],0
+5: mov rcx,[rsp+96]
+ mov rdx,[rsp+104]
+ add rdx,[rsp+112]
+ mov r8d,65536
+ sub r8,[rsp+112]
+ lea r9,[rsp+152]
+ call qword ptr [rip+iat35]
+ test eax,eax
+ jz 9f
+ mov eax,[rsp+152]
+ test eax,eax
+ jz 6f
+ add [rsp+112],rax
+ cmp qword ptr [rsp+112],65536
+ jae 9f
+ jmp 5b
+6: mov rax,[rsp+104]
+ mov rcx,[rsp+112]
+ mov byte ptr [rax+rcx],0
+ xor edx,edx
+7: cmp rdx,rcx
+ je 8f
+ cmp byte ptr [rax+rdx],0
+ je 9f
+ inc rdx
+ jmp 7b
+8: mov qword ptr [rsp+120],1
+ jmp 10f
+9: mov qword ptr [rsp+120],0
+10: mov rcx,[rsp+96]
+ test rcx,rcx
+ jz 11f
+ call qword ptr [rip+iat36]
+11: mov rcx,[rsp+88]
+ test rcx,rcx
+ jz 12f
+ call qword ptr [rip+iat36]
+12: mov rcx,[rsp+80]
+ test rcx,rcx
+ jz 13f
+ call qword ptr [rip+iat36]
+13: cmp qword ptr [rsp+120],0
+ je https_error
+ # Reclaim unused response buffer suffix.
+ mov edx,65535
+ sub rdx,[rsp+112]
+ lea r8,[rip+arena_state]
+ sub [r8],rdx
+ add [r8+8],rdx
+ mov rax,[rsp+104]
+ leave
+ ret
+ .balign 2
+agent: .short 84,82,73,80,79,76,0
+method: .short 71,69,84,0
+.section .text.https_get_linux,"ax"
+ jmp https_error
+.section .text.https_error,"ax"
+ lea rsi,[rip+1f]
+ mov edx,2f-1f
+ call writeerr
+ mov eax,15
+ jmp exit
+1: .ascii "TRIPOL runtime error: HTTPS requires Windows, or request failed\n"
+2:

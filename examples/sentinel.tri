@@ -1,0 +1,20 @@
+import tripol.json
+func dividir(a,b) {return a/b}
+try {
+    show dividir(10,0)
+} catch codigo {
+    show "Error recuperado:", codigo
+} finally {
+    show "Operacion terminada"
+}
+show json.valid("{\"puntos\":42}")
+show json.get_raw("{\"puntos\":42}","puntos")
+total=0
+repeat 2000 {
+    scratch {
+        datos=ints(65535)
+        datos[0]=2
+        total+=datos[0]
+    }
+}
+show "Total:",total

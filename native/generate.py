@@ -2,7 +2,7 @@
 import pathlib, subprocess, tempfile, re
 root=pathlib.Path(__file__).resolve().parent
 names={'print_float':'print:float','osalloc_linux':'osalloc:linux','osalloc_windows':'osalloc:windows','readbyte_linux':'readbyte:linux','readbyte_windows':'readbyte:windows'}
-for helper in ('net_connect','net_send','net_shutdown','net_recv','net_close','file_open','file_chunk_read','file_chunk_write','file_close','clock_ms','sleep_ms'):
+for helper in ('ui_form','https_get','net_connect','net_send','net_shutdown','net_recv','net_close','file_open','file_chunk_read','file_chunk_write','file_close','clock_ms','sleep_ms'):
  for target in ('linux','windows'): names[helper+'_'+target]=helper+':'+target
 with tempfile.TemporaryDirectory() as tmp:
  o=pathlib.Path(tmp)/'liberty.o'; b=pathlib.Path(tmp)/'code.bin'

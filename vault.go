@@ -197,6 +197,7 @@ func (v *vaultLoader) add(name string) {
 			checkExpr(s.bound)
 			checkStmts(s.yes)
 			checkStmts(s.no)
+			checkStmts(s.final)
 		}
 	}
 	for _, f := range fs {

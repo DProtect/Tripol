@@ -1,0 +1,3 @@
+func inner(n) {return 10/n}
+func outer(n) {return inner(n)}
+show outer(0)

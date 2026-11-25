@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const version = "0.11.0"
+const version = "0.12.0"
 
 type token struct {
 	s, k      string
@@ -58,12 +58,12 @@ type expr struct {
 	args  []*expr
 }
 type stmt struct {
-	op, name, typ string
-	e, bound      *expr
-	yes, no       []stmt
-	line          int
-	mut           bool
-	source        string
+	op, name, typ  string
+	e, bound       *expr
+	yes, no, final []stmt
+	line           int
+	mut            bool
+	source         string
 }
 type param struct{ name, typ string }
 type fn struct {
@@ -118,7 +118,7 @@ func (p *parser) end() {
 }
 func (p *parser) name() string {
 	t := p.t()
-	if t.k != "id" || strings.Contains("|import|func|struct|assert|return|show|let|const|if|else|while|for|in|range|repeat|and|or|not|break|continue|true|false|int|bool|string|float|ints|void|", "|"+t.s+"|") {
+	if t.k != "id" || strings.Contains("|import|func|struct|assert|try|catch|finally|throw|scratch|return|show|let|const|if|else|while|for|in|range|repeat|and|or|not|break|continue|true|false|int|bool|string|float|ints|void|", "|"+t.s+"|") {
 		p.err("expected identifier")
 	}
 	return p.take().s
@@ -191,6 +191,28 @@ func (p *parser) statement() stmt {
 			s.yes = append([]stmt{{op: "decl", name: item, line: t.line, e: &expr{op: "index", s: array, args: []*expr{{op: "var", s: s.name}}}}}, body...)
 		}
 		return s
+	case "scratch":
+		p.take()
+		s.op = "scratch"
+		s.yes = p.block()
+		return s
+	case "try":
+		p.take()
+		s.op = "try"
+		s.yes = p.block()
+		p.skip()
+		p.need("catch")
+		s.name = p.name()
+		s.no = p.block()
+		p.skip()
+		if p.eat("finally") {
+			s.final = p.block()
+		}
+		return s
+	case "throw":
+		p.take()
+		s.op = "throw"
+		s.e = p.expression(1)
 	case "assert":
 		p.take()
 		s.op = "assert"
@@ -495,6 +517,8 @@ type asm struct {
 	dataOrder []string
 	target    string
 	opt       bool
+	guard     bool
+	trace     bool
 }
 
 func (a *asm) emit(b ...byte) { a.b = append(a.b, b...) }
@@ -569,22 +593,31 @@ type variable struct {
 	mut bool
 }
 type compiler struct {
-	a           *asm
-	fs          map[string]fn
-	scopes      []map[string]variable
-	slots, line int
-	source      string
-	peak        int
-	ret         string
-	current     fn
-	restart     string
-	loops       [][2]string
+	a             *asm
+	fs            map[string]fn
+	scopes        []map[string]variable
+	slots, line   int
+	source        string
+	peak          int
+	ret           string
+	current       fn
+	restart       string
+	loops         [][2]string
+	protected     []int
+	scratchScopes []int
 }
 
-func (c *compiler) err(s string) { panic(diagnose("compiler", s, c.source, c.line, 0)) }
+func (c *compiler) err(s string) {
+	d := diagnose("compiler", s, c.source, c.line, 0)
+	d.Suggestion = c.suggest(s)
+	panic(d)
+}
 func (c *compiler) lookup(n string) (variable, bool) {
 	for i := len(c.scopes) - 1; i >= 0; i-- {
 		if v, ok := c.scopes[i][n]; ok {
+			if len(c.scratchScopes) > 0 && i < c.scratchScopes[len(c.scratchScopes)-1] && v.typ != "int" && v.typ != "bool" && v.typ != "float" && v.typ != "string" {
+				c.err("scratch cannot access outer aggregate " + n)
+			}
 			return v, true
 		}
 	}
@@ -834,11 +867,30 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			c.source = s.source
 		}
 		switch s.op {
+		case "scratch":
+			c.scratchBlock(s)
+		case "try":
+			c.guardBlock(s)
+		case "throw":
+			c.require(c.expression(s.e), "int")
+			// User exceptions use codes 100..255; invalid codes normalize to 100.
+			a.emit(0x48, 0x83, 0xf8, 100)
+			valid := a.fresh()
+			invalid := a.fresh()
+			a.j(0x8c, invalid)
+			a.emit(0x48, 0x3d)
+			a.u32(255)
+			a.j(0x8e, valid)
+			a.label(invalid)
+			a.imm(100)
+			a.label(valid)
+			a.jmp("guard_raise")
 		case "assert":
 			fail, done := a.fresh(), a.fresh()
 			c.branchFalse(s.e, fail)
 			a.jmp(done)
 			a.label(fail)
+			a.guardTrap(12)
 			msg := fmt.Sprintf("TRIPOL assertion failed at line %d", s.line)
 			if s.name != "" {
 				msg += ": " + s.name
@@ -885,6 +937,9 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				c.require(t, s.typ)
 			}
 			if ok {
+				if len(c.scratchScopes) > 0 && v.typ == "string" && c.outerScratchBinding(s.name) {
+					c.err("scratch cannot assign outer string " + s.name)
+				}
 				if !v.mut {
 					c.err("cannot modify constant " + s.name)
 				}
@@ -916,6 +971,9 @@ func (c *compiler) block(ss []stmt, nested bool) {
 		case "expr":
 			c.expression(s.e)
 		case "return":
+			if len(c.protected) > 0 {
+				c.err("return inside try/catch/finally is not supported; return after the block")
+			}
 			if c.ret == "" {
 				c.err("return outside function")
 			}
@@ -931,9 +989,15 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				a.jmp(c.restart)
 			} else {
 				c.require(c.expression(s.e), c.ret)
+				if a.trace {
+					a.emit(0x4d, 0x8b, 0x3f)
+				}
 				a.emit(0xc9, 0xc3)
 			}
 		case "break", "continue":
+			if len(c.protected) > 0 && len(c.loops) <= c.protected[len(c.protected)-1] {
+				c.err("loop control cannot leave a try/catch/finally block")
+			}
 			if len(c.loops) == 0 {
 				c.err(s.op + " outside loop")
 			}
@@ -988,6 +1052,8 @@ func (c *compiler) function(f fn, main bool) {
 	c.source = f.source
 	c.line = f.line
 	c.loops = nil
+	c.protected = nil
+	c.scratchScopes = nil
 	c.ret = f.ret
 	c.scopes = []map[string]variable{{}}
 	for i, p := range f.args {
@@ -997,12 +1063,18 @@ func (c *compiler) function(f fn, main bool) {
 		c.scopes[0][p.name] = variable{p.typ, 16 + 8*(len(f.args)-1-i), true}
 	}
 	a.label("fn:" + f.name)
+	if a.trace && main {
+		a.emit(0x45, 0x31, 0xff)
+	}
 	a.emit(0x55, 0x48, 0x89, 0xe5)
 	at := -1
-	if !a.opt || needsFrame(f.body) {
+	if !a.opt || a.trace || needsFrame(f.body) {
 		a.emit(0x48, 0x81, 0xec)
 		at = len(a.b)
 		a.u32(0)
+	}
+	if a.trace {
+		c.traceEnter(f)
 	}
 	c.restart = a.fresh()
 	a.label(c.restart)
@@ -1089,6 +1161,7 @@ func (a *asm) rt() {
 	}
 	if !a.opt || a.needed("bounds") {
 		a.label("bounds")
+		a.guardTrap(11)
 		a.str("TRIPOL runtime error: array index out of bounds\n")
 		a.emit(0x48, 0x89, 0xc6, 0xba)
 		a.u32(len("TRIPOL runtime error: array index out of bounds\n"))
@@ -1098,6 +1171,7 @@ func (a *asm) rt() {
 	}
 	if !a.opt || a.needed("err") {
 		a.label("err")
+		a.guardTrap(10)
 		a.str("TRIPOL runtime error: invalid integer arithmetic\n")
 		a.emit(0x48, 0x89, 0xc6, 0xba)
 		a.u32(len("TRIPOL runtime error: invalid integer arithmetic\n"))
@@ -1105,6 +1179,8 @@ func (a *asm) rt() {
 		a.imm(10)
 		a.jmp("exit")
 	}
+	a.guardRuntime()
+	a.traceRuntime()
 	for _, s := range []string{"write", "writeerr"} {
 		if a.opt && !a.needed(s) {
 			continue
@@ -1126,6 +1202,15 @@ func (a *asm) rt() {
 		}
 	}
 	a.label("exit")
+	if a.trace {
+		a.emit(0x48, 0x85, 0xc0)
+		ok := a.fresh()
+		a.j(0x84, ok)
+		a.emit(0x50)
+		a.call("trace_dump")
+		a.emit(0x58)
+		a.label(ok)
+	}
 	if a.target == "linux" {
 		a.emit(0x48, 0x89, 0xc7, 0xb8, 60, 0, 0, 0, 0x0f, 0x05)
 	} else {
@@ -1141,10 +1226,11 @@ func put64(b []byte, o int, v uint64) { binary.LittleEndian.PutUint64(b[o:], v) 
 func elf(a *asm) []byte {
 	const base = 0x400000
 	const off = 0x100
-	arena := a.needed("arena_state")
+	arena := a.needed("arena_state") || a.needed("guard_state")
 	arenaOff := align(off+len(a.b), 0x1000)
 	if arena {
 		a.labels["arena_state"] = arenaOff - off
+		a.labels["guard_state"] = arenaOff - off + 24
 	}
 	a.finish()
 	b := make([]byte, off+len(a.b))
@@ -1164,7 +1250,7 @@ func elf(a *asm) []byte {
 		put64(b, 184, uint64(arenaOff))
 		put64(b, 192, uint64(base+arenaOff))
 		put64(b, 200, uint64(base+arenaOff))
-		put64(b, 216, 24)
+		put64(b, 216, 32)
 		put64(b, 224, 0x1000)
 	}
 	put32(b, 64, 1)
@@ -1195,7 +1281,13 @@ func pe(a *asm) []byte {
 		}
 	}
 	var iat, iatSize, importSize int
-	if a.needed("iat:10") || a.needed("iat:19") {
+	if a.needed("iat:40") {
+		for len(imports) < 40 {
+			imports = append(imports, "")
+		}
+		imports = append(imports, "GetModuleHandleA")
+	}
+	if a.needed("iat:10") || a.needed("iat:19") || a.needed("iat:20") || a.needed("iat:30") {
 		id, iat, iatSize, importSize = networkImports(a, imports, idRVA, textRVA)
 	} else {
 		// Preserve logical IAT labels while packing only used imports.
@@ -1222,11 +1314,12 @@ func pe(a *asm) []byte {
 			a.labels[fmt.Sprintf("iat:%d", i)] = idRVA - textRVA + iat + 8*j
 			j++
 		}
-		if a.needed("arena_state") {
+		if a.needed("arena_state") || a.needed("guard_state") {
 			if cursor > 480 {
 				die("import table overflow")
 			}
 			a.labels["arena_state"] = idRVA - textRVA + 480
+			a.labels["guard_state"] = idRVA - textRVA + 504
 		}
 		put32(id, 0, idRVA+ilt)
 		put32(id, 12, idRVA+dll)
@@ -1299,13 +1392,19 @@ func compileParsed(fs []fn, ss []stmt, target, profile string) []byte {
 	return generate(fs, ss, target, profile != "debug", reachable(fs, ss))
 }
 func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool) []byte {
-	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt}
+	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt, trace: diagnosticTrace}
 	c := compiler{a: a, fs: map[string]fn{}}
 	for _, f := range fs {
 		if _, ok := c.fs[f.name]; ok {
 			die("duplicate function %s", f.name)
 		}
 		c.fs[f.name] = f
+	}
+	a.guard = containsGuard(ss)
+	for _, f := range fs {
+		if (!opt || live[f.name]) && containsGuard(f.body) {
+			a.guard = true
+		}
 	}
 	c.validateTypes(fs)
 	c.function(fn{name: "@main", body: ss}, true)
@@ -1315,6 +1414,7 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool)
 		}
 	}
 	a.rt()
+	a.dialogTemplate()
 	// First-use order is deterministic and linear in the number of literals.
 	for _, s := range a.dataOrder {
 		a.label(a.data[s])
@@ -1337,7 +1437,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.11.0 — VISION\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version\nGlobal: --diagnostics=json | --lang=es")
+		fmt.Println("TRIPOL 0.12.0 — SENTINEL\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {

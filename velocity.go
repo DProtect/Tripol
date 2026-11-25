@@ -4,7 +4,7 @@ package main
 func needsFrame(ss []stmt) bool {
 	for _, s := range ss {
 		// A bare assignment might introduce a local. Keep a frame in that case.
-		if s.op == "decl" || s.op == "assign" || s.op == "for" || needsFrame(s.yes) || needsFrame(s.no) {
+		if s.op == "decl" || s.op == "assign" || s.op == "for" || s.op == "try" || s.op == "scratch" || needsFrame(s.yes) || needsFrame(s.no) || needsFrame(s.final) {
 			return true
 		}
 	}

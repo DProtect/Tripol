@@ -12,7 +12,7 @@
     },
     {
       "name": "support.class.tripol",
-      "match": "\\btripol\\.(math|arrays|stats|text|files|console|convert|encoding|http|network|json|random|search|sort|system|time|validate)\\b"
+      "match": "\\btripol\\.(math|arrays|stats|text|files|console|convert|encoding|http|network|json|random|search|sort|system|time|ui|errors|https|discord|validate)\\b"
     },
     {
       "name": "string.quoted.double.tripol",
@@ -27,7 +27,7 @@
     },
     {
       "name": "keyword.control.tripol",
-      "match": "\\b(import|if|else|while|repeat|for|in|break|continue|return|show|assert)\\b"
+      "match": "\\b(import|if|else|while|repeat|for|in|break|continue|return|show|assert|try|catch|finally|throw|scratch)\\b"
     },
     {
       "name": "storage.type.tripol",

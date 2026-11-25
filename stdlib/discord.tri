@@ -1,0 +1,4 @@
+import tripol.https
+// Public Discord API discovery, no bot token or authentication required.
+func gateway()->string {return https.get("discord.com","/api/v10/gateway")}
+func api_host()->string {return "discord.com"}

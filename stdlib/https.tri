@@ -1,0 +1,8 @@
+// Windows WinHTTP HTTPS GET. OS trust store, no redirects, 2xx text body only.
+func get(host:string,path:string)->string {
+ assert len(host)>0 and len(host)<=253 and len(path)>0 and len(path)<=1024,"Invalid HTTPS host/path size"
+ assert byte_at(path,0)==47,"HTTPS path must begin with /"
+ for i in range(len(host)) {b=byte_at(host,i);assert (b>=65 and b<=90) or (b>=97 and b<=122) or (b>=48 and b<=57) or b==45 or b==46,"Invalid HTTPS host"}
+ for i in range(len(path)) {b=byte_at(path,i);assert b>32 and b<127,"Invalid HTTPS path"}
+ return https_get(host,path)
+}
