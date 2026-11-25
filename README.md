@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/tripol-emblem.png" alt="TRIPOL official logo" width="220" />
+
 # TRIPOL
 
 **Simple by design. Native by nature.**
@@ -8,7 +10,7 @@ A free, experimental programming language that turns readable code directly into
 
 ![Version](https://img.shields.io/badge/version-0.24.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
 
-[Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
+[Official website](https://dprotect.github.io/Tripol/) · [Online docs](https://dprotect.github.io/Tripol/docs/) · [Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
 
 </div>
 
