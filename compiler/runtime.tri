@@ -28,10 +28,10 @@ func gen_guard(code:ints)->int {
 }
 func gen_factor(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
  assert depth<=64 and c[0]<len(tok),"Expected operand"
- i=c[0];s=boot_peek(src,tok,c);c[0]+=3
+ i=c[0];s=boot_peek(src,tok,c);c[0]=c[0]+3
  if s=="(" {
   gen_expr(src,tok,c,code,syms,depth+1)
-  assert boot_peek(src,tok,c)==")","Expected )";c[0]+=3;return 0
+  assert boot_peek(src,tok,c)==")","Expected )";c[0]=c[0]+3;return 0
  }
  if s=="+" or s=="-" {
   gen_factor(src,tok,c,code,syms,depth+1)
@@ -50,7 +50,7 @@ func gen_factor(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
 func gen_term(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
  gen_factor(src,tok,c,code,syms,depth)
  while boot_peek(src,tok,c)=="*" {
-  c[0]+=3;gen_bytes(code,"50");gen_factor(src,tok,c,code,syms,depth)
+  c[0]=c[0]+3;gen_bytes(code,"50");gen_factor(src,tok,c,code,syms,depth)
   gen_bytes(code,"59480fafc1");gen_guard(code)
  }
  return 0
@@ -59,7 +59,7 @@ func gen_expr(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
  gen_term(src,tok,c,code,syms,depth)
  op=boot_peek(src,tok,c)
  while op=="+" or op=="-" {
-  c[0]+=3;gen_bytes(code,"50");gen_term(src,tok,c,code,syms,depth)
+  c[0]=c[0]+3;gen_bytes(code,"50");gen_term(src,tok,c,code,syms,depth)
   if op=="+" {gen_bytes(code,"594801c8")}
   else {gen_bytes(code,"594829c14889c8")}
   gen_guard(code);op=boot_peek(src,tok,c)
@@ -71,16 +71,16 @@ func gen_runtime(source:string)->ints {
  gen_bytes(code,"4889e54881ec00010000")
  while boot_peek(source,tok,c)!="show" {
   i=c[0];assert i<len(tok) and tok[i]==1,"Expected assignment"
-  name=boot_peek(source,tok,c);assert len(name)<=32,"Name limit";c[0]+=3
-  assert boot_peek(source,tok,c)=="=","Expected =";c[0]+=3
+  name=boot_peek(source,tok,c);assert len(name)<=32,"Name limit";c[0]=c[0]+3
+  assert boot_peek(source,tok,c)=="=","Expected =";c[0]=c[0]+3
   gen_expr(source,tok,c,code,syms,0)
   if not dictionary.contains(syms,name) {
    slot=dictionary.size(syms)+1;assert dictionary.set(syms,name,slot),"Variable limit"
   }
   gen_bytes(code,"488985");gen_imm(code,4294967296-dictionary.get(syms,name)*8,4)
-  assert boot_peek(source,tok,c)==";","Expected ;";c[0]+=3
+  assert boot_peek(source,tok,c)==";","Expected ;";c[0]=c[0]+3
  }
- c[0]+=3;gen_expr(source,tok,c,code,syms,0)
+ c[0]=c[0]+3;gen_expr(source,tok,c,code,syms,0)
  assert c[0]==len(tok),"Unexpected trailing token"
  // Signed decimal print and exit. Handles INT64_MIN using unsigned division.
  gen_bytes(code,"4883ec20488d74241fc6060a4989f04989c14531d24885c0790948f7d841ba01000000b90a00000031d248f7f180c23048ffce88164885c075ee4585d2740648ffcec6062d4c89c24829f248ffc2b801000000bf010000000f05b83c00000031ff0f05")
