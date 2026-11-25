@@ -26,7 +26,7 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 ## ASCENSION
 
-New: `arrays.copy_into(destination, source)` reuses equal-sized storage and returns false without modifying the destination on a size mismatch. Arena now supports `--timeout SECONDS`, `copy-reuse`, and p95 in JSON. The static bilingual website is in `website/`; see `docs/website.md`.
+New: `arrays.copy_into(destination, source)` reuses equal-sized storage and returns false without modifying the destination on a size mismatch. Arena now supports `--timeout SECONDS`, `copy-reuse`, and p95 in JSON. The static bilingual website is maintained separately on the [`gh-pages` branch](https://github.com/Tripollas/Tripol/tree/gh-pages); see [website documentation](docs/website.md).
 
 ## Community and tools
 
