@@ -1,3 +1,4 @@
+import tripol.canvas
 // Each particle: x,y,vx,vy,life (integer ticks). Caller owns storage.
 func create(n:int)->ints {assert n>=0 and n<=65535,"Invalid particle count";return ints(n*5)}
 func count(p:ints)->int {assert len(p)%5==0,"Invalid particles";return len(p)/5}
@@ -7,3 +8,20 @@ func step(p:ints)->int {
  return alive
 }
 func alive(p:ints)->int {n=0;for i in range(count(p)) {if p[i*5+4]>0 {n+=1}};return n}
+
+// Reuse a fixed pool for a deterministic short-lived burst.
+func burst(p:ints,x:int,y:int,life=16)->int {
+ assert life>=1 and life<=120,"Invalid particle life"
+ for i in range(count(p)) {
+  b=i*5;p[b]=x;p[b+1]=y;p[b+2]=i%7-3;p[b+3]=(i*3)%7-3;p[b+4]=life
+ }
+ return count(p)
+}
+func draw(p:ints,dst:ints,w:int,h:int,ox:int,oy:int,color:int)->int {
+ n=0
+ for i in range(count(p)) {
+  b=i*5
+  if p[b+4]>0 {if canvas.pixel(dst,w,h,p[b]-ox,p[b+1]-oy,color){n+=1}}
+ }
+ return n
+}

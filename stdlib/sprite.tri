@@ -15,3 +15,37 @@ func draw_key(dst:ints,w:int,h:int,src:ints,sw:int,sh:int,x:int,y:int,key:int)->
 }
 func draw(dst:ints,w:int,h:int,src:ints,sw:int,sh:int,x:int,y:int)->int {return draw_key(dst,w,h,src,sw,sh,x,y,-1)}
 func solid(w:int,h:int,color:int)->ints {p=canvas.create(w,h);canvas.clear(p,color);return p}
+
+// Clockwise quarter turn. Output dimensions are h by w.
+func rotate90(src:ints,w:int,h:int)->ints {
+ assert len(src)==canvas.size(w,h),"Invalid sprite shape"
+ dst=canvas.create(h,w)
+ for y in range(h) {for x in range(w) {dst[x*h+h-1-y]=src[y*w+x]}}
+ return dst
+}
+// Nearest-neighbor texture resize; allocate once then reuse the result.
+func scale_nearest(src:ints,w:int,h:int,nw:int,nh:int)->ints {
+ assert len(src)==canvas.size(w,h),"Invalid sprite shape"
+ dst=canvas.create(nw,nh)
+ for y in range(nh) {for x in range(nw) {dst[y*nw+x]=src[(y*h/nh)*w+x*w/nw]}}
+ return dst
+}
+// Clipped nearest-neighbor scaling, color key and uniform opacity.
+func draw_scaled(dst:ints,w:int,h:int,src:ints,sw:int,sh:int,x:int,y:int,dw:int,dh:int,key=-1,opacity=100)->int {
+ assert len(dst)==canvas.size(w,h) and len(src)==canvas.size(sw,sh),"Invalid sprite shape"
+ assert x>=-4096 and x<=4096 and y>=-4096 and y<=4096 and dw>0 and dh>0 and dw<=2048 and dh<=2048,"Invalid scaled sprite"
+ assert opacity>=0 and opacity<=100,"Invalid opacity"
+ n=0
+ for row in range(max(0,-y),max(0,min(dh,h-y))) {
+  for col in range(max(0,-x),max(0,min(dw,w-x))) {
+   color=src[(row*sh/dh)*sw+col*sw/dw]
+   assert colors.valid(color),"Invalid RGB"
+   if color!=key {
+    i=(row+y)*w+col+x
+    if opacity==100 {dst[i]=color} else {dst[i]=colors.mix(dst[i],color,opacity)}
+    n+=1
+   }
+  }
+ }
+ return n
+}

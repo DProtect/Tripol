@@ -13,3 +13,8 @@ func pad_connected(controller=0)->bool {assert controller>=0 and controller<=3;r
 func pad_buttons(controller=0)->int {assert controller>=0 and controller<=3;return pad_read(controller,1)}
 func pad_axis(axis:int,controller=0)->int {assert controller>=0 and controller<=3 and axis>=0 and axis<=3;return pad_read(controller,axis+4)}
 func pad_trigger(trigger:int,controller=0)->int {assert controller>=0 and controller<=3 and trigger>=0 and trigger<=1;return pad_read(controller,trigger+2)}
+
+// Mouse coordinates in the focused game window, scaled to logical dimensions.
+func mouse_x(width:int)->int {assert width>0 and width<=2048;return native_mouse_axis(0,width)}
+func mouse_y(height:int)->int {assert height>0 and height<=2048;return native_mouse_axis(1,height)}
+func mouse_left()->bool {return game.key(1)}

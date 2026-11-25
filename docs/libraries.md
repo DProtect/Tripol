@@ -119,3 +119,5 @@ See `examples/projects/quantum_x_libraries.tri` and `memory_stress.tri`.
 - `cli`: `option_name`, `find_option`, `has`, `value`, `integer` operate on an explicitly supplied whitespace-separated option string with `--name` and `--name=value` tokens. Last occurrence wins; no quoting or shell interpretation. Does not read OS argv.
 - `process`: `id()`, `platform()`, `exit(code=0)`. Current process ID and explicit termination, checked exit code 0–255. No child spawning.
 - `thread`: `supported()`, `sum(data)`, `sleep(milliseconds)`. Windows starts and joins an OS thread for an ordered checked integer reduction; caller waits, callback cannot allocate or mutate the input. Linux reports unsupported for the worker. No general thread callbacks or claims of parallel speedup.
+
+QUANTUM R3 additionally extends game/events/canvas/sprite/particles/audio with OpenGL triangles, XInput, focused mouse coordinates, software tile maps and transformations, reusable particle bursts and drawing, and optional system tones. See [graphics](graphics-r3.md) for contracts and platform limits.

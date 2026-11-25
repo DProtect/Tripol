@@ -27,3 +27,6 @@ func square_wave(hz:int,milliseconds:int,rate=22050,amplitude=5000)->ints {
 func save_wav(path:string,samples:ints,rate=22050)->int {return io.write(path,wav_mono(samples,rate))}
 func playback_supported()->bool {return platform_name()=="windows"}
 func play_file(path:string)->bool {return audio_play_file(path)}
+
+// Brief system tone, synchronous, no file creation. False on unsupported hosts.
+func beep(hz:int,milliseconds:int)->bool {assert hz>=37 and hz<=32767 and milliseconds>=0 and milliseconds<=5000;return native_beep(hz,milliseconds)}

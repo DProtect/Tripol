@@ -43,6 +43,7 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 			}
 			names = append(names, "CreateWindowExA", "IsWindow", "PeekMessageA", "TranslateMessage", "DispatchMessageA", "DestroyWindow", "GetDC", "ReleaseDC", "GetClientRect", "GetAsyncKeyState", "GetForegroundWindow")
 		}
+		if a.needed("iat:91") || a.needed("iat:92"){for len(names)<72{names=append(names,"")};names=append(names,"GetCursorPos","ScreenToClient")}
 		for i := range names {
 			if !a.needed(fmt.Sprintf("iat:%d", 19+i)) {
 				names[i] = ""

@@ -68,3 +68,19 @@ func blend(p:ints,w:int,h:int,x:int,y:int,color:int,opacity:int)->bool {
  p[y*w+x]=colors.mix(p[y*w+x],color,opacity)
  return true
 }
+
+// Draw a palette-indexed tile map, visiting visible tiles only.
+// Tile 0 is transparent; positive indices reference palette elements.
+func tile_map(dst:ints,w:int,h:int,tiles:ints,cols:int,rows:int,palette:ints,side:int,ox:int,oy:int)->int {
+ assert len(dst)==size(w,h) and len(tiles)==size(cols,rows),"Invalid tile map"
+ assert side>=1 and side<=128 and ox>=0 and oy>=0 and ox<=cols*side and oy<=rows*side,"Invalid tile camera"
+ count=0
+ for r in range(oy/side,min(rows,(oy+h+side-1)/side)) {
+  for c in range(ox/side,min(cols,(ox+w+side-1)/side)) {
+   index=tiles[r*cols+c]
+   assert index>=0 and index<len(palette),"Invalid palette index"
+   if index!=0 {rectangle(dst,w,h,c*side-ox,r*side-oy,side,side,palette[index]);count+=1}
+  }
+ }
+ return count
+}

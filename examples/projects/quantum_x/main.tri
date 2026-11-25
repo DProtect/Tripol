@@ -1,33 +1,73 @@
 import tripol.game
 import tripol.canvas
 import tripol.physics
+import tripol.camera
+import tripol.sprite
+import tripol.particles
+import tripol.animation
+import tripol.audio
+import tripol.events
 import tripol.profiler
-w=320;h=180
+import tripol.time
+w=320;h=180;worldw=640;worldh=368
 pixels=canvas.create(w,h)
+tiles=ints(40*23);palette=ints(4)
+palette[1]=1579032;palette[2]=2106400;palette[3]=3158064
+for row in range(23) {for col in range(40) {tiles[row*40+col]=1+(row+col)%2}}
+ship=sprite.solid(6,6,0)
+canvas.rectangle(ship,6,6,1,0,4,6,65535)
+canvas.rectangle(ship,6,6,0,2,6,3,65535)
+canvas.rectangle(ship,6,6,2,1,2,2,16777215)
+burst=particles.create(24)
 x=20;y=80;cx=240;cy=90;score=0;frame=0
-started=profiler.start()
-game.window("TRIPOL QUANTUM X — Collect the light",960,540)
+menu=true;sound=false;wasM=false
+started=profiler.start();last=time.now_ms()
+show "QUANTUM X: Space/click/A to start; WASD/arrows/controller to move; M sound; ESC exit"
+game.window("TRIPOL QUANTUM X - Collect the light",960,540)
 while game.running() {
  if game.key(27) {break}
- if game.key(37) or game.key(65) {x-=2}
- if game.key(39) or game.key(68) {x+=2}
- if game.key(38) or game.key(87) {y-=2}
- if game.key(40) or game.key(83) {y+=2}
- x=physics.clamp_position(x,12,w);y=physics.clamp_position(y,12,h)
- if x<cx+8 and x+12>cx and y<cy+8 and y+12>cy {
-  score+=1;cx=20+(score*47)%280;cy=20+(score*31)%140
+ now=time.now_ms();dt=max(1,min(50,now-last));last=now
+ m=game.key(77)
+ if m and not wasM {sound=not sound}
+ wasM=m
+ pad=events.pad_connected()
+ buttons=0;ax=0;ay=0
+ if pad {buttons=events.pad_buttons();ax=events.pad_axis(0);ay=events.pad_axis(1)}
+ if menu {
+  canvas.clear(pixels,1052688)
+  canvas.rectangle(pixels,w,h,52,44,216,92,3158064)
+  canvas.rectangle(pixels,w,h,60,52,200,76,1579032)
+  canvas.rectangle(pixels,w,h,100,76,120,28,65535)
+  for k in range(10) {canvas.rectangle(pixels,w,h,140+k,80+k,1,20-2*k,1052688)}
+  if game.key(32) or buttons>=0 and buttons/4096%2==1 or events.mouse_left() and events.mouse_x(w)>=100 and events.mouse_x(w)<220 and events.mouse_y(h)>=76 and events.mouse_y(h)<104 {menu=false}
+ } else {
+  speed=max(1,dt*120/1000)
+  if game.key(37) or game.key(65) or ax<-10000 {x-=speed}
+  if game.key(39) or game.key(68) or ax>10000 {x+=speed}
+  if game.key(38) or game.key(87) or ay>10000 {y-=speed}
+  if game.key(40) or game.key(83) or ay<-10000 {y+=speed}
+  x=physics.clamp_position(x,12,worldw);y=physics.clamp_position(y,12,worldh)
+  if physics.overlap(x,y,12,12,cx,cy,8,8) {
+   score+=1;particles.burst(burst,cx,cy,20)
+   if sound {audio.beep(880,30)}
+   cx=20+(score*47)%600;cy=20+(score*31)%320
+  }
+  ox=camera.follow(x+6,w,worldw);oy=camera.follow(y+6,h,worldh)
+  canvas.clear(pixels,1052688)
+  canvas.tile_map(pixels,w,h,tiles,40,23,palette,16,ox,oy)
+  pulse=animation.frame(now,100,2)
+  canvas.rectangle(pixels,w,h,cx-ox-pulse,cy-oy-pulse,8+2*pulse,8+2*pulse,16766720)
+  sprite.draw_scaled(pixels,w,h,ship,6,6,x-ox,y-oy,12,12,0,100)
+  particles.draw(burst,pixels,w,h,ox,oy,16766720)
+  particles.step(burst)
+  canvas.rectangle(pixels,w,h,0,0,w,11,1052688)
+  for i in range(min(score,30)) {canvas.rectangle(pixels,w,h,4+i*5,3,3,5,16766720)}
  }
- canvas.clear(pixels,1052688)
- for i in range(20) {canvas.line(pixels,w,h,i*16,0,i*16,h-1,1579032)}
- for i in range(12) {canvas.line(pixels,w,h,0,i*16,w-1,i*16,1579032)}
- canvas.rectangle(pixels,w,h,cx,cy,8,8,16766720)
- canvas.rectangle(pixels,w,h,x,y,12,12,65535)
- canvas.rectangle(pixels,w,h,x+2,y+2,3,3,16777215)
- if frame%20<10 {canvas.rectangle(pixels,w,h,cx-2,cy-2,2,2,16777215)}
- for i in range(min(score,30)) {canvas.rectangle(pixels,w,h,4+i*5,4,3,5,16766720)}
  game.present(pixels,w,h);frame+=1;game.wait(16)
 }
 game.close()
+elapsed=profiler.elapsed(started)
 show "Score",score
 show "Frames",frame
-show "Elapsed ns",profiler.elapsed(started)
+show "Elapsed ns",elapsed
+if elapsed>0 {show "Average paced FPS",float(frame)*1000000000.0/float(elapsed)}
