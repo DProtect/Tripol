@@ -9,7 +9,7 @@ CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
 mkdir -p installer/payload
 cp examples/hello.tri installer/payload/hello.tri
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o installer/payload/tripol.exe .
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.23-Setup-x64.exe ./installer
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.25-Setup-x64.exe ./installer
 ```
 
 The installer is unsigned, installs under `%LOCALAPPDATA%\Programs\TRIPOL`, uses PowerShell to update user PATH, and supports `--quiet` and `--uninstall`. Close and reopen CMD. Linux x86-64 ELF uses direct syscalls; Windows PE32+ uses OS DLLs for selected functionality. There is no external language runtime in generated executables.
@@ -41,3 +41,5 @@ Direct self tail calls with full argument lists reuse the frame in all profiles 
 NEXUS adds experimental native WinHTTP WebSocket Gateway and AVX2 search. Gateway requires Windows; offline tests and PE imports validated on Linux. See [Discord guide](discord.md).
 
 ORIGIN adds optional Discord channel filtering, validated binary byte-array codecs and two-vector AVX2 search. See the CI workflow for proposed Windows and Linux checks.
+
+GENESIS R1: [experimental compiler written in TRIPOL](genesis.md). The Go compiler remains required to bootstrap it. It currently emits Linux ELF from one constant expression.

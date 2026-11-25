@@ -1,0 +1,21 @@
+// Bounded integer FIFO ring. Header: read position, logical count.
+func create(limit=32)->ints {
+ assert limit>=1 and limit<=65535,"Invalid queue capacity"
+ return ints(limit+2)
+}
+func capacity(q:ints)->int {assert len(q)>=3 and len(q)<=65537,"Invalid queue";return len(q)-2}
+func size(q:ints)->int {
+ cap=capacity(q)
+ assert q[0]>=0 and q[0]<cap and q[1]>=0 and q[1]<=cap,"Invalid queue header"
+ return q[1]
+}
+func push(q:ints,value:int)->bool {
+ n=size(q);cap=capacity(q)
+ if n==cap {return false}
+ q[2+(q[0]+n)%cap]=value;q[1]=n+1;return true
+}
+func peek(q:ints)->int {assert size(q)>0,"Empty queue";return q[2+q[0]]}
+func pop(q:ints)->int {
+ v=peek(q);q[2+q[0]]=0;q[0]=(q[0]+1)%capacity(q);q[1]=q[1]-1;return v
+}
+func clear(q:ints)->int {n=size(q);q[0]=0;q[1]=0;return n}

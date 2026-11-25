@@ -1,3 +1,11 @@
+# v0.25 EVOLUTION (development)
+
+- GENESIS R1: TRIPOL-written frontend and ELF x86-64 writer for a single constant integer show statement; deterministic hex transport, Linux execution and Windows-host structural test coverage proposed.
+- Bounded reusable integer stack and FIFO ring queue: no new storage after creation during valid operations.
+- TIR R5: eliminate pure constant left identities without removing checked right-hand arithmetic.
+- Version metadata, VS Code grammar and release workflow updated. Full self-hosting, general memory reclamation, SSA and expanded syntax remain future work.
+- No new performance numbers claimed before measurement.
+
 # v0.24 ASCENSION
 
 - Native allocation-free array copy into an existing buffer, including self-copy and size mismatch checks.

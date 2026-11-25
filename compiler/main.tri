@@ -1,0 +1,12 @@
+import "parser.tri"
+import "elf64.tri"
+import tripol.encoding
+// Read one source line and emit lowercase hex, not a host compiler command.
+// R1 accepts one show statement with a checked constant integer expression.
+source=input()
+assert len(source)>5 and has_prefix(source,"show "),"Expected show expression"
+value=boot_eval(slice(source,5,len(source)))
+image=genesis_elf(text(value)+"\n")
+encoded=""
+for byte in image {encoded+=encoding.hex_byte(byte)}
+show encoded

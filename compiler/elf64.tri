@@ -1,0 +1,37 @@
+// GENESIS R1: a sectionless, single-segment Linux x86-64 executable.
+func genesis_put_le(data:ints,offset:int,value:int,width:int)->int {
+ assert value>=0 and width>=1 and width<=8,"Invalid ELF field"
+ assert offset>=0 and offset<=len(data)-width,"ELF offset"
+ for i in range(width) {data[offset+i]=value%256;value/=256}
+ assert value==0,"ELF field overflow"
+ return width
+}
+func genesis_elf(message:string)->ints {
+ n=len(message)
+ assert n>0 and n<=64,"GENESIS output limit"
+ // 64-byte ELF header + 56-byte PT_LOAD + 33-byte code.
+ image=ints(153+n)
+ image[0]=127;image[1]=69;image[2]=76;image[3]=70
+ image[4]=2;image[5]=1;image[6]=1
+ genesis_put_le(image,16,2,2)
+ genesis_put_le(image,18,62,2)
+ genesis_put_le(image,20,1,4)
+ genesis_put_le(image,24,4194424,8)
+ genesis_put_le(image,32,64,8)
+ genesis_put_le(image,52,64,2)
+ genesis_put_le(image,54,56,2)
+ genesis_put_le(image,56,1,2)
+ genesis_put_le(image,64,1,4)
+ genesis_put_le(image,68,5,4)
+ genesis_put_le(image,80,4194304,8)
+ genesis_put_le(image,88,4194304,8)
+ genesis_put_le(image,96,len(image),8)
+ genesis_put_le(image,104,len(image),8)
+ genesis_put_le(image,112,4096,8)
+ // write(1, message, n); exit(0), with RIP-relative message address.
+ code=[184,1,0,0,0,191,1,0,0,0,72,141,53,16,0,0,0,186,0,0,0,0,15,5,184,60,0,0,0,49,255,15,5]
+ for i in range(len(code)) {image[120+i]=code[i]}
+ genesis_put_le(image,138,n,4)
+ for i in range(n) {image[153+i]=byte_at(message,i)}
+ return image
+}

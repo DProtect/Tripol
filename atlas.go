@@ -9,7 +9,7 @@ import (
 //go:embed stdlib/*.tri
 var standardSources embed.FS
 
-var standardNames = []string{"animation", "arrays", "binary", "bits", "buffer", "camera", "canvas", "checksum", "collections", "colors", "compression", "console", "convert", "datetime", "dictionary", "discord", "encoding", "env", "errors", "events", "files", "game", "geometry", "http", "https", "image", "json", "math", "matrix", "memory", "network", "particles", "path", "physics", "random", "search", "sequences", "simd", "sort", "sprite", "stats", "system", "testing", "text", "time", "ui", "validate", "vector"}
+var standardNames = []string{"animation", "arrays", "binary", "bits", "buffer", "camera", "canvas", "checksum", "collections", "colors", "compression", "console", "convert", "datetime", "dictionary", "discord", "encoding", "env", "errors", "events", "files", "game", "geometry", "http", "https", "image", "json", "math", "matrix", "memory", "network", "particles", "path", "physics", "queue", "random", "search", "sequences", "simd", "sort", "sprite", "stack", "stats", "system", "testing", "text", "time", "ui", "validate", "vector"}
 
 type stdLoader struct {
 	state     map[string]int

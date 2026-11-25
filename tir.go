@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-// TIR R1 is a deliberately narrow typed intermediate representation for
+// TIR is a deliberately narrow typed intermediate representation for
 // side-effect-free int64 return expressions. All other language constructs
 // continue through the existing checked backend. The debug validation pass
 // runs before this representation is used. Checked arithmetic is retained.
@@ -63,6 +63,11 @@ func lowerTIR(f fn) (tirFunction, bool) {
 			}
 			if r.op == tirConst && ((r.value == 0 && (op == tirAdd || op == tirSub)) || (r.value == 1 && op == tirMul)) {
 				return l
+			}
+			// A constant left operand is pure; preserve evaluation of the right
+			// subtree and its checked arithmetic, including possible traps.
+			if l.op == tirConst && ((l.value == 0 && op == tirAdd) || (l.value == 1 && op == tirMul)) {
+				return r
 			}
 			return &tirNode{op: op, left: l, right: r}
 		}
@@ -230,7 +235,7 @@ func (n *tirNode) String() string {
 func inspectTIR(file string) {
 	fs, ss, _ := loadProject(file)
 	generate(fs, ss, "linux", false, nil)
-	fmt.Println("TRIPOL TIR R4 — lowered scalar functions")
+	fmt.Println("TRIPOL TIR R5 — lowered scalar functions")
 	n := 0
 	for _, f := range fs {
 		if ir, ok := lowerTIR(f); ok {
