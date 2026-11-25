@@ -1,0 +1,11 @@
+// Compact mutable set with 63 nonnegative bits per signed word.
+import tripol.bits
+func create(count:int)->ints {
+ assert count>=0 and count<=1048576,"Invalid bitset size"
+ a=ints(1+(count+62)/63);a[0]=count;return a
+}
+func capacity(a:ints)->int {assert len(a)>=1,"Invalid bitset";assert a[0]>=0 and a[0]<=1048576 and len(a)==1+(a[0]+62)/63,"Invalid header";return a[0]}
+func contains(a:ints,index:int)->bool {assert index>=0 and index<capacity(a),"Bit index";return bits.test(a[1+index/63],index%63)}
+func add(a:ints,index:int)->bool {old=contains(a,index);slot=1+index/63;a[slot]=bits.set(a[slot],index%63);return not old}
+func remove(a:ints,index:int)->bool {old=contains(a,index);slot=1+index/63;a[slot]=bits.clear(a[slot],index%63);return old}
+func count(a:ints)->int {n=0;for i in range(1,len(a)){n+=bits.count(a[i])};return n}

@@ -1,0 +1,4 @@
+// Monotonic wall-clock timing, not CPU or heap sampling.
+import tripol.time
+func start()->int {return time.now_ns()}
+func elapsed(started:int)->int {return time.elapsed_ns(started)}
