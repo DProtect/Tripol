@@ -138,8 +138,11 @@ func (p *parser) statement() stmt {
 		p.take()
 		s.op = "for"
 		s.name = p.name()
+		itemName := ""
+		if p.eat(",") {itemName=p.name();if itemName==s.name{p.err("duplicate iteration binding")}}
 		p.need("in")
 		if p.eat("range") {
+			if itemName!=""{p.err("two bindings require a collection")}
 			p.need("(")
 			first := p.expression(1)
 			if p.eat(",") {
@@ -153,8 +156,8 @@ func (p *parser) statement() stmt {
 			s.yes = p.block()
 		} else {
 			array := p.name()
-			item := s.name
-			s.name = fmt.Sprintf("@each%d", p.i)
+			item := itemName
+			if item==""{item=s.name;s.name = fmt.Sprintf("@each%d", p.i)}
 			s.e = &expr{op: "int"}
 			s.bound = &expr{op: "call", s: "@array_len", args: []*expr{{op: "var", s: array}}}
 			body := p.block()
@@ -427,6 +430,9 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 				p.need(":")
 				t := p.typ()
 				f.args = append(f.args, param{n, t})
+				var def *expr
+				if p.eat("="){def=p.defaultValue();if def.op!=t{p.err("default field type mismatch")}}else if len(f.defaults)>0&&f.defaults[len(f.defaults)-1]!=nil{p.err("required field after optional field")}
+				f.defaults=append(f.defaults,def)
 				if p.eat(",") {
 					p.skip()
 				} else {
@@ -672,7 +678,7 @@ func (c *compiler) expression(e *expr) string {
 	case "index":
 		v := c.arrayVar(e.s)
 		c.arrayIndex(v, e.args[0])
-		if v.typ == "ints" {
+		if v.typ == "ints" || v.typ=="list" {
 			a.emit(0x48, 0x8b, 0x44, 0xc1, 0x08)
 		} else {
 			a.emit(0x48, 0x8b, 0x84, 0xc5)
@@ -972,16 +978,17 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			c.arrayIndex(v, s.bound)
 			a.emit(0x50) // preserve the single evaluated index
 			if s.typ != "" {
-				if v.typ == "ints" { a.emit(0x48, 0x8b, 0x44, 0xc1, 0x08) } else { a.emit(0x48, 0x8b, 0x84, 0xc5); a.u32(v.off) }
+				if v.typ == "ints" || v.typ=="list" { a.emit(0x48, 0x8b, 0x44, 0xc1, 0x08) } else { a.emit(0x48, 0x8b, 0x84, 0xc5); a.u32(v.off) }
 				a.emit(0x50) // old element before RHS
 			}
 			c.require(c.expression(s.e), "int")
 			if s.typ != "" { a.emit(0x48, 0x89, 0xc1, 0x58); c.compoundInteger(s.typ) }
 			a.emit(0x59)
-			if v.typ == "ints" {
+			if v.typ == "ints" || v.typ=="list" {
 				// Preserve value while loading the array reference in rdx.
 				a.emit(0x48, 0x8b, 0x95)
 				a.u32(v.off)
+				if v.typ=="list"{a.emit(0x48,0x8b,0x52,0x08,0x48,0x3b,0x0a);a.j(0x83,"bounds")}
 				a.emit(0x48, 0x89, 0x44, 0xca, 0x08)
 			} else {
 				a.emit(0x48, 0x89, 0x84, 0xcd)
@@ -1589,6 +1596,8 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool,
 func cli() {
 	diagnosticOptions()
 	args := os.Args[1:]
+	if len(args)>0&&args[0]=="fmt"{formatCLI(args[1:]);return}
+	if len(args)>0&&args[0]=="lsp"{if len(args)!=1{die("usage: tripol lsp")};if e:=serveLSP(os.Stdin,os.Stdout);e!=nil{die("%v",e)};return}
 	if len(args) > 0 && args[0] == "genesis" { genesisCLI(args[1:]); return }
 	if len(args) > 0 && args[0] == "update" {
 		updateCLI(args[1:])
@@ -1603,7 +1612,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {

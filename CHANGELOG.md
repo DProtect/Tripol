@@ -9,6 +9,8 @@
 - TIR R6: constant branch elimination and checked straight-line SSA inspection.
 - Four native int64 atomic operations with bounds and overflow checking.
 - 64 standard modules: SHA-256, audio, explicit CLI option parsing, process inspection/exit, and Windows native worker reduction.
+- SYNTAX R2: trailing scalar record defaults, indexed collection iteration, list indexing and checked list assignment.
+- INTELLISENSE R1: standalone stdio LSP subset and token-preserving indentation formatter, integrated with the VS Code formatting provider.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)

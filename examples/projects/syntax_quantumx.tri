@@ -1,0 +1,8 @@
+struct Player {name:string="Guest";score:int=0}
+p=Player()
+numbers=list()
+numbers.add(10)
+numbers.add(20)
+numbers[0]+=5
+for i,value in numbers {show i,value}
+show p.name,p.score

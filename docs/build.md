@@ -51,3 +51,9 @@ TIR R6 adds experimental statement-level CFG inspection to `tripol ir`; protecte
 ### MEMORY R2 and TIR R6
 
 The compiler proves a narrow subset of straight-line loop bodies cannot retain references beyond the iteration: local integer arrays, scalar arithmetic, local indexing and selected pure builtins. It inserts a scratch region with exception cleanup in every profile. Unproven bodies retain the previous arena behavior. General ownership/GC, string reclamation and arbitrary escape analysis remain pending. `examples/projects/auto_memory.tri` checks reuse. Constant pure conditions can eliminate unreachable branches only after complete source validation. `tripol ir` shows CFG and typed single-block SSA def/use inspection for eligible int64 functions; checked operations are retained even if unused. CFG phi nodes and a general SSA code generator remain pending.
+
+## INTELLISENSE R1 editor commands
+
+`tripol fmt main.tri` prints formatted source without modifying the file. `tripol fmt --stdin` reads source from standard input. Formatting adjusts indentation and verifies unchanged tokens, comments are preserved, and CRLF is retained. VS Code Format Document invokes this command in a trusted workspace.
+
+`tripol lsp` starts a standalone JSON-RPC Language Server Protocol server over standard input/output (no sockets). It accepts full-buffer synchronization and provides syntax/type diagnostics for self-contained or standard-library programs, completion, library signature hover, same-document definitions, document symbols and formatting. Local/Vault imports currently receive parsing-only diagnostics. This is an initial LSP implementation, not full workspace indexing or incremental type analysis.

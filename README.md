@@ -26,6 +26,9 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 ## QUANTUM X — 0.27.1
 
+- Indexed iteration, list subscripts and trailing scalar defaults for record fields.
+- Standalone `tripol lsp` editor protocol and `tripol fmt` indentation formatter with VS Code integration.
+
 - 64 standard modules, including SHA-256, PCM WAV creation, Windows WAV playback, explicit option parsing, native process ID/exit and a joined native Windows worker for checked integer sum. General thread callbacks, process spawning and OS argument parsing are not yet included.
 
 - MEMORY R2: automatic scoped reclamation for proven non-escaping integer-array loop bodies, with explicit scratch fallback for other cases.

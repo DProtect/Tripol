@@ -50,11 +50,9 @@ func (c *compiler) recordField(t, n string) (param, int) {
 	return param{}, 0
 }
 func (c *compiler) recordConstruct(f fn, e *expr) string {
-	if len(f.args) != len(e.args) {
-		c.err("wrong argument count: " + f.name)
-	}
+	args:=c.callArguments(f,e)
 	a := c.a
-	for i, x := range e.args {
+	for i, x := range args {
 		c.require(c.expression(x), f.args[i].typ)
 		a.emit(0x50)
 	}

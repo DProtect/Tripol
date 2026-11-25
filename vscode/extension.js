@@ -23,6 +23,21 @@ function activate(context) {
  }),vscode.languages.registerDefinitionProvider(selector,{
   provideDefinition(doc,pos){const r=doc.getWordRangeAtPosition(pos);if(!r)return;const name=doc.getText(r);for(let i=0;i<doc.lineCount;i++){const m=doc.lineAt(i).text.match(/^\s*func\s+(\w+)\s*\(/);if(m&&m[1]===name)return new vscode.Location(doc.uri,new vscode.Position(i,0));}}
  }));
+ context.subscriptions.push(vscode.languages.registerDocumentFormattingEditProvider(selector,{
+  provideDocumentFormattingEdits(doc){
+   if(!vscode.workspace.isTrusted)return [];
+   const exe=vscode.workspace.getConfiguration("tripol",doc.uri).get("compilerPath","tripol");
+   return new Promise((resolve,reject)=>{
+    const child=cp.execFile(exe,["fmt","--stdin"],{cwd:path.dirname(doc.uri.fsPath),timeout:30000,maxBuffer:4*1024*1024,windowsHide:true,env:{...process.env,TRIPOL_NO_UPDATE:"1"}},(err,stdout,stderr)=>{
+     if(err){reject(new Error(stderr||err.message));return;}
+     const end=doc.lineAt(doc.lineCount-1).range.end;
+     resolve(stdout===doc.getText()?[]:[vscode.TextEdit.replace(new vscode.Range(new vscode.Position(0,0),end),stdout)]);
+    });
+    child.stdin.on("error",()=>{});
+    child.stdin.end(doc.getText(),"utf8");
+   });
+  }
+ }));
  const invoke=(doc,mode)=>{
   if(!vscode.workspace.isTrusted){vscode.window.showWarningMessage("TRIPOL requires a trusted workspace for compiler commands.");return;}
   if(!doc||doc.languageId!=="tripol"||doc.uri.scheme!=="file")return;
