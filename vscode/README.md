@@ -1,2 +1,2 @@
-# TRIPOL syntax highlighting
-Basic highlighting, brackets and comment support for .tri files. Not a language server or debugger. Install from VSIX using VS Code's Extensions menu or `code --install-extension TRIPOL-v0.3.vsix`. The extension is not published to the Marketplace.
+# TRIPOL Language for VS Code 0.4.0
+Syntax highlighting for .tri, including float literals, local imports and Liberty builtins. No language server, completion or debugger. Install the supplied VSIX via Extensions: Install from VSIX. Not tested in VS Code here.

@@ -1,0 +1,12 @@
+show "Primer numero entero:"
+a = parse_int(input())
+show "Segundo numero entero:"
+b = parse_int(input())
+show "Suma:"
+show a + b
+show "Producto:"
+show a * b
+if b != 0 {
+    show "Division decimal:"
+    show float(a) / float(b)
+}

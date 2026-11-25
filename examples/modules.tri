@@ -1,0 +1,3 @@
+import "lib/math.tri"
+show area(2.5, 4.0)
+show double(21)

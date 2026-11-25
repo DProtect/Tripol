@@ -1,10 +1,10 @@
-# TRIPOL v0.3.0 — NANO REVOLUTION
+# TRIPOL v0.4.0 — LIBERTY
 
-Apache-2.0, free experimental native programming language. The standalone Go compiler emits x86-64 PE32+ (Windows) and ELF64 (Linux) directly. No Python, GCC, Clang or Go installation is required for end users. Go 1.23+ is needed only to rebuild the compiler.
+Free, experimental Apache-2.0 programming language. Standalone Go compiler emits x86-64 machine code and PE32+ (Windows) or ELF64 (Linux) directly. No Python, GCC, Clang or Go installation is required to use the distributed compiler. Go 1.23+ is needed only to rebuild it.
 
 ## Windows x64
 
-Run `TRIPOL-v0.3-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. The installer preserves existing `hello.tri` and adds the directory to the user PATH without administrator privileges. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell only to modify PATH. It is unsigned. v0.2 was confirmed working by the project owner on Windows; v0.3 was cross-compiled and PE-inspected, not executed in Windows yet. Alternatively use the portable ZIP and run `tripol.exe` directly.
+Run `TRIPOL-v0.4-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. Previous releases were confirmed by the project owner on Windows; v0.4 is cross-compiled and PE-inspected but its new runtime has not been executed in Windows. Portable ZIP is also available.
 
 ```cmd
 tripol --version
@@ -13,41 +13,59 @@ cd MyProject
 tripol run main.tri
 tripol build main.tri
 main.exe
+tripol bench main.tri --runs 5
 ```
 
-`tripol check FILE.tri`, `tripol run FILE.tri [--profile nano|debug]`, `tripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]`. Default profile nano. `debug` disables the new optimization passes (not a source-level debugger). `--target` is x86-64 only. `tripol new` creates a new folder and refuses to overwrite an existing one.
+Commands: `tripol check FILE.tri`, `tripol run FILE.tri [--profile nano|debug]`, `tripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]`, `tripol bench FILE.tri [--runs 1..100] [--profile nano|debug]`, `tripol new NAME`. Default profile nano. Debug disables the AST/native optimization passes, not a source debugger. Benchmark includes OS process startup, compiles once, excludes one warm-up, closes stdin and discards stdout. Use noninteractive programs only; no built-in timeout. Targets x86-64 only.
 
-## Language additions
+## Interactive programs
 
 ```tripol
-values = [10, 20, 30]
-for i in range(0, len(values)) {
-    values[i] = values[i] * 2
-    show values[i]
-}
+show "Como te llamas?"
+nombre = input()
+show "Hola, " + nombre
+show "Escribe un entero:"
+n = parse_int(input())
+show n * 2
+show sqrt(81.0)
 ```
 
-Output: 20, 40, 60 on separate lines. Arrays hold signed 64-bit integers and are fixed-length, local, zero-based and stack-allocated; 1–400 elements subject to the total 400-slot function limit. Index reads/writes have runtime bounds checks. No array copying, passing, returning, resizing or nesting. `len(array)` returns length (a user-defined `len` takes precedence). `const` arrays cannot be changed. `for i in range(start,end)` evaluates integer bounds once, iterates ascending with exclusive end, and has an immutable scoped index. `break`/`continue` apply to the nearest loop. UTF-8 BOM is accepted for Windows editors.
+`input()` reads one line (LF or CRLF), returning empty string on EOF, with maximum 4096 bytes before line ending. NUL, long lines and I/O errors trap; Windows console encoding follows the console's code page (ASCII examples are recommended until Windows testing). `parse_int` accepts optional +/- followed by decimal digits only; overflow and invalid text trap. `string + string` concatenates at runtime; `len(string)` counts bytes, not Unicode characters. Strings are immutable, can be passed and returned safely within a process, and use NUL termination. Concatenation has a maximum length of 65535 bytes. The 8 MiB arena is allocated lazily with mmap/VirtualAlloc, has a reusable input scratch buffer and retains each resulting string until process exit. No garbage collector, per-object reclamation or general heap management; arena exhaustion traps. Unused runtime helpers and arena are omitted from nano builds.
 
-All v0.2 language features remain: int64, bool, immutable string literals, functions, recursion, checked arithmetic, if/else, while, short-circuiting, string equality. Functions cannot capture top-level locals. No floats, dynamic strings, input, modules/imports, networking or heap allocator yet. Not a sandbox. No production-grade ABI or complete memory safety; ordinary recursion may exhaust stack. Generated PE uses Windows system DLL functions; Linux uses syscalls.
+## Float64
 
-## Optimization R1
+```tripol
+func area(ancho: float, alto: float) -> float {
+    return ancho * alto
+}
+show area(2.5, 4.0)
+show float(7) / 2.0
+```
 
-- Velocity: safe constant folding, smaller immediates and local loads/stores, immediate arithmetic, direct conditional branches on integer constants. Checked arithmetic traps are preserved.
-- ZeroMemory: lexical stack slot reuse; fixed arrays use inline stack storage, no garbage collector. This is not general heap management.
-- MicroBinary: reachability-based unused function removal and omission of unused runtime helpers. All functions are checked before removal.
-- Self-tail-call elimination: exact `return current_function(...)` evaluates arguments first, then reuses its frame. General recursion is unchanged.
-- Native backend remains direct machine code. No TIR yet; these are AST and native code generation optimizations, not a new scientific algorithm.
+Float literals use digits on both sides of the dot (no exponent syntax). Arithmetic + - * /, negation, comparisons, sqrt(float) and float(int) use IEEE-754 binary64/SSE2 with no implicit int/float coercion. NaN comparisons are unordered. `show` rounds to fixed six fractional digits, approximately up to 9.22e12 in magnitude; nonfinite or out-of-range values trap when printed. Negative values rounded to zero print positive zero. This is not shortest-roundtrip or arbitrary precision formatting.
+
+## Local modules
+
+```tripol
+import "lib/math.tri"
+show area(2.5, 4.0)
+```
+
+See `examples/modules.tri` and `examples/lib/math.tri`. Imports must appear first in each file and use quoted local relative `.tri` paths, resolved relative to the importing file and confined to the entry file's project directory. Modules may define functions only; they share a flat function namespace. Duplicate imports are deduplicated, cycles and duplicate function names rejected. No external package manager or namespaced import syntax yet.
+
+## Previous features and limitations
+
+v0.3 features preserved: int64, bool, literal strings, functions, recursion, checked integer arithmetic, while, if/else, short-circuiting, fixed-size local integer arrays with bounds checks, range loops, break/continue, lexical stack reuse, dead function elimination and direct self-tail-call optimization. Arrays cannot be copied, resized, nested, returned or passed. UTF-8 BOM accepted. Max 400 local slots. Not a sandbox; ordinary recursion can exhaust the stack. No general allocator, TIR, file I/O, networking, objects or production-grade ABI yet. Native Linux binaries use syscalls; Windows binaries use kernel32.dll. Go is only the compiler implementation. Runtime templates are hand-written x86-64 assembly; the checked-in generated Go file allows rebuilding without assembly tools or Python. `native/generate.py` uses Python and GNU binutils only if a maintainer edits assembly templates.
 
 ## Build from source
 
 ```sh
-go test -v .
+go test -count=1 -v .
 CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
 mkdir -p installer/payload
 cp examples/hello.tri installer/payload/hello.tri
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o installer/payload/tripol.exe .
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.3-Setup-x64.exe ./installer
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.4-Setup-x64.exe ./installer
 ```
 
-See BENCHMARKS.md and test-results.txt. v0.1 Python/C source may remain in the Git repository as historical reference; it is not used by v0.3.
+See BENCHMARKS.md and test-results.txt. No claim of outperforming Rust or C. License Apache-2.0.

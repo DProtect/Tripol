@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,14 +13,14 @@ import (
 	"strings"
 )
 
-const version = "0.3.0"
+const version = "0.4.0"
 
 type token struct {
 	s, k string
 	line int
 }
 
-var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+)|([A-Za-z_][A-Za-z_0-9]*)|(==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){}\[\],:;\-]))`)
+var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){}\[\],:;\-]))`)
 
 func die(f string, a ...any) { panic(fmt.Errorf(f, a...)) }
 func lex(s string) []token {
@@ -108,14 +109,14 @@ func (p *parser) end() {
 }
 func (p *parser) name() string {
 	t := p.t()
-	if t.k != "id" || strings.Contains("|func|return|show|let|const|if|else|while|for|in|range|break|continue|true|false|int|bool|string|void|", "|"+t.s+"|") {
+	if t.k != "id" || strings.Contains("|import|func|return|show|let|const|if|else|while|for|in|range|break|continue|true|false|int|bool|string|float|void|", "|"+t.s+"|") {
 		p.err("expected identifier")
 	}
 	return p.take().s
 }
 func (p *parser) typ() string {
 	switch p.t().s {
-	case "int", "bool", "string":
+	case "int", "bool", "string", "float":
 		return p.take().s
 	}
 	p.err("expected type")
@@ -228,6 +229,13 @@ func (p *parser) expression(min int) *expr {
 	case t.s == "(":
 		e = p.expression(1)
 		p.need(")")
+	case t.k == "int" && strings.Contains(t.s, "."):
+		e.op = "float"
+		f, err := strconv.ParseFloat(t.s, 64)
+		if err != nil {
+			p.err("invalid float literal")
+		}
+		e.n = int64(math.Float64bits(f))
 	case t.k == "int":
 		e.op = "int"
 		n, err := strconv.ParseInt(t.s, 10, 64)
@@ -273,11 +281,23 @@ func (p *parser) expression(min int) *expr {
 	}
 	return e
 }
-func parse(s string) ([]fn, []stmt) {
+func parseUnit(s string) ([]string, []fn, []stmt) {
 	p := parser{ts: lex(strings.TrimPrefix(s, "\ufeff"))}
 	var fs []fn
 	var ss []stmt
+	var imports []string
 	p.skip()
+	for p.eat("import") {
+		if p.t().k != "str" {
+			p.err("expected quoted local module path")
+		}
+		var name string
+		if json.Unmarshal([]byte(p.take().s), &name) != nil {
+			p.err("invalid import path")
+		}
+		imports = append(imports, name)
+		p.end()
+	}
 	for p.t().k != "eof" {
 		if p.eat("func") {
 			f := fn{name: p.name(), ret: "int"}
@@ -304,6 +324,13 @@ func parse(s string) ([]fn, []stmt) {
 			ss = append(ss, p.statement())
 		}
 		p.skip()
+	}
+	return imports, fs, ss
+}
+func parse(s string) ([]fn, []stmt) {
+	imports, fs, ss := parseUnit(s)
+	if len(imports) != 0 {
+		die("imports require a source file")
 	}
 	return fs, ss
 }
@@ -428,7 +455,7 @@ func (c *compiler) expression(e *expr) string {
 		}
 	}
 	switch e.op {
-	case "int", "bool":
+	case "int", "bool", "float":
 		a.imm(e.n)
 		return e.op
 	case "string":
@@ -454,13 +481,10 @@ func (c *compiler) expression(e *expr) string {
 		return "int"
 	case "call":
 		f, ok := c.fs[e.s]
-		if !ok && e.s == "len" {
-			if len(e.args) != 1 || e.args[0].op != "var" {
-				c.err("len expects an array name")
+		if !ok {
+			if t, handled := c.builtin(e); handled {
+				return t
 			}
-			v := c.arrayVar(e.args[0].s)
-			a.imm(int64(arrayLen(v)))
-			return "int"
 		}
 		if !ok {
 			c.err("unknown function " + e.s)
@@ -484,6 +508,12 @@ func (c *compiler) expression(e *expr) string {
 			c.require(t, "bool")
 			a.emit(0x48, 0x83, 0xf0, 1)
 		} else {
+			if t == "float" {
+				a.emit(0x48, 0xba)
+				a.b = binary.LittleEndian.AppendUint64(a.b, 1<<63)
+				a.emit(0x48, 0x31, 0xd0)
+				return t
+			}
 			c.require(t, "int")
 			a.emit(0x48, 0xf7, 0xd8)
 			a.j(0x80, "err")
@@ -540,6 +570,13 @@ func (c *compiler) expression(e *expr) string {
 	u := c.expression(e.args[1])
 	c.require(u, t)
 	a.emit(0x48, 0x89, 0xc1, 0x58)
+	if t == "float" {
+		return c.floatOp(op)
+	}
+	if t == "string" && op == "+" {
+		a.call("concat")
+		return "string"
+	}
 	if op == "==" || op == "!=" {
 		if t == "string" {
 			a.call("streq")
@@ -743,6 +780,7 @@ func (c *compiler) function(f fn, main bool) {
 
 // Runtime helpers use rax for value; write uses rsi=buffer, rdx=length.
 func (a *asm) rt() {
+	a.libertyRuntime()
 	if !a.opt || a.needed("streq") {
 		a.label("streq")
 		l, n := a.fresh(), a.fresh()
@@ -858,9 +896,14 @@ func put16(b []byte, o int, v int)    { binary.LittleEndian.PutUint16(b[o:], uin
 func put32(b []byte, o int, v int)    { binary.LittleEndian.PutUint32(b[o:], uint32(v)) }
 func put64(b []byte, o int, v uint64) { binary.LittleEndian.PutUint64(b[o:], v) }
 func elf(a *asm) []byte {
-	a.finish()
 	const base = 0x400000
 	const off = 0x100
+	arena := a.needed("arena_state")
+	arenaOff := align(off+len(a.b), 0x1000)
+	if arena {
+		a.labels["arena_state"] = arenaOff - off
+	}
+	a.finish()
 	b := make([]byte, off+len(a.b))
 	copy(b, []byte{0x7f, 'E', 'L', 'F', 2, 1, 1})
 	put16(b, 16, 2)
@@ -871,6 +914,16 @@ func elf(a *asm) []byte {
 	put16(b, 52, 64)
 	put16(b, 54, 56)
 	put16(b, 56, 2)
+	if arena {
+		put16(b, 56, 3)
+		put32(b, 176, 1)
+		put32(b, 180, 6)
+		put64(b, 184, uint64(arenaOff))
+		put64(b, 192, uint64(base+arenaOff))
+		put64(b, 200, uint64(base+arenaOff))
+		put64(b, 216, 24)
+		put64(b, 224, 0x1000)
+	}
 	put32(b, 64, 1)
 	put32(b, 68, 5)
 	put64(b, 80, base)
@@ -890,17 +943,43 @@ func pe(a *asm) []byte {
 	raw := align(len(a.b), 0x200)
 	idRVA := align(textRVA+len(a.b), 0x1000)
 	id := make([]byte, 0x200)
+	imports := []string{"GetStdHandle", "WriteFile", "ExitProcess"}
+	for i, name := range []string{"ReadFile", "VirtualAlloc", "GetLastError"} {
+		if a.needed(fmt.Sprintf("iat:%d", i+3)) {
+			imports = append(imports, name)
+		} else {
+			imports = append(imports, "")
+		}
+	}
+	// Preserve logical IAT labels while packing only used imports.
+	count := 0
+	for _, name := range imports {
+		if name != "" {
+			count++
+		}
+	}
 	const ilt = 40
-	const iat = 72
-	const dll = 104
+	iat := ilt + 8*(count+1)
+	dll := iat + 8*(count+1)
 	copy(id[dll:], "KERNEL32.dll\x00")
-	cursor := 120
-	for i, s := range []string{"GetStdHandle", "WriteFile", "ExitProcess"} {
-		put64(id, ilt+8*i, uint64(idRVA+cursor))
-		put64(id, iat+8*i, uint64(idRVA+cursor))
+	cursor := align(dll+len("KERNEL32.dll")+1, 2)
+	j := 0
+	for i, s := range imports {
+		if s == "" {
+			continue
+		}
+		put64(id, ilt+8*j, uint64(idRVA+cursor))
+		put64(id, iat+8*j, uint64(idRVA+cursor))
 		copy(id[cursor+2:], s+"\x00")
 		cursor = align(cursor+2+len(s)+1, 2)
-		a.labels[fmt.Sprintf("iat:%d", i)] = idRVA - textRVA + iat + 8*i
+		a.labels[fmt.Sprintf("iat:%d", i)] = idRVA - textRVA + iat + 8*j
+		j++
+	}
+	if a.needed("arena_state") {
+		if cursor > 480 {
+			die("import table overflow")
+		}
+		a.labels["arena_state"] = idRVA - textRVA + 480
 	}
 	put32(id, 0, idRVA+ilt)
 	put32(id, 12, idRVA+dll)
@@ -938,7 +1017,7 @@ func pe(a *asm) []byte {
 	put32(b, o+120, idRVA)
 	put32(b, o+124, 40)
 	put32(b, o+208, idRVA+iat)
-	put32(b, o+212, 32)
+	put32(b, o+212, 8*(count+1))
 	s := o + 240
 	copy(b[s:], ".text")
 	put32(b, s+8, len(a.b))
@@ -960,6 +1039,9 @@ func pe(a *asm) []byte {
 func compile(src, target string) []byte { return compileProfile(src, target, "nano") }
 func compileProfile(src, target, profile string) []byte {
 	fs, ss := parse(src)
+	return compileParsed(fs, ss, target, profile)
+}
+func compileParsed(fs []fn, ss []stmt, target, profile string) []byte {
 	// Validate every function before eliminating any unreachable code.
 	if profile != "debug" {
 		generate(fs, ss, target, false, nil)
@@ -1004,7 +1086,7 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool)
 func cli() {
 	args := os.Args[1:]
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.3.0 — NANO\ntripol new NAME\ntripol run FILE.tri [--profile nano|debug]\ntripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check FILE.tri\ntripol --version")
+		fmt.Println("TRIPOL 0.4.0 — LIBERTY\ntripol new NAME\ntripol run FILE.tri [--profile nano|debug]\ntripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check FILE.tri\ntripol bench FILE.tri [--runs 1..100] [--profile nano|debug]\ntripol --version")
 		return
 	}
 	if args[0] == "--version" {
@@ -1025,14 +1107,21 @@ func cli() {
 	profile := "nano"
 	target := runtime.GOOS
 	out := ""
+	runs := 5
 	for i := 2; i < len(args); i++ {
 		switch args[i] {
-		case "-o", "--output", "--target", "--profile":
+		case "-o", "--output", "--target", "--profile", "--runs":
 			if i+1 >= len(args) {
 				die("missing option value")
 			}
 			v := args[i+1]
-			if args[i] == "--profile" {
+			if args[i] == "--runs" {
+				var err error
+				runs, err = strconv.Atoi(v)
+				if cmd != "bench" || err != nil || runs < 1 || runs > 100 {
+					die("--runs requires bench and a count from 1 to 100")
+				}
+			} else if args[i] == "--profile" {
 				if v != "nano" && v != "debug" {
 					die("unknown profile %s", v)
 				}
@@ -1047,20 +1136,14 @@ func cli() {
 			die("unknown option %s", args[i])
 		}
 	}
-	if cmd != "build" && cmd != "run" && cmd != "check" {
+	if cmd != "build" && cmd != "run" && cmd != "check" && cmd != "bench" {
 		die("unknown command %s", cmd)
 	}
-	if cmd == "run" && (target != runtime.GOOS || runtime.GOARCH != "amd64") {
+	if (cmd == "run" || cmd == "bench") && (target != runtime.GOOS || runtime.GOARCH != "amd64") {
 		die("run requires local x86-64 target")
 	}
-	b, e := os.ReadFile(src)
-	if e != nil {
-		die("%v", e)
-	}
-	if len(b) > 4<<20 {
-		die("source too large")
-	}
-	bin := compileProfile(strings.TrimPrefix(string(b), "\ufeff"), target, profile)
+	fs, ss, inputs := loadProject(src)
+	bin := compileParsed(fs, ss, target, profile)
 	if cmd == "check" {
 		fmt.Println("OK")
 		return
@@ -1069,7 +1152,7 @@ func cli() {
 	if target == "windows" {
 		ext = ".exe"
 	}
-	if cmd == "run" {
+	if cmd == "run" || cmd == "bench" {
 		d, e := os.MkdirTemp("", "tripol-")
 		if e != nil {
 			die("%v", e)
@@ -1077,20 +1160,25 @@ func cli() {
 		defer os.RemoveAll(d)
 		out = filepath.Join(d, "program"+ext)
 		write(out, bin)
-		runNative(out)
+		if cmd == "bench" {
+			benchmark(out, runs)
+		} else {
+			runNative(out)
+		}
 		return
 	}
 	if out == "" {
 		out = strings.TrimSuffix(src, filepath.Ext(src)) + ext
 	}
-	s, _ := filepath.Abs(src)
 	o, _ := filepath.Abs(out)
-	if strings.EqualFold(s, o) {
-		die("output must not overwrite source")
-	}
-	if si, e := os.Stat(src); e == nil {
-		if oi, e := os.Stat(out); e == nil && os.SameFile(si, oi) {
-			die("output aliases source")
+	for _, source := range inputs {
+		if strings.EqualFold(source, o) {
+			die("output must not overwrite source")
+		}
+		if si, e := os.Stat(source); e == nil {
+			if oi, e := os.Stat(out); e == nil && os.SameFile(si, oi) {
+				die("output aliases source")
+			}
 		}
 	}
 	write(out, bin)

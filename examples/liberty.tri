@@ -1,0 +1,9 @@
+show "Como te llamas?"
+nombre = input()
+show "Hola, " + nombre
+show "Escribe tu edad:"
+edad = parse_int(input())
+show "El proximo ano tendras:"
+show edad + 1
+show "Raiz cuadrada de 81:"
+show sqrt(81.0)

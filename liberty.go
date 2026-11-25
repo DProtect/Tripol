@@ -1,0 +1,100 @@
+package main
+
+// Liberty R1: native scalar floats and immutable, process-lifetime UTF-8 text.
+// The generated program uses only OS services; no C runtime is linked.
+func (c *compiler) builtin(e *expr) (string, bool) {
+	a := c.a
+	switch e.s {
+	case "len":
+		if len(e.args) != 1 {
+			c.err("len expects one argument")
+		}
+		if e.args[0].op == "var" {
+			if v, ok := c.lookup(e.args[0].s); ok && len(v.typ) >= 6 && v.typ[:6] == "array:" {
+				a.imm(int64(arrayLen(v)))
+				return "int", true
+			}
+		}
+		c.require(c.expression(e.args[0]), "string")
+		a.call("strlen")
+		return "int", true
+	case "input":
+		if len(e.args) != 0 {
+			c.err("input expects no arguments")
+		}
+		a.call("input")
+		return "string", true
+	case "parse_int":
+		if len(e.args) != 1 {
+			c.err("parse_int expects one argument")
+		}
+		c.require(c.expression(e.args[0]), "string")
+		a.call("parseint")
+		return "int", true
+	case "float":
+		if len(e.args) != 1 {
+			c.err("float expects one argument")
+		}
+		c.require(c.expression(e.args[0]), "int")
+		a.emit(0xf2, 0x48, 0x0f, 0x2a, 0xc0, 0x66, 0x48, 0x0f, 0x7e, 0xc0)
+		return "float", true
+	case "sqrt":
+		if len(e.args) != 1 {
+			c.err("sqrt expects one argument")
+		}
+		c.require(c.expression(e.args[0]), "float")
+		a.emit(0x66, 0x48, 0x0f, 0x6e, 0xc0, 0xf2, 0x0f, 0x51, 0xc0, 0x66, 0x48, 0x0f, 0x7e, 0xc0)
+		return "float", true
+	}
+	return "", false
+}
+func (c *compiler) floatOp(op string) string {
+	a := c.a
+	a.emit(0x66, 0x48, 0x0f, 0x6e, 0xc0, 0x66, 0x48, 0x0f, 0x6e, 0xc9) // movq xmm0,rax; xmm1,rcx
+	if code, ok := map[string]byte{"+": 0x58, "-": 0x5c, "*": 0x59, "/": 0x5e}[op]; ok {
+		a.emit(0xf2, 0x0f, code, 0xc1, 0x66, 0x48, 0x0f, 0x7e, 0xc0)
+		return "float"
+	}
+	if code, ok := map[string]byte{"==": 0x94, "!=": 0x95, "<": 0x92, "<=": 0x96, ">": 0x97, ">=": 0x93}[op]; ok {
+		a.emit(0x66, 0x0f, 0x2e, 0xc1, 0x0f, code, 0xc0) // ucomisd / setcc
+		if op == "!=" {
+			a.emit(0x0f, 0x9a, 0xc2, 0x08, 0xd0)
+		} else {
+			a.emit(0x0f, 0x9b, 0xc2, 0x20, 0xd0)
+		}
+		a.emit(0x0f, 0xb6, 0xc0)
+		return "bool"
+	}
+	c.err("unsupported float operator " + op)
+	return ""
+}
+
+// Runtime sections contain hand-written x86-64, with relocations resolved by Forge.
+// Ordered dependency closure keeps unused helpers out of tiny binaries.
+func (a *asm) libertyRuntime() {
+	order := []string{"print:float", "input", "concat", "parseint", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
+	for _, name := range order {
+		if !a.needed(name) {
+			continue
+		}
+		key := name
+		if name == "osalloc" || name == "readbyte" {
+			key += ":" + a.target
+		}
+		t, ok := libertyCode[key]
+		if !ok {
+			die("missing runtime %s", key)
+		}
+		a.label(name)
+		base := len(a.b)
+		a.b = append(a.b, t.code...)
+		for _, r := range t.reloc {
+			a.fixes = append(a.fixes, fix{base + r.at, r.label})
+		}
+	}
+}
+
+type nativeTemplate struct {
+	code  []byte
+	reloc []fix
+}
