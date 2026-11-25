@@ -22,3 +22,6 @@ Use `tripol arena --runs 20 --profile turbo --json arena-apex.json` to save all 
 ## ECLIPSE
 
 `--case copy` measures allocation and copy of one million int64 elements, with checksum after timing. `--case search` measures scanning one million integers for a missing value. `--case all` now includes six workloads. The original four workloads are unchanged. Rust uses checked i64 arithmetic; these tests are not a comprehensive language comparison.
+
+## ASCENSION
+`--timeout 300` configures per-process timeouts (default 120 seconds; 1–900 allowed). Only the Rust version probe retries once on a timeout; failed timed trials abort instead of silently dropping samples. `--case copy-reuse` compares preallocated equal-sized buffers on both languages. JSON includes nearest-rank internal p95. It is a separate workload, not a direct speedup of the allocating `copy` test.

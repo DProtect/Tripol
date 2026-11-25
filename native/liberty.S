@@ -2114,6 +2114,25 @@ discord_post: .short 80,79,83,84,0
  leave
  ret
 
+# Reuse destination storage; reject different lengths before touching data.
+.section .text.array_copy_into,"ax"
+ mov rdx,[rax]
+ cmp rdx,[rcx]
+ jne .aci_bad
+ cmp rax,rcx
+ je .aci_ok
+ lea rdi,[rax+8]
+ lea rsi,[rcx+8]
+ mov rcx,rdx
+ cld
+ rep movsq
+.aci_ok:
+ mov eax,1
+ ret
+.aci_bad:
+ xor eax,eax
+ ret
+
 # Find first matching int64; bounded and read-only.
 # AVX2 first-match search with CPUID/XGETBV gate; scalar fallback and tail.
 .section .text.array_find,"ax"

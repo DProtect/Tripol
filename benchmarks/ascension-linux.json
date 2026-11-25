@@ -1,0 +1,249 @@
+{
+  "arch": "amd64",
+  "os": "linux",
+  "profile": "turbo",
+  "runs": 5,
+  "rust": "not requested",
+  "timeout_seconds": 120,
+  "version": "0.24.0",
+  "workloads": [
+    {
+      "case": "division",
+      "contestants": [
+        {
+          "build_median_ms": 2.762961,
+          "build_samples_ms": [
+            4.646688,
+            2.762961,
+            2.474587
+          ],
+          "bytes": 1586,
+          "internal_median_ms": 11.452879,
+          "internal_p95_ms": 11.966662,
+          "internal_samples_ms": [
+            11.230925,
+            11.589594,
+            11.452879,
+            11.966662,
+            10.873792
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 11.923958,
+          "process_samples_ms": [
+            11.640401,
+            11.923958,
+            11.935496,
+            12.438317,
+            11.275722
+          ]
+        }
+      ],
+      "input": "12000000",
+      "verified_output": "-750000"
+    },
+    {
+      "case": "registers",
+      "contestants": [
+        {
+          "build_median_ms": 2.837067,
+          "build_samples_ms": [
+            2.945115,
+            2.126773,
+            2.837067
+          ],
+          "bytes": 1679,
+          "internal_median_ms": 8.859674,
+          "internal_p95_ms": 9.345506,
+          "internal_samples_ms": [
+            8.752642,
+            9.18889,
+            8.113299,
+            9.345506,
+            8.859674
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 9.276111,
+          "process_samples_ms": [
+            9.159495,
+            9.532748,
+            8.486646,
+            9.741892,
+            9.276111
+          ]
+        }
+      ],
+      "input": "6000000",
+      "verified_output": "45000000 21000000 42000000 46500000"
+    },
+    {
+      "case": "fibonacci",
+      "contestants": [
+        {
+          "build_median_ms": 3.04713,
+          "build_samples_ms": [
+            2.888927,
+            3.04713,
+            3.114505
+          ],
+          "bytes": 1491,
+          "internal_median_ms": 4.058482,
+          "internal_p95_ms": 7.22751,
+          "internal_samples_ms": [
+            4.001446,
+            3.906914,
+            4.058482,
+            4.221909,
+            7.22751
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 4.401369,
+          "process_samples_ms": [
+            4.368785,
+            4.25602,
+            4.401369,
+            4.578376,
+            7.571598
+          ]
+        }
+      ],
+      "input": "30",
+      "verified_output": "832040"
+    },
+    {
+      "case": "arrays",
+      "contestants": [
+        {
+          "build_median_ms": 3.185507,
+          "build_samples_ms": [
+            2.545644,
+            3.185507,
+            4.644896
+          ],
+          "bytes": 1835,
+          "internal_median_ms": 0.448695,
+          "internal_p95_ms": 0.501175,
+          "internal_samples_ms": [
+            0.347283,
+            0.448695,
+            0.309265,
+            0.475215,
+            0.501175
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 6.680411,
+          "process_samples_ms": [
+            5.627586,
+            8.003684,
+            6.680411,
+            6.060197,
+            7.384882
+          ]
+        }
+      ],
+      "input": "1000000",
+      "verified_output": "511370976"
+    },
+    {
+      "case": "copy",
+      "contestants": [
+        {
+          "build_median_ms": 2.851044,
+          "build_samples_ms": [
+            2.851044,
+            2.809151,
+            3.729696
+          ],
+          "bytes": 1935,
+          "internal_median_ms": 4.02336,
+          "internal_p95_ms": 5.499692,
+          "internal_samples_ms": [
+            3.50596,
+            5.499692,
+            4.983015,
+            4.02336,
+            3.281472
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 12.263134,
+          "process_samples_ms": [
+            11.718228,
+            12.263134,
+            13.478079,
+            17.305138,
+            9.047766
+          ]
+        }
+      ],
+      "input": "1000000",
+      "verified_output": "511370976"
+    },
+    {
+      "case": "search",
+      "contestants": [
+        {
+          "build_median_ms": 2.700477,
+          "build_samples_ms": [
+            2.700477,
+            3.078576,
+            2.478102
+          ],
+          "bytes": 1992,
+          "internal_median_ms": 0.152119,
+          "internal_p95_ms": 0.204628,
+          "internal_samples_ms": [
+            0.174432,
+            0.204628,
+            0.152119,
+            0.112259,
+            0.134883
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 4.736514,
+          "process_samples_ms": [
+            4.736514,
+            4.4886,
+            4.778456,
+            4.171572,
+            4.865188
+          ]
+        }
+      ],
+      "input": "1000000",
+      "verified_output": "-1"
+    },
+    {
+      "case": "copy-reuse",
+      "contestants": [
+        {
+          "build_median_ms": 2.256578,
+          "build_samples_ms": [
+            2.838714,
+            2.256578,
+            2.191791
+          ],
+          "bytes": 2006,
+          "internal_median_ms": 0.586023,
+          "internal_p95_ms": 1.065474,
+          "internal_samples_ms": [
+            0.523609,
+            1.065474,
+            0.811623,
+            0.586023,
+            0.580594
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 9.503323,
+          "process_samples_ms": [
+            9.673629,
+            9.341298,
+            9.579297,
+            9.503323,
+            9.101568
+          ]
+        }
+      ],
+      "input": "1000000",
+      "verified_output": "511370976"
+    }
+  ]
+}

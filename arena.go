@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -111,6 +112,19 @@ show "TRIPOL_NS:",ns
 `, rustInput + `let mut data=vec![0i64;n as usize];for i in 0..n {data[i as usize]=i%1024;}
 let start=Instant::now();let s=std::hint::black_box(&data).iter().position(|&x|x==n).map(|i|i as i64).unwrap_or(-1);let ns=start.elapsed().as_nanos();println!("{}",s);println!("TRIPOL_NS: {}",ns);}
 `, "1000000", "-1"},
+		{"copy-reuse", "import tripol.arrays\n" + triInput + `data=ints(n);b=ints(n)
+for i in range(n){data[i]=i%1024}
+start=time.now_ns()
+assert arrays.copy_into(b,data)
+ns=time.elapsed_ns(start)
+s=0
+for i in range(n){s+=b[i]}
+show s
+show "TRIPOL_NS:",ns
+`, rustInput + `let mut data=vec![0i64;n as usize];let mut b=vec![0i64;n as usize];for i in 0..n {data[i as usize]=i%1024;}
+let start=Instant::now();b.copy_from_slice(std::hint::black_box(&data));let ns=start.elapsed().as_nanos();
+let mut s=0i64;for x in b {s+=x;} println!("{}",s);println!("TRIPOL_NS: {}",ns);}
+`, "1000000", "511370976"},
 	}
 }
 func arenaOutput(out, expected string) (int64, bool) {
@@ -132,6 +146,23 @@ func arenaMedian(v []float64) float64 {
 	sort.Float64s(s)
 	return (s[(len(s)-1)/2] + s[len(s)/2]) / 2
 }
+
+// Nearest-rank percentile; no samples discarded.
+func arenaPercentile(v []float64, p float64) float64 {
+	s := append([]float64(nil), v...)
+	sort.Float64s(s)
+	i := int(p * float64(len(s)))
+	if float64(i) < p*float64(len(s)) {
+		i++
+	}
+	if i < 1 {
+		i = 1
+	}
+	if i > len(s) {
+		i = len(s)
+	}
+	return s[i-1]
+}
 func arenaCommand(path string, args []string, input string, limit time.Duration) (string, float64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), limit)
 	defer cancel()
@@ -151,6 +182,7 @@ func arenaCLI(args []string) {
 	selected := "all"
 	jsonPath := ""
 	only := false
+	timeout := 120 * time.Second
 	for len(args) > 0 {
 		if args[0] == "--tripol-only" {
 			only = true
@@ -172,11 +204,17 @@ func arenaCLI(args []string) {
 			if profile != "nano" && profile != "balanced" && profile != "turbo" && profile != "debug" {
 				die("invalid profile")
 			}
+		case "--timeout":
+			n, e := strconv.Atoi(args[1])
+			if e != nil || n < 1 || n > 900 {
+				die("arena timeout must be 1..900 seconds")
+			}
+			timeout = time.Duration(n) * time.Second
 		case "--json":
 			jsonPath = args[1]
 		case "--case":
 			selected = args[1]
-			if selected != "all" && selected != "division" && selected != "registers" && selected != "fibonacci" && selected != "arrays" && selected != "copy" && selected != "search" {
+			if selected != "all" && selected != "division" && selected != "registers" && selected != "fibonacci" && selected != "arrays" && selected != "copy" && selected != "search" && selected != "copy-reuse" {
 				die("unknown arena case")
 			}
 		default:
@@ -198,9 +236,13 @@ func arenaCLI(args []string) {
 		if e != nil {
 			die("rustc not found. Install Rust from https://rustup.rs/ and reopen CMD; or use --tripol-only")
 		}
-		v, _, err := arenaCommand(rust, []string{"--version"}, "", 30*time.Second)
+		v, _, err := arenaCommand(rust, []string{"--version"}, "", timeout)
+		if errors.Is(err, context.DeadlineExceeded) {
+			fmt.Fprintln(os.Stderr, "Rust version probe timed out; retrying once (check disk activity).")
+			v, _, err = arenaCommand(rust, []string{"--version"}, "", timeout)
+		}
 		if err != nil {
-			die("rustc unavailable: %s %v", v, err)
+			die("rustc probe failed: %s %v; try rustc --version, --timeout 300 or --tripol-only", v, err)
 		}
 		rv = strings.TrimSpace(v)
 	}
@@ -209,14 +251,14 @@ func arenaCLI(args []string) {
 		die("%v", e)
 	}
 	defer os.RemoveAll(root)
-	fmt.Printf("TRIPOL ORIGIN Arena | %s/%s | %d runs\nTRIPOL %s (%s) | %s\n", runtime.GOOS, runtime.GOARCH, runs, version, profile, rv)
+	fmt.Printf("TRIPOL ASCENSION Arena | %s/%s | %d runs\nTRIPOL %s (%s) | %s\n", runtime.GOOS, runtime.GOARCH, runs, version, profile, rv)
 	fmt.Println("Checked i64 arithmetic. Runtime input before timer. Rust: -C opt-level=3 -C overflow-checks=yes -C debuginfo=0 -C strip=symbols.")
 	fmt.Println("Build median: 3 full CLI builds incl. startup/write. Runtime: interleaved after warm-up; every result checked.")
 	ext := ""
 	if runtime.GOOS == "windows" {
 		ext = ".exe"
 	}
-	report := map[string]any{"version": version, "rust": rv, "os": runtime.GOOS, "arch": runtime.GOARCH, "profile": profile, "runs": runs}
+	report := map[string]any{"timeout_seconds": int(timeout / time.Second), "version": version, "rust": rv, "os": runtime.GOOS, "arch": runtime.GOARCH, "profile": profile, "runs": runs}
 	workloads := []map[string]any{}
 	for _, w := range arenaCases() {
 		if selected != "all" && selected != w.name {
@@ -250,7 +292,7 @@ func arenaCLI(args []string) {
 					k = len(cs) - 1 - j
 				}
 				c := &cs[k]
-				out, ms, err := arenaCommand(c.tool, c.args, "", 120*time.Second)
+				out, ms, err := arenaCommand(c.tool, c.args, "", timeout)
 				if err != nil {
 					die("%s build failed: %v\n%s", c.name, err, out)
 				}
@@ -258,7 +300,7 @@ func arenaCLI(args []string) {
 			}
 		}
 		run := func(c *contestant, record bool) {
-			out, ms, err := arenaCommand(c.bin, nil, w.input+"\n", 30*time.Second)
+			out, ms, err := arenaCommand(c.bin, nil, w.input+"\n", timeout)
 			ns, ok := arenaOutput(out, w.expected)
 			if err != nil || !ok {
 				die("%s %s result mismatch: expected %s; got %q (%v)", w.name, c.name, w.expected, out, err)
@@ -288,7 +330,7 @@ func arenaCLI(args []string) {
 		fmt.Printf("Verified output: %s\n", w.expected)
 		entries := []map[string]any{}
 		for _, c := range cs {
-			entries = append(entries, map[string]any{"name": c.name, "build_median_ms": arenaMedian(c.build), "internal_median_ms": arenaMedian(c.internal), "process_median_ms": arenaMedian(c.process), "bytes": c.size, "build_samples_ms": c.build, "internal_samples_ms": c.internal, "process_samples_ms": c.process})
+			entries = append(entries, map[string]any{"name": c.name, "build_median_ms": arenaMedian(c.build), "internal_median_ms": arenaMedian(c.internal), "process_median_ms": arenaMedian(c.process), "bytes": c.size, "build_samples_ms": c.build, "internal_samples_ms": c.internal, "process_samples_ms": c.process, "internal_p95_ms": arenaPercentile(c.internal, 0.95)})
 			fmt.Printf("%-7s | build %.3f ms | internal %.6f ms | process %.3f ms | %d bytes\n", c.name, arenaMedian(c.build), arenaMedian(c.internal), arenaMedian(c.process), c.size)
 		}
 		workloads = append(workloads, map[string]any{"case": w.name, "input": w.input, "verified_output": w.expected, "contestants": entries})

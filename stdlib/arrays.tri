@@ -19,3 +19,6 @@ func reversed(a:ints) -> ints {
 }
 func copy(a:ints) -> ints { return array_copy(a) }
 func length(a:ints) -> int { return len(a) }
+
+// Reuse an existing destination of the same length. False leaves it unchanged.
+func copy_into(destination:ints, source:ints) -> bool { return array_copy_into(destination,source) }

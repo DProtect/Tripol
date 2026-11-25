@@ -1,3 +1,10 @@
+# v0.24 ASCENSION
+
+- Native allocation-free array copy into an existing buffer, including self-copy and size mismatch checks.
+- Arena: 120-second default timeout, configurable 1–900 seconds, single retry of Rust version probe on timeout, copy-reuse workload and p95 report.
+- Monochrome responsive static website, bilingual interface, searchable library catalog and checksum-verified user installers.
+- Discord unchanged. General optimizer and memory reclamation work remains planned.
+
 # ORIGIN v0.23.0
 
 - Discord Gateway replies route automatically to the received channel; optional channel filter remains. `send_to`, `event_channel`, `all_channels`, `has_channel` added. No reconnect, slash commands or live Gateway validation yet.

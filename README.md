@@ -6,7 +6,7 @@
 
 A free, experimental programming language that turns readable code directly into native x86-64 executables.
 
-![Version](https://img.shields.io/badge/version-0.23.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
+![Version](https://img.shields.io/badge/version-0.24.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
 
 [Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
 
@@ -18,13 +18,17 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 | Current release | Built-in modules | Callable library functions* | Hello world (Windows / Linux) |
 |---|---:|---:|---:|
-| **0.23.0 — ORIGIN** | 48 | 296 | 1,536 / 373 bytes |
+| **0.24.0 — ASCENSION** | 48 | 297 | 1,536 / 373 bytes |
 
 *Includes JSON scanner helpers. Sizes are measured for `examples/hello.tri` in nano mode, not a promise for arbitrary programs. TRIPOL is pre-1.0 and is not yet a replacement for mature production languages.*
 
+## ASCENSION
+
+New: `arrays.copy_into(destination, source)` reuses equal-sized storage and returns false without modifying the destination on a size mismatch. Arena now supports `--timeout SECONDS`, `copy-reuse`, and p95 in JSON. The static bilingual website is in `website/`; see `docs/website.md`.
+
 ## Quick start
 
-Install the Windows x64 distribution (`TRIPOL-v0.23-Setup-x64.exe`) when provided by the project maintainer, or [build from source](docs/build.md). The installer is unsigned, per-user and configures PATH. Binary release assets are not currently published in this repository.
+Install the Windows x64 distribution (`TRIPOL-v0.24-Setup-x64.exe`) when provided by the project maintainer, or [build from source](docs/build.md). The installer is unsigned, per-user and configures PATH. Binary release assets are not currently published in this repository.
 
 ```cmd
 tripol --version

@@ -18,6 +18,9 @@ func (c *compiler) eclipseBuiltin(e *expr) (string, bool) {
 	case "array_copy":
 		types = []string{"ints"}
 		ret = "ints"
+	case "array_copy_into":
+		types = []string{"ints", "ints"}
+		ret = "bool"
 	case "array_find":
 		types = []string{"ints", "int"}
 		ret = "int"
