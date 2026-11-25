@@ -38,6 +38,17 @@ GENESIS R1 is the first experimental native executable generator written in TRIP
 
 New: `arrays.copy_into(destination, source)` reuses equal-sized storage and returns false without modifying the destination on a size mismatch. Arena now supports `--timeout SECONDS`, `copy-reuse`, and p95 in JSON. The static bilingual website is maintained separately on the [`gh-pages` branch](https://github.com/Tripollas/Tripol/tree/gh-pages); see [website documentation](docs/website.md).
 
+## Repository layout
+
+- `core/`: production Go compiler and white-box regression tests.
+- `compiler/`: GENESIS compiler and demos written in TRIPOL.
+- `stdlib/`: the 52 standard-library modules, embedded at build time.
+- `native/`: assembly source and code generator.
+- `tests/`: CLI integration tests and archived test evidence.
+- `examples/`, `benchmarks/`, `installer/`, `vscode/`, `docs/`: samples, reproducible measurements, distribution and documentation.
+
+The small root `main.go` keeps `go build -o tripol .` compatible. Run the complete compiler and integration suite with `go test ./core ./tests`.
+
 ## Community and tools
 
 [Releases](https://github.com/Tripollas/Tripol/releases) · [VS Code extension](vscode/) · [Practical projects](examples/projects/) · [Security policy](SECURITY.md) · [Release and community checklist](docs/ecosystem-release.md)
@@ -220,7 +231,7 @@ The length benchmark compares identical source and output on the same Linux envi
              modules / Vault ─────────────┘
 ```
 
-Go is the compiler's implementation language, not an intermediate language for user programs. The maintained assembly templates and generated Go tables encode the native helpers. TIR R4 with CORE caching lowers small pure int64 return expressions to a typed tree; eligible zero/one-parameter functions inline in nano, and up to four parameters in the experimental turbo profile using registers; balanced uses a private register ABI for eligible multi-argument leaves, with overflow checks. All other code uses the existing backend. `tripol ir FILE.tri` inspects this subset. General control-flow TIR and full self-hosting remain future work; `bootstrap/demo.tri` exercises an experimental ASCII lexer written in TRIPOL; `bootstrap/parser_demo.tri` exercises its checked integer expression parser.
+Go is the compiler's implementation language, not an intermediate language for user programs. The maintained assembly templates and generated Go tables encode the native helpers. TIR R4 with CORE caching lowers small pure int64 return expressions to a typed tree; eligible zero/one-parameter functions inline in nano, and up to four parameters in the experimental turbo profile using registers; balanced uses a private register ABI for eligible multi-argument leaves, with overflow checks. All other code uses the existing backend. `tripol ir FILE.tri` inspects this subset. General control-flow TIR and full self-hosting remain future work; `compiler/demo.tri` exercises an experimental ASCII lexer written in TRIPOL; `compiler/parser_demo.tri` exercises its checked integer expression parser.
 
 ## Documentation
 

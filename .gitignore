@@ -15,3 +15,7 @@ __pycache__/
 *.pem
 *.key
 arena-*.json
+
+# Generated distribution and local test logs
+/dist/
+/test-results.txt
