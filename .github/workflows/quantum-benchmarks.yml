@@ -1,0 +1,44 @@
+name: QUANTUM X benchmarks
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: v0.26.0
+          path: baseline
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build both compiler versions
+        run: |
+          go build -trimpath -o "$RUNNER_TEMP/tripol027" .
+          (cd baseline && go build -trimpath -o "$RUNNER_TEMP/tripol026" .)
+          "$RUNNER_TEMP/tripol026" --version
+          "$RUNNER_TEMP/tripol027" --version
+      - name: Reproduce old/new and cross-language measurements
+        env:
+          TRIPOL_NO_UPDATE: '1'
+        run: |
+          mkdir -p benchmark-results
+          python benchmarks/compare_versions.py --old "$RUNNER_TEMP/tripol026" --new "$RUNNER_TEMP/tripol027" --runs 7 --out benchmark-results/compare.json
+          python benchmarks/quantum_x.py --compiler "$RUNNER_TEMP/tripol027" --runs 7 --out benchmark-results/languages.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: quantum-x-measurements
+          path: benchmark-results/

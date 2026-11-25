@@ -109,3 +109,5 @@ See `examples/projects/quantum_x_libraries.tri` and `memory_stress.tri`.
 - `io`: `read(path,limit=65536)` and `write(path,data)`. Binary int arrays, values 0..255; limit 65536 bytes. Invalid sizes, bytes, oversized input and OS I/O failures are fatal, matching existing file I/O. Writes replace the destination after input validation; not transactional. Reads reserve storage for the requested limit and return actual length.
 - `stream`: in-memory byte cursor `create`, `position`, `remaining`, `seek`, `read_byte`, `read_u16` (little endian). Cursor is mutable, checked, and allocates only at creation.
 - `regex`: `valid`, `matches`. Bounded byte-oriented full-string matching supporting literal, `.` and `*`; pattern max 128 bytes, input max 4096. No groups, captures, alternation or Unicode matching.
+
+- `atomic`: `load(data,index)`, `exchange(data,index,value)` returns old value, `compare_exchange(data,index,expected,value)` returns bool, `add(data,index,delta)` returns new value. Aligned x86-64 loads and locked RMW instructions; checked index/arithmetic. No general thread API or claim of thread-safe runtime allocation yet.

@@ -257,7 +257,7 @@ func (c *compiler) rangeLoop(s stmt) {
 	}
 	a.j(0x8d, end)
 	c.loops = append(c.loops, [2]string{end, inc})
-	c.block(s.yes, true)
+	c.loopBody(s.yes)
 	c.loops = c.loops[:len(c.loops)-1]
 	a.label(inc)
 	if registerLoop {

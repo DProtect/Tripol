@@ -89,8 +89,8 @@ func TestInfinityAllLibraries(t *testing.T) {
 			t.Fatal("unused libraries changed binary", target)
 		}
 	}
-	if len(standardNames) != 58 {
-		t.Fatalf("expected 58 standard modules, got %d", len(standardNames))
+	if len(standardNames) != 59 {
+		t.Fatalf("expected 59 standard modules, got %d", len(standardNames))
 	}
 }
 func TestInfinityOptimizations(t *testing.T) {

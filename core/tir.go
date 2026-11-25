@@ -246,5 +246,5 @@ func inspectTIR(file string) {
 	fmt.Printf("%d lowered functions; nano: zero/one argument; balanced: register leaf ABI; turbo: up to four arguments may inline.\n", n)
 	fmt.Println("Control-flow inspection (analysis only; existing checked backend retained):")
 	printFlow("@main", ss)
-	for _, f := range fs { if !f.record { printFlow(f.name, f.body) } }
+	for _, f := range fs { if !f.record { printFlow(f.name, f.body); printSSA(f) } }
 }

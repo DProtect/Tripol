@@ -1,0 +1,11 @@
+import tripol.memory
+before=memory.used()
+total=0
+repeat 1000 {
+ temp=ints(65535)
+ temp[0]=1
+ total+=temp[0]
+}
+show total
+show before,memory.used(),memory.committed()
+assert before==memory.used()

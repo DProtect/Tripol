@@ -29,3 +29,7 @@ Use `tripol arena --runs 20 --profile turbo --json arena-apex.json` to save all 
 OVERDRIVE retains the existing Arena workloads. Interactive update checks are disabled for Arena and benchmarks to avoid measurement interference. No new cross-language performance results claimed.
 
 QUANTUM X retains Arena's existing comparable workloads and JSON measurements. Capture v0.26 and v0.27 on the same host using `--runs 20 --profile turbo --tripol-only` with distinct `--json` paths. No new cross-language backends or measured improvements are claimed in this first implementation.
+
+## ARENA R8 companion benchmarks
+
+On Linux, `python benchmarks/compare_versions.py --old /path/to/v026 --new /path/to/v027 --runs 7 --out comparison.json` compares the same existing Arena workloads. `python benchmarks/quantum_x.py --compiler /path/to/v027 --runs 7 --out languages.json` measures checked Fibonacci(30) against available C, C++, Rust, Go, Zig and Python tools, verifies every result, records build/runtime medians and p95, native executable sizes, and a separate GNU time RSS probe when available. Missing or incompatible tools are explicitly recorded, not assigned synthetic results. The dedicated QUANTUM X benchmarks workflow uploads both reports. Hosted runners vary, so do not extrapolate to other hardware or workloads.

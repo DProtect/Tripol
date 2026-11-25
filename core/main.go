@@ -1098,6 +1098,7 @@ func (c *compiler) block(ss []stmt, nested bool) {
 		case "for":
 			c.rangeLoop(s)
 		case "if", "while":
+			if a.opt { if t,n,ok:=fold(s.e);ok&&t=="bool" { if s.op=="if" { if n!=0 {c.block(s.yes,true)} else {c.block(s.no,true)};continue };if n==0 {continue} } }
 			start, end := a.fresh(), a.fresh()
 			a.label(start)
 			other := end
@@ -1108,7 +1109,7 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			if s.op == "while" {
 				c.loops = append(c.loops, [2]string{end, start})
 			}
-			c.block(s.yes, true)
+			if s.op=="while" { c.loopBody(s.yes) } else { c.block(s.yes,true) }
 			if s.op == "while" {
 				c.loops = c.loops[:len(c.loops)-1]
 			}

@@ -4,6 +4,7 @@ package core
 // The generated program uses only OS services; no C runtime is linked.
 func (c *compiler) builtin(e *expr) (string, bool) {
 	a := c.a
+	if t, ok := c.atomicBuiltin(e); ok {return t,true}
 	if t, ok := c.nexusGatewayBuiltin(e); ok {
 		return t, true
 	}

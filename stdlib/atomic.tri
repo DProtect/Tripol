@@ -1,0 +1,6 @@
+// Aligned integer atomics. Sequentially consistent among these operations
+// on x86-64. General user threads and concurrent allocation remain unsupported.
+func load(data:ints,index:int)->int {return atomic_load(data,index)}
+func exchange(data:ints,index:int,value:int)->int {return atomic_exchange(data,index,value)}
+func compare_exchange(data:ints,index:int,expected:int,value:int)->bool {return atomic_compare_exchange(data,index,expected,value)}
+func add(data:ints,index:int,delta:int)->int {return atomic_add(data,index,delta)}

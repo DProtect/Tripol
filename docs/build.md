@@ -47,3 +47,7 @@ GENESIS R2: [experimental compiler written in TRIPOL](genesis.md). The Go compil
 See [UPDATE R1](update.md) for explicit update checks and downloads.
 
 TIR R6 adds experimental statement-level CFG inspection to `tripol ir`; protected control flow is skipped. The production optimizer remains the existing scalar/register backend. See [GENESIS R3](genesis.md), [UPDATE R2](update.md), and [Windows validation](testing-v0.27.md).
+
+### MEMORY R2 and TIR R6
+
+The compiler proves a narrow subset of straight-line loop bodies cannot retain references beyond the iteration: local integer arrays, scalar arithmetic, local indexing and selected pure builtins. It inserts a scratch region with exception cleanup in every profile. Unproven bodies retain the previous arena behavior. General ownership/GC, string reclamation and arbitrary escape analysis remain pending. `examples/projects/auto_memory.tri` checks reuse. Constant pure conditions can eliminate unreachable branches only after complete source validation. `tripol ir` shows CFG and typed single-block SSA def/use inspection for eligible int64 functions; checked operations are retained even if unused. CFG phi nodes and a general SSA code generator remain pending.

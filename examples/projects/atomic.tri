@@ -1,0 +1,6 @@
+import tripol.atomic
+a=ints(1)
+show atomic.exchange(a,0,10)
+show atomic.add(a,0,5)
+show atomic.compare_exchange(a,0,15,20)
+show atomic.load(a,0)
