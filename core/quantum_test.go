@@ -17,6 +17,7 @@ show memory.used(),memory.committed(),memory.capacity()
 a=ints(65535)
 a[0]=77
 a[65534]=99
+b=a
 repeat 31 {b=ints(65535);b[65534]=1}
 show memory.used(),memory.committed()
 show a[0],a[65534]

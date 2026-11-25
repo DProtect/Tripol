@@ -92,6 +92,36 @@ show csv.fields("a,b,c")
         if ($LASTEXITCODE -ne 0) { throw "Native program exited $LASTEXITCODE" }
         Assert-Output ($actual -join "`n") "2`n3`n3"
     }
+    Test-Case 'Automatic loop memory reclamation' {
+        $memory = Join-Path $root 'memory.tri'
+        @'
+import tripol.memory
+before=memory.used()
+repeat 1000 {a=ints(65535);a[65534]=9}
+show memory.used()==before
+'@ | Set-Content -LiteralPath $memory -Encoding ASCII
+        $exe = Join-Path $root 'memory.exe'
+        Invoke-Tripol @('build',$memory,'--target','windows','-o',$exe) | Out-Null
+        $actual = & $exe
+        if ($LASTEXITCODE -ne 0) { throw "Native program exited $LASTEXITCODE" }
+        Assert-Output ($actual -join "`n") 'true'
+    }
+    Test-Case 'Dynamic lists and aliases' {
+        $list = Join-Path $root 'list.tri'
+        @'
+a=list()
+b=a
+repeat 100 {a.add(7)}
+show b.size(),b.get(99)
+a.remove_at(0)
+show b.size()
+'@ | Set-Content -LiteralPath $list -Encoding ASCII
+        $exe = Join-Path $root 'list.exe'
+        Invoke-Tripol @('build',$list,'--target','windows','-o',$exe) | Out-Null
+        $actual = & $exe
+        if ($LASTEXITCODE -ne 0) { throw "Native program exited $LASTEXITCODE" }
+        Assert-Output ($actual -join "`n") "100 7`n99"
+    }
     if ($CheckUpdates) { Test-Case 'Live update detection' { Invoke-Tripol @('update','--check') } }
     else { $results.Add([pscustomobject]@{name='Live update detection';status='SKIP';detail='Use -CheckUpdates'}) }
     if ($Benchmark) { Test-Case 'Arena' { Invoke-Tripol @('arena','--runs','20','--profile','turbo','--tripol-only','--json',$benchmarkPath) } }

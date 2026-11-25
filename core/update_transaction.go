@@ -77,8 +77,8 @@ func extractUpdateLinux(archive,digest,destination string)(string,error){
  in,e:=os.Open(archive);if e!=nil{return "",e};defer in.Close()
  gz,e:=gzip.NewReader(in);if e!=nil{return "",e};defer gz.Close()
  tr:=tar.NewReader(io.LimitReader(gz,updateLimit+1048576))
- var found bool
- defer func(){if !found{_ = os.Remove(destination)}}()
+ var found,created,success bool
+ defer func(){if created&&!success{_ = os.Remove(destination)}}()
  seen:=map[string]bool{};var total int64
  for {
   h,e:=tr.Next();if e==io.EOF{break};if e!=nil{found=false;return "",e}
@@ -87,12 +87,13 @@ func extractUpdateLinux(archive,digest,destination string)(string,error){
   if h.Name=="tripol" {
    if h.Size==0{found=false;return "",fmt.Errorf("empty compiler")}
    out,e:=os.OpenFile(destination,os.O_WRONLY|os.O_CREATE|os.O_EXCL,0700);if e!=nil{return "",e}
+   created=true
    _,e=io.CopyN(out,tr,h.Size);if e==nil{e=out.Sync()};ce:=out.Close();if e==nil{e=ce}
    if e!=nil{return "",e};found=true
   }
  }
  if !found{return "",fmt.Errorf("archive missing compiler")}
- return fileUpdateDigest(destination)
+ result,e:=fileUpdateDigest(destination);if e==nil{success=true};return result,e
 }
 type updateBackup struct {
  Tag string `json:"tag"`

@@ -92,6 +92,8 @@ jobs:
           if ($LASTEXITCODE -or ($output -join ' ') -notmatch '46000') { throw 'Expense smoke test failed' }
           & $compiler build examples/projects/notes.tri --target windows -o notes.exe
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & ./tests/manual/test-v027.ps1 -Compiler $compiler
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           & ./dist/TRIPOL-v0.27-Setup-x64.exe --quiet --uninstall
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           Compress-Archive -Path dist/TRIPOL-v0.27-Setup-x64.exe, LICENSE -DestinationPath dist/TRIPOL-v0.27-Installer.zip
