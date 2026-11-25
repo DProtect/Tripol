@@ -12,7 +12,7 @@
     },
     {
       "name": "support.class.tripol",
-      "match": "\\btripol\\.(math|arrays|stats|text|files|console|convert|encoding|http|network|json|random|search|sort|system|time|ui|errors|https|discord|validate)\\b"
+      "match": "\\btripol\\.(arrays|bits|checksum|collections|colors|compression|console|convert|datetime|discord|encoding|errors|files|geometry|http|https|json|math|matrix|network|random|search|sequences|sort|stats|system|text|time|ui|validate)\\b"
     },
     {
       "name": "string.quoted.double.tripol",

@@ -85,7 +85,7 @@ func (c *compiler) recordAssign(s stmt) {
 	c.a.u32(off)
 }
 func learnSpanish() {
-	fmt.Print(`TRIPOL 0.12 — Aprende en cinco minutos
+	fmt.Print(`TRIPOL 0.13 — Aprende en cinco minutos
 
 1. Mostrar: show "Hola", 10 + 20
 2. Preguntar: nombre = input("Tu nombre?")

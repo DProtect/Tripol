@@ -7,7 +7,7 @@
 === RUN   TestAtlasLibraries/5
 === RUN   TestAtlasLibraries/6
 === RUN   TestAtlasLibraries/7
---- PASS: TestAtlasLibraries (0.03s)
+--- PASS: TestAtlasLibraries (0.02s)
     --- PASS: TestAtlasLibraries/0 (0.00s)
     --- PASS: TestAtlasLibraries/1 (0.00s)
     --- PASS: TestAtlasLibraries/2 (0.00s)
@@ -61,7 +61,7 @@
 === RUN   TestConnectPE
 --- PASS: TestConnectPE (0.00s)
 === RUN   TestConnectHTTPParsing
---- PASS: TestConnectHTTPParsing (0.01s)
+--- PASS: TestConnectHTTPParsing (0.00s)
 === RUN   TestConnectRefused
 --- PASS: TestConnectRefused (0.00s)
 === RUN   TestConnectFindBytes
@@ -95,9 +95,9 @@
 === RUN   TestEcosystemNoAllocRead
 --- PASS: TestEcosystemNoAllocRead (0.03s)
 === RUN   TestEcosystemNoUnused
---- PASS: TestEcosystemNoUnused (0.01s)
+--- PASS: TestEcosystemNoUnused (0.02s)
 === RUN   TestVaultPackages
---- PASS: TestVaultPackages (0.01s)
+--- PASS: TestVaultPackages (0.00s)
 === RUN   TestVaultDependencies
 --- PASS: TestVaultDependencies (0.00s)
 === RUN   TestVaultReject
@@ -197,10 +197,50 @@
 === RUN   TestHorizonModulesPE
 --- PASS: TestHorizonModulesPE (0.00s)
 === RUN   TestHorizonTemplate
-Created /tmp/TestHorizonTemplate4088799606/001/records (records)
-cd /tmp/TestHorizonTemplate4088799606/001/records
+Created /tmp/TestHorizonTemplate3818627743/001/records (records)
+cd /tmp/TestHorizonTemplate3818627743/001/records
 tripol run
 --- PASS: TestHorizonTemplate (0.00s)
+=== RUN   TestInfinitySyntax
+--- PASS: TestInfinitySyntax (0.00s)
+=== RUN   TestInfinityReject
+=== RUN   TestInfinityReject/func_f(x=1,y){return_x+y}
+=== RUN   TestInfinityReject/func_f(x:int="a"){return_x}
+=== RUN   TestInfinityReject/func_f(x=1/0){return_x}
+=== RUN   TestInfinityReject/func_f(x=unknown){return_x}
+=== RUN   TestInfinityReject/func_f(x){return_x};show_f()
+=== RUN   TestInfinityReject/func_f(x=1){return_x};show_f(1,2)
+=== RUN   TestInfinityReject/show_f"{unknown}"
+=== RUN   TestInfinityReject/show_f"{a+1}"
+=== RUN   TestInfinityReject/show_f"{"
+=== RUN   TestInfinityReject/show_f"}"
+=== RUN   TestInfinityReject/x=1.0;show_f"{x}"
+--- PASS: TestInfinityReject (0.00s)
+    --- PASS: TestInfinityReject/func_f(x=1,y){return_x+y} (0.00s)
+    --- PASS: TestInfinityReject/func_f(x:int="a"){return_x} (0.00s)
+    --- PASS: TestInfinityReject/func_f(x=1/0){return_x} (0.00s)
+    --- PASS: TestInfinityReject/func_f(x=unknown){return_x} (0.00s)
+    --- PASS: TestInfinityReject/func_f(x){return_x};show_f() (0.00s)
+    --- PASS: TestInfinityReject/func_f(x=1){return_x};show_f(1,2) (0.00s)
+    --- PASS: TestInfinityReject/show_f"{unknown}" (0.00s)
+    --- PASS: TestInfinityReject/show_f"{a+1}" (0.00s)
+    --- PASS: TestInfinityReject/show_f"{" (0.00s)
+    --- PASS: TestInfinityReject/show_f"}" (0.00s)
+    --- PASS: TestInfinityReject/x=1.0;show_f"{x}" (0.00s)
+=== RUN   TestInfinityCollections
+--- PASS: TestInfinityCollections (0.00s)
+=== RUN   TestInfinityNumbers
+--- PASS: TestInfinityNumbers (0.00s)
+=== RUN   TestInfinityAllLibraries
+--- PASS: TestInfinityAllLibraries (0.02s)
+=== RUN   TestInfinityOptimizations
+--- PASS: TestInfinityOptimizations (0.00s)
+=== RUN   TestTIRInline
+--- PASS: TestTIRInline (0.00s)
+=== RUN   TestInfinityRecovery
+--- PASS: TestInfinityRecovery (0.00s)
+=== RUN   TestInfinityPE
+--- PASS: TestInfinityPE (0.00s)
 === RUN   TestLibertyPrograms
 === RUN   TestLibertyPrograms/0
 === RUN   TestLibertyPrograms/1
@@ -242,7 +282,7 @@ tripol run
 === RUN   TestLibertyTraps/show_1.0/0.0
 === RUN   TestLibertyTraps/show_sqrt(-1.0)
 === RUN   TestLibertyTraps/show_10000000000000.0
---- PASS: TestLibertyTraps (0.01s)
+--- PASS: TestLibertyTraps (0.00s)
     --- PASS: TestLibertyTraps/show_parse_int("9223372036854775808") (0.00s)
     --- PASS: TestLibertyTraps/show_parse_int("-9223372036854775809") (0.00s)
     --- PASS: TestLibertyTraps/show_parse_int("12a") (0.00s)
@@ -513,16 +553,16 @@ tripol run
 --- PASS: TestNexusPE (0.00s)
 === RUN   TestNexusTemplates
 === RUN   TestNexusTemplates/basic
-Created /tmp/TestNexusTemplatesbasic3095454916/001/basic
-cd /tmp/TestNexusTemplatesbasic3095454916/001/basic
+Created /tmp/TestNexusTemplatesbasic4152214580/001/basic
+cd /tmp/TestNexusTemplatesbasic4152214580/001/basic
 tripol run main.tri
 === RUN   TestNexusTemplates/calculator
-Created /tmp/TestNexusTemplatescalculator3016607907/001/calculator (calculator)
-cd /tmp/TestNexusTemplatescalculator3016607907/001/calculator
+Created /tmp/TestNexusTemplatescalculator1757689450/001/calculator (calculator)
+cd /tmp/TestNexusTemplatescalculator1757689450/001/calculator
 tripol run
 === RUN   TestNexusTemplates/files
-Created /tmp/TestNexusTemplatesfiles1118325010/001/files (files)
-cd /tmp/TestNexusTemplatesfiles1118325010/001/files
+Created /tmp/TestNexusTemplatesfiles2734000016/001/files (files)
+cd /tmp/TestNexusTemplatesfiles2734000016/001/files
 tripol run
 --- PASS: TestNexusTemplates (0.00s)
     --- PASS: TestNexusTemplates/basic (0.00s)
@@ -549,7 +589,7 @@ tripol run
 === RUN   TestJSONRead/""
 === RUN   TestJSONRead/"true_false"
 === RUN   TestJSONRead/"[[]]"
---- PASS: TestJSONRead (0.06s)
+--- PASS: TestJSONRead (0.07s)
     --- PASS: TestJSONRead/"{\"a\":[1,true,null,{\"b\":-1.2e-4}],\"c\":\"hola\"}" (0.00s)
     --- PASS: TestJSONRead/"[]" (0.00s)
     --- PASS: TestJSONRead/"{}" (0.00s)
@@ -603,7 +643,7 @@ tripol run
     --- PASS: TestVectorLength/4096 (0.00s)
     --- PASS: TestVectorLength/65535 (0.01s)
 === RUN   TestScratchMemory
---- PASS: TestScratchMemory (0.03s)
+--- PASS: TestScratchMemory (0.02s)
 === RUN   TestScratchEscape
 === RUN   TestScratchEscape/s="a";scratch_{s="b"+"c"}
 === RUN   TestScratchEscape/a=ints(2);scratch_{a[0]=1}
@@ -666,7 +706,7 @@ tripol run
 === RUN   TestVelocityFrameAndRHS/func_f(a:float,b:float)->float{return_a/b}_show_f(9.0,2.0)
 === RUN   TestVelocityFrameAndRHS/func_f(a:string,b:string)->string{return_a+b}_show_f("a","b")
 === RUN   TestVelocityFrameAndRHS/func_f(a){if_a>0{let_b=2;return_b};return_0}_show_f(1)
---- PASS: TestVelocityFrameAndRHS (0.01s)
+--- PASS: TestVelocityFrameAndRHS (0.00s)
     --- PASS: TestVelocityFrameAndRHS/func_sub(a,b){return_a-b}_show_sub(9,3) (0.00s)
     --- PASS: TestVelocityFrameAndRHS/func_f(a,b){if_a==b{return_a*b};return_a+b}_show_f(4,4)_show_f(4,5) (0.00s)
     --- PASS: TestVelocityFrameAndRHS/func_f(a:float,b:float)->float{return_a/b}_show_f(9.0,2.0) (0.00s)
@@ -693,7 +733,7 @@ tripol run
     --- PASS: TestVelocityArrays/a=ints(2)_a[2]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(-1) (0.00s)
     --- PASS: TestVelocityArrays/a=ints(65536) (0.00s)
-    --- PASS: TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)} (0.01s)
+    --- PASS: TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)} (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);show_a==a (0.00s)
     --- PASS: TestVelocityArrays/const_a=ints(2);a[0]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);a[0]="s" (0.00s)
@@ -719,6 +759,4 @@ tripol run
 === RUN   TestVisionRecoverableOps
 --- PASS: TestVisionRecoverableOps (0.00s)
 PASS
-ok  	tripol	0.541s
-
-Go vet: PASS
+ok  	tripol	0.550s

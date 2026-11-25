@@ -19,3 +19,15 @@ show "Hola", nombre
 ```
 
 `tripol learn es` muestra el tutorial sin Internet. `tripol libs` lista bibliotecas; `tripol docs math` muestra su código. `tripol check main.tri --lang=es` comprueba errores. `tripol run main.tri --trace` añade una traza de funciones si el programa falla. Las nuevas funciones Windows (formulario y HTTPS) necesitan prueba real en Windows.
+
+### Novedades de Infinity
+
+```tripol
+func saludo(nombre="Usuario", puntos=10)->string {
+    return f"Hola {nombre}, tienes {puntos} puntos"
+}
+show saludo()
+show saludo("Ana", 25)
+```
+
+Prueba `tripol libs`, `tripol docs collections` y `tripol ir main.tri`.

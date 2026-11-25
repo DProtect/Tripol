@@ -1,0 +1,15 @@
+// Packed RGB24, no alpha channel.
+func rgb(r:int,g:int,b:int)->int {
+ assert r>=0 and r<=255 and g>=0 and g<=255 and b>=0 and b<=255,"Invalid RGB channel"
+ return r*65536+g*256+b
+}
+func valid(c:int)->bool {return c>=0 and c<=16777215}
+func red(c:int)->int {assert valid(c),"Invalid RGB";return c/65536}
+func green(c:int)->int {assert valid(c),"Invalid RGB";return c/256%256}
+func blue(c:int)->int {assert valid(c),"Invalid RGB";return c%256}
+func invert(c:int)->int {assert valid(c),"Invalid RGB";return 16777215-c}
+func gray(v:int)->int {return rgb(v,v,v)}
+func mix(a:int,b:int,percent:int)->int {
+ assert percent>=0 and percent<=100,"Invalid mix percent"
+ return rgb((red(a)*(100-percent)+red(b)*percent)/100,(green(a)*(100-percent)+green(b)*percent)/100,(blue(a)*(100-percent)+blue(b)*percent)/100)
+}

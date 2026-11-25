@@ -1,0 +1,14 @@
+// Nonnegative signed 63-bit bit operations implemented in TRIPOL.
+func mask(index:int)->int {
+ assert index>=0 and index<63,"Invalid bit index"
+ n=1;repeat index {n*=2};return n
+}
+func test(n:int,index:int)->bool {assert n>=0,"Negative bit value";return n/mask(index)%2==1}
+func set(n:int,index:int)->int {if test(n,index) {return n};return n+mask(index)}
+func clear(n:int,index:int)->int {if test(n,index) {return n-mask(index)};return n}
+func toggle(n:int,index:int)->int {if test(n,index) {return clear(n,index)};return set(n,index)}
+func count(n:int)->int {
+ assert n>=0,"Negative bit value";total=0
+ while n>0 {total+=n%2;n/=2}
+ return total
+}

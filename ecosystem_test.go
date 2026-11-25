@@ -213,7 +213,7 @@ time.sleep(15)
 assert time.elapsed(start)>=10, "sleep elapsed too short"
 show system.platform(),system.architecture(),system.compiler()
 show time.seconds(1500),system.is_linux(),system.is_windows()`
-	want := runtime.GOOS + " x86_64 0.12.0\n1.500000 "
+	want := runtime.GOOS + " x86_64 0.13.0\n1.500000 "
 	if runtime.GOOS == "linux" {
 		want += "true false\n"
 	} else {

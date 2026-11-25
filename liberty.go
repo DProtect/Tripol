@@ -60,6 +60,10 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 		if len(e.args) != 1 {
 			c.err("len expects one argument")
 		}
+		if a.opt && e.args[0].op == "string" {
+			a.imm(int64(len(e.args[0].s)))
+			return "int", true
+		}
 		if e.args[0].op == "var" {
 			if v, ok := c.lookup(e.args[0].s); ok && len(v.typ) >= 6 && v.typ[:6] == "array:" {
 				a.imm(int64(arrayLen(v)))

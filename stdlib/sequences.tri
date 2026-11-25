@@ -1,0 +1,13 @@
+func arithmetic(n:int,start:int,step:int)->ints {
+ a=ints(n);v=start
+ for i in range(n) {a[i]=v;if i+1<n {v+=step}}
+ return a
+}
+func fibonacci(n:int)->ints {
+ assert n>=0 and n<=93,"Fibonacci length 0..93"
+ a=ints(n);if n>1 {a[1]=1}
+ for i in range(2,n) {a[i]=a[i-1]+a[i-2]}
+ return a
+}
+func factorial(n:int)->int {assert n>=0 and n<=20,"Factorial range 0..20";v=1;for i in range(2,n+1) {v*=i};return v}
+func triangular(n:int)->int {assert n>=0 and n<=4294967295,"Triangular range";if n%2==0 {return (n/2)*(n+1)};return n*((n+1)/2)}

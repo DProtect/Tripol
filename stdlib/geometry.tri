@@ -1,0 +1,7 @@
+import tripol.math
+func rectangle(w:float,h:float)->float {assert w>=0.0 and h>=0.0,"Negative dimension";return w*h}
+func circle(r:float)->float {assert r>=0.0,"Negative radius";return math.pi()*r*r}
+func circumference(r:float)->float {assert r>=0.0,"Negative radius";return 2.0*math.pi()*r}
+func triangle(b:float,h:float)->float {return rectangle(b,h)/2.0}
+func distance(x:float,y:float,u:float,v:float)->float {dx=x-u;dy=y-v;return sqrt(dx*dx+dy*dy)}
+func lerp(a:float,b:float,t:float)->float {return a+(b-a)*t}

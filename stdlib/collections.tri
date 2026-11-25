@@ -1,0 +1,39 @@
+// Functional integer collection operations. Always return independent copies.
+func append(a:ints,value:int)->ints {
+ b=ints(len(a)+1)
+ for i in range(len(a)) {b[i]=a[i]}
+ b[len(a)]=value
+ return b
+}
+func concat(a:ints,b:ints)->ints {
+ c=ints(len(a)+len(b))
+ for i in range(len(a)) {c[i]=a[i]}
+ for i in range(len(b)) {c[len(a)+i]=b[i]}
+ return c
+}
+func part(a:ints,start:int,end:int)->ints {
+ assert start>=0 and end>=start and end<=len(a),"Invalid collection slice"
+ b=ints(end-start)
+ for i in range(len(b)) {b[i]=a[start+i]}
+ return b
+}
+func remove_at(a:ints,index:int)->ints {
+ assert index>=0 and index<len(a),"Invalid collection index"
+ b=ints(len(a)-1)
+ for i in range(index) {b[i]=a[i]}
+ for i in range(index,len(b)) {b[i]=a[i+1]}
+ return b
+}
+func insert(a:ints,index:int,value:int)->ints {
+ assert index>=0 and index<=len(a),"Invalid collection index"
+ b=ints(len(a)+1)
+ for i in range(index) {b[i]=a[i]}
+ b[index]=value
+ for i in range(index,len(a)) {b[i+1]=a[i]}
+ return b
+}
+func equal(a:ints,b:ints)->bool {
+ if len(a)!=len(b) {return false}
+ for i in range(len(a)) {if a[i]!=b[i] {return false}}
+ return true
+}

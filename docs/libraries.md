@@ -1,4 +1,4 @@
-# Standard library — 21 modules, 111 callable functions
+# Standard library — 30 modules, 164 callable functions
 
 Exact source and signatures: `tripol docs NAME`, `tripol libs`, or [stdlib](../stdlib). Counts include seven JSON scanner helper functions; use the documented high-level APIs for stable behavior. Modules are embedded and offline. In nano mode unused routines are eliminated; imports do not imply runtime dependencies.
 
@@ -23,13 +23,29 @@ Exact source and signatures: `tripol docs NAME`, `tripol libs`, or [stdlib](../s
 | system | 5 | Compiled target metadata |
 | text | 9 | Byte offsets, prefix/suffix and substring search |
 | time | 4 | Monotonic timer and sleep, not calendar dates |
-| ui | 3 | Windows modal dialogs and text form |
+| ui | 7 | Windows modal dialogs and text form |
 | validate | 6 | ASCII validation |
 
 `json.valid(s)` checks JSON grammar, nested arrays/objects, escapes and UTF-8 bytes up to 4096 bytes and nesting depth 32. `json.get_raw(s,key)` returns the first matching top-level value as raw JSON text, empty if invalid/missing; keys match the serializer's exact quoted spelling (no escaped-key normalization); key <=512 bytes. It does not deserialize arbitrary typed records or resolve JSON paths. Escaped surrogate code units are grammar-checked, not decoded. Internal helper signatures are subject to change. Serializer limits: quoted text <=512 bytes, integer arrays <=128 items.
 
-`ui.form(title,label,button)` displays a fixed modal form with one edit field, submit and cancel. Empty return on cancellation/empty input; text uses Windows ANSI encoding (ASCII labels required), up to 4096 bytes, may truncate longer input. The existing `ui.message` and `ui.confirm` are also Windows-only. No custom layout/events or arbitrary windows. New form is PE-verified, not yet Windows-executed.
+`ui.form(title,label,button)` displays a fixed modal form with one edit field, submit and cancel. Empty return on cancellation/empty input; text uses Windows ANSI encoding (ASCII labels required), up to 4096 bytes, may truncate longer input. The existing `ui.message` and `ui.confirm` are also Windows-only. No custom layout/events or arbitrary windows. The project owner demonstrated the form on Windows; the new message-box variants are PE-verified and still need Windows execution testing.
 
 `https.get(host,path)` uses Windows WinHTTP with OS certificate verification, DNS, port 443, 5-second per-operation timeouts, no redirects, only successful 2xx responses, ASCII host/path, body <=65535 bytes without NUL. Not an HTTP general-purpose client: no custom headers, auth, POST, async, total deadline or Linux support; certificate/network errors are fatal. The new path is PE-verified, not executed on Windows in the development environment. `discord.gateway()` requests the public gateway discovery endpoint; no bot token, authenticated requests or WebSocket support.
 
 `network.exchange` is a blocking IPv4 TCP text exchange (half-close, read until EOF, <=65535 bytes); no DNS/UDP/IPv6/TLS here. `http.get_raw` is plaintext, no chunk decoding or redirects; use trusted test services, never send secrets. File operations can overwrite arbitrary accessible paths, are not atomic and do not create directories. Windows file paths are ANSI. No sandbox. For full signatures and examples consult the source directly.
+
+## Infinity additions
+
+| Module | Functions | Notes |
+|---|---:|---|
+| bits | 6 | Nonnegative int64 bit operations; indices 0..62 |
+| checksum | 3 | Adler-32, sum8, sum16; not cryptography |
+| collections | 6 | Append, concatenate, insert, remove, slice, equality; return copies, fixed length |
+| colors | 8 | Packed RGB24, channels 0..255, no alpha |
+| compression | 3 | Integer-array run-length encoding; not general file compression |
+| datetime | 7 | Gregorian calendar 1..9999, ordinal and weekday Monday=1; no clock/time zone |
+| geometry | 6 | Float64 shapes, distance and interpolation |
+| matrix | 6 | Flat row-major integer matrices; explicit shapes, checked math |
+| sequences | 4 | Integer sequences, Fibonacci, factorial and triangular numbers |
+
+Collections return independent arrays capped at 65535 elements. They are not amortized growable vectors or dictionaries. RLE uses `[value,count,...]` pairs, may expand data, limits to 32767 runs and 65535 decoded elements, and validates all counts. `checksum` is noncryptographic and unsuitable for authentication. `ui.warning`, `ui.error`, `ui.retry`, and `ui.choose` use native message boxes; choose returns Win32 IDs Yes=6, No=7, Cancel=2. No custom widgets/canvas yet.

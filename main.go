@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const version = "0.12.0"
+const version = "0.13.0"
 
 type token struct {
 	s, k      string
@@ -69,6 +69,7 @@ type param struct{ name, typ string }
 type fn struct {
 	name, ret string
 	args      []param
+	defaults  []*expr
 	body      []stmt
 	record    bool
 	source    string
@@ -359,6 +360,8 @@ func (p *parser) expression(min int) *expr {
 		if t.s == "true" {
 			e.n = 1
 		}
+	case t.s == "f" && p.t().k == "str" && p.t().line == t.line && p.t().col == t.col+1:
+		e = p.interpolation()
 	case t.k == "id":
 		e.op = "var"
 		if p.eat("(") {
@@ -466,9 +469,23 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 			if !p.eat(")") {
 				for {
 					a := param{p.name(), "int"}
-					if p.eat(":") {
+					typed := p.eat(":")
+					if typed {
 						a.typ = p.typ()
 					}
+					var def *expr
+					if p.eat("=") {
+						def = p.defaultValue()
+						if !typed {
+							a.typ = def.op
+						}
+						if a.typ != def.op {
+							p.err("default parameter type mismatch")
+						}
+					} else if len(f.defaults) > 0 && f.defaults[len(f.defaults)-1] != nil {
+						p.err("required parameter after optional parameter")
+					}
+					f.defaults = append(f.defaults, def)
 					f.args = append(f.args, a)
 					if p.eat(")") {
 						break
@@ -643,6 +660,8 @@ func (c *compiler) expression(e *expr) string {
 	case "string":
 		a.str(e.s)
 		return "string"
+	case "format":
+		return c.formatExpression(e)
 	case "var":
 		v, ok := c.lookup(e.s)
 		if !ok {
@@ -692,10 +711,11 @@ func (c *compiler) expression(e *expr) string {
 		if f.record {
 			return c.recordConstruct(f, e)
 		}
-		if len(f.args) != len(e.args) {
-			c.err("wrong argument count: " + e.s)
+		args := c.callArguments(f, e)
+		if c.inlineTIR(f, args) {
+			return f.ret
 		}
-		for i, x := range e.args {
+		for i, x := range args {
 			if isStandardFunction(f.name) && f.name != "sort.sift" && f.args[i].typ == "ints" && c.promoteFixed(x) {
 				// A standard-library read-only array argument receives a stack view.
 			} else {
@@ -704,12 +724,12 @@ func (c *compiler) expression(e *expr) string {
 			a.emit(0x50)
 		}
 		a.call("fn:" + e.s)
-		if len(e.args) > 0 {
-			if a.opt && len(e.args) <= 15 {
-				a.emit(0x48, 0x83, 0xc4, byte(8*len(e.args)))
+		if len(args) > 0 {
+			if a.opt && len(args) <= 15 {
+				a.emit(0x48, 0x83, 0xc4, byte(8*len(args)))
 			} else {
 				a.emit(0x48, 0x81, 0xc4)
-				a.u32(8 * len(e.args))
+				a.u32(8 * len(args))
 			}
 		}
 		return f.ret
@@ -748,6 +768,9 @@ func (c *compiler) expression(e *expr) string {
 	}
 	if a.opt && t == "int" && e.args[1].op == "int" && e.args[1].n <= 2147483647 {
 		n := e.args[1].n
+		if (n == 0 && (op == "+" || op == "-")) || (n == 1 && op == "*") {
+			return "int"
+		}
 		switch op {
 		case "+", "-", "*":
 			if op == "*" {
@@ -1437,7 +1460,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.12.0 — SENTINEL\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL 0.13.0 — INFINITY\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {
@@ -1460,6 +1483,18 @@ func cli() {
 			die("usage: tripol explain CODE")
 		}
 		explainDiagnostic(args[1])
+		return
+	}
+	if args[0] == "ir" {
+		file := "main.tri"
+		if len(args) > 2 {
+			die("usage: tripol ir [FILE.tri]")
+		}
+		if len(args) == 2 {
+			file = args[1]
+		}
+		entryFile = file
+		inspectTIR(file)
 		return
 	}
 	if args[0] == "net-demo" {

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.0 — INFINITY (experimental)
+
+- Explicit `f"...{name}..."` interpolation and scalar constant default parameters.
+- Nine new standard modules: bits, checksum, collections, colors, compression, datetime, geometry, matrix and sequences; 30 modules and 164 callable functions total.
+- Four additional Windows native message-box variants. No general desktop window/event toolkit yet.
+- TIR R1 typed checked int64 expression subset and experimental small-function inlining; `tripol ir` inspection.
+- Fold literal string lengths and remove safe arithmetic identities in nano builds.
+- 89 test groups and 285 subtests passed in Linux; Windows binaries cross-built and PE checked.
+- Existing arena, networking, Discord and exception restrictions remain.
+
 ## 0.12.0 — SENTINEL (experimental)
 
 - Native recoverable try/catch/finally and explicit throw, with restricted control flow.

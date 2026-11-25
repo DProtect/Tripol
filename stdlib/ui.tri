@@ -14,3 +14,21 @@ func form(title:string,label:string,button:string)->string {
  assert validate.ascii(title) and validate.ascii(label) and validate.ascii(button),"UI form requires ASCII labels"
  return ui_form(title,label,button)
 }
+// Additional native message-box variants. ASCII title and text.
+func warning(title:string,message:string)->bool {
+ assert validate.ascii(title) and validate.ascii(message),"UI requires ASCII text"
+ return ui_dialog(title,message,48)==1
+}
+func error(title:string,message:string)->bool {
+ assert validate.ascii(title) and validate.ascii(message),"UI requires ASCII text"
+ return ui_dialog(title,message,16)==1
+}
+func retry(title:string,message:string)->bool {
+ assert validate.ascii(title) and validate.ascii(message),"UI requires ASCII text"
+ return ui_dialog(title,message,53)==4
+}
+// Yes=6, No=7, Cancel=2. Returns the exact Win32 choice.
+func choose(title:string,message:string)->int {
+ assert validate.ascii(title) and validate.ascii(message),"UI requires ASCII text"
+ return ui_dialog(title,message,35)
+}

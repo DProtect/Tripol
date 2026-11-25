@@ -1,0 +1,12 @@
+// Flat row-major integer matrices; shape provided by caller.
+func size(rows:int,cols:int)->int {assert rows>=0 and cols>=0 and rows<=65535 and cols<=65535,"Invalid shape";assert rows*cols<=65535,"Matrix too large";return rows*cols}
+func zeros(rows:int,cols:int)->ints {return ints(size(rows,cols))}
+func identity(n:int)->ints {a=zeros(n,n);for i in range(n) {a[i*n+i]=1};return a}
+func transpose(a:ints,rows:int,cols:int)->ints {
+ assert len(a)==size(rows,cols),"Invalid matrix shape"
+ b=ints(len(a))
+ for r in range(rows) {for c in range(cols) {b[c*rows+r]=a[r*cols+c]}}
+ return b
+}
+func add(a:ints,b:ints)->ints {assert len(a)==len(b),"Matrix length mismatch";c=ints(len(a));for i in range(len(a)) {c[i]=a[i]+b[i]};return c}
+func dot(a:ints,b:ints)->int {assert len(a)==len(b),"Vector length mismatch";s=0;for i in range(len(a)) {s+=a[i]*b[i]};return s}

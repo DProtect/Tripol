@@ -1,0 +1,19 @@
+import tripol.collections
+import tripol.colors
+import tripol.compression
+import tripol.datetime
+import tripol.sequences
+func saludo(nombre = "Usuario", puntos = 10) -> string {
+ return f"Hola {nombre}, tienes {puntos} puntos"
+}
+show saludo()
+show saludo("Sebas",100)
+base=[1,1,1,4,4,9]
+lista=collections.append(base,9)
+show "Lista:",lista
+comprimido=compression.rle_encode(lista)
+show "RLE:",comprimido
+show "Recuperado:",compression.rle_decode(comprimido)
+show "Color RGB:",colors.rgb(255,0,128)
+show "Dias de febrero 2028:",datetime.days_in_month(2028,2)
+show "Fibonacci:",sequences.fibonacci(10)

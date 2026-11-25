@@ -1,0 +1,16 @@
+// Noncryptographic checksums: never use for authentication or secrets.
+func adler32(s:string)->int {
+ a=1;b=0
+ for i in range(len(s)) {a=(a+byte_at(s,i))%65521;b=(b+a)%65521}
+ return b*65536+a
+}
+func sum8(s:string)->int {
+ total=0
+ for i in range(len(s)) {total=(total+byte_at(s,i))%256}
+ return total
+}
+func sum16(s:string)->int {
+ total=0
+ for i in range(len(s)) {total=(total+byte_at(s,i))%65536}
+ return total
+}

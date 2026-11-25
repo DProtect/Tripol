@@ -1,0 +1,31 @@
+// Run-length encoding for integer arrays: [value,count,...]. Not a byte codec.
+func rle_encode(a:ints)->ints {
+ if len(a)==0 {return ints(0)}
+ runs=1
+ for i in range(1,len(a)) {if a[i]!=a[i-1] {runs+=1}}
+ assert runs<=32767,"Too many RLE runs"
+ b=ints(runs*2)
+ j=0; b[0]=a[0]; b[1]=1
+ for i in range(1,len(a)) {
+  if a[i]==b[j] {b[j+1]=b[j+1]+1} else {j+=2;b[j]=a[i];b[j+1]=1}
+ }
+ return b
+}
+func rle_valid(a:ints)->bool {
+ if len(a)%2!=0 {return false}
+ total=0
+ for i in range(len(a)/2) {
+  n=a[i*2+1]
+  if n<=0 or n>65535-total {return false}
+  total+=n
+ }
+ return true
+}
+func rle_decode(a:ints)->ints {
+ assert rle_valid(a),"Invalid RLE"
+ total=0
+ for i in range(len(a)/2) {total+=a[i*2+1]}
+ b=ints(total); j=0
+ for i in range(len(a)/2) {repeat a[i*2+1] {b[j]=a[i*2];j+=1}}
+ return b
+}
