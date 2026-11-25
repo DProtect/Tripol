@@ -23,11 +23,11 @@
     },
     {
       "name": "keyword.control.tripol",
-      "match": "\\b(import|if|else|while|repeat|for|in|break|continue|return|show)\\b"
+      "match": "\\b(import|if|else|while|repeat|for|in|break|continue|return|show|assert)\\b"
     },
     {
       "name": "storage.type.tripol",
-      "match": "\\b(func|let|const|int|bool|string|float|ints)\\b"
+      "match": "\\b(func|struct|let|const|int|bool|string|float|ints)\\b"
     },
     {
       "name": "constant.language.tripol",

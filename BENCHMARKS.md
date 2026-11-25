@@ -1,23 +1,14 @@
-# TRIPOL v0.6 — NEXUS measurements
+# TRIPOL v0.7 — HORIZON measurements
 
-Linux x86-64, Go compiler toolchain 1.23.x. All execution measurements were performed on Linux. Windows outputs were cross-compiled and inspected, not executed. User confirmed v0.5 on Windows using file and dynamic-array examples; no v0.5 Windows Fibonacci timing was supplied.
+Linux x86-64, Go 1.23.2. Same 3,000 distinct string literal print statements compiled with v0.6 and v0.7; one warm-up per version, 11 timed compilations each alternating order, includes process startup and disk write. Both produced byte-for-byte identical 95,235-byte Linux executables and identical stdout.
 
-## Native array sum
+| Compiler | Median | Min | Max |
+|---|---:|---:|---:|
+| v0.6 | 264.935 ms | 254.472 ms | 284.503 ms |
+| v0.7 | 24.650 ms | 20.491 ms | 37.622 ms |
 
-Two programs in this version initialize an array of 65,535 integers (0 through 65,534), then sum it 500 times. One uses `sum(a)`, the other a checked, indexed `for` loop. Both print 1073692672500. Same compiler profile (nano). One warm-up each, nine alternating measured executions each, stdout discarded, process startup included. Timing from Python monotonic timer used only in development.
+About 10.75x faster on this particular literal-heavy compilation. Not a general speed comparison or application runtime speedup. Reproduce with `python examples/bench_literals.py /tmp/literals.tri` (maintainer-only generator), then `tripol build /tmp/literals.tri -o /tmp/literals` with both versions. Timing depends on hardware and system load.
 
-| Method | Median ms | Min ms | Max ms | ELF bytes |
-|---|---:|---:|---:|---:|
-| Built-in sum | 19.358 | 17.995 | 21.712 | 1107 |
-| Indexed loop | 39.910 | 33.406 | 44.176 | 1176 |
+The experimental change to for-loop code generation was reverted after measurements did not show a reliable benefit. No general application runtime speedup is claimed. No comparative benchmark with Rust, C or Python has been run.
 
-This is a specialized built-in compared to a manually written loop, not an across-version or cross-language speed claim. Source: examples/bench_sum.tri and examples/bench_loop.tri.
-
-## Size
-
-- Windows hello (examples/hello.tri): 1536 bytes.
-- Windows Fibonacci without heading (examples/fibonacci.tri): 1536 bytes.
-- Windows interactive Nexus demo (examples/nexus.tri): 2560 bytes.
-- Linux calculator template: 1650 bytes.
-
-30 test groups / 174 subtests passed on Linux; `go vet .` passed. Native PE inspection and cross-build only for Windows. No new general allocation/reclamation or TIR has been implemented.
+Windows PE sizes (cross-built and inspected, execution pending): hello 1,536 B, interactive record example 2,560 B. Tests execute in Linux. User-confirmed v0.6 Windows calculator template and offline tutorial.

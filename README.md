@@ -1,10 +1,10 @@
-# TRIPOL v0.6.0 — NEXUS
+# TRIPOL v0.7.0 — HORIZON
 
 Free, experimental Apache-2.0 programming language. Standalone Go compiler emits x86-64 machine code and PE32+ (Windows) or ELF64 (Linux) directly. No Python, GCC, Clang or Go installation is required to use the distributed compiler. Go 1.23+ is needed only to rebuild it.
 
 ## Windows x64
 
-Run `TRIPOL-v0.6-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.5 was confirmed by the project owner on Windows (file read/write and runtime-sized arrays). v0.6 is cross-compiled and PE-inspected; Windows execution still needs validation. Portable ZIP is also available.
+Run `TRIPOL-v0.7-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.6 was confirmed by the project owner on Windows (calculator template and offline tutorial); v0.7 is cross-compiled and PE-inspected, with Windows execution pending. Portable ZIP is also available.
 
 ```cmd
 tripol --version
@@ -17,6 +17,32 @@ tripol bench main.tri --runs 5
 ```
 
 Commands: `tripol check FILE.tri`, `tripol run FILE.tri [--profile nano|debug]`, `tripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]`, `tripol bench FILE.tri [--runs 1..100] [--profile nano|debug]`, `tripol new NAME`. Default profile nano. Debug disables the AST/native optimization passes, not a source debugger. Benchmark includes OS process startup, compiles once, excludes one warm-up, closes stdin and discards stdout. Use noninteractive programs only; no built-in timeout. Targets x86-64 only.
+
+## Horizon: typed structures, assertions and Spanish tutorial
+
+```tripol
+struct Jugador {
+    nombre: string
+    puntos: int
+    activo: bool
+}
+func bonus(j: Jugador, cantidad: int) -> Jugador {
+    j.puntos += cantidad
+    return j
+}
+j = Jugador(input("Tu nombre?"), 10, true)
+j = bonus(j, 5)
+assert j.puntos == 15, "Puntos incorrectos"
+show "Jugador:", j.nombre
+show "Puntos:", j.puntos
+show "Activo:", j.activo
+```
+
+- `struct` declares a named type at module scope, with 1–64 named fields. Types are int, bool, float, string and ints. A constructor requires every field in declaration order; fields can be read with dot syntax and assigned on a mutable named variable, including `+=` and other supported compound operations. Structures can be passed to or returned from functions and imported with local modules. No nested record fields, default arguments, methods, inheritance, null, or structural equality yet.
+- Records have reference semantics: assignments and parameters alias the same allocation. `const` forbids direct mutation through that binding but not through another alias. Each record reserves eight bytes per field in the existing shared 8 MiB arena and lives until exit. No per-object reclamation yet. Array fields are dynamic integer-array references; read into a variable before indexing.
+- `assert condition` or `assert condition, "message"` checks a boolean and exits with status 1 and a stderr diagnostic on failure. The message must be a string literal. It remains active in nano and debug profiles. `struct` and `assert` are newly reserved names.
+- `tripol learn es` opens the Spanish offline tutorial; `tripol learn` or `tripol learn en` opens the English tutorial. `tripol new Name --template records` generates a playable console example. VS Code highlighting includes the new keywords.
+- Native string-table emission now maintains first-use order directly, eliminating the former nested search over labels and distinct literals. Native code for existing programs is unchanged; the benchmark measures compiler time, not application runtime.
 
 ## Nexus: easier syntax
 
@@ -40,7 +66,7 @@ if age < 13 { show "Child" } else if age < 18 { show "Teen" } else { show "Adult
 - `tripol run`, `tripol build`, `tripol check`, and `tripol bench` default to `main.tri` if no source is supplied. `tripol learn` displays an offline tutorial; `tripol doctor` reports the compiler location and supported host/targets (not a full hardware diagnostic).
 - `tripol new MyApp --template calculator` or `--template files` creates a ready-to-run example. `basic` is the default. Existing directories are not overwritten.
 
-Nexus adds language conveniences and native math, not a TIR, object system, networking, GUI or general memory allocator. Existing memory and platform limitations still apply.
+Nexus adds language conveniences and native math. Horizon adds typed structures; existing memory and platform limitations still apply.
 
 ## Interactive programs
 
@@ -118,7 +144,7 @@ zero-based byte offsets with exclusive end; it may split UTF-8 sequences.
 
 ## Previous features and limitations
 
-v0.3 features preserved: int64, bool, literal strings, functions, recursion, checked integer arithmetic, while, if/else, short-circuiting, fixed-size local integer arrays with bounds checks, range loops, break/continue, lexical stack reuse, dead function elimination and direct self-tail-call optimization. Fixed local literal arrays cannot be copied, resized, nested, returned or passed. Runtime-sized arrays have the reference semantics described above. UTF-8 BOM accepted. Max 400 local slots. Not a sandbox; ordinary recursion can exhaust the stack. No general allocator, TIR, networking, objects or production-grade ABI yet. The dynamic arrays and text share the bounded arena. Native Linux binaries use syscalls; Windows binaries use kernel32.dll. Go is only the compiler implementation. Runtime templates are hand-written x86-64 assembly; the checked-in generated Go file allows rebuilding without assembly tools or Python. `native/generate.py` uses Python and GNU binutils only if a maintainer edits assembly templates.
+v0.3 features preserved: int64, bool, literal strings, functions, recursion, checked integer arithmetic, while, if/else, short-circuiting, fixed-size local integer arrays with bounds checks, range loops, break/continue, lexical stack reuse, dead function elimination and direct self-tail-call optimization. Fixed local literal arrays cannot be copied, resized, nested, returned or passed. Runtime-sized arrays have the reference semantics described above. UTF-8 BOM accepted. Max 400 local slots. Not a sandbox; ordinary recursion can exhaust the stack. No general allocator, TIR, networking, GUI, methods or production-grade ABI yet. The dynamic arrays and text share the bounded arena. Native Linux binaries use syscalls; Windows binaries use kernel32.dll. Go is only the compiler implementation. Runtime templates are hand-written x86-64 assembly; the checked-in generated Go file allows rebuilding without assembly tools or Python. `native/generate.py` uses Python and GNU binutils only if a maintainer edits assembly templates.
 
 ## Build from source
 
@@ -128,7 +154,7 @@ CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
 mkdir -p installer/payload
 cp examples/hello.tri installer/payload/hello.tri
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o installer/payload/tripol.exe .
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.6-Setup-x64.exe ./installer
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.7-Setup-x64.exe ./installer
 ```
 
-See BENCHMARKS.md and test-results.txt. 30 test groups and 174 subtests passed on Linux; go vet passed. No claim of outperforming Rust or C. License Apache-2.0.
+See BENCHMARKS.md and test-results.txt. 35 test groups and 198 subtests passed on Linux; go vet passed. No claim of outperforming Rust or C. License Apache-2.0.

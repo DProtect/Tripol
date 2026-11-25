@@ -13,14 +13,14 @@ import (
 	"strings"
 )
 
-const version = "0.6.0"
+const version = "0.7.0"
 
 type token struct {
 	s, k string
 	line int
 }
 
-var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(\+=|-=|\*=|/=|%=|==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){}\[\],:;\-]))`)
+var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(\+=|-=|\*=|/=|%=|==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){}\[\],.:;\-]))`)
 
 func die(f string, a ...any) { panic(fmt.Errorf(f, a...)) }
 func lex(s string) []token {
@@ -66,6 +66,7 @@ type fn struct {
 	name, ret string
 	args      []param
 	body      []stmt
+	record    bool
 }
 type parser struct {
 	ts    []token
@@ -109,7 +110,7 @@ func (p *parser) end() {
 }
 func (p *parser) name() string {
 	t := p.t()
-	if t.k != "id" || strings.Contains("|import|func|return|show|let|const|if|else|while|for|in|range|repeat|and|or|not|break|continue|true|false|int|bool|string|float|ints|void|", "|"+t.s+"|") {
+	if t.k != "id" || strings.Contains("|import|func|struct|assert|return|show|let|const|if|else|while|for|in|range|repeat|and|or|not|break|continue|true|false|int|bool|string|float|ints|void|", "|"+t.s+"|") {
 		p.err("expected identifier")
 	}
 	return p.take().s
@@ -118,6 +119,9 @@ func (p *parser) typ() string {
 	switch p.t().s {
 	case "int", "bool", "string", "float", "ints":
 		return p.take().s
+	}
+	if p.t().k == "id" {
+		return p.name()
 	}
 	p.err("expected type")
 	return ""
@@ -179,6 +183,17 @@ func (p *parser) statement() stmt {
 			s.yes = append([]stmt{{op: "decl", name: item, line: t.line, e: &expr{op: "index", s: array, args: []*expr{{op: "var", s: s.name}}}}}, body...)
 		}
 		return s
+	case "assert":
+		p.take()
+		s.op = "assert"
+		s.e = p.expression(1)
+		if p.eat(",") {
+			msg := p.expression(1)
+			if msg.op != "string" {
+				p.err("assert message must be a string literal")
+			}
+			s.name = msg.s
+		}
 	case "show", "return":
 		s.op = p.take().s
 		s.e = p.expression(1)
@@ -240,6 +255,14 @@ func (p *parser) statement() stmt {
 				s.name = s.e.s
 				s.bound = s.e.args[0]
 				s.e = p.expression(1)
+			} else if s.e.op == "field" && strings.Contains("|=|+=|-=|*=|/=|%=|", "|"+p.t().s+"|") {
+				s.op = "fieldassign"
+				s.bound = s.e
+				op := p.take().s
+				s.e = p.expression(1)
+				if op != "=" {
+					s.e = &expr{op: "bin", s: op[:1], args: []*expr{s.bound, s.e}}
+				}
 			}
 		}
 	}
@@ -328,6 +351,9 @@ func (p *parser) expression(min int) *expr {
 		e.args = []*expr{p.expression(1)}
 		p.need("]")
 	}
+	for p.eat(".") {
+		e = &expr{op: "field", s: p.name(), args: []*expr{e}}
+	}
 	for prec[p.t().s] >= min {
 		op := p.take().s
 		priority := prec[op]
@@ -359,7 +385,25 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 		p.end()
 	}
 	for p.t().k != "eof" {
-		if p.eat("func") {
+		if p.eat("struct") {
+			f := fn{name: p.name(), record: true}
+			f.ret = f.name
+			p.skip()
+			p.need("{")
+			p.skip()
+			for !p.eat("}") {
+				n := p.name()
+				p.need(":")
+				t := p.typ()
+				f.args = append(f.args, param{n, t})
+				if p.eat(",") {
+					p.skip()
+				} else {
+					p.end()
+				}
+			}
+			fs = append(fs, f)
+		} else if p.eat("func") {
 			f := fn{name: p.name(), ret: "int"}
 			p.need("(")
 			if !p.eat(")") {
@@ -401,13 +445,14 @@ type fix struct {
 	label string
 }
 type asm struct {
-	b      []byte
-	labels map[string]int
-	fixes  []fix
-	serial int
-	data   map[string]string
-	target string
-	opt    bool
+	b         []byte
+	labels    map[string]int
+	fixes     []fix
+	serial    int
+	data      map[string]string
+	dataOrder []string
+	target    string
+	opt       bool
 }
 
 func (a *asm) emit(b ...byte) { a.b = append(a.b, b...) }
@@ -446,6 +491,7 @@ func (a *asm) str(s string) {
 	if !ok {
 		l = a.fresh()
 		a.data[s] = l
+		a.dataOrder = append(a.dataOrder, s)
 	}
 	a.rel(l, 0x48, 0x8d, 0x05)
 }
@@ -543,6 +589,12 @@ func (c *compiler) expression(e *expr) string {
 			a.u32(v.off)
 		}
 		return "int"
+	case "field":
+		t := c.expression(e.args[0])
+		field, off := c.recordField(t, e.s)
+		a.emit(0x48, 0x8b, 0x80)
+		a.u32(off)
+		return field.typ
 	case "call":
 		f, ok := c.fs[e.s]
 		if !ok {
@@ -552,6 +604,9 @@ func (c *compiler) expression(e *expr) string {
 		}
 		if !ok {
 			c.err("unknown function " + e.s)
+		}
+		if f.record {
+			return c.recordConstruct(f, e)
 		}
 		if len(f.args) != len(e.args) {
 			c.err("wrong argument count: " + e.s)
@@ -657,8 +712,8 @@ func (c *compiler) expression(e *expr) string {
 		a.call("concat")
 		return "string"
 	}
-	if t == "ints" {
-		c.err("array references do not support operators")
+	if t == "ints" || c.isRecord(t) {
+		c.err("aggregate references do not support operators")
 	}
 	if op == "==" || op == "!=" {
 		if t == "string" {
@@ -721,6 +776,25 @@ func (c *compiler) block(ss []stmt, nested bool) {
 	for _, s := range ss {
 		c.line = s.line
 		switch s.op {
+		case "assert":
+			fail, done := a.fresh(), a.fresh()
+			c.branchFalse(s.e, fail)
+			a.jmp(done)
+			a.label(fail)
+			msg := fmt.Sprintf("TRIPOL assertion failed at line %d", s.line)
+			if s.name != "" {
+				msg += ": " + s.name
+			}
+			msg += "\n"
+			a.str(msg)
+			a.emit(0x48, 0x89, 0xc6, 0xba)
+			a.u32(len(msg))
+			a.call("writeerr")
+			a.imm(1)
+			a.jmp("exit")
+			a.label(done)
+		case "fieldassign":
+			c.recordAssign(s)
 		case "indexassign":
 			v := c.arrayVar(s.name)
 			if !v.mut {
@@ -787,7 +861,7 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			a.call("raw_string")
 		case "show":
 			t := c.expression(s.e)
-			if t == "ints" {
+			if t == "ints" || c.isRecord(t) {
 				c.err("show requires a scalar or string")
 			}
 			a.call("print:" + t)
@@ -1175,22 +1249,19 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool)
 		}
 		c.fs[f.name] = f
 	}
+	c.validateTypes(fs)
 	c.function(fn{name: "@main", body: ss}, true)
 	for _, f := range fs {
-		if !opt || live[f.name] {
+		if !f.record && (!opt || live[f.name]) {
 			c.function(f, false)
 		}
 	}
-	a.rt() // deterministic string order by assigned label
-	for i := 1; i <= a.serial; i++ {
-		l := fmt.Sprintf("@%d", i)
-		for s, k := range a.data {
-			if k == l {
-				a.label(l)
-				a.b = append(a.b, []byte(s)...)
-				a.emit(0)
-			}
-		}
+	a.rt()
+	// First-use order is deterministic and linear in the number of literals.
+	for _, s := range a.dataOrder {
+		a.label(a.data[s])
+		a.b = append(a.b, []byte(s)...)
+		a.emit(0)
 	}
 	if target == "linux" {
 		return elf(a)
@@ -1204,14 +1275,21 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool)
 func cli() {
 	args := os.Args[1:]
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.6.0 — NEXUS\ntripol new NAME [--template basic|calculator|files]\ntripol learn\ntripol doctor\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
+		fmt.Println("TRIPOL 0.7.0 — HORIZON\ntripol new NAME [--template basic|calculator|files|records]\ntripol learn [es|en]\ntripol doctor\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
 		return
 	}
 	if args[0] == "--version" {
 		fmt.Println("TRIPOL " + version)
 		return
 	}
-	if args[0] == "learn" && len(args) == 1 {
+	if args[0] == "learn" {
+		if len(args) == 2 && args[1] == "es" {
+			learnSpanish()
+			return
+		}
+		if len(args) > 2 || (len(args) == 2 && args[1] != "en") {
+			die("usage: tripol learn [es|en]")
+		}
 		learn()
 		return
 	}
@@ -1233,7 +1311,7 @@ func cli() {
 		if len(args) == 4 && args[2] == "--template" {
 			template = args[3]
 		} else if len(args) != 2 {
-			die("usage: tripol new NAME [--template basic|calculator|files]")
+			die("usage: tripol new NAME [--template basic|calculator|files|records]")
 		}
 		newProjectTemplate(src, template)
 		return

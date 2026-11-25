@@ -1,0 +1,15 @@
+struct Jugador {
+    nombre: string
+    puntos: int
+    activo: bool
+}
+func bonus(j: Jugador, cantidad: int) -> Jugador {
+    j.puntos += cantidad
+    return j
+}
+j = Jugador(input("Tu nombre?"), 10, true)
+j = bonus(j, 5)
+assert j.puntos == 15, "Puntos incorrectos"
+show "Jugador:", j.nombre
+show "Puntos:", j.puntos
+show "Activo:", j.activo

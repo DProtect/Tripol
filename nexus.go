@@ -90,7 +90,7 @@ func (c *compiler) nexusBuiltin(e *expr) (string, bool) {
 	return "", false
 }
 func learn() {
-	fmt.Print(`TRIPOL 0.6 — Learn in five minutes
+	fmt.Print(`TRIPOL 0.7 — Learn in five minutes
 
 1. Show values:
    show "Hello, TRIPOL!"
@@ -114,6 +114,12 @@ func learn() {
 5. Save data:
    write_text("note.txt", "Hello")
    show read_text("note.txt")
+
+6. Group data:
+   struct Player { name: string; score: int }
+   p = Player("Ana", 10)
+   p.score += 5
+   show p.name, p.score
 
 Save code as main.tri, then: tripol run main.tri
 Build a standalone executable: tripol build main.tri
@@ -148,6 +154,11 @@ show "Sum:", a + b
 show "Product:", a * b
 if b != 0 { show "Division:", float(a) / float(b) }
 `,
+		"records": `struct Player { name: string; score: int }
+p = Player(input("Your name?"), 0)
+p.score += 10
+show "Player:", p.name, "Score:", p.score
+`,
 		"files": `name = input("Your name?")
 write_text("profile.txt", "Name: " + name + "\n")
 show "Saved:", read_text("profile.txt")
@@ -155,7 +166,7 @@ show "Saved:", read_text("profile.txt")
 	}
 	source, ok := templates[template]
 	if !ok {
-		die("unknown project template %s; choose basic, calculator or files", template)
+		die("unknown project template %s; choose basic, calculator, files or records", template)
 	}
 	if err := os.Mkdir(dir, 0755); err != nil {
 		die("cannot create project: %v", err)
