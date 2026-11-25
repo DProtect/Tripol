@@ -8,7 +8,7 @@
 
 A free, experimental programming language that turns readable code directly into native x86-64 executables.
 
-![Version](https://img.shields.io/badge/version-0.25.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
+![Version](https://img.shields.io/badge/version-0.26.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
 
 [Official website](https://tripollas.github.io/Tripol/) · [Online docs](https://tripollas.github.io/Tripol/docs/) · [Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
 
@@ -20,11 +20,17 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 | Current release | Built-in modules | Callable library functions* | Hello world (Windows / Linux) |
 |---|---:|---:|---:|
-| **0.25.0 — EVOLUTION (development)** | 50 | 311 (including scanner helpers) | see v0.24 baseline |
+| **0.26.0 — OVERDRIVE (development)** | 52 | 319 (including scanner helpers) | see v0.24 baseline |
 
 *Includes JSON scanner helpers. Sizes are measured for `examples/hello.tri` in nano mode, not a promise for arbitrary programs. TRIPOL is pre-1.0 and is not yet a replacement for mature production languages.*
 
-## EVOLUTION
+## OVERDRIVE
+
+- UPDATE R1: interactive update notices, 24-hour cache, `tripol update --check` and verified official release downloads with `tripol update`. No automatic installation. [Update guide](docs/update.md).
+- GENESIS R2: integer assignments and runtime x86-64 arithmetic with overflow checks, emitting Linux ELF. Still not self-hosting or a full compiler. [GENESIS guide](docs/genesis.md).
+- `tripol.bitset` and `tripol.profiler`: compact integer bitsets and monotonic timers.
+
+## EVOLUTION (v0.25)
 
 GENESIS R1 is the first experimental native executable generator written in TRIPOL: it parses a constant integer `show` expression and emits Linux x86-64 ELF bytes. It is not self-hosting yet. See [GENESIS](docs/genesis.md). New bounded reusable `stack` and `queue` modules, plus checked scalar TIR identity simplification. The Go compiler remains the production implementation. Performance gains and binary sizes must be remeasured before release.
 
@@ -38,7 +44,7 @@ New: `arrays.copy_into(destination, source)` reuses equal-sized storage and retu
 
 ## Quick start
 
-Install the Windows x64 distribution (`TRIPOL-v0.25-Setup-x64.exe`) when provided by the project maintainer, or [build from source](docs/build.md). The installer is unsigned, per-user and configures PATH. Check GitHub Releases for published assets; the installer is not available there until the release draft has been reviewed and published.
+Install the Windows x64 distribution (`TRIPOL-v0.26-Setup-x64.exe`) when provided by the project maintainer, or [build from source](docs/build.md). The installer is unsigned, per-user and configures PATH. Check GitHub Releases for published assets; the installer is not available there until the release draft has been reviewed and published.
 
 ```cmd
 tripol --version
@@ -153,12 +159,12 @@ This is a modal form with a text field and submit/cancel buttons, not a general 
 
 | Category | Modules |
 |---|---|
-| Data and algorithms | `buffer`, `arrays`, `math`, `stats`, `sort`, `search`, `json`, `random`, `collections`, `matrix`, `sequences`, `bits`, `simd` |
+| Data and algorithms | `buffer`, `bitset`, `arrays`, `math`, `stats`, `sort`, `search`, `json`, `random`, `collections`, `matrix`, `sequences`, `bits`, `simd` |
 | Text and conversion | `text`, `validate`, `convert`, `encoding`, `compression`, `checksum` |
 | System and I/O | `console`, `files`, `system`, `time`, `errors`, `datetime`, `path`, `memory`, `env` |
 | Network | `network`, `http`, `https`, `discord` |
 | UI and geometry | `ui`, `colors`, `geometry`, `canvas`, `game`, `events`, `image`, `animation`, `physics`, `vector`, `sprite`, `camera`, `particles` |
-| Data and testing | `dictionary`, `stack`, `queue`, `testing` |
+| Data and testing | `dictionary`, `stack`, `queue`, `testing`, `profiler` |
 
 Use `import tripol.math`, then `math.square(7)`. Run `tripol libs` or `tripol docs json` to inspect exact available functions offline. See [library guide](docs/libraries.md) for supported operations and restrictions. HTTPS and Discord REST are Windows-only. OMEGA adds a bounded, single-channel REST polling bot; see [Discord setup](docs/discord.md). NEXUS adds experimental Gateway reception and initial presence configuration; live Windows validation remains pending.
 

@@ -25,3 +25,5 @@ Use `tripol arena --runs 20 --profile turbo --json arena-apex.json` to save all 
 
 ## ASCENSION
 `--timeout 300` configures per-process timeouts (default 120 seconds; 1–900 allowed). Only the Rust version probe retries once on a timeout; failed timed trials abort instead of silently dropping samples. `--case copy-reuse` compares preallocated equal-sized buffers on both languages. JSON includes nearest-rank internal p95. It is a separate workload, not a direct speedup of the allocating `copy` test.
+
+OVERDRIVE retains the existing Arena workloads. Interactive update checks are disabled for Arena and benchmarks to avoid measurement interference. No new cross-language performance results claimed.

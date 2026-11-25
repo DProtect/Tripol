@@ -1,4 +1,4 @@
-# Standard library — 50 modules
+# Standard library — 52 modules
 
 Exact source and signatures: `tripol docs NAME`, `tripol libs`, or [stdlib](../stdlib). Counts include seven JSON scanner helper functions; use the documented high-level APIs for stable behavior. Modules are embedded and offline. In nano mode unused routines are eliminated; imports do not imply runtime dependencies.
 
@@ -91,3 +91,7 @@ NEXUS: `search.linear` / `arrays.contains` use AVX2 for large arrays when suppor
 ## stack / queue (EVOLUTION)
 
 Both modules expose `create(limit=32)`, `capacity`, `size`, `push`, `peek`, `pop`, `clear`. They use bounded integer backing arrays. `push` returns false when full; `peek`/`pop` assert on empty. `clear` resets logical size without freeing arena storage. Do not mutate the internal headers. See `examples/projects/collections.tri`.
+
+## bitset / profiler (OVERDRIVE)
+
+`bitset.create(count)` allocates a compact bounded bitset (63 bits per word, at most 1,048,576 bits). `capacity`, `contains`, `add`, `remove`, `count` expose checked operations. `add` and `remove` report whether membership changed. `profiler.start()` and `profiler.elapsed(started)` measure elapsed monotonic nanoseconds, not CPU sampling.

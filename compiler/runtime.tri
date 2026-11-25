@@ -5,8 +5,17 @@ import tripol.dictionary
 import tripol.validate
 // GENESIS R2: integer assignments followed by one show statement.
 // Code uses a fixed 256-byte stack frame, 32 checked integer slots.
-func gen_bytes(code:ints,bytes:ints)->int {
- for b in bytes {assert buffer.size(code)<buffer.capacity(code),"Code limit";buffer.push(code,b)}
+func gen_nibble(b:int)->int {
+ if b>=48 and b<=57 {return b-48}
+ assert b>=97 and b<=102,"Invalid machine hex"
+ return b-87
+}
+func gen_bytes(code:ints,bytes:string)->int {
+ assert len(bytes)%2==0,"Invalid machine hex"
+ for i in range(len(bytes)/2) {
+  assert buffer.size(code)<buffer.capacity(code),"Code limit"
+  buffer.push(code,gen_nibble(byte_at(bytes,i*2))*16+gen_nibble(byte_at(bytes,i*2+1)))
+ }
  return 0
 }
 func gen_imm(code:ints,value:int,width:int)->int {
@@ -15,7 +24,7 @@ func gen_imm(code:ints,value:int,width:int)->int {
 }
 func gen_guard(code:ints)->int {
  // jno +12; exit(10) on overflow.
- return gen_bytes(code,[113,12,184,60,0,0,0,191,10,0,0,0,15,5])
+ return gen_bytes(code,"710cb83c000000bf0a0000000f05")
 }
 func gen_factor(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
  assert depth<=64 and c[0]<len(tok),"Expected operand"
@@ -26,23 +35,23 @@ func gen_factor(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
  }
  if s=="+" or s=="-" {
   gen_factor(src,tok,c,code,syms,depth+1)
-  if s=="-" {gen_bytes(code,[72,247,216]);gen_guard(code)}
+  if s=="-" {gen_bytes(code,"48f7d8");gen_guard(code)}
   return 0
  }
  if tok[i]==2 {
   assert validate.integer(s),"Expected integer"
-  gen_bytes(code,[72,184]);gen_imm(code,parse_int(s),8);return 0
+  gen_bytes(code,"48b8");gen_imm(code,parse_int(s),8);return 0
  }
  assert tok[i]==1 and len(s)<=32 and dictionary.contains(syms,s),"Unknown variable"
  // mov rax,[rbp+disp32], negative offset = 2^32 - slot*8.
- gen_bytes(code,[72,139,133]);gen_imm(code,4294967296-dictionary.get(syms,s)*8,4)
+ gen_bytes(code,"488b85");gen_imm(code,4294967296-dictionary.get(syms,s)*8,4)
  return 0
 }
 func gen_term(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
  gen_factor(src,tok,c,code,syms,depth)
  while boot_peek(src,tok,c)=="*" {
-  c[0]+=3;gen_bytes(code,[80]);gen_factor(src,tok,c,code,syms,depth)
-  gen_bytes(code,[89,72,15,175,193]);gen_guard(code)
+  c[0]+=3;gen_bytes(code,"50");gen_factor(src,tok,c,code,syms,depth)
+  gen_bytes(code,"59480fafc1");gen_guard(code)
  }
  return 0
 }
@@ -50,16 +59,16 @@ func gen_expr(src:string,tok:ints,c:ints,code:ints,syms:ints,depth:int)->int {
  gen_term(src,tok,c,code,syms,depth)
  op=boot_peek(src,tok,c)
  while op=="+" or op=="-" {
-  c[0]+=3;gen_bytes(code,[80]);gen_term(src,tok,c,code,syms,depth)
-  if op=="+" {gen_bytes(code,[89,72,1,200])}
-  else {gen_bytes(code,[89,72,41,193,72,137,200])}
+  c[0]+=3;gen_bytes(code,"50");gen_term(src,tok,c,code,syms,depth)
+  if op=="+" {gen_bytes(code,"594801c8")}
+  else {gen_bytes(code,"594829c14889c8")}
   gen_guard(code);op=boot_peek(src,tok,c)
  }
  return 0
 }
 func gen_runtime(source:string)->ints {
  tok=boot_lex(source);c=ints(1);code=buffer.create(65536);syms=dictionary.create(32)
- gen_bytes(code,[72,137,229,72,129,236,0,1,0,0])
+ gen_bytes(code,"4889e54881ec00010000")
  while boot_peek(source,tok,c)!="show" {
   i=c[0];assert i<len(tok) and tok[i]==1,"Expected assignment"
   name=boot_peek(source,tok,c);assert len(name)<=32,"Name limit";c[0]+=3
@@ -68,12 +77,12 @@ func gen_runtime(source:string)->ints {
   if not dictionary.contains(syms,name) {
    slot=dictionary.size(syms)+1;assert dictionary.set(syms,name,slot),"Variable limit"
   }
-  gen_bytes(code,[72,137,133]);gen_imm(code,4294967296-dictionary.get(syms,name)*8,4)
+  gen_bytes(code,"488985");gen_imm(code,4294967296-dictionary.get(syms,name)*8,4)
   assert boot_peek(source,tok,c)==";","Expected ;";c[0]+=3
  }
  c[0]+=3;gen_expr(source,tok,c,code,syms,0)
  assert c[0]==len(tok),"Unexpected trailing token"
  // Signed decimal print and exit. Handles INT64_MIN using unsigned division.
- gen_bytes(code,[72,131,236,32,72,141,116,36,31,198,6,10,73,137,240,73,137,193,69,49,210,72,133,192,121,9,72,247,216,65,186,1,0,0,0,185,10,0,0,0,49,210,72,247,241,128,194,48,72,255,206,136,22,72,133,192,117,238,69,133,210,116,6,72,255,206,198,6,45,76,137,194,72,41,242,72,255,194,184,1,0,0,0,191,1,0,0,0,15,5,184,60,0,0,0,49,255,15,5])
+ gen_bytes(code,"4883ec20488d74241fc6060a4989f04989c14531d24885c0790948f7d841ba01000000b90a00000031d248f7f180c23048ffce88164885c075ee4585d2740648ffcec6062d4c89c24829f248ffc2b801000000bf010000000f05b83c00000031ff0f05")
  return genesis_code_elf(buffer.values(code))
 }
