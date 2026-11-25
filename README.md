@@ -6,7 +6,7 @@
 
 **Simple by design. Native by nature.**
 
-[Visit the website](https://dprotect.github.io/Tripol/) · [Documentation](https://dprotect.github.io/Tripol/docs/) · [Compiler source](https://github.com/DProtect/Tripol/tree/main)
+[Visit the website](https://tripollas.github.io/Tripol/) · [Documentation](https://tripollas.github.io/Tripol/docs/) · [Compiler source](https://github.com/Tripollas/Tripol/tree/main)
 
 </div>
 
@@ -14,7 +14,7 @@
 
 The `gh-pages` branch hosts the official static website for TRIPOL, a free experimental programming language that compiles directly to native x86-64 executables.
 
-The compiler and standard library source code live in [`main`](https://github.com/DProtect/Tripol/tree/main).
+The compiler and standard library source code live in [`main`](https://github.com/Tripollas/Tripol/tree/main).
 
 ## ASCENSION — v0.24.0
 
@@ -40,7 +40,7 @@ The Windows installer is unsigned. Review installation scripts and verify the ch
 Clone this branch and serve it locally:
 
 ```bash
-git clone --branch gh-pages --single-branch https://github.com/DProtect/Tripol.git
+git clone --branch gh-pages --single-branch https://github.com/Tripollas/Tripol.git
 cd Tripol
 python -m http.server 8000
 ```
@@ -53,4 +53,4 @@ GitHub Pages serves the root of `gh-pages`. Keep `index.html`, `.nojekyll`, `ass
 
 ## Contributing
 
-Report issues through the [official repository](https://github.com/DProtect/Tripol/issues). See the [contribution guide](https://github.com/DProtect/Tripol/blob/main/CONTRIBUTING.md), [security policy](https://github.com/DProtect/Tripol/blob/main/SECURITY.md) and [license](https://github.com/DProtect/Tripol/blob/main/LICENSE).
+Report issues through the [official repository](https://github.com/Tripollas/Tripol/issues). See the [contribution guide](https://github.com/Tripollas/Tripol/blob/main/CONTRIBUTING.md), [security policy](https://github.com/Tripollas/Tripol/blob/main/SECURITY.md) and [license](https://github.com/Tripollas/Tripol/blob/main/LICENSE).

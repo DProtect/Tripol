@@ -8,7 +8,7 @@ try {
     $zip = Join-Path $temp $name
     $local = Join-Path $PSScriptRoot ('downloads/' + $name)
     if (Test-Path -LiteralPath $local) { Copy-Item -LiteralPath $local -Destination $zip }
-    else { Invoke-WebRequest -UseBasicParsing -Uri ('https://dprotect.github.io/Tripol/downloads/' + $name) -OutFile $zip }
+    else { Invoke-WebRequest -UseBasicParsing -Uri ('https://tripollas.github.io/Tripol/downloads/' + $name) -OutFile $zip }
     if ((Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant() -ne $expected) { throw 'SHA-256 mismatch; no installation performed.' }
     Expand-Archive -LiteralPath $zip -DestinationPath $temp
     $exe = Join-Path $temp 'TRIPOL-v0.24-Setup-x64.exe'
