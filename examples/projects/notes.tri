@@ -1,0 +1,5 @@
+// Run in a dedicated working directory. Appends a local note.
+show "Write a note:"
+note = input()
+append_text("notes.txt", note + "\n")
+show read_text("notes.txt")

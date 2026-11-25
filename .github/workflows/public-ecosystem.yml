@@ -1,0 +1,116 @@
+name: Public ecosystem
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  history-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Scan reachable history (redacted)
+        run: docker run --rm -v "$PWD:/repo:ro" ghcr.io/gitleaks/gitleaks:v8.24.3 git /repo --log-opts="--all" --redact=100 --no-banner
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and test
+        run: |
+          go test -count=1 .
+          go vet .
+          mkdir -p dist
+          CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
+          ./tripol --version
+          ./tripol build examples/projects/expense_report.tri --target linux -o expense
+          ./expense | tee /tmp/expense.txt
+          grep -q '46000' /tmp/expense.txt
+          ./tripol build examples/projects/notes.tri --target linux -o /tmp/tripol-notes
+          scratch=$(mktemp -d)
+          (cd "$scratch"; printf 'Test note\n' | /tmp/tripol-notes; grep -q 'Test note' notes.txt)
+          tar -czf dist/TRIPOL-v0.24-Linux-x64.tar.gz tripol LICENSE
+      - name: Package editor extension
+        run: |
+          cp LICENSE vscode/LICENSE
+          cd vscode
+          npx --yes @vscode/vsce@3 package --no-dependencies --out ../dist/tripol-language-0.24.0.vsix
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-and-editor
+          path: dist/
+          if-no-files-found: error
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: false
+      - name: Build and test unsigned installer
+        shell: pwsh
+        run: |
+          go test -count=1 .
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          go vet .
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force installer/payload, dist | Out-Null
+          Copy-Item examples/hello.tri installer/payload/hello.tri
+          $env:CGO_ENABLED = '0'
+          $env:GOARCH = 'amd64'
+          go build -trimpath -ldflags '-s -w' -o installer/payload/tripol.exe .
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          go build -trimpath -ldflags '-s -w' -o dist/TRIPOL-v0.24-Setup-x64.exe ./installer
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & dist/TRIPOL-v0.24-Setup-x64.exe --quiet
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $compiler = Join-Path $env:LOCALAPPDATA 'Programs/TRIPOL/tripol.exe'
+          & $compiler --version
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & $compiler build examples/projects/expense_report.tri --target windows -o expense.exe
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $output = & ./expense.exe
+          if ($LASTEXITCODE -or ($output -join ' ') -notmatch '46000') { throw 'Expense smoke test failed' }
+          & $compiler build examples/projects/notes.tri --target windows -o notes.exe
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & dist/TRIPOL-v0.24-Setup-x64.exe --quiet --uninstall
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Compress-Archive -Path dist/TRIPOL-v0.24-Setup-x64.exe, LICENSE -DestinationPath dist/TRIPOL-v0.24-Installer.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/
+          if-no-files-found: error
+  draft-release:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: [history-audit, linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create draft pre-release (no overwrite)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cd dist
+          sha256sum TRIPOL-v0.24-Setup-x64.exe TRIPOL-v0.24-Installer.zip TRIPOL-v0.24-Linux-x64.tar.gz tripol-language-0.24.0.vsix > SHA256SUMS.txt
+          gh release create v0.24.0 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.24.0 — ASCENSION" --notes "Experimental preview. Windows installer is unsigned. Verify SHA256SUMS.txt. Review CI and security checks before publishing." TRIPOL-v0.24-Setup-x64.exe TRIPOL-v0.24-Installer.zip TRIPOL-v0.24-Linux-x64.tar.gz tripol-language-0.24.0.vsix SHA256SUMS.txt

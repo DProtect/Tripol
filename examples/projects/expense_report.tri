@@ -1,0 +1,6 @@
+// Local expense report using integer amounts in COP.
+import tripol.stats
+amounts = [12000, 8500, 21000, 4500]
+show "Total COP:", sum(amounts)
+show "Largest COP:", stats.maximum(amounts)
+show "Entries:", len(amounts)

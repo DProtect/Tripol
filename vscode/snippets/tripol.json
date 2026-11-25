@@ -1,0 +1,34 @@
+{
+  "Hello world": {
+    "prefix": "hello",
+    "body": [
+      "show \"Hello, TRIPOL!\""
+    ]
+  },
+  "Function": {
+    "prefix": "func",
+    "body": [
+      "func ${1:name}(${2:a}, ${3:b}) {",
+      "    return ${4:a + b}",
+      "}"
+    ]
+  },
+  "Loop": {
+    "prefix": "for",
+    "body": [
+      "for ${1:i} in range(0, ${2:10}) {",
+      "    show ${1:i}",
+      "}"
+    ]
+  },
+  "Discord bot": {
+    "prefix": "discord-bot",
+    "body": [
+      "import tripol.discord",
+      "",
+      "discord.login_env()",
+      "discord.reply(\"!ping\", \"Pong!\")",
+      "discord.run()"
+    ]
+  }
+}
