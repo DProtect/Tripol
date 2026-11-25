@@ -7,7 +7,7 @@ import (
 
 // Straight-line typed SSA analysis. Every definition has a unique value ID.
 // Checked operations are retained, including those whose results are unused.
-// CFG joins/phi insertion and general register allocation are not implemented.
+// CFG joins/phi insertion remain unimplemented; eligible blocks use linear-scan allocation.
 type ssaValue struct{ op string; args []int; literal int64; name string; uses int }
 type ssaProgram struct{ values []ssaValue; result int }
 func buildScalarSSA(f fn)(ssaProgram,bool){
@@ -51,4 +51,5 @@ func printSSA(f fn){
   fmt.Printf("  v%d = %s %s ; uses=%d\n",i,v.op,strings.Join(args,", "),v.uses)
  }
  fmt.Printf("  return v%d\n",p.result)
+ fmt.Println("  "+ssaLocationReport(p))
 }

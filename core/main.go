@@ -1160,6 +1160,7 @@ func (c *compiler) function(f fn, main bool) {
 	}
 	a.label("fn:" + f.name)
 	if !main {
+		if c.emitNativeSSA(f){return}
 		if r, ok := c.recurrence(f); ok {
 			a.emitRecurrence(f, r)
 			return
