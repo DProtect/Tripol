@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const version = "0.9.0"
+const version = "0.10.0"
 
 type token struct {
 	s, k string
@@ -1179,39 +1179,46 @@ func pe(a *asm) []byte {
 			imports = append(imports, "")
 		}
 	}
-	// Preserve logical IAT labels while packing only used imports.
-	count := 0
-	for _, name := range imports {
-		if name != "" {
-			count++
+	var iat, iatSize, importSize int
+	if a.needed("iat:10") {
+		id, iat, iatSize, importSize = networkImports(a, imports, idRVA, textRVA)
+	} else {
+		// Preserve logical IAT labels while packing only used imports.
+		count := 0
+		for _, name := range imports {
+			if name != "" {
+				count++
+			}
 		}
-	}
-	const ilt = 40
-	iat := ilt + 8*(count+1)
-	dll := iat + 8*(count+1)
-	copy(id[dll:], "KERNEL32.dll\x00")
-	cursor := align(dll+len("KERNEL32.dll")+1, 2)
-	j := 0
-	for i, s := range imports {
-		if s == "" {
-			continue
+		const ilt = 40
+		iat = ilt + 8*(count+1)
+		dll := iat + 8*(count+1)
+		copy(id[dll:], "KERNEL32.dll\x00")
+		cursor := align(dll+len("KERNEL32.dll")+1, 2)
+		j := 0
+		for i, s := range imports {
+			if s == "" {
+				continue
+			}
+			put64(id, ilt+8*j, uint64(idRVA+cursor))
+			put64(id, iat+8*j, uint64(idRVA+cursor))
+			copy(id[cursor+2:], s+"\x00")
+			cursor = align(cursor+2+len(s)+1, 2)
+			a.labels[fmt.Sprintf("iat:%d", i)] = idRVA - textRVA + iat + 8*j
+			j++
 		}
-		put64(id, ilt+8*j, uint64(idRVA+cursor))
-		put64(id, iat+8*j, uint64(idRVA+cursor))
-		copy(id[cursor+2:], s+"\x00")
-		cursor = align(cursor+2+len(s)+1, 2)
-		a.labels[fmt.Sprintf("iat:%d", i)] = idRVA - textRVA + iat + 8*j
-		j++
-	}
-	if a.needed("arena_state") {
-		if cursor > 480 {
-			die("import table overflow")
+		if a.needed("arena_state") {
+			if cursor > 480 {
+				die("import table overflow")
+			}
+			a.labels["arena_state"] = idRVA - textRVA + 480
 		}
-		a.labels["arena_state"] = idRVA - textRVA + 480
+		put32(id, 0, idRVA+ilt)
+		put32(id, 12, idRVA+dll)
+		put32(id, 16, idRVA+iat)
+		iatSize = 8 * (count + 1)
+		importSize = 40
 	}
-	put32(id, 0, idRVA+ilt)
-	put32(id, 12, idRVA+dll)
-	put32(id, 16, idRVA+iat)
 	a.finish()
 	b := make([]byte, header+raw+len(id))
 	copy(b, "MZ")
@@ -1243,9 +1250,9 @@ func pe(a *asm) []byte {
 	put64(b, o+96, 4096)
 	put32(b, o+108, 16)
 	put32(b, o+120, idRVA)
-	put32(b, o+124, 40)
+	put32(b, o+124, importSize)
 	put32(b, o+208, idRVA+iat)
-	put32(b, o+212, 8*(count+1))
+	put32(b, o+212, iatSize)
 	s := o + 240
 	copy(b[s:], ".text")
 	put32(b, s+8, len(a.b))
@@ -1314,7 +1321,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.9.0 — ECOSYSTEM\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol libs\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
+		fmt.Println("TRIPOL 0.10.0 — CONNECT\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
 		return
 	}
 	if args[0] == "--version" {
@@ -1330,6 +1337,10 @@ func cli() {
 			die("usage: tripol learn [es|en]")
 		}
 		learn()
+		return
+	}
+	if args[0] == "net-demo" {
+		netDemo(args[1:])
 		return
 	}
 	if args[0] == "libs" && len(args) == 1 {

@@ -758,3 +758,291 @@
  ret
 6: mov eax,1
  ret
+.section .text.tcp_exchange,"ax"
+ # rax IPv4, rcx port, rdx request. One connection; response is bounded text.
+ cmp rax,0
+ jl net_error
+ mov r8d,0xffffffff
+ cmp rax,r8
+ ja net_error
+ cmp rcx,1
+ jl net_error
+ cmp rcx,65535
+ ja net_error
+ push rbp
+ mov rbp,rsp
+ sub rsp,48
+ mov [rbp-8],rdx
+ call net_connect
+ mov [rbp-16],rax
+ mov rax,[rbp-8]
+ call strlen
+ cmp rax,65535
+ ja net_error
+ mov [rbp-24],rax
+ mov qword ptr [rbp-32],0
+1: mov rdx,[rbp-24]
+ sub rdx,[rbp-32]
+ jz 2f
+ mov rax,[rbp-16]
+ mov rsi,[rbp-8]
+ add rsi,[rbp-32]
+ call net_send
+ test rax,rax
+ jle net_error
+ add [rbp-32],rax
+ jmp 1b
+2: mov rax,[rbp-16]
+ call net_shutdown
+ mov eax,65536
+ call alloc
+ mov [rbp-40],rax
+ mov qword ptr [rbp-48],0
+3: mov rax,[rbp-16]
+ mov rsi,[rbp-40]
+ add rsi,[rbp-48]
+ mov edx,65536
+ sub rdx,[rbp-48]
+ call net_recv
+ test rax,rax
+ js net_error
+ jz 4f
+ add [rbp-48],rax
+ cmp qword ptr [rbp-48],65536
+ jae net_error
+ jmp 3b
+4: mov rax,[rbp-16]
+ call net_close
+ mov rax,[rbp-40]
+ mov rcx,[rbp-48]
+ mov byte ptr [rax+rcx],0
+ xor edx,edx
+5: cmp rdx,rcx
+ je 6f
+ cmp byte ptr [rax+rdx],0
+ je net_error
+ inc rdx
+ jmp 5b
+6: mov edx,65535
+ sub rdx,rcx
+ lea r8,[rip+arena_state]
+ sub [r8],rdx
+ add [r8+8],rdx
+ leave
+ ret
+.section .text.net_error,"ax"
+ lea rsi,[rip+1f]
+ mov edx,2f-1f
+ call writeerr
+ mov eax,1
+ jmp exit
+1: .ascii "TRIPOL runtime error: TCP connection, transfer or response limit failed\n"
+2:
+.section .text.net_connect_linux,"ax"
+ push rbp
+ mov rbp,rsp
+ sub rsp,40
+ mov qword ptr [rbp-16],0
+ mov qword ptr [rbp-8],0
+ mov word ptr [rbp-16],2
+ bswap eax
+ mov [rbp-12],eax
+ rol cx,8
+ mov [rbp-14],cx
+ mov eax,41
+ mov edi,2
+ mov esi,1
+ xor edx,edx
+ syscall
+ test rax,rax
+ js net_error
+ mov [rbp-24],rax
+ # SO_RCVTIMEO and SO_SNDTIMEO (also bounds blocking connect on Linux).
+ mov qword ptr [rbp-40],5
+ mov qword ptr [rbp-32],0
+ mov edi,eax
+ mov eax,54
+ mov esi,1
+ mov edx,20
+ lea r10,[rbp-40]
+ mov r8d,16
+ syscall
+ test rax,rax
+ js net_error
+ mov edi,[rbp-24]
+ mov eax,54
+ mov esi,1
+ mov edx,21
+ lea r10,[rbp-40]
+ mov r8d,16
+ syscall
+ test rax,rax
+ js net_error
+ mov edi,[rbp-24]
+ mov eax,42
+ lea rsi,[rbp-16]
+ mov edx,16
+ syscall
+ test rax,rax
+ js net_error
+ mov rax,[rbp-24]
+ leave
+ ret
+.section .text.net_send_linux,"ax"
+ mov rdi,rax
+ mov eax,44
+ mov r10d,0x4000
+ xor r8d,r8d
+ xor r9d,r9d
+ syscall
+ ret
+.section .text.net_recv_linux,"ax"
+ mov rdi,rax
+ mov eax,45
+ xor r10d,r10d
+ xor r8d,r8d
+ xor r9d,r9d
+ syscall
+ ret
+.section .text.net_shutdown_linux,"ax"
+ mov rdi,rax
+ mov eax,48
+ mov esi,1
+ syscall
+ test rax,rax
+ js net_error
+ ret
+.section .text.net_close_linux,"ax"
+ mov rdi,rax
+ mov eax,3
+ syscall
+ test rax,rax
+ js net_error
+ ret
+.section .text.net_connect_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,512
+ # WSAData at rbp-448, local sockaddr at rbp-16, handle at rbp-24.
+ mov qword ptr [rbp-16],0
+ mov qword ptr [rbp-8],0
+ mov word ptr [rbp-16],2
+ bswap eax
+ mov [rbp-12],eax
+ rol cx,8
+ mov [rbp-14],cx
+ mov ecx,0x0202
+ lea rdx,[rbp-448]
+ call qword ptr [rip+iat10]
+ test eax,eax
+ jnz net_error
+ mov ecx,2
+ mov edx,1
+ mov r8d,6
+ call qword ptr [rip+iat11]
+ cmp rax,-1
+ je net_error
+ mov [rbp-24],rax
+ # Winsock timeout value is milliseconds (DWORD).
+ mov dword ptr [rbp-28],5000
+ mov rcx,rax
+ mov edx,0xffff
+ mov r8d,0x1005
+ lea r9,[rbp-28]
+ mov qword ptr [rsp+32],4
+ call qword ptr [rip+iat13]
+ test eax,eax
+ jnz net_error
+ mov rcx,[rbp-24]
+ mov edx,0xffff
+ mov r8d,0x1006
+ lea r9,[rbp-28]
+ mov qword ptr [rsp+32],4
+ call qword ptr [rip+iat13]
+ test eax,eax
+ jnz net_error
+ mov rcx,[rbp-24]
+ lea rdx,[rbp-16]
+ mov r8d,16
+ call qword ptr [rip+iat12]
+ test eax,eax
+ jnz net_error
+ mov rax,[rbp-24]
+ leave
+ ret
+.section .text.net_send_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,32
+ mov rcx,rax
+ mov r8d,edx
+ mov rdx,rsi
+ xor r9d,r9d
+ call qword ptr [rip+iat14]
+ cdqe
+ leave
+ ret
+.section .text.net_recv_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,32
+ mov rcx,rax
+ mov r8d,edx
+ mov rdx,rsi
+ xor r9d,r9d
+ call qword ptr [rip+iat16]
+ cdqe
+ leave
+ ret
+.section .text.net_shutdown_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,32
+ mov rcx,rax
+ mov edx,1
+ call qword ptr [rip+iat15]
+ test eax,eax
+ jnz net_error
+ leave
+ ret
+.section .text.net_close_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,32
+ mov rcx,rax
+ call qword ptr [rip+iat17]
+ test eax,eax
+ jnz net_error
+ call qword ptr [rip+iat18]
+ test eax,eax
+ jnz net_error
+ leave
+ ret
+.section .text.find_bytes,"ax"
+ # rax haystack, rcx needle. Byte offset, -1 if not found.
+ mov r8,rax
+ xor eax,eax
+ cmp byte ptr [rcx],0
+ je 4f
+1: cmp byte ptr [r8+rax],0
+ je 5f
+ lea rdx,[r8+rax]
+ mov r9,rcx
+2: mov r10b,[r9]
+ test r10b,r10b
+ jz 4f
+ cmp [rdx],r10b
+ jne 3f
+ inc rdx
+ inc r9
+ jmp 2b
+3: inc rax
+ jmp 1b
+4: ret
+5: mov rax,-1
+ ret

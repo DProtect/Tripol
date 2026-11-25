@@ -1,26 +1,25 @@
-# TRIPOL v0.9 — ECOSYSTEM measurements
+# TRIPOL v0.10 — CONNECT measurements
 
-Linux x86-64, Go 1.23.2. 57 top-level test groups, 228 subtests passed; `go vet .` passed. Windows binaries cross-built and PE-inspected, not executed on Windows here. User validated v0.8 in Windows.
+Linux x86-64, Go 1.23.2. 64 test groups and 234 subtests passed; `go vet .` passed. Native loopback TCP tests executed on Linux. Windows binaries cross-built and PE-inspected, not executed on Windows here. User reported v0.9 working in Windows (83.144 ms median Fibonacci; 4.860 ms ecosystem compilation; 4608-byte ecosystem executable).
 
-## Text prefix/suffix benchmark
+## Native substring search vs manual byte-based implementation
 
-`examples/bench_text.tri`, 200,000 iterations of both prefix and suffix checks. Identical source, native Linux nano profile, stdout discarded for timing, process startup included, one warm-up per version, 11 runs per version with alternating order. Both outputs verified as 200000.
+`examples/bench_find_manual.tri` built by v0.9, and `examples/bench_find.tri` built by v0.10. Both search for `xyz0` in the same 36-byte text 200,000 times and return 200000. The manual implementation uses checked byte_at operations; the new intrinsic scans bytes directly and avoids repeated length scans. Neither allocates temporary strings. One warm-up and nine alternating measured executions each, stdout discarded, process startup included.
 
-| Version | Median ms | Min ms | Max ms | Linux bytes |
+| Program | Median ms | Min ms | Max ms | Linux bytes |
 |---|---:|---:|---:|---:|
-| v0.8 | 16.198 | 15.290 | 24.635 | 1262 |
-| v0.9 | 3.656 | 3.167 | 4.351 | 815 |
+| v0.9 manual substring | 120.250 | 116.211 | 122.866 | 1144 |
+| v0.10 text.contains | 5.515 | 4.605 | 5.807 | 755 |
 
-Observed speedup 4.43x; old prefix/suffix allocate substrings, new native helpers compare bytes without allocating. A separate test performs one million pairs of checks successfully with no temporary strings. No claim that all programs are faster. No cross-language comparison in this release.
+21.8x observed speedup for this specific implementation comparison, not a general compiler speedup or cross-language comparison. One million native searches also passed without temporary allocations. The original Fibonacci example compiled to identical 593-byte Linux executables on v0.9 and v0.10, so no speedup claimed.
 
 ## Binary sizes
 
 | Program | Linux bytes | Windows bytes |
 |---|---:|---:|
-| Hello | 373 | 1536 |
-| Same hello importing all 15 standard modules | identical | identical |
-| Ecosystem example | 3502 | 4608 |
-| Atlas example (original v0.8 source) | not measured | 3584 |
-| Vault sample | not measured | 2048 |
+| Hello world | 373 | 1536 |
+| Original Fibonacci example (no heading) | 593 | 1536 |
+| HTTP client demo | 3896 | 5632 |
+| Ecosystem | not measured | 4608 |
 
-`tripol bench-build examples/ecosystem.tri --runs 10`: median 1.654 ms, min 1.211 ms, max 4.300 ms; deterministic 4608-byte Windows output. Includes source loading and native generation; excludes writing and compiler startup. PE inspection confirms GetTickCount64 and Sleep imports when needed, along with prior file/console/memory APIs. See test-results.txt.
+`tripol bench-build examples/ecosystem.tri --runs 10`: median 1.628 ms, min 1.114 ms, max 2.370 ms; deterministic 4608-byte Windows output, excludes compiler startup and executable write. Native TCP tests cover partial reads, zero-length response, 65535-byte limit, NUL, refused connection, bad types and ports. The demo server and generated Linux client yielded status 200 and expected body. PE inspection confirms KERNEL32.dll and WS2_32.dll imports, unused networking does not alter nano binaries. No TLS/UDP/DNS/IPv6 or native server yet. See README.md.

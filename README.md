@@ -1,10 +1,10 @@
-# TRIPOL v0.9.0 — ECOSYSTEM
+# TRIPOL v0.10.0 — CONNECT
 
 Free, experimental Apache-2.0 programming language. Standalone Go compiler emits x86-64 machine code and PE32+ (Windows) or ELF64 (Linux) directly. No Python, GCC, Clang or Go installation is required to use the distributed compiler. Go 1.23+ is needed only to rebuild it.
 
 ## Windows x64
 
-Run `TRIPOL-v0.9-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.8 was confirmed by the project owner on Windows (standard libraries, 4096-byte executable); v0.9 is cross-compiled and PE-inspected, with Windows execution pending. Portable ZIP is also available.
+Run `TRIPOL-v0.10-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.9 was confirmed by the project owner on Windows (Vault and 4608-byte ecosystem executable); v0.10 is cross-compiled and PE-inspected, with Windows execution pending. Portable ZIP is also available.
 
 ```cmd
 tripol --version
@@ -18,7 +18,33 @@ tripol bench main.tri --runs 5
 
 Commands: `tripol check FILE.tri`, `tripol run FILE.tri [--profile nano|debug]`, `tripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]`, `tripol bench FILE.tri [--runs 1..100] [--profile nano|debug]`, `tripol new NAME`. Default profile nano. Debug disables the AST/native optimization passes, not a source debugger. Benchmark includes OS process startup, compiles once, excludes one warm-up, closes stdin and discards stdout. Use noninteractive programs only; no built-in timeout. Targets x86-64 only.
 
-## Ecosystem: 15 libraries, 83 callable functions
+## CONNECT R1 — TCP and HTTP
+
+17 standard libraries, 91 callable functions. New modules: `tripol.network` (`ipv4`, `loopback`, `exchange`) and `tripol.http` (`get_raw`, `status`, `body`). `tripol.text` adds `index_of` and `contains`. Native byte searching uses no temporary allocation; returns a zero-based byte offset or -1 (empty needle returns 0). See BENCHMARKS.md.
+
+Start the built-in one-shot test server in one terminal:
+
+```cmd
+tripol net-demo
+```
+
+In another terminal run `examples/connect.tri`, or copy this into `connect.tri`:
+
+```tripol
+import tripol.network
+import tripol.http
+response = http.get_raw(network.loopback(), 8765, "localhost", "/")
+show "Status:", http.status(response)
+show "Body:", http.body(response)
+```
+
+`tripol run connect.tri` prints `Status: 200` and `Body: Hello from TRIPOL!`. Start the server again before another request. `tripol net-demo [PORT]` is a Go compiler-side testing tool, bound only to 127.0.0.1; not a TRIPOL-native server, not a browser server. It reads to EOF and exits after one request, with a 10-second connected-client deadline. Generated client executables use Linux syscalls or Windows Winsock directly; no Go runtime or compiler needed at runtime. Unused network routines/imports are omitted in nano mode.
+
+`network.ipv4(a,b,c,d)` checks octets 0..255. `network.exchange(address,port,request)` opens one blocking IPv4 TCP connection, sends all request bytes (up to 65535), half-closes writes, reads until peer EOF, closes socket and returns NUL-free text up to 65535 bytes; errors terminate program with a nonzero status. A 5-second per-operation send/receive timeout is set; Windows blocking connect uses the OS timeout, and no total transfer deadline exists. Linux blocking connect is subject to the socket send timeout. This API is not for binary data, long-lived sessions or untrusted services. No DNS, IPv6, UDP, TLS, async sockets or native server API yet. Memory is process-lifetime, with unused receive-buffer suffix reclaimed; general reclamation is still pending.
+
+`http.get_raw` sends HTTP/1.0 GET with a caller-supplied IPv4, port, ASCII Host and path; rejects control bytes/whitespace. `http.status` reads the status prefix, `http.body` extracts bytes after the first CRLF CRLF. No HTTP/1.1 chunk decoding, Content-Length validation, redirects, HTTPS, authentication or general HTTP parser. Use trusted local test services; do not send secrets over plaintext HTTP.
+
+## Ecosystem: original 15 libraries (v0.9), expanded to 17 in v0.10
 
 ```tripol
 import tripol.sort
@@ -236,7 +262,7 @@ zero-based byte offsets with exclusive end; it may split UTF-8 sequences.
 
 ## Previous features and limitations
 
-v0.3 features preserved: int64, bool, literal strings, functions, recursion, checked integer arithmetic, while, if/else, short-circuiting, fixed-size local integer arrays with bounds checks, range loops, break/continue, lexical stack reuse, dead function elimination and direct self-tail-call optimization. Fixed local literal arrays cannot be resized, nested, returned or passed to user functions. Official read-only standard-library array parameters can borrow fixed arrays; arrays.copy creates a dynamic copy. Runtime-sized arrays have the reference semantics described above. UTF-8 BOM accepted. Max 401 stack slots (fixed arrays use one additional length slot). Not a sandbox; ordinary recursion can exhaust the stack. No general allocator, TIR, networking, GUI, methods or production-grade ABI yet. The dynamic arrays and text share the bounded arena. Native Linux binaries use syscalls; Windows binaries use kernel32.dll. Go is only the compiler implementation. Runtime templates are hand-written x86-64 assembly; the checked-in generated Go file allows rebuilding without assembly tools or Python. `native/generate.py` uses Python and GNU binutils only if a maintainer edits assembly templates.
+v0.3 features preserved: int64, bool, literal strings, functions, recursion, checked integer arithmetic, while, if/else, short-circuiting, fixed-size local integer arrays with bounds checks, range loops, break/continue, lexical stack reuse, dead function elimination and direct self-tail-call optimization. Fixed local literal arrays cannot be resized, nested, returned or passed to user functions. Official read-only standard-library array parameters can borrow fixed arrays; arrays.copy creates a dynamic copy. Runtime-sized arrays have the reference semantics described above. UTF-8 BOM accepted. Max 401 stack slots (fixed arrays use one additional length slot). Not a sandbox; ordinary recursion can exhaust the stack. No general allocator, TIR, GUI, methods or production-grade ABI yet. Limited TCP/HTTP client support is described below. The dynamic arrays and text share the bounded arena. Native Linux binaries use syscalls; Windows binaries use kernel32.dll and WS2_32.dll only when networking is needed. Go is only the compiler implementation. Runtime templates are hand-written x86-64 assembly; the checked-in generated Go file allows rebuilding without assembly tools or Python. `native/generate.py` uses Python and GNU binutils only if a maintainer edits assembly templates.
 
 ## Build from source
 
@@ -246,7 +272,7 @@ CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
 mkdir -p installer/payload
 cp examples/hello.tri installer/payload/hello.tri
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o installer/payload/tripol.exe .
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.9-Setup-x64.exe ./installer
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.10-Setup-x64.exe ./installer
 ```
 
-See BENCHMARKS.md and test-results.txt. 57 test groups and 228 subtests passed on Linux; go vet passed. No claim of outperforming Rust or C. License Apache-2.0.
+See BENCHMARKS.md and test-results.txt. 64 test groups and 234 subtests passed on Linux; go vet passed. No claim of outperforming Rust or C. License Apache-2.0.

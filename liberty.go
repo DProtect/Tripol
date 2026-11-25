@@ -8,6 +8,18 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 		return t, true
 	}
 	switch e.s {
+	case "find_bytes":
+		if len(e.args) != 2 {
+			c.err("find_bytes expects two strings")
+		}
+		c.require(c.expression(e.args[0]), "string")
+		a.emit(0x50)
+		c.require(c.expression(e.args[1]), "string")
+		a.emit(0x48, 0x89, 0xc1, 0x58)
+		a.call("find_bytes")
+		return "int", true
+	case "tcp_exchange":
+		return c.networkBuiltin(e), true
 	case "platform_name", "compiler_version", "monotonic_ms", "sleep_ms", "has_prefix", "has_suffix":
 		return c.ecosystemBuiltin(e), true
 	case "byte_at":
@@ -110,13 +122,13 @@ func (c *compiler) floatOp(op string) string {
 // Runtime sections contain hand-written x86-64, with relocations resolved by Forge.
 // Ordered dependency closure keeps unused helpers out of tiny binaries.
 func (a *asm) libertyRuntime() {
-	order := []string{"clock_ms", "sleep_ms", "has_prefix", "has_suffix", "raw_bool", "raw_int", "raw_float", "raw_string", "print:float", "input", "concat", "parseint", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
+	order := []string{"tcp_exchange", "net_connect", "net_send", "net_shutdown", "net_recv", "net_close", "net_error", "find_bytes", "clock_ms", "sleep_ms", "has_prefix", "has_suffix", "raw_bool", "raw_int", "raw_float", "raw_string", "print:float", "input", "concat", "parseint", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
 	for _, name := range order {
 		if !a.needed(name) {
 			continue
 		}
 		key := name
-		if name == "clock_ms" || name == "sleep_ms" || name == "osalloc" || name == "readbyte" || name == "file_open" || name == "file_chunk_read" || name == "file_chunk_write" || name == "file_close" {
+		if name == "net_connect" || name == "net_send" || name == "net_shutdown" || name == "net_recv" || name == "net_close" || name == "clock_ms" || name == "sleep_ms" || name == "osalloc" || name == "readbyte" || name == "file_open" || name == "file_chunk_read" || name == "file_chunk_write" || name == "file_close" {
 			key += ":" + a.target
 		}
 		t, ok := libertyCode[key]

@@ -5,3 +5,6 @@ func to_int(s:string) -> int { return parse_int(s) }
 func part(s:string, start:int, end:int) -> string { return slice(s,start,end) }
 func starts_with(s:string, prefix:string) -> bool {return has_prefix(s,prefix)}
 func ends_with(s:string, suffix:string) -> bool {return has_suffix(s,suffix)}
+// Byte index, -1 if absent; empty needle matches at zero.
+func index_of(s:string,needle:string)->int {return find_bytes(s,needle)}
+func contains(s:string,needle:string)->bool {return find_bytes(s,needle)>=0}

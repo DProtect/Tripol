@@ -1,0 +1,25 @@
+import tripol.network
+// Minimal HTTP/1.0 request, no TLS, response headers/body returned together.
+func get_raw(address:int,port:int,host:string,path:string)->string {
+ assert len(host)>0 and len(path)>0,"HTTP host and path required"
+ assert byte_at(path,0)==47,"HTTP path must begin with /"
+ for i in range(len(host)) {assert byte_at(host,i)>32 and byte_at(host,i)<127,"Invalid HTTP host"}
+ for i in range(len(path)) {assert byte_at(path,i)>32 and byte_at(path,i)<127,"Invalid HTTP path"}
+ return network.exchange(address,port,"GET "+path+" HTTP/1.0\r\nHost: "+host+"\r\nConnection: close\r\n\r\n")
+}
+// Status from a raw HTTP/1.x response; rejects malformed status prefix.
+func status(response:string)->int {
+ assert len(response)>=12,"Short HTTP response"
+ assert has_prefix(response,"HTTP/1.0 ") or has_prefix(response,"HTTP/1.1 "),"Invalid HTTP version"
+ a=byte_at(response,9)-48
+ b=byte_at(response,10)-48
+ c=byte_at(response,11)-48
+ assert a>=1 and a<=5 and b>=0 and b<=9 and c>=0 and c<=9,"Invalid HTTP status"
+ return a*100+b*10+c
+}
+// Raw body after the first CRLF CRLF separator; no chunk decoding.
+func body(response:string)->string {
+ i=find_bytes(response,"\r\n\r\n")
+ assert i>=0,"Missing HTTP header separator"
+ return slice(response,i+4,len(response))
+}

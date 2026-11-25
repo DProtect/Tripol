@@ -1,0 +1,8 @@
+// IPv4 in network byte order, represented as an unsigned 32-bit value in int64.
+func ipv4(a:int,b:int,c:int,d:int)->int {
+ assert a>=0 and a<=255 and b>=0 and b<=255 and c>=0 and c<=255 and d>=0 and d<=255,"Invalid IPv4 octet"
+ return a*16777216+b*65536+c*256+d
+}
+// One TCP request, half-close writes, read text until peer closes.
+func exchange(address:int,port:int,request:string)->string {return tcp_exchange(address,port,request)}
+func loopback()->int {return 2130706433}

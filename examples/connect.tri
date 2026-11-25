@@ -1,0 +1,6 @@
+import tripol.network
+import tripol.http
+
+response = http.get_raw(network.loopback(), 8765, "localhost", "/")
+show "Status:", http.status(response)
+show "Body:", http.body(response)
