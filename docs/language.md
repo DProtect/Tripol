@@ -67,3 +67,7 @@ Direct self tail calls with full argument lists reuse the frame in all profiles 
 ## Indexed compound assignment (v0.27)
 
 Mutable fixed and dynamic integer arrays support `a[i] += x`, `-=`, `*=`, `/=`, `%=`. The index is checked and evaluated exactly once before loading the old value, then the RHS is evaluated once. Checked arithmetic and recoverable traps are unchanged. Constant arrays cannot be modified. Dynamic collection method syntax remains pending.
+
+## Growable integer lists (0.27.1)
+
+`nums=list()` or `list(initial_capacity)` creates a stable reference to a growable integer collection. `add(value)` returns new size; `get(index)` and `set(index,value)` check bounds; `remove_at(index)` returns removed value; `clear()` resets size; `size()`, `capacity()`, `len(nums)` and `show nums` are supported. Capacity is at most 1048576, subject to process arena limits. Aliases share one handle across growth; old backing allocations remain in the arena. Direct mutation through a constant binding is rejected; another mutable alias can still mutate the shared collection. This is not general memory reclamation. Lists are distinct from `ints`; use methods, not direct indexing or array-only functions.

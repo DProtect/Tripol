@@ -103,3 +103,9 @@ Both modules expose `create(limit=32)`, `capacity`, `size`, `push`, `peek`, `pop
 - `csv`: escape a single field, fields/valid for a single comma-separated record with quoted fields and doubled quotes. No file/stream parser yet.
 
 See `examples/projects/quantum_x_libraries.tri` and `memory_stress.tri`.
+
+## 0.27.1 additional modules
+
+- `io`: `read(path,limit=65536)` and `write(path,data)`. Binary int arrays, values 0..255; limit 65536 bytes. Invalid sizes, bytes, oversized input and OS I/O failures are fatal, matching existing file I/O. Writes replace the destination after input validation; not transactional. Reads reserve storage for the requested limit and return actual length.
+- `stream`: in-memory byte cursor `create`, `position`, `remaining`, `seek`, `read_byte`, `read_u16` (little endian). Cursor is mutable, checked, and allocates only at creation.
+- `regex`: `valid`, `matches`. Bounded byte-oriented full-string matching supporting literal, `.` and `*`; pattern max 128 bytes, input max 4096. No groups, captures, alternation or Unicode matching.

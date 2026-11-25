@@ -1,3 +1,10 @@
+# v0.27.1 QUANTUM X (development)
+
+- GENESIS integer functions, direct calls, range loops, repeated show, native ELF output without host byte transport via compiler/direct.tri.
+- Bounded native binary file operations, byte cursor, limited regex matching.
+- Growable integer lists with stable aliases and checked methods.
+- Versioned follow-up to published v0.27.0; old release assets are preserved.
+
 # v0.27 QUANTUM X (development)
 
 - Experimental GENESIS R3: checked division/remainder, native conditional branches and loops, multiline file driver; Go CLI transports ELF bytes without Python.

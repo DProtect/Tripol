@@ -7,7 +7,7 @@ function activate(context) {
  const output = vscode.window.createOutputChannel("TRIPOL");
  const diagnostics = vscode.languages.createDiagnosticCollection("tripol");
  const selector = {language:"tripol",scheme:"file"};
- const keyword = "import if else while repeat for in break continue return show assert try catch finally throw scratch func struct let const int bool string float ints true false and or not".split(" ");
+ const keyword = "import if else while repeat for in break continue return show assert try catch finally throw scratch func struct let const int bool string float ints list true false and or not".split(" ");
  const localNames = doc => [...new Set([...doc.getText().matchAll(/\b(?:func\s+)?([A-Za-z_]\w*)\s*(?:\(|=(?!=))/g)].map(x=>x[1]))];
  context.subscriptions.push(output,diagnostics,vscode.languages.registerCompletionItemProvider(selector,{
   provideCompletionItems(doc,pos){

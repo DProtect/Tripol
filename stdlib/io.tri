@@ -1,0 +1,4 @@
+// Binary files: bounded at 65536 bytes. All values must be 0..255.
+// Write validates the full input before opening the file. Existing files are replaced.
+func read(path:string,limit=65536)->ints {return read_bytes(path,limit)}
+func write(path:string,data:ints)->int {return write_bytes(path,data)}

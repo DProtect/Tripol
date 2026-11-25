@@ -1,15 +1,16 @@
-# GENESIS R3 — bootstrap compiler
+# GENESIS R3 — QUANTUM X
 
-The production compiler remains Go. GENESIS is written in TRIPOL and emits Linux x86-64 ELF machine code. The file driver reads a source path on stdin and outputs hex transport; the Go CLI writes those bytes to a new file. No Python is needed for the new command, but standalone binary I/O in TRIPOL remains pending.
+The production Go compiler builds a native stage written in TRIPOL. GENESIS emits Linux x86-64 ELF, not Windows PE. It now supports integer functions (up to 8 int parameters), local integer variables, recursion, calls to previously declared functions, if/else, while, for/range, checked + - * / %, and repeated show. A function must end in a return; an earlier return in a branch is permitted. Forward calls, mutual recursion, global variable capture, bool expressions and a complete type system are not supported. Up to 32 function declarations, 32 slots per frame, 4096 source bytes, 16 statement nesting levels. Declarations must precede control flow in each frame. Loop counters are immutable and scoped.
+
+## Direct binary output
 
 ```sh
-tripol build compiler/file.tri --target linux -o genesis-stage
-tripol genesis ./genesis-stage examples/projects/genesis_r3.tri -o genesis-demo
+tripol build compiler/direct.tri --target linux -o genesis-stage
+printf 'examples/projects/genesis_functions.tri\ngenesis-demo\n' | ./genesis-stage
+chmod +x genesis-demo
 ./genesis-demo
 ```
 
-Expected: 30. On Windows use `--target windows -o genesis-stage.exe` and `tripol genesis genesis-stage.exe examples/projects/genesis_r3.tri -o genesis-demo`. The emitted program still requires Linux x86-64. Use a new output file; overwrite is rejected.
+On Windows build the stage with `--target windows -o genesis-stage.exe` then run it and enter the source and output paths on separate lines. The stage prints bytes written and produces a Linux ELF; execute on Linux x86-64. The direct driver replaces the specified output file, so choose a new path. The existing hex transport (`compiler/file.tri` with `tripol genesis`) remains available and refuses overwrite.
 
-R3 supports up to 32 predeclared integer variables, reassignment, multiline/semicolon separators, integer comparisons, nested if/else and while blocks, checked runtime + - * / % and one final show expression. Variable declarations are required before control flow, avoiding uninitialized slots; nesting limited to 16 statement levels and 64 expression levels, source max 4096 bytes subject to host file limits. Runtime divide-by-zero and signed overflow exit 10. The old stdin driver and R1 constant show mode remain available for compatibility.
-
-No functions, for loops, boolean short-circuit expressions, general type system, AST/SSA backend, PE emission, direct binary writes or self-compilation yet. The host driver invokes an explicitly selected local stage executable; use a trusted stage. Full bootstrap parity and multi-generation verification remain future work.
+Expected output of genesis_functions.tri: 0, 5, 10, ..., 45, each on its own line. Full self-compilation, PE generation and additional language features remain future work.

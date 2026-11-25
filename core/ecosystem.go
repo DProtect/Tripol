@@ -25,6 +25,7 @@ func (c *compiler) showValue(e *expr, newline bool) {
 	if !c.promoteFixed(e) {
 		t = c.expression(e)
 	}
+	if t == "list" { a.emit(0x48,0x8b,0x40,0x08); t = "ints" }
 	if t != "ints" {
 		if c.isRecord(t) {
 			c.err("show requires scalar, string or integer array")

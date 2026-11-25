@@ -2,7 +2,7 @@ package core
 
 // Mutable standard functions must not borrow fixed (potentially const) arrays.
 func mutableArrayFunction(name string) bool {
-	return name == "heap.push" || name == "heap.pop" || name == "bitset.add" || name == "bitset.remove" || name == "stack.push" || name == "stack.pop" || name == "stack.clear" || name == "queue.push" || name == "queue.pop" || name == "queue.clear" || name == "dictionary.set" || name == "dictionary.remove" || name == "sprite.draw" || name == "sprite.draw_key" || name == "canvas.line" || name == "canvas.circle" || name == "canvas.blend" || name == "particles.step" || name == "sort.sift" || name == "buffer.push" || name == "buffer.set" || name == "buffer.pop" || name == "canvas.clear" || name == "canvas.pixel" || name == "canvas.rectangle"
+	return name == "stream.seek" || name == "stream.read_byte" || name == "stream.read_u16" || name == "heap.push" || name == "heap.pop" || name == "bitset.add" || name == "bitset.remove" || name == "stack.push" || name == "stack.pop" || name == "stack.clear" || name == "queue.push" || name == "queue.pop" || name == "queue.clear" || name == "dictionary.set" || name == "dictionary.remove" || name == "sprite.draw" || name == "sprite.draw_key" || name == "canvas.line" || name == "canvas.circle" || name == "canvas.blend" || name == "particles.step" || name == "sort.sift" || name == "buffer.push" || name == "buffer.set" || name == "buffer.pop" || name == "canvas.clear" || name == "canvas.pixel" || name == "canvas.rectangle"
 }
 
 func (c *compiler) quantumBuiltin(e *expr) string {

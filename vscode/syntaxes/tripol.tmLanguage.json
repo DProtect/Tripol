@@ -12,7 +12,7 @@
     },
     {
       "name": "support.class.tripol",
-      "match": "\\btripol\\.(animation|arrays|binary|bits|bitset|buffer|camera|canvas|checksum|collections|colors|compression|console|convert|csv|datetime|dictionary|discord|encoding|env|errors|events|files|game|geometry|heap|http|https|image|json|math|matrix|memory|network|particles|path|physics|profiler|queue|random|search|sequences|simd|sort|sprite|stack|stats|system|testing|text|time|ui|utf8|validate|vector)\\b"
+      "match": "\\btripol\\.(animation|arrays|binary|bits|bitset|buffer|camera|canvas|checksum|collections|colors|compression|console|convert|csv|datetime|dictionary|discord|encoding|env|errors|events|files|game|geometry|heap|http|https|image|io|json|math|matrix|memory|network|particles|path|physics|profiler|queue|random|regex|search|sequences|simd|sort|sprite|stack|stats|stream|system|testing|text|time|ui|utf8|validate|vector)\\b"
     },
     {
       "name": "string.quoted.double.tripol",
@@ -31,7 +31,7 @@
     },
     {
       "name": "storage.type.tripol",
-      "match": "\\b(func|struct|let|const|int|bool|string|float|ints)\\b"
+      "match": "\\b(func|struct|let|const|int|bool|string|float|ints|list)\\b"
     },
     {
       "name": "constant.language.tripol",

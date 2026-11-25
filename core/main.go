@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-const version = "0.27.0"
+const version = "0.27.1"
 
 type token struct {
 	s, k      string
@@ -95,7 +95,7 @@ func (p *parser) name() string {
 }
 func (p *parser) typ() string {
 	switch p.t().s {
-	case "int", "bool", "string", "float", "ints":
+	case "int", "bool", "string", "float", "ints", "list":
 		return p.take().s
 	}
 	if p.t().k == "id" {
@@ -696,6 +696,7 @@ func (c *compiler) expression(e *expr) string {
 		}
 		f, ok := c.fs[e.s]
 		if !ok {
+			if t, handled := c.listMethod(e); handled {return t}
 			if t, handled := c.builtin(e); handled {
 				return t
 			}
@@ -853,7 +854,7 @@ func (c *compiler) expression(e *expr) string {
 		a.call("concat")
 		return "string"
 	}
-	if t == "ints" || c.isRecord(t) {
+	if t == "ints" || t == "list" || c.isRecord(t) {
 		c.err("aggregate references do not support operators")
 	}
 	if op == "==" || op == "!=" {
@@ -1596,7 +1597,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.27.0 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {

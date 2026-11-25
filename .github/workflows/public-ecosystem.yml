@@ -49,7 +49,7 @@ jobs:
           cd vscode
           node generate-catalog.js
           node --check extension.js
-          npx --yes @vscode/vsce@3 package --no-dependencies --out ../dist/tripol-language-0.27.0.vsix
+          npx --yes @vscode/vsce@3 package --no-dependencies --out ../dist/tripol-language-0.27.1.vsix
       - uses: actions/upload-artifact@v4
         with:
           name: linux-and-editor
@@ -116,6 +116,6 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           cd dist
-          sha256sum TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.0.vsix > SHA256SUMS.txt
-          if gh release list --limit 100 --json tagName --jq '.[].tagName' | grep -Fxq v0.27.0; then echo 'Release or draft already exists; not overwriting'; exit 0; fi
-          gh release create v0.27.0 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.27.0 — QUANTUM X" --notes "Experimental preview. Windows installer is unsigned. Verify SHA256SUMS.txt. Review CI and security checks before publishing." TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.0.vsix SHA256SUMS.txt
+          sha256sum TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.1.vsix > SHA256SUMS.txt
+          if gh release list --limit 100 --json tagName --jq '.[].tagName' | grep -Fxq v0.27.1; then echo 'Release or draft already exists; not overwriting'; exit 0; fi
+          gh release create v0.27.1 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.27.1 — QUANTUM X" --notes "Experimental preview. Windows installer is unsigned. Verify SHA256SUMS.txt. Review CI and security checks before publishing." TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.1.vsix SHA256SUMS.txt

@@ -1,6 +1,6 @@
 # QUANTUM X — Windows validation
 
-Run only after the v0.27.0 release is published. Save v0.26 results first, on the same PC and with the same profile, workload and power settings:
+Run only after the v0.27.1 release is published. Save v0.26 results first, on the same PC and with the same profile, workload and power settings:
 
 ```cmd
 tripol --version
@@ -25,7 +25,7 @@ tripol build
 main.exe
 ```
 
-Expected: TRIPOL 0.27.0 and Hello, TRIPOL! from the generated program. Check all four profiles: nano, balanced, turbo, debug. Each must give equivalent results.
+Expected: TRIPOL 0.27.1 and Hello, TRIPOL! from the generated program. Check all four profiles: nano, balanced, turbo, debug. Each must give equivalent results.
 
 ## Validation Center
 
@@ -66,7 +66,7 @@ Use WASD/arrows, collect the gold squares, ESC to quit. The console prints score
 
 ## Editor
 
-Install the official v0.27.0 VSIX through VS Code's Extensions: Install from VSIX command. Open a .tri file, try import completion, function completion/hover and local function definition lookup. Save, then run TRIPOL: Check source. Try invalid code and inspect Problems. Explicit Build/Run commands require trusted workspace; check-on-save is optional and off by default. No formatter/full LSP yet.
+Install the official v0.27.1 VSIX through VS Code's Extensions: Install from VSIX command. Open a .tri file, try import completion, function completion/hover and local function definition lookup. Save, then run TRIPOL: Check source. Try invalid code and inspect Problems. Explicit Build/Run commands require trusted workspace; check-on-save is optional and off by default. No formatter/full LSP yet.
 
 ## Updates and offline
 
@@ -83,3 +83,5 @@ tripol.exe --version
 ```
 
 Compare medians and p95 for the same case names in both JSON files. Record hardware, versions, profile, output equivalence and sample counts. No universal speed claims. Keep any failure logs; do not disable tests.
+
+For the 0.27.1 additions: `tripol run examples/projects/dynamic_list.tri`, `tripol run examples/projects/binary_io.tri` from a disposable working directory (writes quantum-bytes.bin), and `tripol build compiler/direct.tri -o genesis-stage.exe`. See [GENESIS](genesis.md) for the direct driver. Retain prior version reports for comparison.

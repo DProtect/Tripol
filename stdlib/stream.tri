@@ -1,0 +1,10 @@
+// In-memory bounded byte cursor. No allocation during reads.
+func create()->ints {return ints(1)}
+func position(cursor:ints)->int {assert len(cursor)==1 and cursor[0]>=0,"Invalid cursor";return cursor[0]}
+func remaining(cursor:ints,data:ints)->int {p=position(cursor);assert p<=len(data),"Cursor beyond data";return len(data)-p}
+func seek(cursor:ints,data:ints,offset:int)->int {assert len(cursor)==1 and offset>=0 and offset<=len(data),"Invalid offset";cursor[0]=offset;return offset}
+func read_byte(cursor:ints,data:ints)->int {assert remaining(cursor,data)>0,"End of data";p=cursor[0];b=data[p];assert b>=0 and b<=255,"Invalid byte";cursor[0]+=1;return b}
+func read_u16(cursor:ints,data:ints)->int {
+ assert remaining(cursor,data)>=2,"End of data";p=cursor[0];a=data[p];b=data[p+1]
+ assert a>=0 and a<=255 and b>=0 and b<=255,"Invalid byte";cursor[0]+=2;return a+b*256
+}

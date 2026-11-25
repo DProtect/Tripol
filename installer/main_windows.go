@@ -61,7 +61,7 @@ func setup(uninstall bool) error {
 	if err := pathChange(dir, setPath); err != nil {
 		return fmt.Errorf("compiler installed in %s but PATH failed: %w", dir, err)
 	}
-	fmt.Println("Installed TRIPOL 0.27.0 in:", dir)
+	fmt.Println("Installed TRIPOL 0.27.1 in:", dir)
 	fmt.Println("Close this terminal and open a NEW PowerShell or Command Prompt.")
 	fmt.Println("Run: tripol --version")
 	fmt.Println("To try immediately in a new terminal: tripol run \"%LOCALAPPDATA%\\Programs\\TRIPOL\\hello.tri\" (Command Prompt)")

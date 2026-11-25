@@ -8,7 +8,7 @@
 
 A free, experimental programming language that turns readable code directly into native x86-64 executables.
 
-![Version](https://img.shields.io/badge/version-0.27.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
+![Version](https://img.shields.io/badge/version-0.27.1-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
 
 [Official website](https://tripollas.github.io/Tripol/) · [Online docs](https://tripollas.github.io/Tripol/docs/) · [Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
 
@@ -20,11 +20,17 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 | Current release | Built-in modules | Callable library functions* | Hello world (Windows / Linux) |
 |---|---:|---:|---:|
-| **0.27.0 — QUANTUM X (development)** | 55 | 333 (including scanner helpers) | see v0.24 baseline |
+| **0.27.1 — QUANTUM X (development)** | 58 | 343 (including scanner helpers) | see v0.24 baseline |
 
 *Includes JSON scanner helpers. Sizes are measured for `examples/hello.tri` in nano mode, not a promise for arbitrary programs. TRIPOL is pre-1.0 and is not yet a replacement for mature production languages.*
 
-## QUANTUM X
+## QUANTUM X — 0.27.1
+
+- Native byte I/O (`tripol.io`), bounded binary cursor (`tripol.stream`) and bounded literal/dot/star matching (`tripol.regex`).
+- Growable integer lists: `list()`, `add`, `get`, `set`, `remove_at`, `clear`, `size`, `capacity`; stable reference semantics across growth.
+- GENESIS R3 extends the experimental Linux ELF subset with typed integer functions, calls, recursion, `for`/range, repeated `show`, and direct binary output in `compiler/direct.tri`. Not a self-hosting compiler or Windows PE backend yet.
+
+### 0.27.0 foundation
 
 - GENESIS R3 experimental multiline ELF generation: checked runtime division/remainder, comparisons, `if`/`else`, `while`, and a file driver. `tripol genesis` removes the Python transport dependency but the host Go CLI still writes the output; no PE emission or self-hosting yet. [GENESIS](docs/genesis.md).
 - SYNTAX R2: checked indexed compound assignments `+=`, `-=`, `*=`, `/=`, `%=`; index evaluated once.
@@ -51,7 +57,7 @@ New: `arrays.copy_into(destination, source)` reuses equal-sized storage and retu
 
 - `core/`: production Go compiler and white-box regression tests.
 - `compiler/`: GENESIS compiler and demos written in TRIPOL.
-- `stdlib/`: the 55 standard-library modules, embedded at build time.
+- `stdlib/`: the 58 standard-library modules, embedded at build time.
 - `native/`: assembly source and code generator.
 - `tests/`: CLI integration tests and archived test evidence.
 - `examples/`, `benchmarks/`, `installer/`, `vscode/`, `docs/`: samples, reproducible measurements, distribution and documentation.

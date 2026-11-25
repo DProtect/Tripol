@@ -2525,3 +2525,202 @@ discord_post: .short 80,79,83,84,0
  jmp exit
 .gwerr: .ascii "TRIPOL Discord Gateway stopped (transport, heartbeat or protocol error). Check connection and bot configuration.\n"
 .gwerrend:
+
+
+.section .text.bytes_write,"ax"
+# rax=path, rcx=ints; validate before truncating the file
+ push rbp
+ mov rbp,rsp
+ sub rsp,320
+ mov [rbp-8],rax
+ mov [rbp-16],rcx
+ mov rdx,[rcx]
+ cmp rdx,65536
+ ja file_error
+ mov [rbp-24],rdx
+ xor r8d,r8d
+1: cmp r8,rdx
+ jae 2f
+ cmp qword ptr [rcx+r8*8+8],255
+ ja file_error
+ inc r8
+ jmp 1b
+2: mov rax,[rbp-8]
+ mov edx,1
+ call file_open
+ mov [rbp-32],rax
+ mov qword ptr [rbp-40],0
+3: mov rdx,[rbp-24]
+ sub rdx,[rbp-40]
+ jz 7f
+ cmp rdx,256
+ jbe 4f
+ mov edx,256
+4: mov [rbp-48],rdx
+ mov rcx,[rbp-16]
+ mov r8,[rbp-40]
+ lea rcx,[rcx+r8*8+8]
+ lea rsi,[rbp-320]
+ xor r8d,r8d
+5: mov rax,[rcx+r8*8]
+ mov [rsi+r8],al
+ inc r8
+ cmp r8,rdx
+ jb 5b
+ mov qword ptr [rbp-56],0
+6: mov rax,[rbp-32]
+ lea rsi,[rbp-320]
+ add rsi,[rbp-56]
+ mov rdx,[rbp-48]
+ sub rdx,[rbp-56]
+ call file_chunk_write
+ test rax,rax
+ jle file_error
+ add [rbp-56],rax
+ mov rcx,[rbp-56]
+ cmp rcx,[rbp-48]
+ jb 6b
+ add [rbp-40],rcx
+ jmp 3b
+7: mov rax,[rbp-32]
+ call file_close
+ mov rax,[rbp-24]
+ leave
+ ret
+.section .text.bytes_read,"ax"
+# rax=path, rcx=maximum bytes
+ push rbp
+ mov rbp,rsp
+ sub rsp,320
+ mov [rbp-8],rax
+ cmp rcx,65536
+ ja file_error
+ mov [rbp-16],rcx
+ mov rax,rcx
+ call ints_alloc
+ mov [rbp-24],rax
+ mov rax,[rbp-8]
+ xor edx,edx
+ call file_open
+ mov [rbp-32],rax
+ mov qword ptr [rbp-40],0
+1: mov rdx,[rbp-16]
+ sub rdx,[rbp-40]
+ jz 5f
+ cmp rdx,256
+ jbe 2f
+ mov edx,256
+2: mov rax,[rbp-32]
+ lea rsi,[rbp-320]
+ call file_chunk_read
+ test rax,rax
+ js file_error
+ jz 6f
+ mov rcx,[rbp-24]
+ mov r8,[rbp-40]
+ lea rcx,[rcx+r8*8+8]
+ lea rsi,[rbp-320]
+ xor edx,edx
+3: movzx r8d,byte ptr [rsi+rdx]
+ mov [rcx+rdx*8],r8
+ inc rdx
+ cmp rdx,rax
+ jb 3b
+ add [rbp-40],rax
+ jmp 1b
+5: mov rax,[rbp-32]
+ lea rsi,[rbp-320]
+ mov edx,1
+ call file_chunk_read
+ test rax,rax
+ jnz file_error
+6: mov rax,[rbp-32]
+ call file_close
+ mov rax,[rbp-24]
+ mov rcx,[rbp-40]
+ mov [rax],rcx
+ leave
+ ret
+
+
+.section .text.list_new,"ax"
+# rax=capacity, stable list header = [capacity, ints backing pointer]
+ push rbp
+ mov rbp,rsp
+ sub rsp,24
+ cmp rax,1048576
+ ja bounds
+ mov [rbp-8],rax
+ mov eax,16
+ call alloc
+ mov [rbp-16],rax
+ mov rax,[rbp-8]
+ call ints_alloc
+ mov qword ptr [rax],0
+ mov rcx,[rbp-16]
+ mov [rcx+8],rax
+ mov rdx,[rbp-8]
+ mov [rcx],rdx
+ mov rax,rcx
+ leave
+ ret
+.section .text.list_add,"ax"
+# rax=header, rcx=value; grow backing without invalidating aliases
+ push rbp
+ mov rbp,rsp
+ sub rsp,48
+ mov [rbp-8],rax
+ mov [rbp-16],rcx
+ mov rdx,[rax+8]
+ mov [rbp-24],rdx
+ mov rcx,[rdx]
+ cmp rcx,[rax]
+ jb 2f
+ mov [rbp-32],rcx
+ mov rax,[rax]
+ cmp rax,1048576
+ jae bounds
+ add rax,rax
+ jnz 1f
+ inc rax
+1: cmp rax,1048576
+ jbe 3f
+ mov eax,1048576
+3: mov [rbp-40],rax
+ call ints_alloc
+ mov rcx,[rbp-32]
+ mov [rax],rcx
+ lea rdi,[rax+8]
+ mov rsi,[rbp-24]
+ add rsi,8
+ cld
+ rep movsq
+ mov rcx,[rbp-8]
+ mov [rcx+8],rax
+ mov rdx,[rbp-40]
+ mov [rcx],rdx
+ mov rdx,rax
+2: mov rcx,[rdx]
+ mov rax,[rbp-16]
+ mov [rdx+rcx*8+8],rax
+ inc rcx
+ mov [rdx],rcx
+ mov rax,rcx
+ leave
+ ret
+.section .text.list_remove,"ax"
+# rax=header, rcx=index; return removed integer
+ mov rdx,[rax+8]
+ cmp rcx,[rdx]
+ jae bounds
+ mov rax,[rdx+rcx*8+8]
+ mov r8,[rdx]
+ dec r8
+ mov [rdx],r8
+1: cmp rcx,r8
+ jae 2f
+ mov r9,[rdx+rcx*8+16]
+ mov [rdx+rcx*8+8],r9
+ inc rcx
+ jmp 1b
+2: ret
