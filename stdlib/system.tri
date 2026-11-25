@@ -1,0 +1,5 @@
+func platform() -> string {return platform_name()}
+func architecture() -> string {return "x86_64"}
+func compiler() -> string {return compiler_version()}
+func is_windows() -> bool {return platform()=="windows"}
+func is_linux() -> bool {return platform()=="linux"}

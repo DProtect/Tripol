@@ -1,0 +1,22 @@
+func linear(a:ints, value:int) -> int {
+    for i in range(len(a)) { if a[i]==value { return i } }
+    return -1
+}
+func lower_bound(a:ints, value:int) -> int {
+    lo=0; hi=len(a)
+    while lo<hi {
+        mid=lo+(hi-lo)/2
+        if a[mid]<value {lo=mid+1} else {hi=mid}
+    }
+    return lo
+}
+func binary(a:ints, value:int) -> int {
+    i=lower_bound(a,value)
+    if i<len(a) and a[i]==value {return i}
+    return -1
+}
+func last(a:ints,value:int) -> int {
+    i=len(a)
+    while i>0 { i-=1; if a[i]==value {return i} }
+    return -1
+}

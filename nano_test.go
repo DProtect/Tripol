@@ -32,7 +32,7 @@ func TestNanoPrograms(t *testing.T) {
 	}
 }
 func TestNanoErrors(t *testing.T) {
-	for i, s := range []string{"break", "continue", "const a=[1]\na[0]=2", "a=[true]", "a=[]", "a=[1]\nshow a", "a=[1]\nshow a[true]", "a=[1]\na[0]=true", "for i in range(true,3){}", "for i in range(0,3){i=2}", "func dead(){return false}\nshow 1", "a=[1]\na=[2]", "show len(3)"} {
+	for i, s := range []string{"break", "continue", "const a=[1]\na[0]=2", "a=[true]", "a=[]", "a=[1]\nshow a[true]", "a=[1]\na[0]=true", "for i in range(true,3){}", "for i in range(0,3){i=2}", "func dead(){return false}\nshow 1", "a=[1]\na=[2]", "show len(3)"} {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			defer func() {
 				if recover() == nil {

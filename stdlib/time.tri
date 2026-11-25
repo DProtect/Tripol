@@ -1,0 +1,5 @@
+// Monotonic time in milliseconds, not wall-clock date/time.
+func now_ms() -> int {return monotonic_ms()}
+func elapsed(start:int) -> int {return now_ms()-start}
+func sleep(ms:int) -> int {return sleep_ms(ms)}
+func seconds(ms:int) -> float {return float(ms)/1000.0}

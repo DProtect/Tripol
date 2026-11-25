@@ -1,0 +1,3 @@
+import tripol.math
+func doble(n:int) -> int {return n*2}
+func cuadrado_doble(n:int) -> int {return math.square(doble(n))}

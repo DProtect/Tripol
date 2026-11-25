@@ -1,0 +1,18 @@
+func digit(n:int) -> bool { return n>=48 and n<=57 }
+func letter(n:int) -> bool { return (n>=65 and n<=90) or (n>=97 and n<=122) }
+func whitespace(n:int) -> bool { return n==32 or n==9 or n==10 or n==13 }
+func integer(s:string) -> bool {
+    n=len(s); if n==0 {return false}
+    i=0
+    if byte_at(s,0)==43 or byte_at(s,0)==45 {i=1}
+    if i==n {return false}
+    while i<n {if not digit(byte_at(s,i)) {return false}; i+=1}
+    return true
+}
+func ascii(s:string) -> bool {for i in range(len(s)) {if byte_at(s,i)>127 {return false}}; return true}
+func identifier(s:string) -> bool {
+    if len(s)==0 {return false}
+    b=byte_at(s,0); if not (letter(b) or b==95) {return false}
+    for i in range(1,len(s)) {b=byte_at(s,i);if not (letter(b) or digit(b) or b==95) {return false}}
+    return true
+}

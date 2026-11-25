@@ -1,0 +1,23 @@
+import tripol.encoding
+// Small JSON writer; input strings must be valid UTF-8. No general parser yet.
+func quote(s:string) -> string {
+    assert len(s)<=512, "JSON string limit 512 bytes"
+    result="\""
+    for i in range(len(s)) {
+        b=byte_at(s,i)
+        if b==34 {result+="\\\""}
+        else if b==92 {result+="\\\\"}
+        else if b<32 {result+="\\u00"+encoding.hex_byte(b)}
+        else {result+=slice(s,i,i+1)}
+    }
+    return result+"\""
+}
+func integer(n:int) -> string {return text(n)}
+func boolean(b:bool) -> string {if b {return "true"}; return "false"}
+func pair(key:string,value:string) -> string {return "{"+quote(key)+":"+quote(value)+"}"}
+func integers(a:ints) -> string {
+    assert len(a)<=128, "JSON array limit 128 integers"
+    result="["
+    for i in range(len(a)) {if i>0 {result+=","}; result+=text(a[i])}
+    return result+"]"
+}

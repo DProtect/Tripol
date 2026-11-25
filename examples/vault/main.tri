@@ -1,0 +1,3 @@
+import vault.mi_lib
+show "Doble:",mi_lib.doble(21)
+show "Cuadrado del doble:",mi_lib.cuadrado_doble(7)

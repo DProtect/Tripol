@@ -648,3 +648,113 @@
  call write
  leave
  ret
+
+# Monotonic time; x86-64 Linux clock_gettime(CLOCK_MONOTONIC).
+.section .text.clock_ms_linux,"ax"
+ sub rsp,16
+ mov eax,228
+ mov edi,1
+ mov rsi,rsp
+ syscall
+ test rax,rax
+ js text_error
+ mov rax,[rsp+8]
+ xor edx,edx
+ mov ecx,1000000
+ div rcx
+ imul rcx,[rsp],1000
+ add rax,rcx
+ add rsp,16
+ ret
+.section .text.clock_ms_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,32
+ call [rip+iat8]
+ leave
+ ret
+
+# Sleep milliseconds, 0..INT32_MAX, retry Linux nanosleep on EINTR.
+.section .text.sleep_ms_linux,"ax"
+ cmp rax,2147483647
+ ja text_error
+ xor edx,edx
+ mov ecx,1000
+ div rcx
+ imul rdx,rdx,1000000
+ sub rsp,32
+ mov [rsp],rax
+ mov [rsp+8],rdx
+1: mov eax,35
+ mov rdi,rsp
+ lea rsi,[rsp+16]
+ syscall
+ test rax,rax
+ jz 2f
+ cmp rax,-4
+ jne text_error
+ mov rax,[rsp+16]
+ mov rdx,[rsp+24]
+ mov [rsp],rax
+ mov [rsp+8],rdx
+ jmp 1b
+2: add rsp,32
+ xor eax,eax
+ ret
+.section .text.sleep_ms_windows,"ax"
+ cmp rax,2147483647
+ ja text_error
+ mov ecx,eax
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,32
+ call [rip+iat9]
+ leave
+ xor eax,eax
+ ret
+
+# Allocation-free bytewise prefix and suffix checks. Inputs RAX, RCX.
+.section .text.has_prefix,"ax"
+1: mov dl,[rcx]
+ test dl,dl
+ jz 2f
+ cmp dl,[rax]
+ jne 3f
+ inc rax
+ inc rcx
+ jmp 1b
+2: mov eax,1
+ ret
+3: xor eax,eax
+ ret
+.section .text.has_suffix,"ax"
+ mov rdx,rax
+ mov r8,rcx
+1: cmp byte ptr [rdx],0
+ je 2f
+ inc rdx
+ jmp 1b
+2: cmp byte ptr [r8],0
+ je 3f
+ inc r8
+ jmp 2b
+3: sub r8,rcx
+ sub rdx,rax
+ cmp r8,rdx
+ ja 5f
+ sub rdx,r8
+ add rax,rdx
+4: mov dl,[rcx]
+ test dl,dl
+ jz 6f
+ cmp dl,[rax]
+ jne 5f
+ inc rax
+ inc rcx
+ jmp 4b
+5: xor eax,eax
+ ret
+6: mov eax,1
+ ret

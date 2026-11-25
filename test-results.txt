@@ -40,6 +40,74 @@
 --- PASS: TestAtlasElimination (0.00s)
 === RUN   TestAtlasMixedModules
 --- PASS: TestAtlasMixedModules (0.00s)
+=== RUN   TestEcosystemLibraries
+=== RUN   TestEcosystemLibraries/0
+=== RUN   TestEcosystemLibraries/1
+=== RUN   TestEcosystemLibraries/2
+=== RUN   TestEcosystemLibraries/3
+=== RUN   TestEcosystemLibraries/4
+=== RUN   TestEcosystemLibraries/5
+=== RUN   TestEcosystemLibraries/6
+=== RUN   TestEcosystemLibraries/7
+--- PASS: TestEcosystemLibraries (0.02s)
+    --- PASS: TestEcosystemLibraries/0 (0.00s)
+    --- PASS: TestEcosystemLibraries/1 (0.00s)
+    --- PASS: TestEcosystemLibraries/2 (0.00s)
+    --- PASS: TestEcosystemLibraries/3 (0.00s)
+    --- PASS: TestEcosystemLibraries/4 (0.00s)
+    --- PASS: TestEcosystemLibraries/5 (0.00s)
+    --- PASS: TestEcosystemLibraries/6 (0.00s)
+    --- PASS: TestEcosystemLibraries/7 (0.00s)
+=== RUN   TestEcosystemBounds
+=== RUN   TestEcosystemBounds/show_byte_at("abc",-1)
+=== RUN   TestEcosystemBounds/show_byte_at("abc",3)
+=== RUN   TestEcosystemBounds/show_byte_at("",0)
+--- PASS: TestEcosystemBounds (0.00s)
+    --- PASS: TestEcosystemBounds/show_byte_at("abc",-1) (0.00s)
+    --- PASS: TestEcosystemBounds/show_byte_at("abc",3) (0.00s)
+    --- PASS: TestEcosystemBounds/show_byte_at("",0) (0.00s)
+=== RUN   TestEcosystemNoAllocRead
+--- PASS: TestEcosystemNoAllocRead (0.03s)
+=== RUN   TestEcosystemNoUnused
+--- PASS: TestEcosystemNoUnused (0.01s)
+=== RUN   TestVaultPackages
+--- PASS: TestVaultPackages (0.00s)
+=== RUN   TestVaultDependencies
+--- PASS: TestVaultDependencies (0.00s)
+=== RUN   TestVaultReject
+=== RUN   TestVaultReject/0
+=== RUN   TestVaultReject/1
+=== RUN   TestVaultReject/2
+=== RUN   TestVaultReject/3
+=== RUN   TestVaultReject/4
+=== RUN   TestVaultReject/5
+=== RUN   TestVaultReject/6
+--- PASS: TestVaultReject (0.00s)
+    --- PASS: TestVaultReject/0 (0.00s)
+    --- PASS: TestVaultReject/1 (0.00s)
+    --- PASS: TestVaultReject/2 (0.00s)
+    --- PASS: TestVaultReject/3 (0.00s)
+    --- PASS: TestVaultReject/4 (0.00s)
+    --- PASS: TestVaultReject/5 (0.00s)
+    --- PASS: TestVaultReject/6 (0.00s)
+=== RUN   TestVaultNoBorrow
+--- PASS: TestVaultNoBorrow (0.00s)
+=== RUN   TestVaultLock
+--- PASS: TestVaultLock (0.00s)
+=== RUN   TestEcosystemJSON
+--- PASS: TestEcosystemJSON (0.00s)
+=== RUN   TestEcosystemSortLarge
+--- PASS: TestEcosystemSortLarge (0.00s)
+=== RUN   TestVaultRejectQualifiedAccess
+--- PASS: TestVaultRejectQualifiedAccess (0.00s)
+=== RUN   TestEcosystemTimeSystem
+--- PASS: TestEcosystemTimeSystem (0.02s)
+=== RUN   TestEcosystemTextNoAlloc
+--- PASS: TestEcosystemTextNoAlloc (0.02s)
+=== RUN   TestEcosystemShowValues
+--- PASS: TestEcosystemShowValues (0.00s)
+=== RUN   TestVaultExplicitDependencies
+--- PASS: TestVaultExplicitDependencies (0.00s)
 === RUN   TestHorizonRecords
 === RUN   TestHorizonRecords/0
 === RUN   TestHorizonRecords/1
@@ -97,8 +165,8 @@
 === RUN   TestHorizonModulesPE
 --- PASS: TestHorizonModulesPE (0.00s)
 === RUN   TestHorizonTemplate
-Created /tmp/TestHorizonTemplate200243483/001/records (records)
-cd /tmp/TestHorizonTemplate200243483/001/records
+Created /tmp/TestHorizonTemplate3485220895/001/records (records)
+cd /tmp/TestHorizonTemplate3485220895/001/records
 tripol run
 --- PASS: TestHorizonTemplate (0.00s)
 === RUN   TestLibertyPrograms
@@ -110,7 +178,7 @@ tripol run
 === RUN   TestLibertyPrograms/5
 === RUN   TestLibertyPrograms/6
 === RUN   TestLibertyPrograms/7
---- PASS: TestLibertyPrograms (0.00s)
+--- PASS: TestLibertyPrograms (0.01s)
     --- PASS: TestLibertyPrograms/0 (0.00s)
     --- PASS: TestLibertyPrograms/1 (0.00s)
     --- PASS: TestLibertyPrograms/2 (0.00s)
@@ -299,7 +367,7 @@ tripol run
 === RUN   TestNanoPrograms/12
 === RUN   TestNanoPrograms/13
 === RUN   TestNanoPrograms/14
---- PASS: TestNanoPrograms (0.08s)
+--- PASS: TestNanoPrograms (0.09s)
     --- PASS: TestNanoPrograms/0 (0.00s)
     --- PASS: TestNanoPrograms/1 (0.00s)
     --- PASS: TestNanoPrograms/2 (0.00s)
@@ -311,7 +379,7 @@ tripol run
     --- PASS: TestNanoPrograms/8 (0.00s)
     --- PASS: TestNanoPrograms/9 (0.00s)
     --- PASS: TestNanoPrograms/10 (0.00s)
-    --- PASS: TestNanoPrograms/11 (0.07s)
+    --- PASS: TestNanoPrograms/11 (0.08s)
     --- PASS: TestNanoPrograms/12 (0.00s)
     --- PASS: TestNanoPrograms/13 (0.00s)
     --- PASS: TestNanoPrograms/14 (0.00s)
@@ -328,7 +396,6 @@ tripol run
 === RUN   TestNanoErrors/9
 === RUN   TestNanoErrors/10
 === RUN   TestNanoErrors/11
-=== RUN   TestNanoErrors/12
 --- PASS: TestNanoErrors (0.00s)
     --- PASS: TestNanoErrors/0 (0.00s)
     --- PASS: TestNanoErrors/1 (0.00s)
@@ -342,7 +409,6 @@ tripol run
     --- PASS: TestNanoErrors/9 (0.00s)
     --- PASS: TestNanoErrors/10 (0.00s)
     --- PASS: TestNanoErrors/11 (0.00s)
-    --- PASS: TestNanoErrors/12 (0.00s)
 === RUN   TestBounds
 === RUN   TestBounds/a=[1]_show_a[-1]
 === RUN   TestBounds/a=[1]_show_a[1]
@@ -390,7 +456,6 @@ tripol run
 === RUN   TestNexusReject/show_min(1,true)
 === RUN   TestNexusReject/show_sum(1)
 === RUN   TestNexusReject/show_input_int(1)
-=== RUN   TestNexusReject/a=[1];_show_"a",a
 === RUN   TestNexusReject/show_1,
 === RUN   TestNexusReject/x=1;_for_x_in_range(3){show_x}
 --- PASS: TestNexusReject (0.00s)
@@ -402,7 +467,6 @@ tripol run
     --- PASS: TestNexusReject/show_min(1,true) (0.00s)
     --- PASS: TestNexusReject/show_sum(1) (0.00s)
     --- PASS: TestNexusReject/show_input_int(1) (0.00s)
-    --- PASS: TestNexusReject/a=[1];_show_"a",a (0.00s)
     --- PASS: TestNexusReject/show_1, (0.00s)
     --- PASS: TestNexusReject/x=1;_for_x_in_range(3){show_x} (0.00s)
 === RUN   TestNexusTraps
@@ -417,16 +481,16 @@ tripol run
 --- PASS: TestNexusPE (0.00s)
 === RUN   TestNexusTemplates
 === RUN   TestNexusTemplates/basic
-Created /tmp/TestNexusTemplatesbasic321157186/001/basic
-cd /tmp/TestNexusTemplatesbasic321157186/001/basic
+Created /tmp/TestNexusTemplatesbasic2348522726/001/basic
+cd /tmp/TestNexusTemplatesbasic2348522726/001/basic
 tripol run main.tri
 === RUN   TestNexusTemplates/calculator
-Created /tmp/TestNexusTemplatescalculator3121919082/001/calculator (calculator)
-cd /tmp/TestNexusTemplatescalculator3121919082/001/calculator
+Created /tmp/TestNexusTemplatescalculator2357077280/001/calculator (calculator)
+cd /tmp/TestNexusTemplatescalculator2357077280/001/calculator
 tripol run
 === RUN   TestNexusTemplates/files
-Created /tmp/TestNexusTemplatesfiles2752762613/001/files (files)
-cd /tmp/TestNexusTemplatesfiles2752762613/001/files
+Created /tmp/TestNexusTemplatesfiles867982327/001/files (files)
+cd /tmp/TestNexusTemplatesfiles867982327/001/files
 tripol run
 --- PASS: TestNexusTemplates (0.00s)
     --- PASS: TestNexusTemplates/basic (0.00s)
@@ -499,7 +563,6 @@ tripol run
 === RUN   TestVelocityArrays/a=ints(-1)
 === RUN   TestVelocityArrays/a=ints(65536)
 === RUN   TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)}
-=== RUN   TestVelocityArrays/a=ints(2);show_a
 === RUN   TestVelocityArrays/a=ints(2);show_a==a
 === RUN   TestVelocityArrays/const_a=ints(2);a[0]=1
 === RUN   TestVelocityArrays/a=ints(2);a[0]="s"
@@ -513,10 +576,9 @@ tripol run
     --- PASS: TestVelocityArrays/a=ints(-1) (0.00s)
     --- PASS: TestVelocityArrays/a=ints(65536) (0.00s)
     --- PASS: TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)} (0.00s)
-    --- PASS: TestVelocityArrays/a=ints(2);show_a (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);show_a==a (0.00s)
     --- PASS: TestVelocityArrays/const_a=ints(2);a[0]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);a[0]="s" (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2.0) (0.00s)
 PASS
-ok  	tripol	0.221s
+ok  	tripol	0.345s

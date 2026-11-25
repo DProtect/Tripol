@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const version = "0.8.0"
+const version = "0.9.0"
 
 type token struct {
 	s, k string
@@ -397,11 +397,16 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 				p.err("invalid import path")
 			}
 		} else {
-			if p.name() != "tripol" {
-				p.err("expected import tripol.NAME or quoted local path")
-			}
+			kind := p.name()
 			p.need(".")
-			name = "@std:" + p.name()
+			switch kind {
+			case "tripol":
+				name = "@std:" + p.name()
+			case "vault":
+				name = "@pkg:" + p.name()
+			default:
+				p.err("expected import tripol.NAME, vault.NAME or quoted local path")
+			}
 		}
 		imports = append(imports, name)
 		p.end()
@@ -649,7 +654,7 @@ func (c *compiler) expression(e *expr) string {
 			c.err("wrong argument count: " + e.s)
 		}
 		for i, x := range e.args {
-			if strings.Contains(f.name, ".") && f.args[i].typ == "ints" && c.promoteFixed(x) {
+			if isStandardFunction(f.name) && f.name != "sort.sift" && f.args[i].typ == "ints" && c.promoteFixed(x) {
 				// A standard-library read-only array argument receives a stack view.
 			} else {
 				c.require(c.expression(x), f.args[i].typ)
@@ -890,22 +895,12 @@ func (c *compiler) block(ss []stmt, nested bool) {
 					a.str(" ")
 					a.call("raw_string")
 				}
-				t := c.expression(x)
-				switch t {
-				case "int", "string", "bool", "float":
-					a.call("raw_" + t)
-				default:
-					c.err("show requires scalar or string")
-				}
+				c.showValue(x, false)
 			}
 			a.str("\n")
 			a.call("raw_string")
 		case "show":
-			t := c.expression(s.e)
-			if t == "ints" || c.isRecord(t) {
-				c.err("show requires a scalar or string")
-			}
-			a.call("print:" + t)
+			c.showValue(s.e, true)
 		case "expr":
 			c.expression(s.e)
 		case "return":
@@ -1177,7 +1172,7 @@ func pe(a *asm) []byte {
 	idRVA := align(textRVA+len(a.b), 0x1000)
 	id := make([]byte, 0x200)
 	imports := []string{"GetStdHandle", "WriteFile", "ExitProcess"}
-	for i, name := range []string{"ReadFile", "VirtualAlloc", "GetLastError", "CreateFileA", "CloseHandle"} {
+	for i, name := range []string{"ReadFile", "VirtualAlloc", "GetLastError", "CreateFileA", "CloseHandle", "GetTickCount64", "Sleep"} {
 		if a.needed(fmt.Sprintf("iat:%d", i+3)) {
 			imports = append(imports, name)
 		} else {
@@ -1315,8 +1310,11 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool)
 }
 func cli() {
 	args := os.Args[1:]
+	if vaultCLI(args) {
+		return
+	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.8.0 — ATLAS\ntripol new NAME [--template basic|calculator|files|records|libraries]\ntripol learn [es|en]\ntripol doctor\ntripol libs\ntripol docs NAME\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
+		fmt.Println("TRIPOL 0.9.0 — ECOSYSTEM\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol libs\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
 		return
 	}
 	if args[0] == "--version" {
@@ -1360,7 +1358,7 @@ func cli() {
 		if len(args) == 4 && args[2] == "--template" {
 			template = args[3]
 		} else if len(args) != 2 {
-			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries]")
+			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]")
 		}
 		newProjectTemplate(src, template)
 		return

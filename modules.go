@@ -20,6 +20,7 @@ func loadProject(source string) ([]fn, []stmt, []string) {
 	root := filepath.Dir(abs)
 	states := map[string]int{}
 	libs := standardLoader()
+	packages := newVaultLoader(root, libs)
 	var fs []fn
 	var main []stmt
 	var inputs []string
@@ -60,6 +61,10 @@ func loadProject(source string) ([]fn, []stmt, []string) {
 			die("module %s may contain functions only", path)
 		}
 		for _, name := range imports {
+			if strings.HasPrefix(name, "@pkg:") {
+				packages.add(strings.TrimPrefix(name, "@pkg:"))
+				continue
+			}
 			if strings.HasPrefix(name, "@std:") {
 				libs.add(strings.TrimPrefix(name, "@std:"))
 				continue
@@ -77,5 +82,5 @@ func loadProject(source string) ([]fn, []stmt, []string) {
 		states[path] = 2
 	}
 	visit(abs, true, 0)
-	return append(libs.functions, fs...), main, inputs
+	return append(libs.functions, fs...), main, append(inputs, packages.inputs...)
 }

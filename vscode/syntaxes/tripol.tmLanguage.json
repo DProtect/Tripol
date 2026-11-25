@@ -12,7 +12,7 @@
     },
     {
       "name": "support.class.tripol",
-      "match": "\\btripol\\.(math|arrays|stats|text|files|console)\\b"
+      "match": "\\btripol\\.(math|arrays|stats|text|files|console|convert|encoding|json|random|search|sort|system|time|validate)\\b"
     },
     {
       "name": "string.quoted.double.tripol",
@@ -39,7 +39,7 @@
     },
     {
       "name": "support.function.tripol",
-      "match": "\\b(len|range|input|input_int|parse_int|sum|min|max|abs|sqrt|read_text|write_text|append_text|text|slice)\\b"
+      "match": "\\b(len|range|input|input_int|parse_int|sum|min|max|abs|sqrt|read_text|write_text|append_text|text|slice|byte_at|monotonic_ms|sleep_ms|has_prefix|has_suffix)\\b"
     },
     {
       "name": "constant.numeric.tripol",

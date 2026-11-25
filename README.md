@@ -1,10 +1,10 @@
-# TRIPOL v0.8.0 — ATLAS
+# TRIPOL v0.9.0 — ECOSYSTEM
 
 Free, experimental Apache-2.0 programming language. Standalone Go compiler emits x86-64 machine code and PE32+ (Windows) or ELF64 (Linux) directly. No Python, GCC, Clang or Go installation is required to use the distributed compiler. Go 1.23+ is needed only to rebuild it.
 
 ## Windows x64
 
-Run `TRIPOL-v0.8-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.7 was confirmed by the project owner on Windows (records, Spanish tutorial, and project template); v0.8 is cross-compiled and PE-inspected, with Windows execution pending. Portable ZIP is also available.
+Run `TRIPOL-v0.9-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.8 was confirmed by the project owner on Windows (standard libraries, 4096-byte executable); v0.9 is cross-compiled and PE-inspected, with Windows execution pending. Portable ZIP is also available.
 
 ```cmd
 tripol --version
@@ -18,9 +18,71 @@ tripol bench main.tri --runs 5
 
 Commands: `tripol check FILE.tri`, `tripol run FILE.tri [--profile nano|debug]`, `tripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]`, `tripol bench FILE.tri [--runs 1..100] [--profile nano|debug]`, `tripol new NAME`. Default profile nano. Debug disables the AST/native optimization passes, not a source debugger. Benchmark includes OS process startup, compiles once, excludes one warm-up, closes stdin and discards stdout. Use noninteractive programs only; no built-in timeout. Targets x86-64 only.
 
-## Atlas: standard library R1
+## Ecosystem: 15 libraries, 83 callable functions
 
-Six libraries (40 public functions), written in TRIPOL itself, are embedded in the compiler. No download, account, network or package install is required. Import the module at the beginning of your file, then call functions as `module.function(...)`.
+```tripol
+import tripol.sort
+import tripol.search
+import tripol.json
+import tripol.time
+import tripol.system
+numbers = [90, 20, 5, 100, 15]
+start = time.now_ms()
+ordered = sort.ascending(numbers)
+show "Ordenados:", ordered
+show "Position:", search.binary(ordered, 20)
+show "JSON:", json.integers(ordered)
+show system.platform(), time.elapsed(start)
+```
+
+Nine new libraries join the original six (see below):
+
+| Module | Functions and limitations |
+|---|---|
+| `tripol.sort` | ascending, descending, sorted; sift is a low-level mutable heap helper (dynamic arrays only). Heapsort copies the input; descending reverses that copy. O(n log n), not stable. |
+| `tripol.search` | linear, last, lower_bound, binary; zero-based, -1 for missing, lower_bound returns insertion index; binary/lower_bound require sorted ascending data. |
+| `tripol.validate` | digit, letter, whitespace, integer, ascii, identifier; ASCII classification, integer checks syntax only (not range). |
+| `tripol.convert` | celsius/fahrenheit/kelvin, km/miles, kg/lb, Float64. |
+| `tripol.encoding` | hex_digit, hex_byte, hex_int, hex_text; lowercase, nonnegative integer or byte, hex_text up to 1024 bytes. |
+| `tripol.random` | next, unit, bounded; deterministic explicit seed (Park-Miller), not crypto, bounded uses modulo and can be biased. |
+| `tripol.json` | quote, integer, boolean, pair, integers; serialization only, not a full JSON parser. quote up to 512 bytes of valid UTF-8; integers up to 128 elements. |
+| `tripol.time` | now_ms, elapsed, sleep, seconds; monotonic milliseconds, not calendar dates. Sleep 0..2147483647 ms. Linux clock_gettime/nanosleep, Windows GetTickCount64/Sleep. |
+| `tripol.system` | platform, architecture, compiler, is_linux, is_windows; compiled target metadata (not hardware detection). |
+
+`show numbers` and `show "Numbers:", numbers` print fixed and dynamic integer arrays without allocating a string. `byte_at(s,i)` returns a checked byte as int (not a Unicode code point); it scans for string length, so repeated access on long strings is not constant-time. Native prefix/suffix checking is linear and allocation-free; see BENCHMARKS.md. General arena reclamation is still pending.
+
+## Vault R1: local packages
+
+In a project directory containing your entry `main.tri`, create a package source `mi_lib.tri`:
+
+```tripol
+func doble(n:int) -> int { return n*2 }
+```
+
+Then install and use it:
+
+```cmd
+tripol add mi_lib mi_lib.tri --version 1.0.0
+tripol packages
+tripol verify
+```
+
+`main.tri`:
+
+```tripol
+import vault.mi_lib
+show mi_lib.doble(21)
+```
+
+`tripol run` prints 42. `tripol remove mi_lib` removes the lock entry; cached source stays. Adding a higher or different explicit version replaces the selected version after validation. Same-version different-content updates are rejected while locked. The lock (`tripol.lock`, JSON format 1) pins one exact version and SHA-256 per name, and `.tripol/packages/<hash>.tri` stores the content. Copy both to reproduce a build offline; source files are not fetched automatically. Package roots are the entry file directory (CLI package commands operate on the current directory). Names are lowercase ASCII identifiers; standard names cannot be used. Each source is a single file of functions, at most 256 KiB; packages may import named built-in or locked Vault modules, with explicit dependency declarations, cycles rejected. No package structs, build scripts, post-install hooks, online registry, remote installation, semver solver, multiple versions per name, or concurrent lock editing support. Lock changes are validated before replacement; failed additions may leave unused cached content. The hash verifies consistency, not author identity or trust. Packages execute as part of the final application and have normal filesystem access: use only trusted code. Fixed arrays may be borrowed by safe standard functions, not arbitrary Vault functions; copy them with arrays.copy when a package needs a dynamic array.
+
+## Compilation benchmark
+
+`tripol bench-build main.tri --runs 10` loads and compiles the source repeatedly to Windows x64 nano in memory, checks byte-for-byte determinism, reports median/min/max and size. One warm-up excluded; excludes startup and file output. Existing `tripol bench` measures native program execution separately. `tripol new MyApp --template ecosystem` creates a runnable example. TIR, general garbage collection/ownership analysis, compiler turbo profiles, cross-language benchmark suite, interpolation and the public registry are future work, not claimed features.
+
+## Atlas: original standard library R1
+
+The original six libraries (40 functions), written in TRIPOL itself, are embedded in the compiler. No download, account, network or package install is required. Import the module at the beginning of your file, then call functions as `module.function(...)`.
 
 ```tripol
 import tripol.math
@@ -44,9 +106,9 @@ show text.starts_with("TRIPOL", "TRI")
 
 `tripol libs` lists modules. `tripol docs math` displays the exact library source and signatures offline; `tripol docs tripol.math` works too. `tripol new MyApp --template libraries` scaffolds a project. Library sources are in `stdlib/` and are Apache-2.0.
 
-Local quoted imports still work. Standard imports are deduplicated project-wide; dependencies are also visible (stats imports arrays). Qualified calls currently refer only to standard-library modules, not object methods or namespaces for local files. The compiler isolates library-local function names and intrinsic calls from user functions with the same names. Importing an unknown module or calling an unimported module is a compile error.
+Local quoted imports still work. Standard imports are deduplicated project-wide; dependencies are also visible (stats imports arrays). Qualified calls refer to standard-library and Vault modules, not object methods or namespaces for quoted local files. The compiler isolates library-local function names and intrinsic calls from user functions with the same names. Importing an unknown module or calling an unimported module is a compile error.
 
-In nano builds unused library routines are eliminated; importing libraries without calling them produces the identical binary for the tested hello program on both targets. Debug builds retain unused routines. Standard read-only array calls accept fixed or dynamic named arrays. A fixed array borrows a stack view (length header + elements), without an arena allocation. No official routine returns/retains that view; reversed and copy produce independent dynamic arrays. Dynamic arrays still use the process-lifetime 8 MiB arena. `stats` uses checked int64 sum and Float64; mean/variance/deviation and min/max require a nonempty array, variance is population variance. Power accepts nonnegative integer exponents with checked multiplication, and gcd/absolute trap if abs of INT64_MIN is required. Text functions use byte offsets (not Unicode code points), and starts/ends currently allocate slices; existing text size/arena limits apply. File operations inherit the previous native text I/O limits and can write/overwrite the path given by the program. No package registry, networking, Discord, GUI, general memory reclamation, or new backend IR in this release.
+In nano builds unused library routines are eliminated; importing libraries without calling them produces the identical binary for the tested hello program on both targets. Debug builds retain unused routines. Standard read-only array calls accept fixed or dynamic named arrays. A fixed array borrows a stack view (length header + elements), without an arena allocation. No official routine returns/retains that view; reversed and copy produce independent dynamic arrays. Dynamic arrays still use the process-lifetime 8 MiB arena. `stats` uses checked int64 sum and Float64; mean/variance/deviation and min/max require a nonempty array, variance is population variance. Power accepts nonnegative integer exponents with checked multiplication, and gcd/absolute trap if abs of INT64_MIN is required. Text functions use byte offsets (not Unicode code points); starts/ends are now allocation-free native routines. Existing text size/arena limits apply. File operations inherit the previous native text I/O limits and can write/overwrite the path given by the program. No online package registry, networking, Discord, GUI, general memory reclamation, or new backend IR in this release.
 
 ## Horizon: typed structures, assertions and Spanish tutorial
 
@@ -131,7 +193,7 @@ import "lib/math.tri"
 show area(2.5, 4.0)
 ```
 
-See `examples/modules.tri` and `examples/lib/math.tri`. Imports must appear first in each file and use quoted local relative `.tri` paths, resolved relative to the importing file and confined to the entry file's project directory. Modules may define functions only; they share a flat function namespace. Duplicate imports are deduplicated, cycles and duplicate function names rejected. No external package manager or namespaced import syntax yet.
+See `examples/modules.tri` and `examples/lib/math.tri`. Imports must appear first in each file and use quoted local relative `.tri` paths, resolved relative to the importing file and confined to the entry file's project directory. Quoted local modules share a flat namespace for functions and structures. Duplicate imports are deduplicated, cycles and duplicate function names rejected. Vault adds separately qualified local packages.
 
 ## FileSystem R1
 
@@ -184,7 +246,7 @@ CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
 mkdir -p installer/payload
 cp examples/hello.tri installer/payload/hello.tri
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o installer/payload/tripol.exe .
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.8-Setup-x64.exe ./installer
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.9-Setup-x64.exe ./installer
 ```
 
-See BENCHMARKS.md and test-results.txt. 41 test groups and 213 subtests passed on Linux; go vet passed. No claim of outperforming Rust or C. License Apache-2.0.
+See BENCHMARKS.md and test-results.txt. 57 test groups and 228 subtests passed on Linux; go vet passed. No claim of outperforming Rust or C. License Apache-2.0.

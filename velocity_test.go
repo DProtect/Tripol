@@ -178,7 +178,7 @@ a[2]=1`, "TRIPOL runtime error: array index out of bounds\n", true},
 	} {
 		t.Run(c.s, func(t *testing.T) { runCase(t, c.s, c.w, c.bad) })
 	}
-	for _, s := range []string{`a=ints(2);show a`, `a=ints(2);show a==a`, `const a=ints(2);a[0]=1`, `a=ints(2);a[0]="s"`, `a=ints(2.0)`} {
+	for _, s := range []string{`a=ints(2);show a==a`, `const a=ints(2);a[0]=1`, `a=ints(2);a[0]="s"`, `a=ints(2.0)`} {
 		t.Run(s, func(t *testing.T) {
 			defer func() {
 				if recover() == nil {

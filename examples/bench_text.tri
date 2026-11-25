@@ -1,0 +1,4 @@
+import tripol.text
+n=0
+repeat 200000 { if text.starts_with("TRIPOL","TRI") and text.ends_with("TRIPOL","POL") {n+=1} }
+show n

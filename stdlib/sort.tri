@@ -1,0 +1,28 @@
+import tripol.arrays
+// Internal heap adjustment. Call only with an owned dynamic array.
+func sift(a:ints, root:int, size:int) -> int {
+    assert root>=0 and root<len(a) and size>=0 and size<=len(a), "Invalid heap range"
+    while root*2+1<size {
+        child=root*2+1
+        if child+1<size and a[child]<a[child+1] { child+=1 }
+        if a[root]>=a[child] { return 0 }
+        tmp=a[root]; a[root]=a[child]; a[child]=tmp; root=child
+    }
+    return 0
+}
+func ascending(a:ints) -> ints {
+    b=arrays.copy(a)
+    i=len(b)/2
+    while i>0 { i-=1; sift(b,i,len(b)) }
+    n=len(b)
+    while n>1 { n-=1; tmp=b[0]; b[0]=b[n]; b[n]=tmp; sift(b,0,n) }
+    return b
+}
+func descending(a:ints) -> ints {
+    b=ascending(a)
+    return arrays.reversed(b)
+}
+func sorted(a:ints) -> bool {
+    for i in range(1,len(a)) { if a[i-1]>a[i] { return false } }
+    return true
+}

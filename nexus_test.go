@@ -74,7 +74,7 @@ show "Hello",name,n*2`
 	}
 }
 func TestNexusReject(t *testing.T) {
-	for _, src := range []string{`x+=1`, `const x=1; x+=2`, `for x in "a" {show x}`, `x="a";for y in x {show y}`, `repeat true {show 1}`, `show min(1,true)`, `show sum(1)`, `show input_int(1)`, `a=[1]; show "a",a`, `show 1,`, `x=1; for x in range(3){show x}`} {
+	for _, src := range []string{`x+=1`, `const x=1; x+=2`, `for x in "a" {show x}`, `x="a";for y in x {show y}`, `repeat true {show 1}`, `show min(1,true)`, `show sum(1)`, `show input_int(1)`, `show 1,`, `x=1; for x in range(3){show x}`} {
 		t.Run(src, func(t *testing.T) {
 			defer func() {
 				if recover() == nil {

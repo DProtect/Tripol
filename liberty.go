@@ -8,6 +8,10 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 		return t, true
 	}
 	switch e.s {
+	case "platform_name", "compiler_version", "monotonic_ms", "sleep_ms", "has_prefix", "has_suffix":
+		return c.ecosystemBuiltin(e), true
+	case "byte_at":
+		return c.byteAt(e), true
 	case "ints":
 		if len(e.args) != 1 {
 			c.err("ints expects one length")
@@ -106,13 +110,13 @@ func (c *compiler) floatOp(op string) string {
 // Runtime sections contain hand-written x86-64, with relocations resolved by Forge.
 // Ordered dependency closure keeps unused helpers out of tiny binaries.
 func (a *asm) libertyRuntime() {
-	order := []string{"raw_bool", "raw_int", "raw_float", "raw_string", "print:float", "input", "concat", "parseint", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
+	order := []string{"clock_ms", "sleep_ms", "has_prefix", "has_suffix", "raw_bool", "raw_int", "raw_float", "raw_string", "print:float", "input", "concat", "parseint", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
 	for _, name := range order {
 		if !a.needed(name) {
 			continue
 		}
 		key := name
-		if name == "osalloc" || name == "readbyte" || name == "file_open" || name == "file_chunk_read" || name == "file_chunk_write" || name == "file_close" {
+		if name == "clock_ms" || name == "sleep_ms" || name == "osalloc" || name == "readbyte" || name == "file_open" || name == "file_chunk_read" || name == "file_chunk_write" || name == "file_close" {
 			key += ":" + a.target
 		}
 		t, ok := libertyCode[key]

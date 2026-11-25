@@ -9,7 +9,7 @@ import (
 //go:embed stdlib/*.tri
 var standardSources embed.FS
 
-var standardNames = []string{"arrays", "console", "files", "math", "stats", "text"}
+var standardNames = []string{"arrays", "console", "convert", "encoding", "files", "json", "math", "random", "search", "sort", "stats", "system", "text", "time", "validate"}
 
 type stdLoader struct {
 	state     map[string]int
@@ -52,6 +52,10 @@ func (l *stdLoader) add(name string) {
 		}
 		l.add(strings.TrimPrefix(dep, "@std:"))
 	}
+	l.qualify(name, fs)
+	l.state[name] = 2
+}
+func (l *stdLoader) qualify(name string, fs []fn) {
 	names := map[string]bool{}
 	for _, f := range fs {
 		names[f.name] = true
@@ -87,10 +91,21 @@ func (l *stdLoader) add(name string) {
 		stmtWalk(f.body)
 		l.functions = append(l.functions, f)
 	}
-	l.state[name] = 2
+}
+func isStandardFunction(name string) bool {
+	prefix, _, ok := strings.Cut(name, ".")
+	if !ok {
+		return false
+	}
+	for _, n := range standardNames {
+		if prefix == n {
+			return true
+		}
+	}
+	return false
 }
 func listLibraries() {
-	fmt.Println("TRIPOL Atlas — built-in standard libraries")
+	fmt.Println("TRIPOL Ecosystem — built-in standard libraries")
 	for _, name := range standardNames {
 		_, fs, _ := parseUnit(standardSource(name))
 		fmt.Printf("tripol.%s (%d functions)\n", name, len(fs))

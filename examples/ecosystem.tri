@@ -1,0 +1,13 @@
+import tripol.sort
+import tripol.search
+import tripol.json
+import tripol.system
+import tripol.time
+nums=[90,20,5,100,15]
+start=time.now_ms()
+ordered=sort.ascending(nums)
+show "Ordenados:",ordered
+show "Posicion del 20:",search.binary(ordered,20)
+show "JSON:",json.integers(ordered)
+show "Sistema:",system.platform()
+show "Tiempo ms:",time.elapsed(start)

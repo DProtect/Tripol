@@ -3,11 +3,5 @@ func empty(s:string) -> bool { return len(s)==0 }
 func from_int(n:int) -> string { return text(n) }
 func to_int(s:string) -> int { return parse_int(s) }
 func part(s:string, start:int, end:int) -> string { return slice(s,start,end) }
-func starts_with(s:string, prefix:string) -> bool {
-    if len(prefix)>len(s) { return false }
-    return slice(s,0,len(prefix))==prefix
-}
-func ends_with(s:string, suffix:string) -> bool {
-    if len(suffix)>len(s) { return false }
-    return slice(s,len(s)-len(suffix),len(s))==suffix
-}
+func starts_with(s:string, prefix:string) -> bool {return has_prefix(s,prefix)}
+func ends_with(s:string, suffix:string) -> bool {return has_suffix(s,suffix)}

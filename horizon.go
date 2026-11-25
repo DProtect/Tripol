@@ -83,7 +83,7 @@ func (c *compiler) recordAssign(s stmt) {
 	c.a.u32(off)
 }
 func learnSpanish() {
-	fmt.Print(`TRIPOL 0.8 — Aprende en cinco minutos
+	fmt.Print(`TRIPOL 0.9 — Aprende en cinco minutos
 
 1. Mostrar: show "Hola", 10 + 20
 2. Preguntar: nombre = input("Tu nombre?")
@@ -93,6 +93,7 @@ func learnSpanish() {
    for i in range(5) { show i }
 5. Datos: numeros = [10, 20, 30]
    show sum(numeros)
+   show numeros
 6. Guardar: write_text("nota.txt", "Hola")
    show read_text("nota.txt")
 7. Estructuras:
@@ -105,6 +106,8 @@ func learnSpanish() {
 8. Bibliotecas: import tripol.math
    show math.square(7)
    tripol libs muestra los modulos disponibles.
+   tripol docs sort muestra las funciones de ordenamiento.
+   tripol packages lista los paquetes locales Vault.
 
 Guarda el codigo en main.tri.
 tripol run main.tri   Ejecuta el programa

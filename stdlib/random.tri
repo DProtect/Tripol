@@ -1,0 +1,10 @@
+// Deterministic Park-Miller sequence; explicit seed, not cryptographically secure.
+func next(seed:int) -> int {
+    assert seed>0 and seed<2147483647, "Seed must be 1..2147483646"
+    return seed*48271%2147483647
+}
+func unit(seed:int) -> float {return float(next(seed))/2147483647.0}
+func bounded(seed:int,limit:int) -> int {
+    assert limit>0 and limit<=2147483646, "Invalid random limit"
+    return (next(seed)-1)%limit
+}

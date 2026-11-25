@@ -1,0 +1,21 @@
+func hex_digit(n:int) -> string {
+    assert n>=0 and n<16, "Invalid hex digit"
+    return slice("0123456789abcdef",n,n+1)
+}
+func hex_byte(n:int) -> string {
+    assert n>=0 and n<=255, "Invalid byte"
+    return hex_digit(n/16)+hex_digit(n%16)
+}
+func hex_int(n:int) -> string {
+    assert n>=0, "Hex requires nonnegative integer"
+    if n==0 {return "0"}
+    result=""
+    while n>0 { result=hex_digit(n%16)+result; n/=16 }
+    return result
+}
+func hex_text(s:string) -> string {
+    assert len(s)<=1024, "Hex text limit 1024 bytes"
+    result=""
+    for i in range(len(s)) {result+=hex_byte(byte_at(s,i))}
+    return result
+}
