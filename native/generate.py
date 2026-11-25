@@ -2,6 +2,8 @@
 import pathlib, subprocess, tempfile, re
 root=pathlib.Path(__file__).resolve().parent
 names={'print_float':'print:float','osalloc_linux':'osalloc:linux','osalloc_windows':'osalloc:windows','readbyte_linux':'readbyte:linux','readbyte_windows':'readbyte:windows'}
+for helper in ('file_open','file_chunk_read','file_chunk_write','file_close'):
+ for target in ('linux','windows'): names[helper+'_'+target]=helper+':'+target
 with tempfile.TemporaryDirectory() as tmp:
  o=pathlib.Path(tmp)/'liberty.o'; b=pathlib.Path(tmp)/'code.bin'
  subprocess.run(['as','--64','-o',str(o),str(root/'liberty.S')],check=True)

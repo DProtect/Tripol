@@ -1,20 +1,15 @@
-# TRIPOL v0.4 — Liberty measurements
+# TRIPOL v0.5 — VELOCITY measurements
 
-Linux x86-64, Go 1.23.2. Compilers v0.3 and v0.4 built locally. Same fib(35) recursive source with header and result. One warmup, nine runs per version interleaved, stdout discarded, process startup included.
+Linux x86-64, Go 1.23.2. Same recursive Fibonacci(35) with heading and result. Both versions compiled to native code locally; one warmup, 11 timed executions each, alternating order, stdout discarded, process startup included. Correct output 9227465 was verified for both versions.
 
-| Version | Median | Linux ELF | Windows PE |
-|---|---:|---:|---:|
-| 0.3 | 75.274 ms | 700 B | 2048 B |
-| 0.4 | 75.370 ms | 700 B | 2048 B |
-
-The generated Linux machine-code binaries are identical for this integer workload (verify with cmp). Timing difference is noise; no new speedup claimed.
-
-User-reported Windows v0.3 five runs: 323.1765, 87.0602, 88.7783, 88.654, 92.7706 ms; median 88.7783 ms. v0.2 single reported run 23350.0547 ms, not a controlled comparison. Windows v0.4 runtime not executed here.
-
-| Example | Linux bytes | Windows bytes |
+| | v0.4 | v0.5 |
 |---|---:|---:|
-| hello | 380 | 1536 |
-| fibonacci(35) with header | 700 | 2048 |
-| interactive calculator | 1615 | 3072 |
+| Fibonacci Linux binary | 700 B | 677 B |
+| Fibonacci Linux median | 74.508 ms | 75.295 ms |
+| Fibonacci Linux min | 71.545 ms | 74.711 ms |
+| Fibonacci Linux max | 79.975 ms | 86.274 ms |
+| Fibonacci Windows binary | 2048 B | 2048 B |
+| Hello Linux | 380 B | 373 B |
+| Hello Windows | 1536 B | 1536 B |
 
-18 Go test groups, 109 nested subtests, all passed on Linux. PE imports inspected using objdump and debug/pe; Windows test suite cross-compiled, not run. No Windows runtime, memory or power measurements. No comparative Rust/C benchmarks.
+No demonstrated Fibonacci speed improvement. Linux code size decreased, while Windows PE alignment preserved the size. Windows sizes measured on cross-generated files, not runtime performance. v0.5 files example: Windows 3072 B, Linux 1846 B. v0.5 runtime array example: Windows 3072 B. The owner reported v0.4 Windows Fibonacci median 85.961 ms (10 runs, one warmup, 84.631–89.684 ms); this is a separate baseline, not directly comparable to Linux. No comparative Rust/C/Go/Python benchmark yet.

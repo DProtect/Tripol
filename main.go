@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const version = "0.4.0"
+const version = "0.5.0"
 
 type token struct {
 	s, k string
@@ -109,14 +109,14 @@ func (p *parser) end() {
 }
 func (p *parser) name() string {
 	t := p.t()
-	if t.k != "id" || strings.Contains("|import|func|return|show|let|const|if|else|while|for|in|range|break|continue|true|false|int|bool|string|float|void|", "|"+t.s+"|") {
+	if t.k != "id" || strings.Contains("|import|func|return|show|let|const|if|else|while|for|in|range|break|continue|true|false|int|bool|string|float|ints|void|", "|"+t.s+"|") {
 		p.err("expected identifier")
 	}
 	return p.take().s
 }
 func (p *parser) typ() string {
 	switch p.t().s {
-	case "int", "bool", "string", "float":
+	case "int", "bool", "string", "float", "ints":
 		return p.take().s
 	}
 	p.err("expected type")
@@ -476,8 +476,12 @@ func (c *compiler) expression(e *expr) string {
 	case "index":
 		v := c.arrayVar(e.s)
 		c.arrayIndex(v, e.args[0])
-		a.emit(0x48, 0x8b, 0x84, 0xc5)
-		a.u32(v.off)
+		if v.typ == "ints" {
+			a.emit(0x48, 0x8b, 0x44, 0xc1, 0x08)
+		} else {
+			a.emit(0x48, 0x8b, 0x84, 0xc5)
+			a.u32(v.off)
+		}
 		return "int"
 	case "call":
 		f, ok := c.fs[e.s]
@@ -498,8 +502,12 @@ func (c *compiler) expression(e *expr) string {
 		}
 		a.call("fn:" + e.s)
 		if len(e.args) > 0 {
-			a.emit(0x48, 0x81, 0xc4)
-			a.u32(8 * len(e.args))
+			if a.opt && len(e.args) <= 15 {
+				a.emit(0x48, 0x83, 0xc4, byte(8*len(e.args)))
+			} else {
+				a.emit(0x48, 0x81, 0xc4)
+				a.u32(8 * len(e.args))
+			}
 		}
 		return f.ret
 	case "un":
@@ -566,16 +574,31 @@ func (c *compiler) expression(e *expr) string {
 			return "bool"
 		}
 	}
-	a.emit(0x50)
-	u := c.expression(e.args[1])
-	c.require(u, t)
-	a.emit(0x48, 0x89, 0xc1, 0x58)
+	if a.opt && e.args[1].op == "var" {
+		v, ok := c.lookup(e.args[1].s)
+		if !ok {
+			c.err("unknown variable " + e.args[1].s)
+		}
+		c.require(v.typ, t)
+		if strings.HasPrefix(v.typ, "array:") {
+			c.err("array requires an index")
+		}
+		a.loadRCX(v.off)
+	} else {
+		a.emit(0x50)
+		u := c.expression(e.args[1])
+		c.require(u, t)
+		a.emit(0x48, 0x89, 0xc1, 0x58)
+	}
 	if t == "float" {
 		return c.floatOp(op)
 	}
 	if t == "string" && op == "+" {
 		a.call("concat")
 		return "string"
+	}
+	if t == "ints" {
+		c.err("array references do not support operators")
 	}
 	if op == "==" || op == "!=" {
 		if t == "string" {
@@ -646,8 +669,16 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			c.arrayIndex(v, s.bound)
 			a.emit(0x50)
 			c.require(c.expression(s.e), "int")
-			a.emit(0x59, 0x48, 0x89, 0x84, 0xcd)
-			a.u32(v.off)
+			a.emit(0x59)
+			if v.typ == "ints" {
+				// Preserve value while loading the array reference in rdx.
+				a.emit(0x48, 0x8b, 0x95)
+				a.u32(v.off)
+				a.emit(0x48, 0x89, 0x44, 0xca, 0x08)
+			} else {
+				a.emit(0x48, 0x89, 0x84, 0xcd)
+				a.u32(v.off)
+			}
 		case "decl", "assign":
 			if s.e.op == "array" {
 				c.arrayDeclare(s)
@@ -680,6 +711,9 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			a.store(v.off)
 		case "show":
 			t := c.expression(s.e)
+			if t == "ints" {
+				c.err("show requires a scalar or string")
+			}
 			a.call("print:" + t)
 		case "expr":
 			c.expression(s.e)
@@ -763,9 +797,13 @@ func (c *compiler) function(f fn, main bool) {
 		c.scopes[0][p.name] = variable{p.typ, 16 + 8*(len(f.args)-1-i), true}
 	}
 	a.label("fn:" + f.name)
-	a.emit(0x55, 0x48, 0x89, 0xe5, 0x48, 0x81, 0xec)
-	at := len(a.b)
-	a.u32(0)
+	a.emit(0x55, 0x48, 0x89, 0xe5)
+	at := -1
+	if !a.opt || needsFrame(f.body) {
+		a.emit(0x48, 0x81, 0xec)
+		at = len(a.b)
+		a.u32(0)
+	}
 	c.restart = a.fresh()
 	a.label(c.restart)
 	c.block(f.body, false)
@@ -775,7 +813,11 @@ func (c *compiler) function(f fn, main bool) {
 	} else if !returns(f.body) {
 		die("function %s may finish without return", f.name)
 	}
-	binary.LittleEndian.PutUint32(a.b[at:], uint32(c.peak*8))
+	if at >= 0 {
+		binary.LittleEndian.PutUint32(a.b[at:], uint32(c.peak*8))
+	} else if c.peak != 0 {
+		die("internal frame analysis error")
+	}
 }
 
 // Runtime helpers use rax for value; write uses rsi=buffer, rdx=length.
@@ -944,7 +986,7 @@ func pe(a *asm) []byte {
 	idRVA := align(textRVA+len(a.b), 0x1000)
 	id := make([]byte, 0x200)
 	imports := []string{"GetStdHandle", "WriteFile", "ExitProcess"}
-	for i, name := range []string{"ReadFile", "VirtualAlloc", "GetLastError"} {
+	for i, name := range []string{"ReadFile", "VirtualAlloc", "GetLastError", "CreateFileA", "CloseHandle"} {
 		if a.needed(fmt.Sprintf("iat:%d", i+3)) {
 			imports = append(imports, name)
 		} else {
@@ -1086,7 +1128,7 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool)
 func cli() {
 	args := os.Args[1:]
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.4.0 — LIBERTY\ntripol new NAME\ntripol run FILE.tri [--profile nano|debug]\ntripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check FILE.tri\ntripol bench FILE.tri [--runs 1..100] [--profile nano|debug]\ntripol --version")
+		fmt.Println("TRIPOL 0.5.0 — VELOCITY\ntripol new NAME\ntripol run FILE.tri [--profile nano|debug]\ntripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check FILE.tri\ntripol bench FILE.tri [--runs 1..100] [--profile nano|debug]\ntripol --version")
 		return
 	}
 	if args[0] == "--version" {

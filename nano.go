@@ -187,10 +187,9 @@ func (c *compiler) rangeLoop(s stmt) {
 	}()
 	start, inc, end := a.fresh(), a.fresh(), a.fresh()
 	a.label(start)
-	a.load(bound.off)
-	a.emit(0x50)
 	a.load(v.off)
-	a.emit(0x59, 0x48, 0x39, 0xc8)
+	a.loadRCX(bound.off)
+	a.emit(0x48, 0x39, 0xc8)
 	a.j(0x8d, end)
 	c.loops = append(c.loops, [2]string{end, inc})
 	c.block(s.yes, true)
@@ -217,7 +216,7 @@ func newProject(dir string) {
 func arrayLen(v variable) int { n, _ := strconv.Atoi(strings.TrimPrefix(v.typ, "array:")); return n }
 func (c *compiler) arrayVar(name string) variable {
 	v, ok := c.lookup(name)
-	if !ok || !strings.HasPrefix(v.typ, "array:") {
+	if !ok || !strings.HasPrefix(v.typ, "array:") && v.typ != "ints" {
 		c.err("expected array: " + name)
 	}
 	return v
@@ -225,8 +224,13 @@ func (c *compiler) arrayVar(name string) variable {
 func (c *compiler) arrayIndex(v variable, e *expr) {
 	c.require(c.expression(e), "int")
 	a := c.a
-	a.emit(0x48, 0x3d)
-	a.u32(arrayLen(v))
+	if v.typ == "ints" {
+		a.loadRCX(v.off)
+		a.emit(0x48, 0x3b, 0x01)
+	} else {
+		a.emit(0x48, 0x3d)
+		a.u32(arrayLen(v))
+	}
 	a.j(0x83, "bounds") /* unsigned >= also catches negatives */
 }
 func (c *compiler) arrayDeclare(s stmt) {

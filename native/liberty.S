@@ -272,3 +272,281 @@
  jmp exit
 1: .ascii "TRIPOL runtime error: float outside printable range\n"
 2:
+.section .text.file_read,"ax"
+ push rbp
+ mov rbp,rsp
+ sub rsp,32
+ xor edx,edx
+ call file_open
+ mov [rbp-8],rax
+ mov eax,65536
+ call alloc
+ mov [rbp-16],rax
+ mov qword ptr [rbp-24],0
+1: mov rax,[rbp-8]
+ mov rsi,[rbp-16]
+ add rsi,[rbp-24]
+ mov edx,65536
+ sub rdx,[rbp-24]
+ call file_chunk_read
+ test rax,rax
+ js file_error
+ jz 2f
+ add [rbp-24],rax
+ cmp qword ptr [rbp-24],65536
+ jae file_error
+ jmp 1b
+2: mov rax,[rbp-8]
+ call file_close
+ mov rax,[rbp-16]
+ mov rcx,[rbp-24]
+ mov byte ptr [rax+rcx],0
+ # Reject embedded NUL; string API is NUL-terminated.
+ xor edx,edx
+3: cmp rdx,rcx
+ je 4f
+ cmp byte ptr [rax+rdx],0
+ je file_error
+ inc rdx
+ jmp 3b
+4: # Return unused arena space; no allocation happened after the buffer.
+ mov edx,65535
+ sub rdx,rcx
+ lea r8,[rip+arena_state]
+ sub [r8],rdx
+ add [r8+8],rdx
+ leave
+ ret
+.section .text.file_write,"ax"
+ mov edx,1
+ jmp file_write_common
+.section .text.file_append,"ax"
+ mov edx,2
+ jmp file_write_common
+.section .text.file_write_common,"ax"
+ push rbp
+ mov rbp,rsp
+ sub rsp,40
+ mov [rbp-8],rcx
+ call file_open
+ mov [rbp-16],rax
+ mov rax,[rbp-8]
+ call strlen
+ mov [rbp-24],rax
+ mov qword ptr [rbp-32],0
+1: mov rdx,[rbp-24]
+ sub rdx,[rbp-32]
+ jz 2f
+ mov rax,[rbp-16]
+ mov rsi,[rbp-8]
+ add rsi,[rbp-32]
+ call file_chunk_write
+ test rax,rax
+ jle file_error
+ add [rbp-32],rax
+ jmp 1b
+2: mov rax,[rbp-16]
+ call file_close
+ mov rax,[rbp-24]
+ leave
+ ret
+.section .text.file_open_linux,"ax"
+ mov rdi,rax
+ xor esi,esi
+ cmp edx,0
+ je 1f
+ mov esi,577 # O_WRONLY|O_CREAT|O_TRUNC
+ cmp edx,1
+ je 1f
+ mov esi,1089 # O_WRONLY|O_CREAT|O_APPEND
+1: mov edx,438 # 0666, filtered by umask
+ mov eax,2
+ syscall
+ test rax,rax
+ js file_error
+ ret
+.section .text.file_chunk_read_linux,"ax"
+ mov rdi,rax
+1: xor eax,eax
+ syscall
+ cmp rax,-4
+ je 1b
+ ret
+.section .text.file_chunk_write_linux,"ax"
+ mov rdi,rax
+1: mov eax,1
+ syscall
+ cmp rax,-4
+ je 1b
+ ret
+.section .text.file_close_linux,"ax"
+ mov rdi,rax
+ mov eax,3
+ syscall
+ test rax,rax
+ js file_error
+ ret
+.section .text.file_open_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,64
+ mov rcx,rax
+ mov r8d,1 # FILE_SHARE_READ
+ xor r9d,r9d
+ mov qword ptr [rsp+40],128 # FILE_ATTRIBUTE_NORMAL
+ mov qword ptr [rsp+48],0
+ cmp edx,0
+ je 1f
+ cmp edx,1
+ je 2f
+ mov edx,4 # FILE_APPEND_DATA
+ mov qword ptr [rsp+32],4 # OPEN_ALWAYS
+ jmp 3f
+1: mov edx,0x80000000 # GENERIC_READ
+ mov qword ptr [rsp+32],3 # OPEN_EXISTING
+ jmp 3f
+2: mov edx,0x40000000 # GENERIC_WRITE
+ mov qword ptr [rsp+32],2 # CREATE_ALWAYS
+3: call qword ptr [rip+iat6]
+ cmp rax,-1
+ je file_error
+ leave
+ ret
+.section .text.file_chunk_read_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,64
+ mov rcx,rax
+ mov r8d,edx
+ mov rdx,rsi
+ lea r9,[rsp+48]
+ mov qword ptr [rsp+32],0
+ call qword ptr [rip+iat3]
+ test eax,eax
+ jz file_error
+ mov eax,[rsp+48]
+ leave
+ ret
+.section .text.file_chunk_write_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,64
+ mov rcx,rax
+ mov r8d,edx
+ mov rdx,rsi
+ lea r9,[rsp+48]
+ mov qword ptr [rsp+32],0
+ call qword ptr [rip+iat1]
+ test eax,eax
+ jz file_error
+ mov eax,[rsp+48]
+ leave
+ ret
+.section .text.file_close_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,32
+ mov rcx,rax
+ call qword ptr [rip+iat7]
+ test eax,eax
+ jz file_error
+ leave
+ ret
+.section .text.file_error,"ax"
+ lea rsi,[rip+1f]
+ mov edx,2f-1f
+ call writeerr
+ mov eax,1
+ jmp exit
+1: .ascii "TRIPOL runtime error: file operation failed or text exceeds limit\n"
+2:
+.section .text.int_text,"ax"
+ # signed int64 -> immutable decimal text; unsigned division handles INT64_MIN.
+ push rbp
+ mov rbp,rsp
+ sub rsp,48
+ lea rsi,[rbp-1]
+ mov byte ptr [rsi],0
+ mov ecx,10
+ xor r8d,r8d
+ test rax,rax
+ jns 1f
+ mov r8b,1
+ neg rax
+1: xor edx,edx
+ div rcx
+ add dl,48
+ dec rsi
+ mov [rsi],dl
+ test rax,rax
+ jnz 1b
+ test r8b,r8b
+ jz 2f
+ dec rsi
+ mov byte ptr [rsi],45
+2: lea rax,[rbp]
+ sub rax,rsi
+ mov [rbp-40],rsi
+ mov [rbp-48],rax
+ call alloc
+ mov rdi,rax
+ mov rsi,[rbp-40]
+ mov rcx,[rbp-48]
+ cld
+ rep movsb
+ leave
+ ret
+.section .text.text_slice,"ax"
+ # rax=string, rcx=start, rdx=end (exclusive), byte offsets
+ push rbp
+ mov rbp,rsp
+ sub rsp,32
+ mov [rbp-8],rax
+ mov [rbp-16],rcx
+ mov [rbp-24],rdx
+ test rcx,rcx
+ js text_error
+ cmp rdx,rcx
+ jl text_error
+ call strlen
+ cmp [rbp-24],rax
+ ja text_error
+ mov rax,[rbp-24]
+ sub rax,[rbp-16]
+ inc rax
+ mov [rbp-32],rax
+ call alloc
+ mov rdi,rax
+ mov rsi,[rbp-8]
+ add rsi,[rbp-16]
+ mov rcx,[rbp-32]
+ dec rcx
+ cld
+ rep movsb
+ mov byte ptr [rdi],0
+ leave
+ ret
+.section .text.ints_alloc,"ax"
+ # Runtime-sized int64 array: [length][elements...], bounded arena allocation.
+ cmp rax,65535
+ ja text_error
+ push rbp
+ mov rbp,rsp
+ sub rsp,8
+ mov [rbp-8],rax
+ lea rax,[rax*8+8]
+ call alloc
+ mov rdx,rax
+ mov rcx,[rbp-8]
+ mov [rax],rcx
+ lea rdi,[rax+8]
+ xor eax,eax
+ cld
+ rep stosq
+ mov rax,rdx
+ leave
+ ret

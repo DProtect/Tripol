@@ -5,6 +5,34 @@ package main
 func (c *compiler) builtin(e *expr) (string, bool) {
 	a := c.a
 	switch e.s {
+	case "ints":
+		if len(e.args) != 1 {
+			c.err("ints expects one length")
+		}
+		c.require(c.expression(e.args[0]), "int")
+		a.call("ints_alloc")
+		return "ints", true
+	case "text":
+		if len(e.args) != 1 {
+			c.err("text expects one integer")
+		}
+		c.require(c.expression(e.args[0]), "int")
+		a.call("int_text")
+		return "string", true
+	case "slice":
+		if len(e.args) != 3 {
+			c.err("slice expects text, start, end")
+		}
+		c.require(c.expression(e.args[0]), "string")
+		a.emit(0x50)
+		c.require(c.expression(e.args[1]), "int")
+		a.emit(0x50)
+		c.require(c.expression(e.args[2]), "int")
+		a.emit(0x48, 0x89, 0xc2, 0x59, 0x58)
+		a.call("text_slice")
+		return "string", true
+	case "read_text", "write_text", "append_text":
+		return c.fileBuiltin(e), true
 	case "len":
 		if len(e.args) != 1 {
 			c.err("len expects one argument")
@@ -15,7 +43,12 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 				return "int", true
 			}
 		}
-		c.require(c.expression(e.args[0]), "string")
+		t := c.expression(e.args[0])
+		if t == "ints" {
+			a.emit(0x48, 0x8b, 0x00)
+			return "int", true
+		}
+		c.require(t, "string")
 		a.call("strlen")
 		return "int", true
 	case "input":
@@ -72,13 +105,13 @@ func (c *compiler) floatOp(op string) string {
 // Runtime sections contain hand-written x86-64, with relocations resolved by Forge.
 // Ordered dependency closure keeps unused helpers out of tiny binaries.
 func (a *asm) libertyRuntime() {
-	order := []string{"print:float", "input", "concat", "parseint", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
+	order := []string{"print:float", "input", "concat", "parseint", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
 	for _, name := range order {
 		if !a.needed(name) {
 			continue
 		}
 		key := name
-		if name == "osalloc" || name == "readbyte" {
+		if name == "osalloc" || name == "readbyte" || name == "file_open" || name == "file_chunk_read" || name == "file_chunk_write" || name == "file_close" {
 			key += ":" + a.target
 		}
 		t, ok := libertyCode[key]

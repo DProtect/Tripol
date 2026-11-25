@@ -1,0 +1,11 @@
+show "Cuantos numeros? (0 a 65535)"
+n = parse_int(input())
+valores = ints(n)
+for i in range(0, len(valores)) {
+    valores[i] = i * 2
+}
+total = 0
+for i in range(0, len(valores)) {
+    total = total + valores[i]
+}
+show "Total: " + text(total)

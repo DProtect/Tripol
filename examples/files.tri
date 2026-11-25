@@ -1,0 +1,7 @@
+show "Escribe tu nombre:"
+nombre = input()
+show "Escribe tu edad:"
+edad = parse_int(input())
+write_text("perfil.txt", "Nombre: " + nombre + "\nEdad: " + text(edad) + "\n")
+append_text("perfil.txt", "Guardado con TRIPOL\n")
+show read_text("perfil.txt")
