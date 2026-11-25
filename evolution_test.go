@@ -83,3 +83,41 @@ func TestGenesisNativeELF(t *testing.T) {
   if out,err:=run(bad);err==nil {t.Fatalf("accepted invalid source %q: %q",bad,out)}
  }
 }
+
+func TestGenesisRuntimeR2(t *testing.T) {
+ if runtime.GOARCH!="amd64" || (runtime.GOOS!="linux" && runtime.GOOS!="windows") {t.Skip("native x86-64 required")}
+ fs,ss,_:=loadProject("compiler/main.tri")
+ stage:=filepath.Join(t.TempDir(),"genesis.exe")
+ if e:=os.WriteFile(stage,compileParsed(fs,ss,runtime.GOOS,"nano"),0755);e!=nil{t.Fatal(e)}
+ for _,tc:=range []struct{src,want string;status int}{
+ {"a=20;b=30;show a*b","600\n",0},
+ {"a=7;b=10;a=a-b;show a*2","-6\n",0},
+ {"a=0;show a","0\n",0},
+ {"a=9223372036854775807;show -a-1","-9223372036854775808\n",0},
+ {"a=9223372036854775807;show a+1","",10},
+ }{
+  t.Run(tc.src,func(t *testing.T){
+   ctx,cancel:=context.WithTimeout(context.Background(),10*time.Second);defer cancel()
+   cmd:=exec.CommandContext(ctx,stage);cmd.Stdin=strings.NewReader(tc.src+"\n")
+   out,e:=cmd.CombinedOutput();if e!=nil{t.Fatalf("stage: %q %v",out,e)}
+   image,e:=hex.DecodeString(strings.TrimSpace(string(out)));if e!=nil{t.Fatal(e)}
+   file,e:=elfcheck.NewFile(bytes.NewReader(image));if e!=nil{t.Fatal(e)};defer file.Close()
+   if file.Entry!=0x400078||file.Machine!=elfcheck.EM_X86_64{t.Fatal("invalid ELF")}
+   if runtime.GOOS!="linux"{return}
+   p:=filepath.Join(t.TempDir(),"generated")
+   if e=os.WriteFile(p,image,0755);e!=nil{t.Fatal(e)}
+   got,e:=exec.CommandContext(ctx,p).CombinedOutput()
+   if tc.status==0 {if e!=nil||string(got)!=tc.want{t.Fatalf("%q %v",got,e)}}else{exit,ok:=e.(*exec.ExitError);if !ok||exit.ExitCode()!=tc.status{t.Fatalf("expected exit %d: %q %v",tc.status,got,e)}}
+  })
+ }
+}
+func TestOverdriveBitset(t *testing.T){
+ runCase(t,`import tripol.bitset
+import tripol.profiler
+b=bitset.create(130)
+show bitset.add(b,0),bitset.add(b,63),bitset.add(b,129),bitset.add(b,63)
+show bitset.count(b),bitset.contains(b,129),bitset.remove(b,63),bitset.count(b)
+try {bitset.add(b,130)} catch e {show e}
+start=profiler.start()
+show profiler.elapsed(start)>=0`,"true true true false\n3 true true 2\n12\ntrue\n",false)
+}

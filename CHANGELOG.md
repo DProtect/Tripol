@@ -1,3 +1,10 @@
+# v0.26 OVERDRIVE (development)
+
+- UPDATE R1: opt-out interactive release notices, daily cache, explicit checks and verified downloads. No background installation.
+- GENESIS R2: semicolon-separated integer assignments, symbol table, checked native +, - and * on Linux x86-64; retains the R1 constant-expression mode. No full self-hosting, PE emitter or direct binary I/O yet.
+- 52 modules: new bitset and profiler. Mutable collection operations now require dynamic backing arrays instead of borrowed fixed arrays.
+- New tests for release selection, caching, download tampering, bitset and runtime ELF generation. No benchmark improvements claimed before measurement.
+
 # v0.25 EVOLUTION (development)
 
 - GENESIS R1: TRIPOL-written frontend and ELF x86-64 writer for a single constant integer show statement; deterministic hex transport, Linux execution and Windows-host structural test coverage proposed.

@@ -35,3 +35,18 @@ func genesis_elf(message:string)->ints {
  for i in range(n) {image[153+i]=byte_at(message,i)}
  return image
 }
+
+func genesis_code_elf(code:ints)->ints {
+ assert len(code)>0 and len(code)<=65536,"Code limit"
+ image=ints(120+len(code))
+ image[0]=127;image[1]=69;image[2]=76;image[3]=70
+ image[4]=2;image[5]=1;image[6]=1
+ genesis_put_le(image,16,2,2);genesis_put_le(image,18,62,2);genesis_put_le(image,20,1,4)
+ genesis_put_le(image,24,4194424,8);genesis_put_le(image,32,64,8)
+ genesis_put_le(image,52,64,2);genesis_put_le(image,54,56,2);genesis_put_le(image,56,1,2)
+ genesis_put_le(image,64,1,4);genesis_put_le(image,68,5,4)
+ genesis_put_le(image,80,4194304,8);genesis_put_le(image,88,4194304,8)
+ genesis_put_le(image,96,len(image),8);genesis_put_le(image,104,len(image),8);genesis_put_le(image,112,4096,8)
+ for i in range(len(code)) {image[120+i]=code[i]}
+ return image
+}

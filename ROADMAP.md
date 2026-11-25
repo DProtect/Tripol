@@ -11,4 +11,4 @@ ORIGIN is a public-preview candidate, not stable v1.0. Goals, not promised versi
 
 ## GENESIS self-hosting
 
-R1: native ELF emission from one constant integer statement. R2: runtime expression emission and binary output; R3: statements and typed functions; R4: bootstrap compiler capable of compiling itself, with multi-generation equivalence tests. Preserve the Go compiler until parity is verified.
+R1: native ELF emission from one constant integer statement. R2: runtime integer assignment and expression emission; direct binary output remains pending; R3: statements and typed functions; R4: bootstrap compiler capable of compiling itself, with multi-generation equivalence tests. Preserve the Go compiler until parity is verified.

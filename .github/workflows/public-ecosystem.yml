@@ -42,12 +42,12 @@ jobs:
           ./tripol build examples/projects/notes.tri --target linux -o /tmp/tripol-notes
           scratch=$(mktemp -d)
           (cd "$scratch"; printf 'Test note\n' | /tmp/tripol-notes; grep -q 'Test note' notes.txt)
-          tar -czf dist/TRIPOL-v0.25-Linux-x64.tar.gz tripol LICENSE
+          tar -czf dist/TRIPOL-v0.26-Linux-x64.tar.gz tripol LICENSE
       - name: Package editor extension
         run: |
           cp LICENSE vscode/LICENSE
           cd vscode
-          npx --yes @vscode/vsce@3 package --no-dependencies --out ../dist/tripol-language-0.25.0.vsix
+          npx --yes @vscode/vsce@3 package --no-dependencies --out ../dist/tripol-language-0.26.0.vsix
       - uses: actions/upload-artifact@v4
         with:
           name: linux-and-editor
@@ -76,9 +76,9 @@ jobs:
           $env:GOARCH = 'amd64'
           go build -trimpath -ldflags '-s -w' -o installer/payload/tripol.exe .
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          go build -trimpath -ldflags '-s -w' -o dist/TRIPOL-v0.25-Setup-x64.exe ./installer
+          go build -trimpath -ldflags '-s -w' -o dist/TRIPOL-v0.26-Setup-x64.exe ./installer
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          & ./dist/TRIPOL-v0.25-Setup-x64.exe --quiet
+          & ./dist/TRIPOL-v0.26-Setup-x64.exe --quiet
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $compiler = Join-Path $env:LOCALAPPDATA 'Programs/TRIPOL/tripol.exe'
           & $compiler --version
@@ -89,9 +89,9 @@ jobs:
           if ($LASTEXITCODE -or ($output -join ' ') -notmatch '46000') { throw 'Expense smoke test failed' }
           & $compiler build examples/projects/notes.tri --target windows -o notes.exe
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          & ./dist/TRIPOL-v0.25-Setup-x64.exe --quiet --uninstall
+          & ./dist/TRIPOL-v0.26-Setup-x64.exe --quiet --uninstall
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          Compress-Archive -Path dist/TRIPOL-v0.25-Setup-x64.exe, LICENSE -DestinationPath dist/TRIPOL-v0.25-Installer.zip
+          Compress-Archive -Path dist/TRIPOL-v0.26-Setup-x64.exe, LICENSE -DestinationPath dist/TRIPOL-v0.26-Installer.zip
       - uses: actions/upload-artifact@v4
         with:
           name: windows
@@ -114,5 +114,5 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           cd dist
-          sha256sum TRIPOL-v0.25-Setup-x64.exe TRIPOL-v0.25-Installer.zip TRIPOL-v0.25-Linux-x64.tar.gz tripol-language-0.25.0.vsix > SHA256SUMS.txt
-          gh release create v0.25.0 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.25.0 — EVOLUTION" --notes "Experimental preview. Windows installer is unsigned. Verify SHA256SUMS.txt. Review CI and security checks before publishing." TRIPOL-v0.25-Setup-x64.exe TRIPOL-v0.25-Installer.zip TRIPOL-v0.25-Linux-x64.tar.gz tripol-language-0.25.0.vsix SHA256SUMS.txt
+          sha256sum TRIPOL-v0.26-Setup-x64.exe TRIPOL-v0.26-Installer.zip TRIPOL-v0.26-Linux-x64.tar.gz tripol-language-0.26.0.vsix > SHA256SUMS.txt
+          gh release create v0.26.0 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.26.0 — OVERDRIVE" --notes "Experimental preview. Windows installer is unsigned. Verify SHA256SUMS.txt. Review CI and security checks before publishing." TRIPOL-v0.26-Setup-x64.exe TRIPOL-v0.26-Installer.zip TRIPOL-v0.26-Linux-x64.tar.gz tripol-language-0.26.0.vsix SHA256SUMS.txt
