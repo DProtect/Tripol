@@ -12,6 +12,7 @@
 - SYNTAX R2: trailing scalar record defaults, indexed collection iteration, list indexing and checked list assignment.
 - INTELLISENSE R1: standalone stdio LSP subset and token-preserving indentation formatter, integrated with the VS Code formatting provider.
 - TIR R6 native straight-line SSA backend with linear-scan register allocation, frame spills and checked-operation preservation.
+- QUANTUM R3 experimental WGL/OpenGL triangle backend and XInput controller reads; GDI retained as fallback.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)

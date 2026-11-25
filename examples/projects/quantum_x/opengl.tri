@@ -1,0 +1,31 @@
+import tripol.game
+import tripol.canvas
+import tripol.events
+import tripol.time
+verts=ints(9)
+verts[0]=-700;verts[1]=-700;verts[2]=16711680
+verts[3]=700;verts[4]=-700;verts[5]=65280
+verts[6]=0;verts[7]=700;verts[8]=255
+pixels=canvas.create(320,180)
+game.window("QUANTUM X OpenGL experiment",960,540)
+gl=true;frames=0;start=time.now_ns()
+while game.running() {
+ if game.key(27) {break}
+ if gl {
+  if not game.gl_frame(verts,1052688) {
+   game.close()
+   game.window("QUANTUM X software fallback",960,540)
+   gl=false
+  }
+ } else {
+  canvas.clear(pixels,1052688)
+  canvas.rectangle(pixels,320,180,120,50,80,80,65535)
+  game.present(pixels,320,180)
+ }
+ frames+=1
+ game.wait(16)
+}
+game.close()
+show "OpenGL selected",gl
+show "Frames",frames
+show "Elapsed ns",time.elapsed_ns(start)

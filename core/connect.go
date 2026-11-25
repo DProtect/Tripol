@@ -61,9 +61,14 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 		groups = append(groups, group{dll: "WINHTTP.dll", names: names, first: 30})
 	}
 
-	if a.needed("iat:61") {
-		groups = append(groups, group{dll: "GDI32.dll", names: []string{"StretchDIBits"}, first: 61})
-	}
+	if a.needed("iat:61") || a.needed("gl_state") {
+        names:=make([]string,19)
+        if a.needed("iat:61"){names[0]="StretchDIBits"}
+        if a.needed("gl_state"){copy(names[15:],[]string{"GetPixelFormat","ChoosePixelFormat","SetPixelFormat","SwapBuffers"})}
+        groups=append(groups,group{dll:"GDI32.dll",names:names,first:61})
+    }
+    if a.needed("iat:75"){groups=append(groups,group{dll:"XINPUT1_4.dll",names:[]string{"XInputGetState"},first:75})}
+    if a.needed("gl_state"){groups=append(groups,group{dll:"OPENGL32.dll",names:[]string{"wglCreateContext","wglMakeCurrent","wglDeleteContext","glViewport","glClearColor","glClear","glBegin","glColor3ub","glVertex2f","glEnd"},first:80})}
 	if a.needed("iat:74") {groups=append(groups,group{dll:"WINMM.dll",names:[]string{"PlaySoundA"},first:74})}
 	size := 1024
 	if len(groups) > 2 {
@@ -125,7 +130,12 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 		a.labels["game_state"] = rva - textRVA + len(id) - reserve
 		a.labels["game_buffer"] = a.labels["game_state"] + 8
 	}
-	if cursor > len(id)-reserve {
+	if a.needed("gl_state"){
+        reserve+=16
+        a.labels["gl_state"]=rva-textRVA+len(id)-reserve
+        a.labels["gl_context"]=a.labels["gl_state"]+8
+    }
+    if cursor > len(id)-reserve {
 		die("network import table overflow")
 	}
 	if a.needed("arena_state") || a.needed("guard_state") {

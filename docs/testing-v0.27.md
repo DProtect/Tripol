@@ -85,3 +85,7 @@ tripol.exe --version
 Compare medians and p95 for the same case names in both JSON files. Record hardware, versions, profile, output equivalence and sample counts. No universal speed claims. Keep any failure logs; do not disable tests.
 
 For the 0.27.1 additions: `tripol run examples/projects/dynamic_list.tri`, `tripol run examples/projects/binary_io.tri` from a disposable working directory (writes quantum-bytes.bin), and `tripol build compiler/direct.tri -o genesis-stage.exe`. See [GENESIS](genesis.md) for the direct driver. Retain prior version reports for comparison.
+
+### Experimental OpenGL and XInput
+
+See [QUANTUM R3 graphics](graphics-r3.md). Compile the OpenGL demo, resize the window and press ESC. Record whether OpenGL succeeds, frames and elapsed time. The fallback is a reopened GDI window. Test physical gamepads separately; CI only checks imports, no-window behavior and validation.

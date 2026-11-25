@@ -15,3 +15,7 @@ func present(pixels:ints,w:int,h:int)->bool {
 func key(code:int)->bool {return game_key(code)}
 func close()->bool {return game_close()}
 func wait(ms:int)->int {return time.sleep(ms)}
+
+// Experimental WGL/OpenGL triangles, coordinates -1000..1000; triples x,y,RGB.
+// Return false if no context/window; do not mix presenters in one window.
+func gl_frame(vertices:ints,background=0)->bool {return native_gl_frame(vertices,background)}

@@ -4,6 +4,7 @@ package core
 // The generated program uses only OS services; no C runtime is linked.
 func (c *compiler) builtin(e *expr) (string, bool) {
 	a := c.a
+	if t, ok := c.graphicsBuiltin(e); ok {return t,true}
 	if t, ok := c.quantumNative(e); ok {return t,true}
 	if t, ok := c.atomicBuiltin(e); ok {return t,true}
 	if t, ok := c.nexusGatewayBuiltin(e); ok {
@@ -165,6 +166,7 @@ func (a *asm) libertyRuntime() {
 			die("missing runtime %s", key)
 		}
 		a.label(name)
+		if name=="game_close"&&a.needed("gl_state"){a.call("gl_close")}
 		base := len(a.b)
 		a.b = append(a.b, t.code...)
 		for _, r := range t.reloc {

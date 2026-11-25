@@ -7,3 +7,9 @@ func up()->int {return 38}
 func down()->int {return 40}
 func escape()->int {return 27}
 func space()->int {return 32}
+
+// XInput controllers 0..3. Poll explicitly. Windows 8+.
+func pad_connected(controller=0)->bool {assert controller>=0 and controller<=3;return pad_read(controller,0)==1}
+func pad_buttons(controller=0)->int {assert controller>=0 and controller<=3;return pad_read(controller,1)}
+func pad_axis(axis:int,controller=0)->int {assert controller>=0 and controller<=3 and axis>=0 and axis<=3;return pad_read(controller,axis+4)}
+func pad_trigger(trigger:int,controller=0)->int {assert controller>=0 and controller<=3 and trigger>=0 and trigger<=1;return pad_read(controller,trigger+2)}
