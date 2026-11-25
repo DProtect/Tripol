@@ -33,11 +33,20 @@ func TestVisionModuleLocation(t *testing.T) {
 	d := t.TempDir()
 	main := filepath.Join(d, "main.tri")
 	mod := filepath.Join(d, "lib.tri")
-	os.WriteFile(main, []byte("import \"lib.tri\"\nshow f()"), 0600)
-	os.WriteFile(mod, []byte("func f(){\nreturn missing\n}"), 0600)
+	if err := os.WriteFile(main, []byte("import \"lib.tri\"\nshow f()"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(mod, []byte("func f(){\nreturn missing\n}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	// Diagnostics identify the canonical module path, not a Windows 8.3 alias.
+	canonical, err := filepath.EvalSymlinks(mod)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer func() {
 		v, ok := recover().(diagnostic)
-		if !ok || v.File != mod || v.Line != 2 {
+		if !ok || v.File != canonical || v.Line != 2 {
 			t.Fatalf("bad location %#v", v)
 		}
 	}()

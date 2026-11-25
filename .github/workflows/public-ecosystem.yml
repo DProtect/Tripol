@@ -1,5 +1,7 @@
 name: Public ecosystem
 on:
+  push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -76,7 +78,7 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           go build -trimpath -ldflags '-s -w' -o dist/TRIPOL-v0.24-Setup-x64.exe ./installer
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          & dist/TRIPOL-v0.24-Setup-x64.exe --quiet
+          & ./dist/TRIPOL-v0.24-Setup-x64.exe --quiet
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $compiler = Join-Path $env:LOCALAPPDATA 'Programs/TRIPOL/tripol.exe'
           & $compiler --version
@@ -87,7 +89,7 @@ jobs:
           if ($LASTEXITCODE -or ($output -join ' ') -notmatch '46000') { throw 'Expense smoke test failed' }
           & $compiler build examples/projects/notes.tri --target windows -o notes.exe
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          & dist/TRIPOL-v0.24-Setup-x64.exe --quiet --uninstall
+          & ./dist/TRIPOL-v0.24-Setup-x64.exe --quiet --uninstall
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           Compress-Archive -Path dist/TRIPOL-v0.24-Setup-x64.exe, LICENSE -DestinationPath dist/TRIPOL-v0.24-Installer.zip
       - uses: actions/upload-artifact@v4
