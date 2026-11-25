@@ -1,0 +1,5 @@
+func count(n, acc) {
+    if n == 0 { return acc }
+    return count(n - 1, acc + 1)
+}
+show count(1000000, 0)

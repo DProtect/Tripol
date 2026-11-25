@@ -12,14 +12,14 @@ import (
 	"strings"
 )
 
-const version = "0.2.0"
+const version = "0.3.0"
 
 type token struct {
 	s, k string
 	line int
 }
 
-var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+)|([A-Za-z_][A-Za-z_0-9]*)|(==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){},:;\-]))`)
+var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+)|([A-Za-z_][A-Za-z_0-9]*)|(==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){}\[\],:;\-]))`)
 
 func die(f string, a ...any) { panic(fmt.Errorf(f, a...)) }
 func lex(s string) []token {
@@ -55,7 +55,7 @@ type expr struct {
 }
 type stmt struct {
 	op, name, typ string
-	e             *expr
+	e, bound      *expr
 	yes, no       []stmt
 	line          int
 	mut           bool
@@ -108,7 +108,7 @@ func (p *parser) end() {
 }
 func (p *parser) name() string {
 	t := p.t()
-	if t.k != "id" || strings.Contains("|func|return|show|let|const|if|else|while|true|false|int|bool|string|void|", "|"+t.s+"|") {
+	if t.k != "id" || strings.Contains("|func|return|show|let|const|if|else|while|for|in|range|break|continue|true|false|int|bool|string|void|", "|"+t.s+"|") {
 		p.err("expected identifier")
 	}
 	return p.take().s
@@ -141,6 +141,21 @@ func (p *parser) statement() stmt {
 	t := p.t()
 	s := stmt{line: t.line}
 	switch t.s {
+	case "break", "continue":
+		s.op = p.take().s
+	case "for":
+		p.take()
+		s.op = "for"
+		s.name = p.name()
+		p.need("in")
+		p.need("range")
+		p.need("(")
+		s.e = p.expression(1)
+		p.need(",")
+		s.bound = p.expression(1)
+		p.need(")")
+		s.yes = p.block()
+		return s
 	case "show", "return":
 		s.op = p.take().s
 		s.e = p.expression(1)
@@ -173,6 +188,12 @@ func (p *parser) statement() stmt {
 		} else {
 			s.op = "expr"
 			s.e = p.expression(1)
+			if s.e.op == "index" && p.eat("=") {
+				s.op = "indexassign"
+				s.name = s.e.s
+				s.bound = s.e.args[0]
+				s.e = p.expression(1)
+			}
 		}
 	}
 	p.end()
@@ -193,6 +214,17 @@ func (p *parser) expression(min int) *expr {
 	case t.s == "-" || t.s == "!":
 		e.op = "un"
 		e.args = []*expr{p.expression(7)}
+	case t.s == "[":
+		e.op = "array"
+		if !p.eat("]") {
+			for {
+				e.args = append(e.args, p.expression(1))
+				if p.eat("]") {
+					break
+				}
+				p.need(",")
+			}
+		}
 	case t.s == "(":
 		e = p.expression(1)
 		p.need(")")
@@ -230,6 +262,11 @@ func (p *parser) expression(min int) *expr {
 	default:
 		die("line %d: expected expression", t.line)
 	}
+	if e.op == "var" && p.eat("[") {
+		e.op = "index"
+		e.args = []*expr{p.expression(1)}
+		p.need("]")
+	}
 	for prec[p.t().s] >= min {
 		op := p.take().s
 		e = &expr{op: "bin", s: op, args: []*expr{e, p.expression(prec[op] + 1)}}
@@ -237,7 +274,7 @@ func (p *parser) expression(min int) *expr {
 	return e
 }
 func parse(s string) ([]fn, []stmt) {
-	p := parser{ts: lex(s)}
+	p := parser{ts: lex(strings.TrimPrefix(s, "\ufeff"))}
 	var fs []fn
 	var ss []stmt
 	p.skip()
@@ -283,11 +320,22 @@ type asm struct {
 	serial int
 	data   map[string]string
 	target string
+	opt    bool
 }
 
 func (a *asm) emit(b ...byte) { a.b = append(a.b, b...) }
 func (a *asm) u32(n int)      { a.b = binary.LittleEndian.AppendUint32(a.b, uint32(n)) }
 func (a *asm) imm(n int64) {
+	if a.opt && n >= 0 && n <= 0xffffffff {
+		a.emit(0xb8)
+		a.u32(int(n))
+		return
+	}
+	if a.opt && n >= -2147483648 && n <= 2147483647 {
+		a.emit(0x48, 0xc7, 0xc0)
+		a.u32(int(n))
+		return
+	}
 	a.emit(0x48, 0xb8)
 	a.b = binary.LittleEndian.AppendUint64(a.b, uint64(n))
 }
@@ -314,8 +362,22 @@ func (a *asm) str(s string) {
 	}
 	a.rel(l, 0x48, 0x8d, 0x05)
 }
-func (a *asm) load(off int)  { a.emit(0x48, 0x8b, 0x85); a.u32(off) }
-func (a *asm) store(off int) { a.emit(0x48, 0x89, 0x85); a.u32(off) }
+func (a *asm) load(off int) {
+	if a.opt && off >= -128 && off <= 127 {
+		a.emit(0x48, 0x8b, 0x45, byte(off))
+		return
+	}
+	a.emit(0x48, 0x8b, 0x85)
+	a.u32(off)
+}
+func (a *asm) store(off int) {
+	if a.opt && off >= -128 && off <= 127 {
+		a.emit(0x48, 0x89, 0x45, byte(off))
+		return
+	}
+	a.emit(0x48, 0x89, 0x85)
+	a.u32(off)
+}
 func (a *asm) finish() {
 	for _, f := range a.fixes {
 		v, ok := a.labels[f.label]
@@ -336,7 +398,11 @@ type compiler struct {
 	fs          map[string]fn
 	scopes      []map[string]variable
 	slots, line int
+	peak        int
 	ret         string
+	current     fn
+	restart     string
+	loops       [][2]string
 }
 
 func (c *compiler) err(s string) { die("line %d: %s", c.line, s) }
@@ -355,6 +421,12 @@ func (c *compiler) require(a, b string) {
 }
 func (c *compiler) expression(e *expr) string {
 	a := c.a
+	if a.opt {
+		if k, n, ok := fold(e); ok && e.op != "int" && e.op != "bool" {
+			a.imm(n)
+			return k
+		}
+	}
 	switch e.op {
 	case "int", "bool":
 		a.imm(e.n)
@@ -367,10 +439,29 @@ func (c *compiler) expression(e *expr) string {
 		if !ok {
 			c.err("unknown variable " + e.s)
 		}
+		if strings.HasPrefix(v.typ, "array:") {
+			c.err("array requires an index")
+		}
 		a.load(v.off)
 		return v.typ
+	case "array":
+		c.err("array literal only allowed in a local declaration")
+	case "index":
+		v := c.arrayVar(e.s)
+		c.arrayIndex(v, e.args[0])
+		a.emit(0x48, 0x8b, 0x84, 0xc5)
+		a.u32(v.off)
+		return "int"
 	case "call":
 		f, ok := c.fs[e.s]
+		if !ok && e.s == "len" {
+			if len(e.args) != 1 || e.args[0].op != "var" {
+				c.err("len expects an array name")
+			}
+			v := c.arrayVar(e.args[0].s)
+			a.imm(int64(arrayLen(v)))
+			return "int"
+		}
 		if !ok {
 			c.err("unknown function " + e.s)
 		}
@@ -413,6 +504,37 @@ func (c *compiler) expression(e *expr) string {
 		c.require(c.expression(e.args[1]), "bool")
 		a.label(end)
 		return "bool"
+	}
+	if a.opt && t == "int" && e.args[1].op == "int" && e.args[1].n <= 2147483647 {
+		n := e.args[1].n
+		switch op {
+		case "+", "-", "*":
+			if op == "*" {
+				if n <= 127 {
+					a.emit(0x48, 0x6b, 0xc0, byte(n))
+				} else {
+					a.emit(0x48, 0x69, 0xc0)
+					a.u32(int(n))
+				}
+			} else {
+				code := byte(0xc0)
+				if op == "-" {
+					code = 0xe8
+				}
+				if n <= 127 {
+					a.emit(0x48, 0x83, code, byte(n))
+				} else {
+					a.emit(0x48, 0x81, code)
+					a.u32(int(n))
+				}
+			}
+			a.j(0x80, "err")
+			return "int"
+		case "==", "!=", "<", ">", "<=", ">=":
+			a.cmpImm(n)
+			a.emit(0x0f, compareCode[op], 0xc0, 0x0f, 0xb6, 0xc0)
+			return "bool"
+		}
 	}
 	a.emit(0x50)
 	u := c.expression(e.args[1])
@@ -466,14 +588,34 @@ func (c *compiler) expression(e *expr) string {
 }
 func (c *compiler) block(ss []stmt, nested bool) {
 	if nested {
+		old := c.slots
 		c.scopes = append(c.scopes, map[string]variable{})
-		defer func() { c.scopes = c.scopes[:len(c.scopes)-1] }()
+		defer func() {
+			c.scopes = c.scopes[:len(c.scopes)-1]
+			if c.a.opt {
+				c.slots = old
+			}
+		}()
 	}
 	a := c.a
 	for _, s := range ss {
 		c.line = s.line
 		switch s.op {
+		case "indexassign":
+			v := c.arrayVar(s.name)
+			if !v.mut {
+				c.err("cannot modify constant " + s.name)
+			}
+			c.arrayIndex(v, s.bound)
+			a.emit(0x50)
+			c.require(c.expression(s.e), "int")
+			a.emit(0x59, 0x48, 0x89, 0x84, 0xcd)
+			a.u32(v.off)
 		case "decl", "assign":
+			if s.e.op == "array" {
+				c.arrayDeclare(s)
+				continue
+			}
 			t := c.expression(s.e)
 			v, ok := c.lookup(s.name)
 			if s.op == "decl" && ok {
@@ -489,6 +631,9 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				c.require(t, v.typ)
 			} else {
 				c.slots++
+				if c.slots > c.peak {
+					c.peak = c.slots
+				}
 				if c.slots > 400 {
 					c.err("too many local variables (maximum 400)")
 				}
@@ -505,19 +650,47 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			if c.ret == "" {
 				c.err("return outside function")
 			}
-			c.require(c.expression(s.e), c.ret)
-			a.emit(0xc9, 0xc3)
+			if a.opt && s.e.op == "call" && s.e.s == c.current.name && len(s.e.args) == len(c.current.args) {
+				for i, x := range s.e.args {
+					c.require(c.expression(x), c.current.args[i].typ)
+					a.emit(0x50)
+				}
+				for i := len(s.e.args) - 1; i >= 0; i-- {
+					a.emit(0x58)
+					a.store(16 + 8*(len(s.e.args)-1-i))
+				}
+				a.jmp(c.restart)
+			} else {
+				c.require(c.expression(s.e), c.ret)
+				a.emit(0xc9, 0xc3)
+			}
+		case "break", "continue":
+			if len(c.loops) == 0 {
+				c.err(s.op + " outside loop")
+			}
+			l := c.loops[len(c.loops)-1]
+			if s.op == "break" {
+				a.jmp(l[0])
+			} else {
+				a.jmp(l[1])
+			}
+		case "for":
+			c.rangeLoop(s)
 		case "if", "while":
 			start, end := a.fresh(), a.fresh()
 			a.label(start)
-			c.require(c.expression(s.e), "bool")
-			a.emit(0x48, 0x85, 0xc0)
 			other := end
 			if len(s.no) > 0 {
 				other = a.fresh()
 			}
-			a.j(0x84, other)
+			c.branchFalse(s.e, other)
+			if s.op == "while" {
+				c.loops = append(c.loops, [2]string{end, start})
+			}
 			c.block(s.yes, true)
+			if s.op == "while" {
+				c.loops = c.loops[:len(c.loops)-1]
+			}
 			if s.op == "while" {
 				a.jmp(start)
 			}
@@ -541,6 +714,9 @@ func returns(ss []stmt) bool {
 func (c *compiler) function(f fn, main bool) {
 	a := c.a
 	c.slots = 0
+	c.peak = 0
+	c.current = f
+	c.loops = nil
 	c.ret = f.ret
 	c.scopes = []map[string]variable{{}}
 	for i, p := range f.args {
@@ -553,6 +729,8 @@ func (c *compiler) function(f fn, main bool) {
 	a.emit(0x55, 0x48, 0x89, 0xe5, 0x48, 0x81, 0xec)
 	at := len(a.b)
 	a.u32(0)
+	c.restart = a.fresh()
+	a.label(c.restart)
 	c.block(f.body, false)
 	if main {
 		a.imm(0)
@@ -560,74 +738,96 @@ func (c *compiler) function(f fn, main bool) {
 	} else if !returns(f.body) {
 		die("function %s may finish without return", f.name)
 	}
-	binary.LittleEndian.PutUint32(a.b[at:], uint32(c.slots*8))
+	binary.LittleEndian.PutUint32(a.b[at:], uint32(c.peak*8))
 }
 
 // Runtime helpers use rax for value; write uses rsi=buffer, rdx=length.
 func (a *asm) rt() {
-	a.label("streq")
-	l, n := a.fresh(), a.fresh()
-	a.label(l)
-	a.emit(0x8a, 0x10, 0x3a, 0x11)
-	a.j(0x85, n)
-	a.emit(0x84, 0xd2)
-	eq := a.fresh()
-	a.j(0x84, eq)
-	a.emit(0x48, 0xff, 0xc0, 0x48, 0xff, 0xc1)
-	a.jmp(l)
-	a.label(n)
-	a.emit(0x31, 0xc0, 0xc3)
-	a.label(eq)
-	a.emit(0xb8, 1, 0, 0, 0, 0xc3)
-	a.label("print:bool")
-	a.emit(0x48, 0x85, 0xc0)
-	f := a.fresh()
-	a.j(0x84, f)
-	a.str("true")
-	a.jmp("print:string")
-	a.label(f)
-	a.str("false")
-	a.jmp("print:string")
-	a.label("print:string")
-	a.emit(0x48, 0x89, 0xc6, 0x31, 0xd2)
-	loop, done := a.fresh(), a.fresh()
-	a.label(loop)
-	a.emit(0x80, 0x3c, 0x16, 0)
-	a.j(0x84, done)
-	a.emit(0x48, 0xff, 0xc2)
-	a.jmp(loop)
-	a.label(done)
-	a.call("write")
-	a.str("\n")
-	a.emit(0x48, 0x89, 0xc6, 0xba, 1, 0, 0, 0)
-	a.jmp("write")
-	a.label("print:int")
-	a.emit(0x55, 0x48, 0x89, 0xe5, 0x48, 0x83, 0xec, 0x30, 0x48, 0x8d, 0x75, 0xff, 0xc6, 0x06, 0x0a, 0x41, 0xb8, 1, 0, 0, 0, 0x45, 0x31, 0xc9, 0x48, 0x85, 0xc0)
-	pos := a.fresh()
-	a.j(0x89, pos)
-	a.emit(0x41, 0xb1, 1, 0x48, 0xf7, 0xd8)
-	a.label(pos)
-	a.emit(0xb9, 10, 0, 0, 0)
-	digits := a.fresh()
-	a.label(digits)
-	a.emit(0x31, 0xd2, 0x48, 0xf7, 0xf1, 0x80, 0xc2, 0x30, 0x48, 0xff, 0xce, 0x88, 0x16, 0x49, 0xff, 0xc0, 0x48, 0x85, 0xc0)
-	a.j(0x85, digits)
-	sign := a.fresh()
-	a.emit(0x45, 0x84, 0xc9)
-	a.j(0x84, sign)
-	a.emit(0x48, 0xff, 0xce, 0xc6, 0x06, 0x2d, 0x49, 0xff, 0xc0)
-	a.label(sign)
-	a.emit(0x4c, 0x89, 0xc2)
-	a.call("write")
-	a.emit(0xc9, 0xc3)
-	a.label("err")
-	a.str("TRIPOL runtime error: invalid integer arithmetic\n")
-	a.emit(0x48, 0x89, 0xc6, 0xba)
-	a.u32(len("TRIPOL runtime error: invalid integer arithmetic\n"))
-	a.call("writeerr")
-	a.imm(1)
-	a.jmp("exit")
+	if !a.opt || a.needed("streq") {
+		a.label("streq")
+		l, n := a.fresh(), a.fresh()
+		a.label(l)
+		a.emit(0x8a, 0x10, 0x3a, 0x11)
+		a.j(0x85, n)
+		a.emit(0x84, 0xd2)
+		eq := a.fresh()
+		a.j(0x84, eq)
+		a.emit(0x48, 0xff, 0xc0, 0x48, 0xff, 0xc1)
+		a.jmp(l)
+		a.label(n)
+		a.emit(0x31, 0xc0, 0xc3)
+		a.label(eq)
+		a.emit(0xb8, 1, 0, 0, 0, 0xc3)
+	}
+	if !a.opt || a.needed("print:bool") {
+		a.label("print:bool")
+		a.emit(0x48, 0x85, 0xc0)
+		f := a.fresh()
+		a.j(0x84, f)
+		a.str("true")
+		a.jmp("print:string")
+		a.label(f)
+		a.str("false")
+		a.jmp("print:string")
+	}
+	if !a.opt || a.needed("print:string") {
+		a.label("print:string")
+		a.emit(0x48, 0x89, 0xc6, 0x31, 0xd2)
+		loop, done := a.fresh(), a.fresh()
+		a.label(loop)
+		a.emit(0x80, 0x3c, 0x16, 0)
+		a.j(0x84, done)
+		a.emit(0x48, 0xff, 0xc2)
+		a.jmp(loop)
+		a.label(done)
+		a.call("write")
+		a.str("\n")
+		a.emit(0x48, 0x89, 0xc6, 0xba, 1, 0, 0, 0)
+		a.jmp("write")
+	}
+	if !a.opt || a.needed("print:int") {
+		a.label("print:int")
+		a.emit(0x55, 0x48, 0x89, 0xe5, 0x48, 0x83, 0xec, 0x30, 0x48, 0x8d, 0x75, 0xff, 0xc6, 0x06, 0x0a, 0x41, 0xb8, 1, 0, 0, 0, 0x45, 0x31, 0xc9, 0x48, 0x85, 0xc0)
+		pos := a.fresh()
+		a.j(0x89, pos)
+		a.emit(0x41, 0xb1, 1, 0x48, 0xf7, 0xd8)
+		a.label(pos)
+		a.emit(0xb9, 10, 0, 0, 0)
+		digits := a.fresh()
+		a.label(digits)
+		a.emit(0x31, 0xd2, 0x48, 0xf7, 0xf1, 0x80, 0xc2, 0x30, 0x48, 0xff, 0xce, 0x88, 0x16, 0x49, 0xff, 0xc0, 0x48, 0x85, 0xc0)
+		a.j(0x85, digits)
+		sign := a.fresh()
+		a.emit(0x45, 0x84, 0xc9)
+		a.j(0x84, sign)
+		a.emit(0x48, 0xff, 0xce, 0xc6, 0x06, 0x2d, 0x49, 0xff, 0xc0)
+		a.label(sign)
+		a.emit(0x4c, 0x89, 0xc2)
+		a.call("write")
+		a.emit(0xc9, 0xc3)
+	}
+	if !a.opt || a.needed("bounds") {
+		a.label("bounds")
+		a.str("TRIPOL runtime error: array index out of bounds\n")
+		a.emit(0x48, 0x89, 0xc6, 0xba)
+		a.u32(len("TRIPOL runtime error: array index out of bounds\n"))
+		a.call("writeerr")
+		a.imm(1)
+		a.jmp("exit")
+	}
+	if !a.opt || a.needed("err") {
+		a.label("err")
+		a.str("TRIPOL runtime error: invalid integer arithmetic\n")
+		a.emit(0x48, 0x89, 0xc6, 0xba)
+		a.u32(len("TRIPOL runtime error: invalid integer arithmetic\n"))
+		a.call("writeerr")
+		a.imm(1)
+		a.jmp("exit")
+	}
 	for _, s := range []string{"write", "writeerr"} {
+		if a.opt && !a.needed(s) {
+			continue
+		}
 		a.label(s)
 		fd := byte(1)
 		if s == "writeerr" {
@@ -757,9 +957,17 @@ func pe(a *asm) []byte {
 	copy(b[header+raw:], id)
 	return b
 }
-func compile(src, target string) []byte {
+func compile(src, target string) []byte { return compileProfile(src, target, "nano") }
+func compileProfile(src, target, profile string) []byte {
 	fs, ss := parse(src)
-	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target}
+	// Validate every function before eliminating any unreachable code.
+	if profile != "debug" {
+		generate(fs, ss, target, false, nil)
+	}
+	return generate(fs, ss, target, profile != "debug", reachable(fs, ss))
+}
+func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool) []byte {
+	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt}
 	c := compiler{a: a, fs: map[string]fn{}}
 	for _, f := range fs {
 		if _, ok := c.fs[f.name]; ok {
@@ -769,7 +977,9 @@ func compile(src, target string) []byte {
 	}
 	c.function(fn{name: "@main", body: ss}, true)
 	for _, f := range fs {
-		c.function(f, false)
+		if !opt || live[f.name] {
+			c.function(f, false)
+		}
 	}
 	a.rt() // deterministic string order by assigned label
 	for i := 1; i <= a.serial; i++ {
@@ -794,7 +1004,7 @@ func compile(src, target string) []byte {
 func cli() {
 	args := os.Args[1:]
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.2.0 — FORGE\ntripol run FILE.tri\ntripol build FILE.tri [-o OUTPUT] [--target windows|linux]\ntripol check FILE.tri\ntripol --version")
+		fmt.Println("TRIPOL 0.3.0 — NANO\ntripol new NAME\ntripol run FILE.tri [--profile nano|debug]\ntripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check FILE.tri\ntripol --version")
 		return
 	}
 	if args[0] == "--version" {
@@ -805,6 +1015,14 @@ func cli() {
 		die("source file required")
 	}
 	cmd, src := args[0], args[1]
+	if cmd == "new" {
+		if len(args) != 2 {
+			die("usage: tripol new NAME")
+		}
+		newProject(src)
+		return
+	}
+	profile := "nano"
 	target := runtime.GOOS
 	out := ""
 	for i := 2; i < len(args); i++ {
@@ -815,9 +1033,10 @@ func cli() {
 			}
 			v := args[i+1]
 			if args[i] == "--profile" {
-				if v != "nano" {
-					die("only nano profile is available in the new native backend")
+				if v != "nano" && v != "debug" {
+					die("unknown profile %s", v)
 				}
+				profile = v
 			} else if args[i] == "--target" {
 				target = v
 			} else {
@@ -841,7 +1060,7 @@ func cli() {
 	if len(b) > 4<<20 {
 		die("source too large")
 	}
-	bin := compile(string(b), target)
+	bin := compileProfile(strings.TrimPrefix(string(b), "\ufeff"), target, profile)
 	if cmd == "check" {
 		fmt.Println("OK")
 		return

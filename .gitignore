@@ -3,3 +3,6 @@ __pycache__/
 *.exe
 /bin/
 /installer/payload/
+
+# Local native compiler binary
+/tripol

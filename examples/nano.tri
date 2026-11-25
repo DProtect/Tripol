@@ -1,0 +1,9 @@
+// TRIPOL v0.3: stack arrays and range loops.
+values = [10, 20, 30, 40, 50]
+total = 0
+for i in range(0, len(values)) {
+    values[i] = values[i] * 2
+    total = total + values[i]
+}
+show "TRIPOL NANO"
+show total
