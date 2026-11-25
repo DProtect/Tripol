@@ -1,0 +1,3 @@
+func ask(prompt:string) -> string { return input(prompt) }
+func ask_int(prompt:string) -> int { return input_int(prompt) }
+func line(message:string) -> int { show message; return 0 }

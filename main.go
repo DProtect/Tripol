@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const version = "0.7.0"
+const version = "0.8.0"
 
 type token struct {
 	s, k string
@@ -352,7 +352,24 @@ func (p *parser) expression(min int) *expr {
 		p.need("]")
 	}
 	for p.eat(".") {
-		e = &expr{op: "field", s: p.name(), args: []*expr{e}}
+		member := p.name()
+		if p.eat("(") {
+			if e.op != "var" {
+				p.err("qualified call requires module name")
+			}
+			e = &expr{op: "call", s: e.s + "." + member}
+			if !p.eat(")") {
+				for {
+					e.args = append(e.args, p.expression(1))
+					if p.eat(")") {
+						break
+					}
+					p.need(",")
+				}
+			}
+		} else {
+			e = &expr{op: "field", s: member, args: []*expr{e}}
+		}
 	}
 	for prec[p.t().s] >= min {
 		op := p.take().s
@@ -374,12 +391,17 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 	var imports []string
 	p.skip()
 	for p.eat("import") {
-		if p.t().k != "str" {
-			p.err("expected quoted local module path")
-		}
 		var name string
-		if json.Unmarshal([]byte(p.take().s), &name) != nil {
-			p.err("invalid import path")
+		if p.t().k == "str" {
+			if json.Unmarshal([]byte(p.take().s), &name) != nil {
+				p.err("invalid import path")
+			}
+		} else {
+			if p.name() != "tripol" {
+				p.err("expected import tripol.NAME or quoted local path")
+			}
+			p.need(".")
+			name = "@std:" + p.name()
 		}
 		imports = append(imports, name)
 		p.end()
@@ -434,7 +456,14 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 func parse(s string) ([]fn, []stmt) {
 	imports, fs, ss := parseUnit(s)
 	if len(imports) != 0 {
-		die("imports require a source file")
+		libs := standardLoader()
+		for _, name := range imports {
+			if !strings.HasPrefix(name, "@std:") {
+				die("local imports require a source file")
+			}
+			libs.add(strings.TrimPrefix(name, "@std:"))
+		}
+		fs = append(libs.functions, fs...)
 	}
 	return fs, ss
 }
@@ -596,6 +625,14 @@ func (c *compiler) expression(e *expr) string {
 		a.u32(off)
 		return field.typ
 	case "call":
+		if strings.HasPrefix(e.s, "@builtin:") {
+			b := *e
+			b.s = strings.TrimPrefix(b.s, "@builtin:")
+			if t, ok := c.builtin(&b); ok {
+				return t
+			}
+			c.err("unknown standard intrinsic " + b.s)
+		}
 		f, ok := c.fs[e.s]
 		if !ok {
 			if t, handled := c.builtin(e); handled {
@@ -612,7 +649,11 @@ func (c *compiler) expression(e *expr) string {
 			c.err("wrong argument count: " + e.s)
 		}
 		for i, x := range e.args {
-			c.require(c.expression(x), f.args[i].typ)
+			if strings.Contains(f.name, ".") && f.args[i].typ == "ints" && c.promoteFixed(x) {
+				// A standard-library read-only array argument receives a stack view.
+			} else {
+				c.require(c.expression(x), f.args[i].typ)
+			}
 			a.emit(0x50)
 		}
 		a.call("fn:" + e.s)
@@ -836,8 +877,8 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				if c.slots > c.peak {
 					c.peak = c.slots
 				}
-				if c.slots > 400 {
-					c.err("too many local variables (maximum 400)")
+				if c.slots > 401 {
+					c.err("too many local variables (maximum 401 stack slots)")
 				}
 				v = variable{t, -8 * c.slots, s.mut || s.op == "assign"}
 				c.scopes[len(c.scopes)-1][s.name] = v
@@ -1275,7 +1316,7 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool)
 func cli() {
 	args := os.Args[1:]
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.7.0 — HORIZON\ntripol new NAME [--template basic|calculator|files|records]\ntripol learn [es|en]\ntripol doctor\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
+		fmt.Println("TRIPOL 0.8.0 — ATLAS\ntripol new NAME [--template basic|calculator|files|records|libraries]\ntripol learn [es|en]\ntripol doctor\ntripol libs\ntripol docs NAME\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
 		return
 	}
 	if args[0] == "--version" {
@@ -1291,6 +1332,14 @@ func cli() {
 			die("usage: tripol learn [es|en]")
 		}
 		learn()
+		return
+	}
+	if args[0] == "libs" && len(args) == 1 {
+		listLibraries()
+		return
+	}
+	if args[0] == "docs" && len(args) == 2 {
+		libraryDocs(args[1])
 		return
 	}
 	if args[0] == "doctor" && len(args) == 1 {
@@ -1311,7 +1360,7 @@ func cli() {
 		if len(args) == 4 && args[2] == "--template" {
 			template = args[3]
 		} else if len(args) != 2 {
-			die("usage: tripol new NAME [--template basic|calculator|files|records]")
+			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries]")
 		}
 		newProjectTemplate(src, template)
 		return

@@ -1,0 +1,11 @@
+import tripol.math
+import tripol.stats
+import tripol.text
+
+numeros = [10, 20, 30, 40]
+show "Cuadrado:", math.square(7)
+show "Potencia:", math.power(2, 10)
+show "Promedio:", stats.mean(numeros)
+show "Minimo:", stats.minimum(numeros)
+show "Maximo:", stats.maximum(numeros)
+show "Texto:", text.starts_with("TRIPOL", "TRI")

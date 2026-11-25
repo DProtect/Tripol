@@ -1,0 +1,26 @@
+func make(n:int, value:int) -> ints {
+    a=ints(n)
+    for i in range(n) { a[i]=value }
+    return a
+}
+func total(a:ints) -> int { return sum(a) }
+func count(a:ints, value:int) -> int {
+    n=0
+    for item in a { if item==value { n+=1 } }
+    return n
+}
+func contains(a:ints, value:int) -> bool {
+    for item in a { if item==value { return true } }
+    return false
+}
+func reversed(a:ints) -> ints {
+    b=ints(len(a))
+    for i in range(len(a)) { b[i]=a[len(a)-1-i] }
+    return b
+}
+func copy(a:ints) -> ints {
+    b=ints(len(a))
+    for i in range(len(a)) { b[i]=a[i] }
+    return b
+}
+func length(a:ints) -> int { return len(a) }

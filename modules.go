@@ -19,6 +19,7 @@ func loadProject(source string) ([]fn, []stmt, []string) {
 	}
 	root := filepath.Dir(abs)
 	states := map[string]int{}
+	libs := standardLoader()
 	var fs []fn
 	var main []stmt
 	var inputs []string
@@ -59,6 +60,10 @@ func loadProject(source string) ([]fn, []stmt, []string) {
 			die("module %s may contain functions only", path)
 		}
 		for _, name := range imports {
+			if strings.HasPrefix(name, "@std:") {
+				libs.add(strings.TrimPrefix(name, "@std:"))
+				continue
+			}
 			if name == "" || filepath.IsAbs(name) || filepath.VolumeName(name) != "" || filepath.Ext(name) != ".tri" || strings.ContainsRune(name, 0) {
 				die("invalid local import: %s", name)
 			}
@@ -72,5 +77,5 @@ func loadProject(source string) ([]fn, []stmt, []string) {
 		states[path] = 2
 	}
 	visit(abs, true, 0)
-	return fs, main, inputs
+	return append(libs.functions, fs...), main, inputs
 }

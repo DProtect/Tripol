@@ -1,0 +1,28 @@
+func square(n:int) -> int { return n*n }
+func cube(n:int) -> int { return n*n*n }
+func clamp(n:int, low:int, high:int) -> int {
+    assert low <= high, "Invalid clamp limits"
+    return min(max(n, low), high)
+}
+func power(base:int, exponent:int) -> int {
+    assert exponent >= 0, "Negative integer exponent"
+    result = 1
+    while exponent > 0 {
+        if exponent % 2 == 1 { result *= base }
+        exponent /= 2
+        if exponent > 0 { base *= base }
+    }
+    return result
+}
+func gcd(a:int, b:int) -> int {
+    a=abs(a); b=abs(b)
+    while b != 0 { r=a%b; a=b; b=r }
+    return a
+}
+func root(x:float) -> float { return sqrt(x) }
+func pi() -> float { return 3.141592653589793 }
+func percent(value:float, rate:float) -> float { return value * rate / 100.0 }
+func sqrt_value(x:float) -> float { return root(x) }
+func absolute(n:int) -> int { if n<0 { return -n }; return n }
+func minimum(a:int,b:int) -> int { if a<b { return a }; return b }
+func maximum(a:int,b:int) -> int { if a>b { return a }; return b }

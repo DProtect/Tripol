@@ -1,0 +1,25 @@
+import tripol.arrays
+func mean(a:ints) -> float {
+    assert len(a)>0, "Mean requires nonempty array"
+    return float(arrays.total(a))/float(len(a))
+}
+func minimum(a:ints) -> int {
+    assert len(a)>0, "Minimum requires nonempty array"
+    result=a[0]
+    for v in a { result=min(result,v) }
+    return result
+}
+func maximum(a:ints) -> int {
+    assert len(a)>0, "Maximum requires nonempty array"
+    result=a[0]
+    for v in a { result=max(result,v) }
+    return result
+}
+func variance(a:ints) -> float {
+    avg=mean(a)
+    result=0.0
+    for v in a { d=float(v)-avg; result+=d*d }
+    return result/float(len(a))
+}
+func deviation(a:ints) -> float { return sqrt(variance(a)) }
+func total(a:ints) -> int { return arrays.total(a) }

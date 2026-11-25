@@ -158,8 +158,8 @@ func reachable(fs []fn, ss []stmt) map[string]bool {
 }
 func (c *compiler) alloc(typ string, mut bool) variable {
 	c.slots++
-	if c.slots > 400 {
-		c.err("too many local variables (maximum 400)")
+	if c.slots > 401 {
+		c.err("too many local variables (maximum 401 stack slots)")
 	}
 	if c.slots > c.peak {
 		c.peak = c.slots
@@ -244,10 +244,11 @@ func (c *compiler) arrayDeclare(s stmt) {
 	if n == 0 || n > 400 {
 		c.err("array must have 1 to 400 elements")
 	}
-	for i := 0; i < n; i++ {
+	// Reserve a preceding length slot so standard read-only array views need no heap copy.
+	for i := 0; i <= n; i++ {
 		c.alloc("int", true)
 	}
-	v := variable{fmt.Sprintf("array:%d", n), -8 * c.slots, s.mut || s.op == "assign"}
+	v := variable{fmt.Sprintf("array:%d", n), -8*c.slots + 8, s.mut || s.op == "assign"}
 	for i, e := range s.e.args {
 		c.require(c.expression(e), "int")
 		c.a.store(v.off + 8*i)

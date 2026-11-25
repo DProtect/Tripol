@@ -90,7 +90,7 @@ func (c *compiler) nexusBuiltin(e *expr) (string, bool) {
 	return "", false
 }
 func learn() {
-	fmt.Print(`TRIPOL 0.7 — Learn in five minutes
+	fmt.Print(`TRIPOL 0.8 — Learn in five minutes
 
 1. Show values:
    show "Hello, TRIPOL!"
@@ -121,6 +121,10 @@ func learn() {
    p.score += 5
    show p.name, p.score
 
+7. Libraries: import tripol.math
+   show math.square(7)
+   tripol libs lists available modules.
+
 Save code as main.tri, then: tripol run main.tri
 Build a standalone executable: tripol build main.tri
 `)
@@ -148,6 +152,12 @@ func newProjectTemplate(dir, template string) {
 		return
 	}
 	templates := map[string]string{
+		"libraries": `import tripol.math
+import tripol.stats
+numbers = [10, 20, 30]
+show "Square:", math.square(7)
+show "Mean:", stats.mean(numbers)
+`,
 		"calculator": `a = input_int("First number?")
 b = input_int("Second number?")
 show "Sum:", a + b
@@ -166,7 +176,7 @@ show "Saved:", read_text("profile.txt")
 	}
 	source, ok := templates[template]
 	if !ok {
-		die("unknown project template %s; choose basic, calculator, files or records", template)
+		die("unknown project template %s; choose basic, calculator, files, records or libraries", template)
 	}
 	if err := os.Mkdir(dir, 0755); err != nil {
 		die("cannot create project: %v", err)

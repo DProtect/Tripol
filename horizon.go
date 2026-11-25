@@ -83,7 +83,7 @@ func (c *compiler) recordAssign(s stmt) {
 	c.a.u32(off)
 }
 func learnSpanish() {
-	fmt.Print(`TRIPOL 0.7 — Aprende en cinco minutos
+	fmt.Print(`TRIPOL 0.8 — Aprende en cinco minutos
 
 1. Mostrar: show "Hola", 10 + 20
 2. Preguntar: nombre = input("Tu nombre?")
@@ -101,6 +101,10 @@ func learnSpanish() {
    j.puntos += 5
    show j.nombre, j.puntos
    assert j.puntos == 15, "Puntos incorrectos"
+
+8. Bibliotecas: import tripol.math
+   show math.square(7)
+   tripol libs muestra los modulos disponibles.
 
 Guarda el codigo en main.tri.
 tripol run main.tri   Ejecuta el programa

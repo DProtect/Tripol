@@ -1,0 +1,5 @@
+func read(path:string) -> string { return read_text(path) }
+func write(path:string, content:string) -> int { return write_text(path,content) }
+func append(path:string, content:string) -> int { return append_text(path,content) }
+func write_line(path:string, content:string) -> int { return write_text(path,content+"\n") }
+func append_line(path:string, content:string) -> int { return append_text(path,content+"\n") }

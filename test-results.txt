@@ -1,3 +1,45 @@
+=== RUN   TestAtlasLibraries
+=== RUN   TestAtlasLibraries/0
+=== RUN   TestAtlasLibraries/1
+=== RUN   TestAtlasLibraries/2
+=== RUN   TestAtlasLibraries/3
+=== RUN   TestAtlasLibraries/4
+=== RUN   TestAtlasLibraries/5
+=== RUN   TestAtlasLibraries/6
+=== RUN   TestAtlasLibraries/7
+--- PASS: TestAtlasLibraries (0.02s)
+    --- PASS: TestAtlasLibraries/0 (0.00s)
+    --- PASS: TestAtlasLibraries/1 (0.00s)
+    --- PASS: TestAtlasLibraries/2 (0.00s)
+    --- PASS: TestAtlasLibraries/3 (0.00s)
+    --- PASS: TestAtlasLibraries/4 (0.00s)
+    --- PASS: TestAtlasLibraries/5 (0.01s)
+    --- PASS: TestAtlasLibraries/6 (0.00s)
+    --- PASS: TestAtlasLibraries/7 (0.00s)
+=== RUN   TestAtlasFilesConsole
+--- PASS: TestAtlasFilesConsole (0.00s)
+=== RUN   TestAtlasReject
+=== RUN   TestAtlasReject/import_tripol.missing
+=== RUN   TestAtlasReject/show_math.square(3)
+=== RUN   TestAtlasReject/import_tripol.math_show_math.square(true)
+=== RUN   TestAtlasReject/import_tripol.text_show_text.unknown(1)
+=== RUN   TestAtlasReject/import_other.math_show_1
+=== RUN   TestAtlasReject/import_tripol.math_show_math.square()
+=== RUN   TestAtlasReject/import_tripol.math_show_math.square(1,2)
+--- PASS: TestAtlasReject (0.00s)
+    --- PASS: TestAtlasReject/import_tripol.missing (0.00s)
+    --- PASS: TestAtlasReject/show_math.square(3) (0.00s)
+    --- PASS: TestAtlasReject/import_tripol.math_show_math.square(true) (0.00s)
+    --- PASS: TestAtlasReject/import_tripol.text_show_text.unknown(1) (0.00s)
+    --- PASS: TestAtlasReject/import_other.math_show_1 (0.00s)
+    --- PASS: TestAtlasReject/import_tripol.math_show_math.square() (0.00s)
+    --- PASS: TestAtlasReject/import_tripol.math_show_math.square(1,2) (0.00s)
+=== RUN   TestAtlasTraps
+--- PASS: TestAtlasTraps (0.00s)
+=== RUN   TestAtlasElimination
+--- PASS: TestAtlasElimination (0.00s)
+=== RUN   TestAtlasMixedModules
+--- PASS: TestAtlasMixedModules (0.00s)
 === RUN   TestHorizonRecords
 === RUN   TestHorizonRecords/0
 === RUN   TestHorizonRecords/1
@@ -55,8 +97,8 @@
 === RUN   TestHorizonModulesPE
 --- PASS: TestHorizonModulesPE (0.00s)
 === RUN   TestHorizonTemplate
-Created /tmp/TestHorizonTemplate4006860230/001/records (records)
-cd /tmp/TestHorizonTemplate4006860230/001/records
+Created /tmp/TestHorizonTemplate200243483/001/records (records)
+cd /tmp/TestHorizonTemplate200243483/001/records
 tripol run
 --- PASS: TestHorizonTemplate (0.00s)
 === RUN   TestLibertyPrograms
@@ -68,7 +110,7 @@ tripol run
 === RUN   TestLibertyPrograms/5
 === RUN   TestLibertyPrograms/6
 === RUN   TestLibertyPrograms/7
---- PASS: TestLibertyPrograms (0.01s)
+--- PASS: TestLibertyPrograms (0.00s)
     --- PASS: TestLibertyPrograms/0 (0.00s)
     --- PASS: TestLibertyPrograms/1 (0.00s)
     --- PASS: TestLibertyPrograms/2 (0.00s)
@@ -257,7 +299,7 @@ tripol run
 === RUN   TestNanoPrograms/12
 === RUN   TestNanoPrograms/13
 === RUN   TestNanoPrograms/14
---- PASS: TestNanoPrograms (0.09s)
+--- PASS: TestNanoPrograms (0.08s)
     --- PASS: TestNanoPrograms/0 (0.00s)
     --- PASS: TestNanoPrograms/1 (0.00s)
     --- PASS: TestNanoPrograms/2 (0.00s)
@@ -375,16 +417,16 @@ tripol run
 --- PASS: TestNexusPE (0.00s)
 === RUN   TestNexusTemplates
 === RUN   TestNexusTemplates/basic
-Created /tmp/TestNexusTemplatesbasic817648788/001/basic
-cd /tmp/TestNexusTemplatesbasic817648788/001/basic
+Created /tmp/TestNexusTemplatesbasic321157186/001/basic
+cd /tmp/TestNexusTemplatesbasic321157186/001/basic
 tripol run main.tri
 === RUN   TestNexusTemplates/calculator
-Created /tmp/TestNexusTemplatescalculator2109992072/001/calculator (calculator)
-cd /tmp/TestNexusTemplatescalculator2109992072/001/calculator
+Created /tmp/TestNexusTemplatescalculator3121919082/001/calculator (calculator)
+cd /tmp/TestNexusTemplatescalculator3121919082/001/calculator
 tripol run
 === RUN   TestNexusTemplates/files
-Created /tmp/TestNexusTemplatesfiles1181045282/001/files (files)
-cd /tmp/TestNexusTemplatesfiles1181045282/001/files
+Created /tmp/TestNexusTemplatesfiles2752762613/001/files (files)
+cd /tmp/TestNexusTemplatesfiles2752762613/001/files
 tripol run
 --- PASS: TestNexusTemplates (0.00s)
     --- PASS: TestNexusTemplates/basic (0.00s)
@@ -477,4 +519,4 @@ tripol run
     --- PASS: TestVelocityArrays/a=ints(2);a[0]="s" (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2.0) (0.00s)
 PASS
-ok  	tripol	0.194s
+ok  	tripol	0.221s
