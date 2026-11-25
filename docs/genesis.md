@@ -22,3 +22,7 @@ tripol build compiler/windows.tri --target windows -o genesis-win.exe
 genesis-win.exe
 ```
 Enter `examples/projects/genesis_functions.tri` and `genesis-demo.exe` on separate lines. Run `genesis-demo.exe`. Expected ten lines from 0 to 45 in steps of 5. The compiler emits PE32+ directly, with RX code and a RW import table for GetStdHandle, WriteFile and ExitProcess. Linux can host this stage as well. Output paths are replaced; choose a new path. No DLLs beyond kernel32, fixed image base (no relocation directory), no general Windows APIs or full self-hosting.
+
+### GENESIS R3 additional control flow
+
+The declaration pass now builds the function signature table before emitting code. Calls target stable native jump stubs patched to actual function bodies, enabling forward calls and mutual recursion. Conditions support integer comparisons, boolean literals, `not`, `and`, `or` (also !, &&, ||), short-circuit evaluation and boolean grouping; `else if` chains are supported. Booleans are condition-only; variables and function signatures are still int64. The compiler still uses direct token-to-code lowering rather than a full AST, functions cannot access main's local slots, and self-compilation is not yet possible. See examples/projects/genesis_control.tri.

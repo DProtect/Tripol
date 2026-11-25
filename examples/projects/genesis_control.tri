@@ -1,0 +1,11 @@
+func first(n:int)->int {
+ return second(n)+1
+}
+func second(n:int)->int {
+ if n==0 {return 0}
+ return first(n-1)
+}
+x=2
+if false and 1/0==0 {show 99} else if (x+1)>2 and not (x==0 or false) {show first(3)} else {show 88}
+if true or 1/0==0 {show 42}
+while x>0 and true {show x;x=x-1}

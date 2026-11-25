@@ -15,6 +15,7 @@
 - QUANTUM R3 experimental WGL/OpenGL triangle backend and XInput controller reads; GDI retained as fallback.
 - MEMORY R2: scoped automatic reuse of temporary strings and list allocations; TIR R6: dominating expression reuse and checked constant propagation.
 - QUANTUM R3: mouse input, software tile maps, sprite rotation/scaling/opacity, particle pools, optional tones and improved pixel-art demonstration.
+- GENESIS R3: signature declaration pass, patched native function trampolines, forward calls, mutual recursion, else-if and short-circuit boolean conditions.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)

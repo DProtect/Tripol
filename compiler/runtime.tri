@@ -48,8 +48,8 @@ func gen_factor(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:
  }
  assert tok[i]==1 and len(s)<=32,"Expected variable or function"
  if boot_peek(src,tok,c)=="(" {
-  assert dictionary.contains(funcs,s),"Unknown or forward function"
-  signature=dictionary.get(funcs,s);arity=signature%16;target=signature/16
+  assert dictionary.contains(funcs,s),"Unknown function"
+  signature=dictionary.get(funcs,s);arity=signature%16;target=15+signature/16*5
   c[0]+=3;n=0
   if boot_peek(src,tok,c)!=")" {
    gen_expr(src,tok,c,code,syms,funcs,depth+1);gen_bytes(code,"50");n+=1
@@ -107,17 +107,74 @@ func gen_patch(code:ints,at:int,target:int)->int {
 func gen_jump(code:ints,opcode:string)->int {
  gen_bytes(code,opcode);at=buffer.size(code);gen_imm(code,0,4);return at
 }
-func gen_condition(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints)->int {
+// Boolean conditions lower to canonical 0/1 values. Logical branches
+// short-circuit and never evaluate an unreachable checked computation.
+func gen_compare(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints)->int {
  gen_expr(src,tok,c,code,syms,funcs,0)
- op=boot_peek(src,tok,c);c[0]=c[0]+3;gen_bytes(code,"50")
+ op=boot_peek(src,tok,c);c[0]+=3;gen_bytes(code,"50")
  gen_expr(src,tok,c,code,syms,funcs,0);gen_bytes(code,"4889c1584839c8")
- if op=="==" {return gen_jump(code,"0f85")}
- if op=="!=" {return gen_jump(code,"0f84")}
- if op=="<" {return gen_jump(code,"0f8d")}
- if op=="<=" {return gen_jump(code,"0f8f")}
- if op==">" {return gen_jump(code,"0f8e")}
- assert op==">=","Expected integer comparison"
- return gen_jump(code,"0f8c")
+ if op=="==" {gen_bytes(code,"0f94c0")}
+ else if op=="!=" {gen_bytes(code,"0f95c0")}
+ else if op=="<" {gen_bytes(code,"0f9cc0")}
+ else if op=="<=" {gen_bytes(code,"0f9ec0")}
+ else if op==">" {gen_bytes(code,"0f9fc0")}
+ else {assert op==">=","Expected comparison";gen_bytes(code,"0f9dc0")}
+ gen_bytes(code,"0fb6c0")
+ return 0
+}
+// Distinguish (arithmetic) < value from (boolean expression).
+func gen_arithmetic_paren(src:string,tok:ints,c:ints)->bool {
+ scan=ints(1);scan[0]=c[0];nesting=0
+ while true {
+  assert scan[0]<len(tok),"Unclosed condition"
+  word=boot_peek(src,tok,scan);scan[0]+=3
+  if word=="(" {nesting+=1}
+  if word==")" {nesting-=1}
+  if nesting==0 {break}
+ }
+ op=boot_peek(src,tok,scan)
+ return op=="+" or op=="-" or op=="*" or op=="/" or op=="%" or op=="==" or op=="!=" or op=="<" or op=="<=" or op==">" or op==">="
+}
+func gen_bool_atom(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int)->int {
+ assert depth<=32,"Boolean nesting limit"
+ word=boot_peek(src,tok,c)
+ if word=="not" or word=="!" {
+  c[0]+=3;gen_bool_atom(src,tok,c,code,syms,funcs,depth+1)
+  gen_bytes(code,"83f001");return 0
+ }
+ if word=="true" or word=="false" {
+  c[0]+=3
+  if word=="true" {gen_bytes(code,"b801000000")} else {gen_bytes(code,"31c0")}
+  return 0
+ }
+ if word=="(" and not gen_arithmetic_paren(src,tok,c) {
+  c[0]+=3;gen_bool_or(src,tok,c,code,syms,funcs,depth+1)
+  gen_expect(src,tok,c,")");return 0
+ }
+ return gen_compare(src,tok,c,code,syms,funcs)
+}
+func gen_bool_and(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int)->int {
+ gen_bool_atom(src,tok,c,code,syms,funcs,depth)
+ while boot_peek(src,tok,c)=="and" or boot_peek(src,tok,c)=="&&" {
+  c[0]+=3;gen_bytes(code,"4885c0");skip=gen_jump(code,"0f84")
+  gen_bool_atom(src,tok,c,code,syms,funcs,depth)
+  gen_patch(code,skip,buffer.size(code))
+ }
+ return 0
+}
+func gen_bool_or(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int)->int {
+ gen_bool_and(src,tok,c,code,syms,funcs,depth)
+ while boot_peek(src,tok,c)=="or" or boot_peek(src,tok,c)=="||" {
+  c[0]+=3;gen_bytes(code,"4885c0");skip=gen_jump(code,"0f85")
+  gen_bool_and(src,tok,c,code,syms,funcs,depth)
+  gen_patch(code,skip,buffer.size(code))
+ }
+ return 0
+}
+func gen_condition(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints)->int {
+ gen_bool_or(src,tok,c,code,syms,funcs,0)
+ gen_bytes(code,"4885c0")
+ return gen_jump(code,"0f84")
 }
 func gen_separators(src:string,tok:ints,c:ints)->int {
  while boot_peek(src,tok,c)==";" or boot_peek(src,tok,c)=="\n" {c[0]=c[0]+3}
@@ -133,7 +190,7 @@ func gen_expect(src:string,tok:ints,c:ints,want:string)->int {
 func gen_name(src:string,tok:ints,c:ints)->string {
  assert c[0]<len(tok) and tok[c[0]]==1,"Expected identifier"
  name=boot_peek(src,tok,c);assert len(name)<=32 and validate.identifier(name),"Invalid identifier"
- assert name!="if" and name!="else" and name!="while" and name!="for" and name!="return" and name!="show" and name!="func" and name!="range" and name!="in","Reserved identifier"
+ assert name!="if" and name!="else" and name!="while" and name!="for" and name!="return" and name!="show" and name!="func" and name!="range" and name!="in" and name!="true" and name!="false" and name!="not" and name!="and" and name!="or" and name!="int","Reserved identifier"
  c[0]+=3;return name
 }
 func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int,infunc:bool)->int {
@@ -149,18 +206,15 @@ func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,de
    c[0]+=3;gen_expr(src,tok,c,code,syms,funcs,0);gen_bytes(code,"c9c3")
    gen_separators(src,tok,c);assert boot_peek(src,tok,c)=="}","Expected closing brace after return"
    return 1
-  } else if name=="if" or name=="while" {
+  } else if name=="if" {
+   gen_if(src,tok,c,code,syms,funcs,depth,infunc)
+  } else if name=="while" {
    c[0]+=3;start=buffer.size(code);skip=gen_condition(src,tok,c,code,syms,funcs)
    gen_expect(src,tok,c,"{")
    gen_statements(src,tok,c,code,syms,funcs,depth+1,infunc)
    gen_expect(src,tok,c,"}")
-   if name=="while" {back=gen_jump(code,"e9");gen_patch(code,back,start)}
-   gen_separators(src,tok,c)
-   if name=="if" and boot_peek(src,tok,c)=="else" {
-    done=gen_jump(code,"e9");gen_patch(code,skip,buffer.size(code));c[0]+=3
-    gen_expect(src,tok,c,"{");gen_statements(src,tok,c,code,syms,funcs,depth+1,infunc);gen_expect(src,tok,c,"}")
-    gen_patch(code,done,buffer.size(code))
-   } else {gen_patch(code,skip,buffer.size(code))}
+   back=gen_jump(code,"e9");gen_patch(code,back,start)
+   gen_patch(code,skip,buffer.size(code))
   } else if name=="for" {
    c[0]+=3;counter=gen_name(src,tok,c)
    assert not dictionary.contains(syms,counter),"Range variable already declared"
@@ -198,9 +252,58 @@ func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,de
  }
  return 0
 }
+func gen_if(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int,infunc:bool)->int {
+ assert depth<=16,"If nesting limit"
+ gen_expect(src,tok,c,"if");skip=gen_condition(src,tok,c,code,syms,funcs)
+ gen_expect(src,tok,c,"{")
+ gen_statements(src,tok,c,code,syms,funcs,depth+1,infunc)
+ gen_expect(src,tok,c,"}");gen_separators(src,tok,c)
+ if boot_peek(src,tok,c)=="else" {
+  done=gen_jump(code,"e9");gen_patch(code,skip,buffer.size(code));c[0]+=3
+  if boot_peek(src,tok,c)=="if" {gen_if(src,tok,c,code,syms,funcs,depth+1,infunc)}
+  else {
+   gen_expect(src,tok,c,"{");gen_statements(src,tok,c,code,syms,funcs,depth+1,infunc);gen_expect(src,tok,c,"}")
+  }
+  gen_patch(code,done,buffer.size(code))
+ } else {gen_patch(code,skip,buffer.size(code))}
+ return 0
+}
+// Declaration pass establishes signatures and trampoline indices before
+// emitting any bodies. Each call can reference its stable 5-byte jump stub.
+func gen_collect_functions(src:string,tok:ints,funcs:ints)->int {
+ scan=ints(1);gen_separators(src,tok,scan)
+ while boot_peek(src,tok,scan)=="func" {
+  scan[0]+=3;name=gen_name(src,tok,scan)
+  assert not dictionary.contains(funcs,name),"Duplicate function"
+  gen_expect(src,tok,scan,"(");n=0
+  if boot_peek(src,tok,scan)!=")" {
+   more=true
+   while more {
+    param=gen_name(src,tok,scan)
+    gen_expect(src,tok,scan,":");gen_expect(src,tok,scan,"int")
+    n+=1;assert n<=8,"Argument limit"
+    more=boot_peek(src,tok,scan)==","
+    if more {scan[0]+=3}
+   }
+  }
+  gen_expect(src,tok,scan,")");gen_expect(src,tok,scan,"->");gen_expect(src,tok,scan,"int")
+  gen_expect(src,tok,scan,"{")
+  slot=dictionary.size(funcs);assert dictionary.set(funcs,name,slot*16+n),"Function limit"
+  depth=1
+  while depth>0 {
+   assert scan[0]<len(tok),"Unclosed function"
+   word=boot_peek(src,tok,scan);scan[0]+=3
+   if word=="{" {depth+=1}
+   if word=="}" {depth-=1}
+  }
+  gen_separators(src,tok,scan)
+ }
+ return dictionary.size(funcs)
+}
 func gen_function(src:string,tok:ints,c:ints,code:ints,funcs:ints)->int {
  gen_expect(src,tok,c,"func");name=gen_name(src,tok,c)
- assert not dictionary.contains(funcs,name),"Duplicate function"
+ assert dictionary.contains(funcs,name),"Missing function signature"
+ signature=dictionary.get(funcs,name)
  syms=dictionary.create(32);n=0
  gen_expect(src,tok,c,"(")
  if boot_peek(src,tok,c)!=")" {
@@ -214,7 +317,8 @@ func gen_function(src:string,tok:ints,c:ints,code:ints,funcs:ints)->int {
   }
  }
  gen_expect(src,tok,c,")");gen_expect(src,tok,c,"->");gen_expect(src,tok,c,"int");gen_expect(src,tok,c,"{")
- assert dictionary.set(funcs,name,buffer.size(code)*16+n),"Function limit"
+ assert n==signature%16,"Function signature mismatch"
+ gen_patch(code,16+signature/16*5,buffer.size(code))
  // Separate frame; callers push arguments left-to-right.
  gen_bytes(code,"554889e54881ec00010000")
  for i in range(n) {
@@ -226,7 +330,9 @@ func gen_function(src:string,tok:ints,c:ints,code:ints,funcs:ints)->int {
 func gen_runtime(source:string,target:string="linux")->ints {
  assert target=="linux" or target=="windows","Unsupported target"
  tok=boot_lex(source);c=ints(1);code=buffer.create(65536);syms=dictionary.create(32);funcs=dictionary.create(32)
+ count=gen_collect_functions(source,tok,funcs)
  entry=gen_jump(code,"e9");print_jump=gen_jump(code,"e9");exit_jump=gen_jump(code,"e9")
+ for i in range(count) {gen_jump(code,"e9")}
  gen_patch(code,print_jump,buffer.size(code));print_start=buffer.size(code)
  if target=="linux" {
   gen_bytes(code,"4883ec20488d74241fc6060a4989f04989c14531d24885c0790948f7d841ba01000000b90a00000031d248f7f180c23048ffce88164885c075ee4585d2740648ffcec6062d4c89c24829f248ffc2b801000000bf010000000f054883c420c3")
