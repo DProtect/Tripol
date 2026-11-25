@@ -22,9 +22,9 @@ repeat 31 {b=ints(65535);b[65534]=1}
 show memory.used(),memory.committed()
 show a[0],a[65534]
 before=memory.used()
-repeat 100 {scratch {b=ints(65535);b[65534]=8}}
+repeat 100 {scratch {temp=ints(65535);temp[65534]=8}}
 show memory.used()==before,memory.committed()>=before
-try {scratch {b=ints(65535);throw 101}} catch e {show e}
+try {scratch {temp=ints(65535);throw 101}} catch e {show e}
 show memory.used()==before`, "0 0 268435456\n16777216 16777216\n77 99\ntrue true\n101\ntrue\n", false)
 }
 func TestQuantumCanvas(t *testing.T) {
