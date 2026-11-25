@@ -90,7 +90,7 @@ func updateLookup(force bool,timeout time.Duration)(updateRelease,error){
  root,e:=updateRoot();if e!=nil{return updateRelease{},e}
  c:=readUpdateCache(root);age:=time.Since(c.Checked)
  if !force && age>=0 && age<updateTTL {return c.Release,nil}
- r,e:=getUpdateRelease(&http.Client{Timeout:timeout},updateAPI)
+ r,e:=getUpdateRelease(&http.Client{Timeout:timeout,CheckRedirect:func(req *http.Request,via []*http.Request)error{return fmt.Errorf("release API redirect rejected")}},updateAPI)
  // Cache failed attempts too, so offline interactive invocations remain fast.
  if e!=nil {writeUpdateCache(root,updateCache{time.Now(),c.Release});return c.Release,e}
  writeUpdateCache(root,updateCache{time.Now(),r});return r,nil
@@ -113,7 +113,7 @@ func updateAssetFor(r updateRelease,platform string)(updateAsset,error){
  // Current releases use major.minor in distribution names.
  short:=p[0]+"."+p[1]
  name:=""
- switch platform{case "windows":name="TRIPOL-v"+short+"-Setup-x64.exe";case "linux":name="TRIPOL-v"+short+"-Linux-x64.tar.gz";default:return updateAsset{},fmt.Errorf("unsupported platform")}
+ switch platform{case "windows":name="TRIPOL-v"+short+"-Setup-x64.exe";case "windows-binary":name="TRIPOL-v"+short+"-Windows-x64.exe";case "linux":name="TRIPOL-v"+short+"-Linux-x64.tar.gz";default:return updateAsset{},fmt.Errorf("unsupported platform")}
  for _,a:=range r.Assets{
   if a.Name!=name{continue}
   expected:="https://github.com/Tripollas/Tripol/releases/download/"+r.Tag+"/"+name
@@ -144,14 +144,24 @@ func downloadUpdate(client *http.Client,a updateAsset,root string)(string,error)
  return path,nil
 }
 func updateCLI(args []string){
- if len(args)>1||(len(args)==1&&args[0]!="--check"&&args[0]!="--download-only"&&args[0]!="--history"){die("usage: tripol update [--check|--download-only|--history]")}
+ if len(args)>0&&args[0]=="--worker"{updateWorkerCLI(args[1:]);return}
+ if len(args)>1||(len(args)==1&&args[0]!="--check"&&args[0]!="--download-only"&&args[0]!="--history"&&args[0]!="--install"&&args[0]!="--rollback"){die("usage: tripol update [--check|--download-only|--install|--rollback|--history]")}
+ if len(args)==1&&args[0]=="--rollback"{rollbackUpdate();return}
  if len(args)==1&&args[0]=="--history"{updateHistoryCLI();return}
  r,e:=updateLookup(true,8*time.Second);if e!=nil{die("update check failed: %v",e)}
  if !newerVersion(r.Tag,version){fmt.Println("TRIPOL is up to date:",version);return}
  fmt.Printf("TRIPOL update available: %s -> %s\n",version,r.Tag)
  if len(args)==1&&args[0]=="--check"{return}
  if runtime.GOARCH!="amd64"{die("updates require x86-64")}
- a,e:=updateAssetFor(r,runtime.GOOS);if e!=nil{die("%v",e)}
+ target,targetErr:=currentManagedTarget()
+ explicit:=len(args)==1&&args[0]=="--install"
+ install:=explicit||(len(args)==0&&targetErr==nil&&interactiveUpdate())
+ if explicit&&targetErr!=nil{die("%v",targetErr)}
+ platform:=runtime.GOOS
+ if install&&platform=="windows"{platform="windows-binary"}
+ a,e:=updateAssetFor(r,platform)
+ if e!=nil&&install&&!explicit&&runtime.GOOS=="windows"{install=false;a,e=updateAssetFor(r,"windows")}
+ if e!=nil{die("%v",e)}
  root,e:=updateRoot();if e!=nil{die("%v",e)}
  client:=&http.Client{Timeout:2*time.Minute,CheckRedirect:func(req *http.Request,via []*http.Request)error{
   if len(via)>=8||req.URL.Scheme!="https"||(req.URL.Hostname()!="github.com"&&!strings.HasSuffix(req.URL.Hostname(),".githubusercontent.com")){return fmt.Errorf("untrusted release redirect")};return nil
@@ -160,6 +170,16 @@ func updateCLI(args []string){
  fmt.Println("Verified SHA-256. Downloaded:",path)
  if e:=recordUpdate(root,r.Tag,a,path);e!=nil{fmt.Fprintln(os.Stderr,"Update history:",e)}
  if len(args)==1&&args[0]=="--download-only"{return}
+ if install{
+  if !updateConfirm("Install "+r.Tag+" at "+target+"?"){fmt.Println("Installation cancelled; verified download retained.");return}
+  source,digest:=path,a.Digest
+  if runtime.GOOS=="linux"{
+   source=filepath.Join(filepath.Dir(path),"candidate")
+   digest,e=extractUpdateLinux(path,a.Digest,source);if e!=nil{die("extract update: %v",e)}
+  }
+  if e=launchManagedUpdate(target,source,digest,r.Tag);e!=nil{die("update installation: %v",e)}
+  return
+ }
  if runtime.GOOS=="windows"{fmt.Println("Close TRIPOL processes and run the unsigned setup EXE above to install the update.")}else{fmt.Println("Extract tripol from the archive and replace your installed compiler after closing running processes.")}
  fmt.Println("No files were installed automatically. Release:", "https://github.com/Tripollas/Tripol/releases/tag/"+r.Tag)
 }

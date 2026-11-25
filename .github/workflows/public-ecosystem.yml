@@ -78,6 +78,7 @@ jobs:
           $env:GOARCH = 'amd64'
           go build -trimpath -ldflags '-s -w' -o installer/payload/tripol.exe .
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Copy-Item installer/payload/tripol.exe dist/TRIPOL-v0.27-Windows-x64.exe
           go build -trimpath -ldflags '-s -w' -o dist/TRIPOL-v0.27-Setup-x64.exe ./installer
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           & ./dist/TRIPOL-v0.27-Setup-x64.exe --quiet
@@ -116,6 +117,6 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           cd dist
-          sha256sum TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.1.vsix > SHA256SUMS.txt
+          sha256sum TRIPOL-v0.27-Windows-x64.exe TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.1.vsix > SHA256SUMS.txt
           if gh release list --limit 100 --json tagName --jq '.[].tagName' | grep -Fxq v0.27.1; then echo 'Release or draft already exists; not overwriting'; exit 0; fi
-          gh release create v0.27.1 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.27.1 — QUANTUM X" --notes "Experimental preview. Windows installer is unsigned. Verify SHA256SUMS.txt. Review CI and security checks before publishing." TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.1.vsix SHA256SUMS.txt
+          gh release create v0.27.1 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.27.1 — QUANTUM X" --notes "Experimental preview. Windows installer is unsigned. Verify SHA256SUMS.txt. Review CI and security checks before publishing." TRIPOL-v0.27-Windows-x64.exe TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.1.vsix SHA256SUMS.txt

@@ -4,6 +4,7 @@
 - GENESIS integer functions, direct calls, range loops, repeated show, native ELF output without host byte transport via compiler/direct.tri.
 - Bounded native binary file operations, byte cursor, limited regex matching.
 - Growable integer lists with stable aliases and checked methods.
+- UPDATE R2 managed transactional installation, confirmation, verified backups, rollback and Windows worker; strict archive extraction.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)
