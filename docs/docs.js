@@ -5,14 +5,15 @@ let lang='en';try{if(localStorage.getItem('tripol-language')==='es')lang='es'}ca
 const chosen=new URLSearchParams(location.search).get('lang');if(chosen==='en'||chosen==='es')lang=chosen;
 const root=document.body.dataset.docRoot||'./';
 function localLinks(){for(const a of $$('a[href]')){const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||/^(https?:|mailto:)/i.test(raw)&&a.origin!==location.origin)continue;const u=new URL(raw,location.href);if(!u.pathname.endsWith('.html'))continue;u.searchParams.set('lang',lang);a.href=u.href;}}
-// Keep shared navigation consistent on all historical reference pages.
+// Shared navigation and current release label on all reference pages.
 const side=document.querySelector('#doc-side');
-side.querySelector('.side-kicker').textContent='EVOLUTION / 0.25.0';
-const crumb=document.querySelector('.crumb > span:last-child');if(crumb&&crumb.textContent==='0.24')crumb.textContent='0.25';
-const meta=document.querySelector('.lib-meta > span:first-child');if(meta&&meta.textContent==='ASCENSION 0.24')meta.textContent='EVOLUTION 0.25';
-const guide=side.querySelector('nav[aria-label="Guides"]');if(!guide.querySelector('a[href$="genesis.html"]')){const a=document.createElement('a');a.href=root+'genesis.html';a.textContent='GENESIS R1';guide.append(a);}
+side.querySelector('.side-kicker').textContent='OVERDRIVE / 0.26.0';
+const crumb=document.querySelector('.crumb > span:last-child');if(crumb&&/^0\.(24|25)$/.test(crumb.textContent))crumb.textContent='0.26';
+const meta=document.querySelector('.lib-meta > span:first-child');if(meta&&/^(ASCENSION 0\.24|EVOLUTION 0\.25)$/.test(meta.textContent))meta.textContent='OVERDRIVE 0.26';
+const guide=side.querySelector('nav[aria-label="Guides"]');
+for(const [file,label] of [['genesis','GENESIS R2'],['update','UPDATE R1']]){let a=guide.querySelector('a[href$="'+file+'.html"]');if(!a){a=document.createElement('a');a.href=root+file+'.html';guide.append(a);}a.textContent=label;}
 const libs=side.querySelector('.side-libs');
-for(const [name,before] of [['queue','random'],['stack','stats']]){if(!libs.querySelector('a[href$="/'+name+'.html"]')){const a=document.createElement('a');a.href=root+'libraries/'+name+'.html';const label=document.createElement('span');label.textContent=name;const n=document.createElement('small');n.textContent='7';a.append(label,n);libs.insertBefore(a,libs.querySelector('a[href$="/'+before+'.html"]'));}}
+for(const [name,before,count] of [['queue','random',7],['stack','stats',7],['bitset','buffer',6],['profiler','queue',2]]){if(!libs.querySelector('a[href$="/'+name+'.html"]')){const a=document.createElement('a');a.href=root+'libraries/'+name+'.html';const label=document.createElement('span');label.textContent=name;const n=document.createElement('small');n.textContent=String(count);a.append(label,n);libs.insertBefore(a,libs.querySelector('a[href$="/'+before+'.html"]'));}}
 for(const a of side.querySelectorAll('nav a')){a.removeAttribute('aria-current');if(new URL(a.href,location.href).pathname===location.pathname)a.setAttribute('aria-current','page');}
 const translate=(en,es)=>lang==='es'?es:en;
 let labels=[], placeholders=[];
