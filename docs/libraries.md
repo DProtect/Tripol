@@ -1,4 +1,4 @@
-# Standard library — 48 modules, 296 callable functions
+# Standard library — 50 modules
 
 Exact source and signatures: `tripol docs NAME`, `tripol libs`, or [stdlib](../stdlib). Counts include seven JSON scanner helper functions; use the documented high-level APIs for stable behavior. Modules are embedded and offline. In nano mode unused routines are eliminated; imports do not imply runtime dependencies.
 
@@ -87,3 +87,7 @@ Sprite source and destination must not alias; copy first if needed. The map is n
 ECLIPSE adds the stateful Discord REST API (see [Discord guide](discord.md)) and native array copy/search; no new grammar.
 
 NEXUS: `search.linear` / `arrays.contains` use AVX2 for large arrays when supported by CPU and OS, scalar otherwise. `discord.run` uses experimental Gateway; `run_rest` preserves old behavior.
+
+## stack / queue (EVOLUTION)
+
+Both modules expose `create(limit=32)`, `capacity`, `size`, `push`, `peek`, `pop`, `clear`. They use bounded integer backing arrays. `push` returns false when full; `peek`/`pop` assert on empty. `clear` resets logical size without freeing arena storage. Do not mutate the internal headers. See `examples/projects/collections.tri`.

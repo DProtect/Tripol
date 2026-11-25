@@ -1,0 +1,14 @@
+// Bounded mutable integer stack. All operations after create reuse storage.
+func create(limit=32)->ints {
+ assert limit>=1 and limit<=65535,"Invalid stack capacity"
+ return ints(limit+1)
+}
+func capacity(s:ints)->int {assert len(s)>=2 and len(s)<=65536,"Invalid stack";return len(s)-1}
+func size(s:ints)->int {assert s[0]>=0 and s[0]<=capacity(s),"Invalid stack size";return s[0]}
+func push(s:ints,value:int)->bool {
+ n=size(s);if n==capacity(s) {return false}
+ s[n+1]=value;s[0]=n+1;return true
+}
+func peek(s:ints)->int {n=size(s);assert n>0,"Empty stack";return s[n]}
+func pop(s:ints)->int {v=peek(s);n=size(s);s[n]=0;s[0]=n-1;return v}
+func clear(s:ints)->int {n=size(s);s[0]=0;return n}

@@ -1,0 +1,13 @@
+import tripol.stack
+import tripol.queue
+import tripol.memory
+undo=stack.create(8)
+jobs=queue.create(8)
+before=memory.used()
+assert stack.push(undo,10)
+assert stack.push(undo,20)
+assert queue.push(jobs,100)
+assert queue.push(jobs,200)
+show "Undo:",stack.pop(undo),stack.pop(undo)
+show "Jobs:",queue.pop(jobs),queue.pop(jobs)
+show "Storage reused:",before==memory.used()
