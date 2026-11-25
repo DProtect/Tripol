@@ -3,7 +3,7 @@ package main
 import (
  "bytes"
  "context"
- "debug/elf"
+ elfcheck "debug/elf"
  "encoding/hex"
  "os"
  "os/exec"
@@ -66,9 +66,9 @@ func TestGenesisNativeELF(t *testing.T) {
    out,err:=run(tc.src);if err!=nil {t.Fatalf("GENESIS: %q %v",out,err)}
    image,err:=hex.DecodeString(strings.TrimSpace(string(out)));if err!=nil {t.Fatal(err)}
    out2,err:=run(tc.src);if err!=nil||!bytes.Equal(out,out2){t.Fatal("non-deterministic GENESIS output")}
-   file,err:=elf.NewFile(bytes.NewReader(image));if err!=nil {t.Fatal(err)}
+   file,err:=elfcheck.NewFile(bytes.NewReader(image));if err!=nil {t.Fatal(err)}
    defer file.Close()
-   if file.Machine!=elf.EM_X86_64||file.Type!=elf.ET_EXEC||file.Entry!=0x400078||len(file.Progs)!=1 {t.Fatal("unexpected ELF metadata")}
+   if file.Machine!=elfcheck.EM_X86_64||file.Type!=elfcheck.ET_EXEC||file.Entry!=0x400078||len(file.Progs)!=1 {t.Fatal("unexpected ELF metadata")}
    if !bytes.HasSuffix(image,[]byte(tc.want)){t.Fatal("wrong emitted message")}
    if runtime.GOOS=="linux" {
     p:=filepath.Join(t.TempDir(),"program")
