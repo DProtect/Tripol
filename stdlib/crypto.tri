@@ -1,0 +1,50 @@
+import tripol.binary
+import tripol.encoding
+// SHA-256 (FIPS 180-4) for bounded byte arrays. Not a password KDF;
+// no claim of constant-time behavior or external cryptographic audit.
+func sha256_bytes(data:ints)->ints {
+ assert len(data)<=65536 and binary.valid(data),"SHA-256 input limit or invalid byte"
+ n=len(data);padded=(n+9+63)/64*64
+ msg=ints(padded)
+ for i in range(n) {msg[i]=data[i]}
+ msg[n]=128;bits=n*8
+ for i in range(8) {msg[padded-1-i]=bits%256;bits/=256}
+ k=[1116352408,1899447441,3049323471,3921009573,961987163,1508970993,2453635748,2870763221,3624381080,310598401,607225278,1426881987,1925078388,2162078206,2614888103,3248222580,3835390401,4022224774,264347078,604807628,770255983,1249150122,1555081692,1996064986,2554220882,2821834349,2952996808,3210313671,3336571891,3584528711,113926993,338241895,666307205,773529912,1294757372,1396182291,1695183700,1986661051,2177026350,2456956037,2730485921,2820302411,3259730800,3345764771,3516065817,3600352804,4094571909,275423344,430227734,506948616,659060556,883997877,958139571,1322822218,1537002063,1747873779,1955562222,2024104815,2227730452,2361852424,2428436474,2756734187,3204031479,3329325298]
+ h=[1779033703,3144134277,1013904242,2773480762,1359893119,2600822924,528734635,1541459225]
+ w=ints(64)
+ for block in range(padded/64) {
+  for i in range(16) {p=block*64+i*4;w[i]=msg[p]*16777216+msg[p+1]*65536+msg[p+2]*256+msg[p+3]}
+  for i in range(16,64) {
+   x=w[i-15];y=w[i-2]
+   s0=u32_xor(u32_xor(u32_rotr(x,7),u32_rotr(x,18)),u32_shr(x,3))
+   s1=u32_xor(u32_xor(u32_rotr(y,17),u32_rotr(y,19)),u32_shr(y,10))
+   w[i]=(w[i-16]+s0+w[i-7]+s1)%4294967296
+  }
+  a=h[0];b=h[1];c=h[2];d=h[3];e=h[4];g=h[6];z=h[7];q=h[5]
+  for i in range(64) {
+   s1=u32_xor(u32_xor(u32_rotr(e,6),u32_rotr(e,11)),u32_rotr(e,25))
+   choose=u32_xor(u32_and(e,q),u32_and(4294967295-e,g))
+   t1=(z+s1+choose+k[i]+w[i])%4294967296
+   s0=u32_xor(u32_xor(u32_rotr(a,2),u32_rotr(a,13)),u32_rotr(a,22))
+   majority=u32_xor(u32_xor(u32_and(a,b),u32_and(a,c)),u32_and(b,c))
+   t2=(s0+majority)%4294967296
+   z=g;g=q;q=e;e=(d+t1)%4294967296;d=c;c=b;b=a;a=(t1+t2)%4294967296
+  }
+  h[0]=(h[0]+a)%4294967296;h[1]=(h[1]+b)%4294967296;h[2]=(h[2]+c)%4294967296;h[3]=(h[3]+d)%4294967296
+  h[4]=(h[4]+e)%4294967296;h[5]=(h[5]+q)%4294967296;h[6]=(h[6]+g)%4294967296;h[7]=(h[7]+z)%4294967296
+ }
+ out=ints(32)
+ for i in range(8) {v=h[i];for j in range(4) {out[i*4+3-j]=v%256;v/=256}}
+ return out
+}
+func sha256(data:ints)->string {
+ digest=sha256_bytes(data);result=""
+ for b in digest {result+=encoding.hex_byte(b)}
+ return result
+}
+func sha256_text(value:string)->string {
+ assert len(value)<=65536,"SHA-256 text limit"
+ data=ints(len(value))
+ for i in range(len(value)) {data[i]=byte_at(value,i)}
+ return sha256(data)
+}

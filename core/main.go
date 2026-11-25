@@ -1196,6 +1196,7 @@ func (c *compiler) function(f fn, main bool) {
 func (a *asm) rt() {
 	a.visionRuntime()
 	a.libertyRuntime()
+	a.quantumNativeRuntime()
 	if !a.opt || a.needed("streq") {
 		a.label("streq")
 		l, n := a.fresh(), a.fresh()
@@ -1419,7 +1420,11 @@ func pe(a *asm) []byte {
 		}
 		imports = append(imports, "CreateThread", "WaitForSingleObject")
 	}
-	if a.needed("iat:63") || a.needed("iat:10") || a.needed("iat:19") || a.needed("iat:20") || a.needed("iat:30") || a.needed("game_state") || a.needed("gw_state") {
+	if a.needed("iat:72") {
+		for len(imports)<72 {imports=append(imports,"")}
+		imports=append(imports,"GetCurrentProcessId")
+	}
+	if a.needed("iat:70") || a.needed("iat:72") || a.needed("iat:74") || a.needed("iat:63") || a.needed("iat:10") || a.needed("iat:19") || a.needed("iat:20") || a.needed("iat:30") || a.needed("game_state") || a.needed("gw_state") {
 		id, iat, iatSize, importSize = networkImports(a, imports, idRVA, textRVA)
 	} else {
 		// Preserve logical IAT labels while packing only used imports.

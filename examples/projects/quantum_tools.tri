@@ -1,0 +1,14 @@
+import tripol.crypto
+import tripol.cli
+import tripol.audio
+import tripol.process
+import tripol.thread
+show crypto.sha256_text("abc")
+show cli.integer("--port=9000","port")
+show process.id()>0
+samples=audio.square_wave(440,250)
+show audio.save_wav("quantum-tone.wav",samples)
+if thread.supported() {
+ values=[10,20,30]
+ show thread.sum(values)
+}

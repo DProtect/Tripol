@@ -20,11 +20,13 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 | Current release | Built-in modules | Callable library functions* | Hello world (Windows / Linux) |
 |---|---:|---:|---:|
-| **0.27.1 — QUANTUM X (development)** | 59 | 347 (including scanner helpers) | see v0.24 baseline |
+| **0.27.1 — QUANTUM X (development)** | 64 | 366 (including scanner helpers) | see v0.24 baseline |
 
 *Includes JSON scanner helpers. Sizes are measured for `examples/hello.tri` in nano mode, not a promise for arbitrary programs. TRIPOL is pre-1.0 and is not yet a replacement for mature production languages.*
 
 ## QUANTUM X — 0.27.1
+
+- 64 standard modules, including SHA-256, PCM WAV creation, Windows WAV playback, explicit option parsing, native process ID/exit and a joined native Windows worker for checked integer sum. General thread callbacks, process spawning and OS argument parsing are not yet included.
 
 - MEMORY R2: automatic scoped reclamation for proven non-escaping integer-array loop bodies, with explicit scratch fallback for other cases.
 - TIR R6: constant-branch elimination after complete validation, CFG and single-block checked SSA inspection.
@@ -62,7 +64,7 @@ New: `arrays.copy_into(destination, source)` reuses equal-sized storage and retu
 
 - `core/`: production Go compiler and white-box regression tests.
 - `compiler/`: GENESIS compiler and demos written in TRIPOL.
-- `stdlib/`: the 59 standard-library modules, embedded at build time.
+- `stdlib/`: the 64 standard-library modules, embedded at build time.
 - `native/`: assembly source and code generator.
 - `tests/`: CLI integration tests and archived test evidence.
 - `examples/`, `benchmarks/`, `installer/`, `vscode/`, `docs/`: samples, reproducible measurements, distribution and documentation.

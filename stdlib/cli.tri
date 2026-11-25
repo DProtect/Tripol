@@ -1,0 +1,36 @@
+import tripol.validate
+// Explicit whitespace-delimited option text, not a shell parser or OS argv.
+// Options use --name or --name=value; last occurrence wins.
+func option_name(name:string)->bool {
+ if len(name)==0 or len(name)>64 {return false}
+ for i in range(len(name)) {b=byte_at(name,i);if not (validate.letter(b) or validate.digit(b) or b==45 or b==95) {return false}}
+ return true
+}
+func find_option(line:string,name:string)->int {
+ assert len(line)<=4096 and option_name(name),"Invalid option input"
+ key="--"+name;found=-1;i=0
+ while i<len(line) {
+  while i<len(line) and validate.whitespace(byte_at(line,i)) {i+=1}
+  start=i
+  while i<len(line) and not validate.whitespace(byte_at(line,i)) {i+=1}
+  if i-start>=len(key) {
+   if slice(line,start,start+len(key))==key {
+    if i-start==len(key) {found=start} else if byte_at(line,start+len(key))==61 {found=start}
+   }
+  }
+ }
+ return found
+}
+func has(line:string,name:string)->bool {return find_option(line,name)>=0}
+func value(line:string,name:string,fallback="")->string {
+ p=find_option(line,name);if p<0 {return fallback}
+ p+=len(name)+2
+ if p>=len(line) or byte_at(line,p)!=61 {return fallback}
+ p+=1;end=p
+ while end<len(line) and not validate.whitespace(byte_at(line,end)) {end+=1}
+ return slice(line,p,end)
+}
+func integer(line:string,name:string,fallback=0)->int {
+ s=value(line,name,"");if s=="" {return fallback}
+ assert validate.integer(s),"Expected integer option";return parse_int(s)
+}

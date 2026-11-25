@@ -64,6 +64,7 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 	if a.needed("iat:61") {
 		groups = append(groups, group{dll: "GDI32.dll", names: []string{"StretchDIBits"}, first: 61})
 	}
+	if a.needed("iat:74") {groups=append(groups,group{dll:"WINMM.dll",names:[]string{"PlaySoundA"},first:74})}
 	size := 1024
 	if len(groups) > 2 {
 		size = 1536

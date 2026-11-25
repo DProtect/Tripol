@@ -111,3 +111,11 @@ See `examples/projects/quantum_x_libraries.tri` and `memory_stress.tri`.
 - `regex`: `valid`, `matches`. Bounded byte-oriented full-string matching supporting literal, `.` and `*`; pattern max 128 bytes, input max 4096. No groups, captures, alternation or Unicode matching.
 
 - `atomic`: `load(data,index)`, `exchange(data,index,value)` returns old value, `compare_exchange(data,index,expected,value)` returns bool, `add(data,index,delta)` returns new value. Aligned x86-64 loads and locked RMW instructions; checked index/arithmetic. No general thread API or claim of thread-safe runtime allocation yet.
+
+## QUANTUM X standard-library expansion
+
+- `crypto`: `sha256_bytes(data)` (32 digest bytes), `sha256(data)` and `sha256_text(text)` (lowercase hex). Standard SHA-256, bounded input 65536 bytes, tested against Go's standard implementation. No encryption, KDF or independent security audit.
+- `audio`: `wav_mono(samples,rate=22050)`, `square_wave(hz,milliseconds,rate=22050,amplitude=5000)`, `save_wav(path,samples,rate=22050)`, `playback_supported()`, `play_file(path)`. Signed 16-bit mono PCM, 8–48 kHz, at most 32746 samples. Windows synchronous WAV playback via WinMM; other targets return false for playback. Device availability is not guaranteed. No mixer or streaming audio.
+- `cli`: `option_name`, `find_option`, `has`, `value`, `integer` operate on an explicitly supplied whitespace-separated option string with `--name` and `--name=value` tokens. Last occurrence wins; no quoting or shell interpretation. Does not read OS argv.
+- `process`: `id()`, `platform()`, `exit(code=0)`. Current process ID and explicit termination, checked exit code 0–255. No child spawning.
+- `thread`: `supported()`, `sum(data)`, `sleep(milliseconds)`. Windows starts and joins an OS thread for an ordered checked integer reduction; caller waits, callback cannot allocate or mutate the input. Linux reports unsupported for the worker. No general thread callbacks or claims of parallel speedup.

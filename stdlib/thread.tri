@@ -1,0 +1,5 @@
+// Windows-only synchronous native worker for checked integer reduction.
+// No arbitrary callback, shared allocator or concurrent mutation API.
+func supported()->bool {return platform_name()=="windows"}
+func sum(data:ints)->int {return thread_sum(data)}
+func sleep(milliseconds:int)->int {assert milliseconds>=0,"Invalid sleep";return sleep_ms(milliseconds)}

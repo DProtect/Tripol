@@ -1,0 +1,4 @@
+// Current process inspection and explicit termination, not arbitrary spawning.
+func id()->int {return process_id()}
+func platform()->string {return platform_name()}
+func exit(code=0)->int {return process_exit(code)}

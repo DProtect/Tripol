@@ -8,7 +8,7 @@ import (
 
 var standardSources = stdlib.Sources
 
-var standardNames = []string{"animation", "arrays", "atomic", "binary", "bits", "bitset", "buffer", "camera", "canvas", "checksum", "collections", "colors", "compression", "console", "convert", "csv", "datetime", "dictionary", "discord", "encoding", "env", "errors", "events", "files", "game", "geometry", "heap", "http", "https", "image", "io", "json", "math", "matrix", "memory", "network", "particles", "path", "physics", "profiler", "queue", "random", "regex", "search", "sequences", "simd", "sort", "sprite", "stack", "stats", "stream", "system", "testing", "text", "time", "ui", "utf8", "validate", "vector"}
+var standardNames = []string{"animation", "arrays", "atomic", "audio", "binary", "bits", "bitset", "buffer", "camera", "canvas", "checksum", "cli", "collections", "colors", "compression", "console", "convert", "crypto", "csv", "datetime", "dictionary", "discord", "encoding", "env", "errors", "events", "files", "game", "geometry", "heap", "http", "https", "image", "io", "json", "math", "matrix", "memory", "network", "particles", "path", "physics", "process", "profiler", "queue", "random", "regex", "search", "sequences", "simd", "sort", "sprite", "stack", "stats", "stream", "system", "testing", "text", "thread", "time", "ui", "utf8", "validate", "vector"}
 
 type stdLoader struct {
 	state     map[string]int
