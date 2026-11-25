@@ -9,7 +9,7 @@ import (
 //go:embed stdlib/*.tri
 var standardSources embed.FS
 
-var standardNames = []string{"arrays", "console", "convert", "encoding", "files", "http", "json", "math", "network", "random", "search", "sort", "stats", "system", "text", "time", "validate"}
+var standardNames = []string{"arrays", "console", "convert", "encoding", "errors", "files", "http", "json", "math", "network", "random", "search", "sort", "stats", "system", "text", "time", "ui", "validate"}
 
 type stdLoader struct {
 	state     map[string]int
@@ -42,7 +42,7 @@ func (l *stdLoader) add(name string) {
 		return
 	}
 	l.state[name] = 1
-	imports, fs, ss := parseUnit(standardSource(name))
+	imports, fs, ss := parseNamed(standardSource(name), "tripol."+name)
 	if len(ss) != 0 {
 		die("standard library cannot have executable top-level statements")
 	}
@@ -105,7 +105,7 @@ func isStandardFunction(name string) bool {
 	return false
 }
 func listLibraries() {
-	fmt.Println("TRIPOL Connect — built-in standard libraries")
+	fmt.Println("TRIPOL Vision — built-in standard libraries")
 	for _, name := range standardNames {
 		_, fs, _ := parseUnit(standardSource(name))
 		fmt.Printf("tripol.%s (%d functions)\n", name, len(fs))

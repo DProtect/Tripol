@@ -1,0 +1,8 @@
+import tripol.errors
+entrada = input("Escribe un numero:")
+if errors.is_int(entrada) {
+    show "Resultado:", errors.int_or(entrada, 0)
+} else {
+    show "Entrada invalida. Continuamos con 0."
+}
+show "Division segura:", errors.div_or(10, 0, -1)

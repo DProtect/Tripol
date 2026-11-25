@@ -163,7 +163,14 @@ func (v *vaultLoader) add(name string) {
 	if v.total > 4<<20 {
 		die("Vault source limit exceeded")
 	}
-	im, fs := checkPackage(b)
+	var im []string
+	var fs []fn
+	file := vaultPath(v.root, x.SHA256)
+	attachSource(file, func() { im, fs = checkPackage(b) })
+	for i := range fs {
+		fs[i].source = file
+		tagSource(fs[i].body, file)
+	}
 	allowed := map[string]bool{name: true}
 	for _, dep := range im {
 		_, prefix, _ := strings.Cut(dep, ":")

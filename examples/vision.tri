@@ -1,0 +1,6 @@
+import tripol.ui
+if ui.confirm("TRIPOL VISION", "Do you like TRIPOL?") {
+    show ui.message("TRIPOL", "Welcome to native applications!")
+} else {
+    show "No problem."
+}

@@ -1,20 +1,29 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 func runNative(p string) {
 	c := exec.Command(p)
 	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
+	var stderr bytes.Buffer
+	if diagnosticJSON {
+		c.Stderr = &stderr
+	} else {
+		c.Stderr = os.Stderr
+	}
 	c.Stdin = os.Stdin
 	if e := c.Run(); e != nil {
 		var x *exec.ExitError
 		if errors.As(e, &x) {
-			die("program exited with status %d", x.ExitCode())
+			d := runtimeDiagnostic(x.ExitCode())
+			d.Detail = strings.TrimSpace(stderr.String())
+			panic(d)
 		}
 		die("%v", e)
 	}

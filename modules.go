@@ -56,7 +56,7 @@ func loadProject(source string) ([]fn, []stmt, []string) {
 		if total > 4<<20 {
 			die("project source too large")
 		}
-		imports, local, ss := parseUnit(string(b))
+		imports, local, ss := parseNamed(string(b), path)
 		if !entry && len(ss) != 0 {
 			die("module %s may contain functions only", path)
 		}

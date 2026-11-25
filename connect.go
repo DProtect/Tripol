@@ -31,9 +31,19 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 		first    int
 		ilt, iat int
 	}
-	groups := []group{{dll: "KERNEL32.dll", names: kernel}, {dll: "WS2_32.dll", names: []string{"WSAStartup", "socket", "connect", "setsockopt", "send", "shutdown", "recv", "closesocket", "WSACleanup"}, first: 10}}
-	id := make([]byte, 1024)
-	cursor := 64
+	groups := []group{{dll: "KERNEL32.dll", names: kernel}}
+	if a.needed("iat:10") {
+		groups = append(groups, group{dll: "WS2_32.dll", names: []string{"WSAStartup", "socket", "connect", "setsockopt", "send", "shutdown", "recv", "closesocket", "WSACleanup"}, first: 10})
+	}
+	if a.needed("iat:19") {
+		groups = append(groups, group{dll: "USER32.dll", names: []string{"MessageBoxA"}, first: 19})
+	}
+	size := 1024
+	if len(groups) > 2 {
+		size = 1536
+	}
+	id := make([]byte, size)
+	cursor := align((len(groups)+1)*20, 16)
 	for i := range groups {
 		g := &groups[i]
 		g.ilt = cursor
@@ -76,13 +86,13 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 			j++
 		}
 	}
-	if cursor > 992 {
+	if cursor > len(id)-32 {
 		die("network import table overflow")
 	}
 	if a.needed("arena_state") {
-		a.labels["arena_state"] = rva - textRVA + 992
+		a.labels["arena_state"] = rva - textRVA + len(id) - 32
 	}
-	return id, firstIAT, iatSize, 60
+	return id, firstIAT, iatSize, (len(groups) + 1) * 20
 }
 
 // One-shot localhost server for a safe, dependency-free installation smoke test.

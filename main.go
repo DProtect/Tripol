@@ -13,11 +13,11 @@ import (
 	"strings"
 )
 
-const version = "0.10.0"
+const version = "0.11.0"
 
 type token struct {
-	s, k string
-	line int
+	s, k      string
+	line, col int
 }
 
 var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(\+=|-=|\*=|/=|%=|==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){}\[\],.:;\-]))`)
@@ -25,11 +25,11 @@ var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\
 func die(f string, a ...any) { panic(fmt.Errorf(f, a...)) }
 func lex(s string) []token {
 	var ts []token
-	line := 1
+	line, col := 1, 1
 	for len(s) > 0 {
 		m := lexRE.FindStringSubmatch(s)
 		if m == nil {
-			die("line %d: unexpected character %q", line, s[0])
+			panic(diagnose("lexer", fmt.Sprintf("unexpected character %q", s[0]), "", line, col))
 		}
 		k := 0
 		for i := 1; i < len(m); i++ {
@@ -39,14 +39,17 @@ func lex(s string) []token {
 			}
 		}
 		if k > 2 {
-			ts = append(ts, token{m[0], []string{"", "", "", "nl", "str", "int", "id", "op"}[k], line})
+			ts = append(ts, token{m[0], []string{"", "", "", "nl", "str", "int", "id", "op"}[k], line, col})
 		}
 		if k == 3 {
 			line++
+			col = 1
+		} else {
+			col += len(m[0])
 		}
 		s = s[len(m[0]):]
 	}
-	return append(ts, token{"<eof>", "eof", line})
+	return append(ts, token{"<eof>", "eof", line, col})
 }
 
 type expr struct {
@@ -60,6 +63,7 @@ type stmt struct {
 	yes, no       []stmt
 	line          int
 	mut           bool
+	source        string
 }
 type param struct{ name, typ string }
 type fn struct {
@@ -67,6 +71,8 @@ type fn struct {
 	args      []param
 	body      []stmt
 	record    bool
+	source    string
+	line      int
 }
 type parser struct {
 	ts    []token
@@ -74,8 +80,10 @@ type parser struct {
 	depth int
 }
 
-func (p *parser) t() token     { return p.ts[p.i] }
-func (p *parser) err(s string) { die("line %d: %s (got %q)", p.t().line, s, p.t().s) }
+func (p *parser) t() token { return p.ts[p.i] }
+func (p *parser) err(s string) {
+	panic(diagnose("parser", fmt.Sprintf("%s (got %q)", s, p.t().s), "", p.t().line, p.t().col))
+}
 func (p *parser) take() token {
 	t := p.t()
 	if t.k == "eof" {
@@ -413,7 +421,7 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 	}
 	for p.t().k != "eof" {
 		if p.eat("struct") {
-			f := fn{name: p.name(), record: true}
+			f := fn{line: p.t().line, name: p.name(), record: true}
 			f.ret = f.name
 			p.skip()
 			p.need("{")
@@ -431,7 +439,7 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 			}
 			fs = append(fs, f)
 		} else if p.eat("func") {
-			f := fn{name: p.name(), ret: "int"}
+			f := fn{line: p.t().line, name: p.name(), ret: "int"}
 			p.need("(")
 			if !p.eat(")") {
 				for {
@@ -565,6 +573,7 @@ type compiler struct {
 	fs          map[string]fn
 	scopes      []map[string]variable
 	slots, line int
+	source      string
 	peak        int
 	ret         string
 	current     fn
@@ -572,7 +581,7 @@ type compiler struct {
 	loops       [][2]string
 }
 
-func (c *compiler) err(s string) { die("line %d: %s", c.line, s) }
+func (c *compiler) err(s string) { panic(diagnose("compiler", s, c.source, c.line, 0)) }
 func (c *compiler) lookup(n string) (variable, bool) {
 	for i := len(c.scopes) - 1; i >= 0; i-- {
 		if v, ok := c.scopes[i][n]; ok {
@@ -821,6 +830,9 @@ func (c *compiler) block(ss []stmt, nested bool) {
 	a := c.a
 	for _, s := range ss {
 		c.line = s.line
+		if s.source != "" {
+			c.source = s.source
+		}
 		switch s.op {
 		case "assert":
 			fail, done := a.fresh(), a.fresh()
@@ -836,7 +848,7 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			a.emit(0x48, 0x89, 0xc6, 0xba)
 			a.u32(len(msg))
 			a.call("writeerr")
-			a.imm(1)
+			a.imm(12)
 			a.jmp("exit")
 			a.label(done)
 		case "fieldassign":
@@ -973,6 +985,8 @@ func (c *compiler) function(f fn, main bool) {
 	c.slots = 0
 	c.peak = 0
 	c.current = f
+	c.source = f.source
+	c.line = f.line
 	c.loops = nil
 	c.ret = f.ret
 	c.scopes = []map[string]variable{{}}
@@ -997,7 +1011,7 @@ func (c *compiler) function(f fn, main bool) {
 		a.imm(0)
 		a.jmp("exit")
 	} else if !returns(f.body) {
-		die("function %s may finish without return", f.name)
+		c.err(fmt.Sprintf("function %s may finish without return", f.name))
 	}
 	if at >= 0 {
 		binary.LittleEndian.PutUint32(a.b[at:], uint32(c.peak*8))
@@ -1008,6 +1022,7 @@ func (c *compiler) function(f fn, main bool) {
 
 // Runtime helpers use rax for value; write uses rsi=buffer, rdx=length.
 func (a *asm) rt() {
+	a.visionRuntime()
 	a.libertyRuntime()
 	if !a.opt || a.needed("streq") {
 		a.label("streq")
@@ -1078,7 +1093,7 @@ func (a *asm) rt() {
 		a.emit(0x48, 0x89, 0xc6, 0xba)
 		a.u32(len("TRIPOL runtime error: array index out of bounds\n"))
 		a.call("writeerr")
-		a.imm(1)
+		a.imm(11)
 		a.jmp("exit")
 	}
 	if !a.opt || a.needed("err") {
@@ -1087,7 +1102,7 @@ func (a *asm) rt() {
 		a.emit(0x48, 0x89, 0xc6, 0xba)
 		a.u32(len("TRIPOL runtime error: invalid integer arithmetic\n"))
 		a.call("writeerr")
-		a.imm(1)
+		a.imm(10)
 		a.jmp("exit")
 	}
 	for _, s := range []string{"write", "writeerr"} {
@@ -1180,7 +1195,7 @@ func pe(a *asm) []byte {
 		}
 	}
 	var iat, iatSize, importSize int
-	if a.needed("iat:10") {
+	if a.needed("iat:10") || a.needed("iat:19") {
 		id, iat, iatSize, importSize = networkImports(a, imports, idRVA, textRVA)
 	} else {
 		// Preserve logical IAT labels while packing only used imports.
@@ -1316,12 +1331,13 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool)
 	return nil
 }
 func cli() {
+	diagnosticOptions()
 	args := os.Args[1:]
 	if vaultCLI(args) {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.10.0 — CONNECT\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
+		fmt.Println("TRIPOL 0.11.0 — VISION\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version\nGlobal: --diagnostics=json | --lang=es")
 		return
 	}
 	if args[0] == "--version" {
@@ -1337,6 +1353,13 @@ func cli() {
 			die("usage: tripol learn [es|en]")
 		}
 		learn()
+		return
+	}
+	if args[0] == "explain" {
+		if len(args) != 2 {
+			die("usage: tripol explain CODE")
+		}
+		explainDiagnostic(args[1])
 		return
 	}
 	if args[0] == "net-demo" {
@@ -1364,6 +1387,7 @@ func cli() {
 		die("source file required; try tripol --help")
 	}
 	cmd, src := args[0], args[1]
+	entryFile = src
 	if cmd == "new" {
 		template := "basic"
 		if len(args) == 4 && args[2] == "--template" {
@@ -1467,7 +1491,11 @@ func write(p string, b []byte) {
 func main() {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Fprintln(os.Stderr, "tripol:", r)
+			d := normalizeDiagnostic(r)
+			printDiagnostic(d)
+			if d.ExitStatus > 0 && d.ExitStatus < 256 {
+				os.Exit(d.ExitStatus)
+			}
 			os.Exit(1)
 		}
 	}()

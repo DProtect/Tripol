@@ -1,0 +1,41 @@
+// Verify the full signed int64 range without overflowing or allocating.
+func is_int(s:string)->bool {
+ n=len(s)
+ if n==0 {return false}
+ i=0
+ negative=byte_at(s,0)==45
+ if negative or byte_at(s,0)==43 {i=1}
+ if i==n {return false}
+ acc=0
+ last=7
+ if negative {last=8}
+ while i<n {
+   d=byte_at(s,i)-48
+   if d<0 or d>9 {return false}
+   if acc < -922337203685477580 {return false}
+   if acc == -922337203685477580 and d>last {return false}
+   acc=acc*10-d
+   i+=1
+ }
+ return true
+}
+// Safe integer conversion: invalid or out-of-range input returns fallback.
+func int_or(s:string,fallback:int)->int {
+ if is_int(s) {return parse_int(s)}
+ return fallback
+}
+// Safe checked integer division, including INT64_MIN / -1.
+func can_divide(a:int,b:int)->bool {
+ if b==0 {return false}
+ if b==-1 and a==(-9223372036854775807-1) {return false}
+ return true
+}
+func div_or(a:int,b:int,fallback:int)->int {
+ if can_divide(a,b) {return a/b}
+ return fallback
+}
+// Read a valid array element or return a fallback.
+func get_or(a:ints,index:int,fallback:int)->int {
+ if index<0 or index>=len(a) {return fallback}
+ return a[index]
+}

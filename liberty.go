@@ -8,6 +8,8 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 		return t, true
 	}
 	switch e.s {
+	case "ui_dialog":
+		return c.uiBuiltin(e), true
 	case "find_bytes":
 		if len(e.args) != 2 {
 			c.err("find_bytes expects two strings")

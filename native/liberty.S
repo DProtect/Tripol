@@ -260,7 +260,7 @@
  lea rsi,[rip+1f]
  mov edx,2f-1f
  call writeerr
- mov eax,1
+ mov eax,13
  jmp exit
 1: .ascii "TRIPOL runtime error: invalid input, text too long or allocation failed\n"
 2:
@@ -268,7 +268,7 @@
  lea rsi,[rip+1f]
  mov edx,2f-1f
  call writeerr
- mov eax,1
+ mov eax,16
  jmp exit
 1: .ascii "TRIPOL runtime error: float outside printable range\n"
 2:
@@ -460,7 +460,7 @@
  lea rsi,[rip+1f]
  mov edx,2f-1f
  call writeerr
- mov eax,1
+ mov eax,14
  jmp exit
 1: .ascii "TRIPOL runtime error: file operation failed or text exceeds limit\n"
 2:
@@ -834,7 +834,7 @@
  lea rsi,[rip+1f]
  mov edx,2f-1f
  call writeerr
- mov eax,1
+ mov eax,15
  jmp exit
 1: .ascii "TRIPOL runtime error: TCP connection, transfer or response limit failed\n"
 2:

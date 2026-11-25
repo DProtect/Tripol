@@ -1,0 +1,11 @@
+import tripol.validate
+// Native Windows dialogs, ASCII title and message in R1. Returns true when acknowledged.
+func message(title:string, message:string)->bool {
+ assert validate.ascii(title) and validate.ascii(message),"UI R1 requires ASCII text"
+ return ui_dialog(title,message,64)==1
+}
+// Yes/no dialog; returns true for Yes, false for No.
+func confirm(title:string, message:string)->bool {
+ assert validate.ascii(title) and validate.ascii(message),"UI R1 requires ASCII text"
+ return ui_dialog(title,message,36)==6
+}

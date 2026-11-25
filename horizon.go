@@ -13,8 +13,10 @@ func (c *compiler) validType(t string) bool {
 }
 func (c *compiler) validateTypes(fs []fn) {
 	for _, f := range fs {
+		c.source = f.source
+		c.line = f.line
 		if !c.validType(f.ret) {
-			die("unknown type %s in %s", f.ret, f.name)
+			c.err(fmt.Sprintf("unknown type %s in %s", f.ret, f.name))
 		}
 		if f.record && (len(f.args) == 0 || len(f.args) > 64) {
 			die("struct %s requires 1 to 64 fields", f.name)
@@ -26,7 +28,7 @@ func (c *compiler) validateTypes(fs []fn) {
 			}
 			seen[p.name] = true
 			if !c.validType(p.typ) {
-				die("unknown type %s in %s", p.typ, f.name)
+				c.err(fmt.Sprintf("unknown type %s in %s", p.typ, f.name))
 			}
 			if f.record && c.isRecord(p.typ) {
 				die("nested struct fields are not supported yet: %s.%s", f.name, p.name)
@@ -83,7 +85,7 @@ func (c *compiler) recordAssign(s stmt) {
 	c.a.u32(off)
 }
 func learnSpanish() {
-	fmt.Print(`TRIPOL 0.10 — Aprende en cinco minutos
+	fmt.Print(`TRIPOL 0.11 — Aprende en cinco minutos
 
 1. Mostrar: show "Hola", 10 + 20
 2. Preguntar: nombre = input("Tu nombre?")

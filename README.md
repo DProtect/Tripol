@@ -1,10 +1,10 @@
-# TRIPOL v0.10.0 — CONNECT
+# TRIPOL v0.11.0 — VISION & GUARD
 
 Free, experimental Apache-2.0 programming language. Standalone Go compiler emits x86-64 machine code and PE32+ (Windows) or ELF64 (Linux) directly. No Python, GCC, Clang or Go installation is required to use the distributed compiler. Go 1.23+ is needed only to rebuild it.
 
 ## Windows x64
 
-Run `TRIPOL-v0.10-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.9 was confirmed by the project owner on Windows (Vault and 4608-byte ecosystem executable); v0.10 is cross-compiled and PE-inspected, with Windows execution pending. Portable ZIP is also available.
+Run `TRIPOL-v0.11-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.9 was confirmed by the project owner on Windows (Vault and 4608-byte ecosystem executable); v0.10 was confirmed on Windows by the project owner (local demo and 5632-byte TCP client build); v0.11 is cross-compiled and PE-inspected, with Windows execution pending. Portable ZIP is also available.
 
 ```cmd
 tripol --version
@@ -17,6 +17,15 @@ tripol bench main.tri --runs 5
 ```
 
 Commands: `tripol check FILE.tri`, `tripol run FILE.tri [--profile nano|debug]`, `tripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]`, `tripol bench FILE.tri [--runs 1..100] [--profile nano|debug]`, `tripol new NAME`. Default profile nano. Debug disables the AST/native optimization passes, not a source debugger. Benchmark includes OS process startup, compiles once, excludes one warm-up, closes stdin and discards stdout. Use noninteractive programs only; no built-in timeout. Targets x86-64 only.
+
+## VISION R1 / GUARD R1 (v0.11)
+
+- `tripol check bad.tri --lang=es`: diagnostic code, phase, source file, line and lexer/parser byte column when available; English message and Spanish guidance. Compiler type errors report statement lines. Local and Vault module source paths are retained; standard library errors identify the module. The compiler reports the first failure, not a batch of errors.
+- `tripol check bad.tri --diagnostics=json`: machine-readable diagnostic object on stderr. `tripol run ... --diagnostics=json` captures native error text in `detail` and retains the native exit status. `tripol explain TP2001` describes the code. Successful output remains normal text.
+- Native exit codes: 10 integer arithmetic; 11 bounds; 12 assert; 13 text/input/arena; 14 files; 15 TCP; 16 float formatting; 17 UI. Existing native error messages are unchanged. Runtime stack traces and general try/catch are not implemented; native runtime errors are fatal except for explicitly recoverable operations.
+- `import tripol.errors`: `is_int`, `int_or`, `can_divide`, `div_or`, `get_or`. These check before attempting an operation; `int_or` validates all signed 64-bit boundaries. No temporary allocations are needed.
+- `import tripol.ui`: `ui.message(title, message)` and `ui.confirm(title, message)` use native USER32 MessageBoxA on Windows. ASCII strings only in R1; no custom windows, buttons, layouts or events yet. Invoking a dialog on Linux reports a runtime error; unused UI imports are eliminated in nano. No extra runtime installation. Windows actual dialog execution is pending.
+- 19 built-in modules / 98 functions. `examples/vision.tri` and `examples/recovery.tri` demonstrate new features.
 
 ## CONNECT R1 — TCP and HTTP
 
@@ -272,7 +281,7 @@ CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
 mkdir -p installer/payload
 cp examples/hello.tri installer/payload/hello.tri
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o installer/payload/tripol.exe .
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.10-Setup-x64.exe ./installer
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.11-Setup-x64.exe ./installer
 ```
 
 See BENCHMARKS.md and test-results.txt. 64 test groups and 234 subtests passed on Linux; go vet passed. No claim of outperforming Rust or C. License Apache-2.0.
