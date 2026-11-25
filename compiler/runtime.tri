@@ -120,7 +120,7 @@ func gen_separators(src:string,tok:ints,c:ints)->int {
 func gen_load(code:ints,slot:int)->int {gen_bytes(code,"488b85");gen_imm(code,4294967296-abs(slot)*8,4);return 0}
 func gen_store(code:ints,slot:int)->int {gen_bytes(code,"488985");gen_imm(code,4294967296-abs(slot)*8,4);return 0}
 func gen_expect(src:string,tok:ints,c:ints,want:string)->int {
- assert boot_peek(src,tok,c)==want,"Unexpected token, expected "+want
+ assert boot_peek(src,tok,c)==want,"Unexpected token"
  c[0]+=3;return 0
 }
 func gen_name(src:string,tok:ints,c:ints)->string {
