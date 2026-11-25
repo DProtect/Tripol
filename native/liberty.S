@@ -191,32 +191,50 @@
  neg rax
  jo text_error
 5: ret
-.section .text.alloc,"ax"
- # 8 MiB arena allocated lazily. Immutable text remains valid until exit.
+ .section .text.alloc,"ax"
+ # 256 MiB contiguous virtual reservation. Commit pages only as needed.
+ # [cursor, remaining reservation, input scratch, committed end].
  push rbp
  mov rbp,rsp
- sub rsp,8
+ sub rsp,24
  mov [rbp-8],rax
  lea rdx,[rip+arena_state]
  cmp qword ptr [rdx],0
  jne 1f
- mov eax,8388608
+ mov eax,268435456
  call osalloc
  lea rdx,[rip+arena_state]
  mov [rdx],rax
- mov qword ptr [rdx+8],8388608
+ mov qword ptr [rdx+8],268435456
+ mov [rdx+24],rax
 1: mov rcx,[rbp-8]
  cmp rcx,[rdx+8]
  ja text_error
  mov rax,[rdx]
+ mov [rbp-16],rax
+ add rax,rcx
+ cmp rax,[rdx+24]
+ jbe 2f
+ add rax,4095
+ and rax,-4096
+ mov [rbp-24],rax
+ mov rcx,rax
+ mov rax,[rdx+24]
+ sub rcx,rax
+ call oscommit
+ lea rdx,[rip+arena_state]
+ mov rax,[rbp-24]
+ mov [rdx+24],rax
+2: mov rcx,[rbp-8]
  add [rdx],rcx
  sub [rdx+8],rcx
+ mov rax,[rbp-16]
  leave
  ret
 .section .text.osalloc_linux,"ax"
  mov rsi,rax
  xor edi,edi
- mov edx,3
+ xor edx,edx
  mov r10d,0x22
  mov r8,-1
  xor r9d,r9d
@@ -232,12 +250,64 @@
  sub rsp,32
  mov rdx,rax
  xor ecx,ecx
- mov r8d,0x3000
+ mov r8d,0x2000
  mov r9d,4
  call qword ptr [rip+iat4]
  test rax,rax
  jz text_error
  leave
+ ret
+.section .text.oscommit_linux,"ax"
+ mov rdi,rax
+ mov rsi,rcx
+ mov edx,3
+ mov eax,10
+ syscall
+ test rax,rax
+ jnz text_error
+ ret
+.section .text.oscommit_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,32
+ mov rdx,rcx
+ mov rcx,rax
+ mov r8d,0x1000
+ mov r9d,4
+ call qword ptr [rip+iat4]
+ test rax,rax
+ jz text_error
+ leave
+ ret
+.section .text.arena_used,"ax"
+ lea rdx,[rip+arena_state]
+ xor eax,eax
+ cmp qword ptr [rdx],0
+ je 1f
+ mov eax,268435456
+ sub rax,[rdx+8]
+1: ret
+.section .text.arena_committed,"ax"
+ lea rdx,[rip+arena_state]
+ xor eax,eax
+ cmp qword ptr [rdx],0
+ je 1f
+ mov rax,[rdx+24]
+ sub rax,[rdx]
+ sub rax,[rdx+8]
+ add rax,268435456
+1: ret
+.section .text.array_fill,"ax"
+ # rax dynamic array pointer, rcx fill value
+ mov rdi,rax
+ mov rdx,[rdi]
+ add rdi,8
+ mov rax,rcx
+ mov rcx,rdx
+ cld
+ rep stosq
+ mov rax,rdx
  ret
 .section .text.readbyte_linux,"ax"
  mov rsi,rax
@@ -1348,4 +1418,259 @@ method: .short 71,69,84,0
  mov eax,15
  jmp exit
 1: .ascii "TRIPOL runtime error: HTTPS requires Windows, or request failed\n"
+2:
+
+# QUANTUM: one Windows window, one 32-bit staging buffer, no language arena references.
+# Window is a built-in STATIC class, with the OS default message handler.
+.section .text.game_open_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,128
+ mov [rsp+104],rax
+ mov [rsp+112],rcx
+ mov [rsp+120],rdx
+ cmp rcx,64
+ jl game_error
+ cmp rcx,2048
+ jg game_error
+ cmp rdx,64
+ jl game_error
+ cmp rdx,2048
+ jg game_error
+ call game_close
+ xor ecx,ecx
+ call qword ptr [rip+iat40]
+ mov [rsp+80],rax
+ xor ecx,ecx
+ lea rdx,[rip+1f]
+ mov r8,[rsp+104]
+ mov r9d,0x10cf0000
+ mov qword ptr [rsp+32],-2147483648
+ mov qword ptr [rsp+40],-2147483648
+ mov rax,[rsp+112]
+ mov [rsp+48],rax
+ mov rax,[rsp+120]
+ mov [rsp+56],rax
+ mov qword ptr [rsp+64],0
+ mov qword ptr [rsp+72],0
+ mov qword ptr [rsp+88],0
+ call qword ptr [rip+iat50]
+ test rax,rax
+ jz game_error
+ lea rdx,[rip+game_state]
+ mov [rdx],rax
+ xor ecx,ecx
+ mov edx,262144
+ mov r8d,0x3000
+ mov r9d,4
+ call qword ptr [rip+iat4]
+ test rax,rax
+ jz game_error
+ lea rdx,[rip+game_state]
+ mov [rdx+8],rax
+ mov eax,1
+ leave
+ ret
+1: .asciz "STATIC"
+.section .text.game_close_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,32
+ lea rax,[rip+game_state]
+ mov rcx,[rax]
+ test rcx,rcx
+ jz 1f
+ call qword ptr [rip+iat51]
+ test eax,eax
+ jz 1f
+ mov rcx,[rip+game_state]
+ call qword ptr [rip+iat55]
+1: lea rax,[rip+game_state]
+ mov qword ptr [rax],0
+ mov rcx,[rax+8]
+ test rcx,rcx
+ jz 2f
+ xor edx,edx
+ mov r8d,0x8000
+ call qword ptr [rip+iat62]
+ test eax,eax
+ jz game_error
+2: lea rdx,[rip+game_state]
+ mov qword ptr [rdx+8],0
+ mov eax,1
+ leave
+ ret
+.section .text.game_running_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,96
+1: lea rcx,[rsp+40]
+ xor edx,edx
+ xor r8d,r8d
+ xor r9d,r9d
+ mov qword ptr [rsp+32],1
+ call qword ptr [rip+iat52]
+ test eax,eax
+ jz 3f
+ cmp dword ptr [rsp+48],0x12
+ je 4f
+ cmp dword ptr [rsp+48],0x10
+ jne 2f
+ mov rax,[rsp+40]
+ cmp rax,[rip+game_state]
+ je 4f
+2: lea rcx,[rsp+40]
+ call qword ptr [rip+iat53]
+ lea rcx,[rsp+40]
+ call qword ptr [rip+iat54]
+ jmp 1b
+3: mov rcx,[rip+game_state]
+ test rcx,rcx
+ jz 4f
+ call qword ptr [rip+iat51]
+ test eax,eax
+ jz 4f
+ mov eax,1
+ leave
+ ret
+4: call game_close
+ xor eax,eax
+ leave
+ ret
+.section .text.game_key_windows,"ax"
+ cmp rax,0
+ jl game_error
+ cmp rax,255
+ jg game_error
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,48
+ mov [rsp+40],rax
+ call qword ptr [rip+iat60]
+ test rax,rax
+ jz 1f
+ cmp rax,[rip+game_state]
+ jne 1f
+ mov rcx,[rsp+40]
+ call qword ptr [rip+iat59]
+ shr eax,15
+ and eax,1
+ leave
+ ret
+1: xor eax,eax
+ leave
+ ret
+.section .text.game_present_windows,"ax"
+ # rax=array ptr, rcx=source width, rdx=source height; exact length, 0xRRGGBB.
+ cmp rcx,1
+ jl game_error
+ cmp rcx,65535
+ jg game_error
+ cmp rdx,1
+ jl game_error
+ cmp rdx,65535
+ jg game_error
+ mov r8,rcx
+ imul r8,rdx
+ cmp r8,65535
+ ja game_error
+ cmp [rax],r8
+ jne game_error
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,208
+ mov [rsp+112],rcx
+ mov [rsp+120],rdx
+ mov rdi,[rip+game_buffer]
+ test rdi,rdi
+ jz game_error
+ lea rsi,[rax+8]
+ mov rcx,r8
+ cld
+1: lodsq
+ cmp rax,16777215
+ ja game_error
+ stosd
+ dec rcx
+ jnz 1b
+ mov rcx,[rip+game_state]
+ test rcx,rcx
+ jz game_error
+ lea rdx,[rsp+136]
+ call qword ptr [rip+iat58]
+ test eax,eax
+ jz game_error
+ # skip minimized (zero area) without reporting failure
+ cmp dword ptr [rsp+144],0
+ jle 4f
+ cmp dword ptr [rsp+148],0
+ jle 4f
+ mov rcx,[rip+game_state]
+ call qword ptr [rip+iat56]
+ test rax,rax
+ jz game_error
+ mov [rsp+128],rax
+ # BITMAPINFOHEADER at 152: top-down 32-bit RGB DIB
+ lea rdi,[rsp+152]
+ xor eax,eax
+ mov ecx,5
+ cld
+ rep stosq
+ mov dword ptr [rsp+152],40
+ mov eax,[rsp+112]
+ mov [rsp+156],eax
+ mov eax,[rsp+120]
+ neg eax
+ mov [rsp+160],eax
+ mov dword ptr [rsp+164],0x00200001
+ mov rcx,[rsp+128]
+ xor edx,edx
+ xor r8d,r8d
+ mov r9d,[rsp+144]
+ mov eax,[rsp+148]
+ mov [rsp+32],rax
+ mov qword ptr [rsp+40],0
+ mov qword ptr [rsp+48],0
+ mov rax,[rsp+112]
+ mov [rsp+56],rax
+ mov rax,[rsp+120]
+ mov [rsp+64],rax
+ mov rax,[rip+game_buffer]
+ mov [rsp+72],rax
+ lea rax,[rsp+152]
+ mov [rsp+80],rax
+ mov qword ptr [rsp+88],0
+ mov qword ptr [rsp+96],0x00cc0020
+ call qword ptr [rip+iat61]
+ mov [rsp+192],eax
+ mov rcx,[rip+game_state]
+ mov rdx,[rsp+128]
+ call qword ptr [rip+iat57]
+ cmp dword ptr [rsp+192],0
+ jle game_error
+4: mov eax,1
+ leave
+ ret
+.section .text.game_open_linux,"ax"
+ jmp game_error
+.section .text.game_close_linux,"ax"
+ jmp game_error
+.section .text.game_running_linux,"ax"
+ jmp game_error
+.section .text.game_key_linux,"ax"
+ jmp game_error
+.section .text.game_present_linux,"ax"
+ jmp game_error
+.section .text.game_error,"ax"
+ lea rsi,[rip+1f]
+ mov edx,2f-1f
+ call writeerr
+ mov eax,17
+ jmp exit
+1: .ascii "TRIPOL runtime error: game window requires Windows or graphics operation failed\n"
 2:

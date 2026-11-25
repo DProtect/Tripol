@@ -1,0 +1,8 @@
+// 2D Float64 scalar vector helpers and integer-array vector math.
+func dot2(x:float,y:float,u:float,v:float)->float {return x*u+y*v}
+func cross2(x:float,y:float,u:float,v:float)->float {return x*v-y*u}
+func length2(x:float,y:float)->float {return sqrt(dot2(x,y,x,y))}
+func distance2(x:float,y:float,u:float,v:float)->float {return length2(x-u,y-v)}
+func normalized_x(x:float,y:float)->float {n=length2(x,y);assert n>0.0,"Zero vector";return x/n}
+func normalized_y(x:float,y:float)->float {n=length2(x,y);assert n>0.0,"Zero vector";return y/n}
+func scale(a:ints,k:int)->ints {b=ints(len(a));for i in range(len(a)) {b[i]=a[i]*k};return b}

@@ -1,0 +1,82 @@
+{
+  "workload": "naive recursive Fibonacci(30), output 832040",
+  "startup_included": true,
+  "runs": 5,
+  "results": {
+    "TRIPOL": {
+      "build_ms_single": 4.122702,
+      "native_bytes": 593,
+      "samples_ms": [
+        9.5632,
+        8.1393,
+        10.3645,
+        6.4319,
+        6.6134
+      ],
+      "median_ms": 8.1393
+    },
+    "C": {
+      "build_ms_single": 77.523791,
+      "native_bytes": 15984,
+      "samples_ms": [
+        2.5145,
+        3.7469,
+        2.4458,
+        2.5807,
+        2.8816
+      ],
+      "median_ms": 2.5807
+    },
+    "C++": {
+      "build_ms_single": 149.740475,
+      "native_bytes": 15984,
+      "samples_ms": [
+        3.416,
+        4.5343,
+        2.9357,
+        2.4725,
+        2.7535
+      ],
+      "median_ms": 2.9357
+    },
+    "Go": {
+      "build_ms_single": 131.994352,
+      "native_bytes": 1384600,
+      "samples_ms": [
+        7.4566,
+        6.8986,
+        6.9349,
+        5.2673,
+        7.6548
+      ],
+      "median_ms": 6.9349
+    },
+    "Rust": {
+      "status": "not installed"
+    },
+    "Python": {
+      "build_ms_single": null,
+      "native_bytes": null,
+      "samples_ms": [
+        964.9154,
+        840.8607,
+        806.3883,
+        941.0962,
+        779.5781
+      ],
+      "median_ms": 840.8607
+    },
+    "JavaScript": {
+      "build_ms_single": null,
+      "native_bytes": null,
+      "samples_ms": [
+        46.8381,
+        45.8926,
+        37.7389,
+        41.6422,
+        44.499
+      ],
+      "median_ms": 44.499
+    }
+  }
+}

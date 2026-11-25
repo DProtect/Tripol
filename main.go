@@ -13,14 +13,14 @@ import (
 	"strings"
 )
 
-const version = "0.13.0"
+const version = "0.14.0"
 
 type token struct {
 	s, k      string
 	line, col int
 }
 
-var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(\+=|-=|\*=|/=|%=|==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){}\[\],.:;\-]))`)
+var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(\+=|-=|\*=|/=|%=|==|!=|<=|>=|&&|\|\||->|=>|[+*/%<>=!(){}\[\],.:;\-]))`)
 
 func die(f string, a ...any) { panic(fmt.Errorf(f, a...)) }
 func lex(s string) []token {
@@ -496,7 +496,12 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 			if p.eat("->") {
 				f.ret = p.typ()
 			}
-			f.body = p.block()
+			if p.eat("=>") {
+				f.body = []stmt{{op: "return", line: p.t().line, e: p.expression(1)}}
+				p.end()
+			} else {
+				f.body = p.block()
+			}
 			fs = append(fs, f)
 		} else {
 			ss = append(ss, p.statement())
@@ -534,6 +539,7 @@ type asm struct {
 	dataOrder []string
 	target    string
 	opt       bool
+	turbo     bool
 	guard     bool
 	trace     bool
 }
@@ -716,7 +722,7 @@ func (c *compiler) expression(e *expr) string {
 			return f.ret
 		}
 		for i, x := range args {
-			if isStandardFunction(f.name) && f.name != "sort.sift" && f.args[i].typ == "ints" && c.promoteFixed(x) {
+			if isStandardFunction(f.name) && !mutableArrayFunction(f.name) && f.args[i].typ == "ints" && c.promoteFixed(x) {
 				// A standard-library read-only array argument receives a stack view.
 			} else {
 				c.require(c.expression(x), f.args[i].typ)
@@ -1253,7 +1259,7 @@ func elf(a *asm) []byte {
 	arenaOff := align(off+len(a.b), 0x1000)
 	if arena {
 		a.labels["arena_state"] = arenaOff - off
-		a.labels["guard_state"] = arenaOff - off + 24
+		a.labels["guard_state"] = arenaOff - off + 32
 	}
 	a.finish()
 	b := make([]byte, off+len(a.b))
@@ -1273,7 +1279,7 @@ func elf(a *asm) []byte {
 		put64(b, 184, uint64(arenaOff))
 		put64(b, 192, uint64(base+arenaOff))
 		put64(b, 200, uint64(base+arenaOff))
-		put64(b, 216, 32)
+		put64(b, 216, 40)
 		put64(b, 224, 0x1000)
 	}
 	put32(b, 64, 1)
@@ -1310,7 +1316,13 @@ func pe(a *asm) []byte {
 		}
 		imports = append(imports, "GetModuleHandleA")
 	}
-	if a.needed("iat:10") || a.needed("iat:19") || a.needed("iat:20") || a.needed("iat:30") {
+	if a.needed("iat:62") {
+		for len(imports) < 62 {
+			imports = append(imports, "")
+		}
+		imports = append(imports, "VirtualFree")
+	}
+	if a.needed("iat:10") || a.needed("iat:19") || a.needed("iat:20") || a.needed("iat:30") || a.needed("game_state") {
 		id, iat, iatSize, importSize = networkImports(a, imports, idRVA, textRVA)
 	} else {
 		// Preserve logical IAT labels while packing only used imports.
@@ -1338,10 +1350,10 @@ func pe(a *asm) []byte {
 			j++
 		}
 		if a.needed("arena_state") || a.needed("guard_state") {
-			if cursor > 480 {
+			if cursor > 472 {
 				die("import table overflow")
 			}
-			a.labels["arena_state"] = idRVA - textRVA + 480
+			a.labels["arena_state"] = idRVA - textRVA + 472
 			a.labels["guard_state"] = idRVA - textRVA + 504
 		}
 		put32(id, 0, idRVA+ilt)
@@ -1412,10 +1424,10 @@ func compileParsed(fs []fn, ss []stmt, target, profile string) []byte {
 	if profile != "debug" {
 		generate(fs, ss, target, false, nil)
 	}
-	return generate(fs, ss, target, profile != "debug", reachable(fs, ss))
+	return generate(fs, ss, target, profile != "debug", reachable(fs, ss), profile == "turbo")
 }
-func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool) []byte {
-	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt, trace: diagnosticTrace}
+func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool, turbo ...bool) []byte {
+	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt, trace: diagnosticTrace, turbo: len(turbo) > 0 && turbo[0]}
 	c := compiler{a: a, fs: map[string]fn{}}
 	for _, f := range fs {
 		if _, ok := c.fs[f.name]; ok {
@@ -1460,7 +1472,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.13.0 — INFINITY\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL 0.14.0 — QUANTUM\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|turbo|debug]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {
@@ -1483,6 +1495,18 @@ func cli() {
 			die("usage: tripol explain CODE")
 		}
 		explainDiagnostic(args[1])
+		return
+	}
+	if args[0] == "fix" {
+		file := "main.tri"
+		if len(args) > 2 {
+			die("usage: tripol fix [FILE.tri]")
+		}
+		if len(args) == 2 {
+			file = args[1]
+		}
+		entryFile = file
+		previewFix(file)
 		return
 	}
 	if args[0] == "ir" {
@@ -1528,7 +1552,7 @@ func cli() {
 		if len(args) == 4 && args[2] == "--template" {
 			template = args[3]
 		} else if len(args) != 2 {
-			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries|ecosystem]")
+			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game]")
 		}
 		newProjectTemplate(src, template)
 		return
@@ -1551,7 +1575,7 @@ func cli() {
 					die("--runs requires bench and a count from 1 to 100")
 				}
 			} else if args[i] == "--profile" {
-				if v != "nano" && v != "debug" {
+				if v != "nano" && v != "turbo" && v != "debug" {
 					die("unknown profile %s", v)
 				}
 				profile = v

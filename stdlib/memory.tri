@@ -1,0 +1,5 @@
+// Arena bytes, not total process RAM. Reservation is bounded; committed pages are retained.
+func capacity()->int {return 268435456}
+func used()->int {return arena_used()}
+func committed()->int {return arena_committed()}
+func available()->int {return capacity()-used()}

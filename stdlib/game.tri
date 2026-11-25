@@ -1,0 +1,17 @@
+import tripol.canvas
+import tripol.validate
+import tripol.time
+// Single native Windows window. All presentation and input APIs are Windows-only.
+func window(title:string,w:int,h:int)->bool {
+ assert validate.ascii(title),"Game title requires ASCII"
+ return game_open(title,w,h)
+}
+func running()->bool {return game_running()}
+func present(pixels:ints,w:int,h:int)->bool {
+ assert len(pixels)==canvas.size(w,h),"Invalid framebuffer"
+ return game_present(pixels,w,h)
+}
+// Win32 virtual-key code, queried only while the game has foreground focus.
+func key(code:int)->bool {return game_key(code)}
+func close()->bool {return game_close()}
+func wait(ms:int)->int {return time.sleep(ms)}

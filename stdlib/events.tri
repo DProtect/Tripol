@@ -1,0 +1,9 @@
+import tripol.game
+// Key state and common Win32 virtual-key values. No global polling outside game focus.
+func pressed(key:int)->bool {return game.key(key)}
+func left()->int {return 37}
+func right()->int {return 39}
+func up()->int {return 38}
+func down()->int {return 40}
+func escape()->int {return 27}
+func space()->int {return 32}

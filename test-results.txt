@@ -7,10 +7,10 @@
 === RUN   TestAtlasLibraries/5
 === RUN   TestAtlasLibraries/6
 === RUN   TestAtlasLibraries/7
---- PASS: TestAtlasLibraries (0.02s)
+--- PASS: TestAtlasLibraries (0.03s)
     --- PASS: TestAtlasLibraries/0 (0.00s)
     --- PASS: TestAtlasLibraries/1 (0.00s)
-    --- PASS: TestAtlasLibraries/2 (0.00s)
+    --- PASS: TestAtlasLibraries/2 (0.01s)
     --- PASS: TestAtlasLibraries/3 (0.00s)
     --- PASS: TestAtlasLibraries/4 (0.00s)
     --- PASS: TestAtlasLibraries/5 (0.01s)
@@ -93,7 +93,7 @@
     --- PASS: TestEcosystemBounds/show_byte_at("abc",3) (0.00s)
     --- PASS: TestEcosystemBounds/show_byte_at("",0) (0.00s)
 === RUN   TestEcosystemNoAllocRead
---- PASS: TestEcosystemNoAllocRead (0.03s)
+--- PASS: TestEcosystemNoAllocRead (0.04s)
 === RUN   TestEcosystemNoUnused
 --- PASS: TestEcosystemNoUnused (0.02s)
 === RUN   TestVaultPackages
@@ -197,8 +197,8 @@
 === RUN   TestHorizonModulesPE
 --- PASS: TestHorizonModulesPE (0.00s)
 === RUN   TestHorizonTemplate
-Created /tmp/TestHorizonTemplate3818627743/001/records (records)
-cd /tmp/TestHorizonTemplate3818627743/001/records
+Created /tmp/TestHorizonTemplate3499885056/001/records (records)
+cd /tmp/TestHorizonTemplate3499885056/001/records
 tripol run
 --- PASS: TestHorizonTemplate (0.00s)
 === RUN   TestInfinitySyntax
@@ -282,7 +282,7 @@ tripol run
 === RUN   TestLibertyTraps/show_1.0/0.0
 === RUN   TestLibertyTraps/show_sqrt(-1.0)
 === RUN   TestLibertyTraps/show_10000000000000.0
---- PASS: TestLibertyTraps (0.00s)
+--- PASS: TestLibertyTraps (0.01s)
     --- PASS: TestLibertyTraps/show_parse_int("9223372036854775808") (0.00s)
     --- PASS: TestLibertyTraps/show_parse_int("-9223372036854775809") (0.00s)
     --- PASS: TestLibertyTraps/show_parse_int("12a") (0.00s)
@@ -310,7 +310,7 @@ tripol run
 === RUN   TestLibertyPE
 --- PASS: TestLibertyPE (0.00s)
 === RUN   TestLibertyArenaLimit
---- PASS: TestLibertyArenaLimit (0.01s)
+--- PASS: TestLibertyArenaLimit (0.02s)
 === RUN   TestLocalModules
 === RUN   TestLocalModules/cycle.tri
 === RUN   TestLocalModules/bad.tri
@@ -378,7 +378,7 @@ tripol run
 === RUN   TestTraps/show_9223372036854775807*2
 === RUN   TestTraps/show_-(-9223372036854775807-1)
 === RUN   TestTraps/show_-9223372036854775807-2
---- PASS: TestTraps (0.00s)
+--- PASS: TestTraps (0.01s)
     --- PASS: TestTraps/show_1/0 (0.00s)
     --- PASS: TestTraps/show_9223372036854775807+1 (0.00s)
     --- PASS: TestTraps/show_(-9223372036854775807-1)/-1 (0.00s)
@@ -553,21 +553,45 @@ tripol run
 --- PASS: TestNexusPE (0.00s)
 === RUN   TestNexusTemplates
 === RUN   TestNexusTemplates/basic
-Created /tmp/TestNexusTemplatesbasic4152214580/001/basic
-cd /tmp/TestNexusTemplatesbasic4152214580/001/basic
+Created /tmp/TestNexusTemplatesbasic132648839/001/basic
+cd /tmp/TestNexusTemplatesbasic132648839/001/basic
 tripol run main.tri
 === RUN   TestNexusTemplates/calculator
-Created /tmp/TestNexusTemplatescalculator1757689450/001/calculator (calculator)
-cd /tmp/TestNexusTemplatescalculator1757689450/001/calculator
+Created /tmp/TestNexusTemplatescalculator3038539027/001/calculator (calculator)
+cd /tmp/TestNexusTemplatescalculator3038539027/001/calculator
 tripol run
 === RUN   TestNexusTemplates/files
-Created /tmp/TestNexusTemplatesfiles2734000016/001/files (files)
-cd /tmp/TestNexusTemplatesfiles2734000016/001/files
+Created /tmp/TestNexusTemplatesfiles298932302/001/files (files)
+cd /tmp/TestNexusTemplatesfiles298932302/001/files
 tripol run
 --- PASS: TestNexusTemplates (0.00s)
     --- PASS: TestNexusTemplates/basic (0.00s)
     --- PASS: TestNexusTemplates/calculator (0.00s)
     --- PASS: TestNexusTemplates/files (0.00s)
+=== RUN   TestQuantumMemory
+--- PASS: TestQuantumMemory (0.01s)
+=== RUN   TestQuantumCanvas
+--- PASS: TestQuantumCanvas (0.00s)
+=== RUN   TestQuantumMath
+--- PASS: TestQuantumMath (0.00s)
+=== RUN   TestQuantumReject
+=== RUN   TestQuantumReject/import_tripol.canvas_const_a=[1,2];canvas.clear(a,3)
+=== RUN   TestQuantumReject/func_bad()->bool_=>_42_show_bad()
+=== RUN   TestQuantumReject/func_f(n)_=>_n+1_show_f(1)
+--- PASS: TestQuantumReject (0.00s)
+    --- PASS: TestQuantumReject/import_tripol.canvas_const_a=[1,2];canvas.clear(a,3) (0.00s)
+    --- PASS: TestQuantumReject/func_bad()->bool_=>_42_show_bad() (0.00s)
+    --- PASS: TestQuantumReject/func_f(n)_=>_n+1_show_f(1) (0.00s)
+=== RUN   TestQuantumPE
+--- PASS: TestQuantumPE (0.00s)
+=== RUN   TestQuantumTurbo
+--- PASS: TestQuantumTurbo (0.00s)
+=== RUN   TestQuantumBuffer
+--- PASS: TestQuantumBuffer (0.00s)
+=== RUN   TestQuantumFixPreview
+--- PASS: TestQuantumFixPreview (0.00s)
+=== RUN   TestQuantumBootstrap
+--- PASS: TestQuantumBootstrap (0.00s)
 === RUN   TestJSONRead
 === RUN   TestJSONRead/"{\"a\":[1,true,null,{\"b\":-1.2e-4}],\"c\":\"hola\"}"
 === RUN   TestJSONRead/"[]"
@@ -589,7 +613,7 @@ tripol run
 === RUN   TestJSONRead/""
 === RUN   TestJSONRead/"true_false"
 === RUN   TestJSONRead/"[[]]"
---- PASS: TestJSONRead (0.07s)
+--- PASS: TestJSONRead (0.08s)
     --- PASS: TestJSONRead/"{\"a\":[1,true,null,{\"b\":-1.2e-4}],\"c\":\"hola\"}" (0.00s)
     --- PASS: TestJSONRead/"[]" (0.00s)
     --- PASS: TestJSONRead/"{}" (0.00s)
@@ -606,14 +630,14 @@ tripol run
     --- PASS: TestJSONRead/"1e" (0.00s)
     --- PASS: TestJSONRead/"{\"a\"_1}" (0.00s)
     --- PASS: TestJSONRead/"\"\\q\"" (0.00s)
-    --- PASS: TestJSONRead/"\"\\u0x00\"" (0.00s)
+    --- PASS: TestJSONRead/"\"\\u0x00\"" (0.01s)
     --- PASS: TestJSONRead/"" (0.00s)
     --- PASS: TestJSONRead/"true_false" (0.00s)
     --- PASS: TestJSONRead/"[[]]" (0.00s)
 === RUN   TestTraceFrames
 --- PASS: TestTraceFrames (0.00s)
 === RUN   TestSentinelPE
---- PASS: TestSentinelPE (0.00s)
+--- PASS: TestSentinelPE (0.01s)
 === RUN   TestFixSuggestion
 --- PASS: TestFixSuggestion (0.00s)
 === RUN   TestVectorLength
@@ -629,7 +653,7 @@ tripol run
 === RUN   TestVectorLength/4095
 === RUN   TestVectorLength/4096
 === RUN   TestVectorLength/65535
---- PASS: TestVectorLength (0.02s)
+--- PASS: TestVectorLength (0.01s)
     --- PASS: TestVectorLength/0 (0.00s)
     --- PASS: TestVectorLength/1 (0.00s)
     --- PASS: TestVectorLength/15 (0.00s)
@@ -720,12 +744,12 @@ tripol run
 === RUN   TestVelocityArrays/a=ints(2)_a[2]=1
 === RUN   TestVelocityArrays/a=ints(-1)
 === RUN   TestVelocityArrays/a=ints(65536)
-=== RUN   TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)}
+=== RUN   TestVelocityArrays/for_i_in_range(0,513){v=ints(65535)}
 === RUN   TestVelocityArrays/a=ints(2);show_a==a
 === RUN   TestVelocityArrays/const_a=ints(2);a[0]=1
 === RUN   TestVelocityArrays/a=ints(2);a[0]="s"
 === RUN   TestVelocityArrays/a=ints(2.0)
---- PASS: TestVelocityArrays (0.01s)
+--- PASS: TestVelocityArrays (0.56s)
     --- PASS: TestVelocityArrays/n=5_v=ints(n)_for_i_in_range(0,len(v)){v[i]=i*10}_show_v[0]_show_v[4]_show_len(v) (0.00s)
     --- PASS: TestVelocityArrays/func_make(n)->ints{return_ints(n)}_func_update(v:ints)->int{v[1]=99;return_v[1]}_a=make(3)_b=a_show_update(b)_show_a[1]_show_a[2] (0.00s)
     --- PASS: TestVelocityArrays/a=ints(0)_show_len(a) (0.00s)
@@ -733,7 +757,7 @@ tripol run
     --- PASS: TestVelocityArrays/a=ints(2)_a[2]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(-1) (0.00s)
     --- PASS: TestVelocityArrays/a=ints(65536) (0.00s)
-    --- PASS: TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)} (0.00s)
+    --- PASS: TestVelocityArrays/for_i_in_range(0,513){v=ints(65535)} (0.55s)
     --- PASS: TestVelocityArrays/a=ints(2);show_a==a (0.00s)
     --- PASS: TestVelocityArrays/const_a=ints(2);a[0]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);a[0]="s" (0.00s)
@@ -759,4 +783,4 @@ tripol run
 === RUN   TestVisionRecoverableOps
 --- PASS: TestVisionRecoverableOps (0.00s)
 PASS
-ok  	tripol	0.550s
+ok  	tripol	1.161s

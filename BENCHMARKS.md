@@ -1,3 +1,20 @@
+# TRIPOL v0.14 — QUANTUM verification
+
+Linux x86-64, Go 1.23.2. 98 top-level test groups and 288 subtests passed; `go vet .` passed. Windows compiler and installer cross-built, game PE imported symbols inspected; actual game window and new arena Windows execution pending.
+
+| Workload | Manual loop | Native canvas.clear |
+|---|---:|---:|
+| 1,000 fills × 57,600 RGB pixels | 104.711519 ms | 10.551845 ms |
+| Linux executable | 1,169 B | 1,594 B |
+
+11 interleaved timed runs per binary, process startup included, verified output 7111065600 every run. The manual fixture uses the same v0.14 compiler, array size, fill value, and count. The native fixture uses `rep stosq` and RGB validation. This isolates the operation, not an overall language speedup. Sizes: hello Windows/Linux 1,536/373 B, game Windows 10,240 B, memory example Windows 3,072 B. Test importing all 40 libraries without using any produces byte-identical hello binaries.
+
+Memory: 32 arrays of 65,535 ints use exactly 16,777,216 arena bytes; first array remains valid. Repeated scratch restores used bytes. A 513th full-size array exceeds 256 MiB and traps. Committed/enabled pages are not RSS; no general reclamation.
+
+Benchmark Arena: `python benchmarks/arena.py --compiler ./tripol --runs 5` (optional maintainer script). Naive recursive Fibonacci(30), verified 832040 each run, startup included, 5 alternated/reversed runs; C/C++ -O2, Go optimized stripped, Rust -O when installed. Checked TRIPOL vs unchecked arithmetic in C/C++/Go/Rust, not identical safety semantics. Python and JavaScript native file size is not applicable. No measured RSS. Results from this Linux environment in `benchmarks/quantum-linux.json`; Rust unavailable. C/C++ and Go faster on this workload, TRIPOL smallest native executable. Single build times are not statistically robust. No universal language performance claim.
+
+## Previous measurements
+
 # TRIPOL v0.13 — INFINITY verification
 
 Linux x86-64, Go 1.23.2. 89 top-level test groups and 285 subtests passed; `go vet .` passed. Windows compiler and installer cross-compiled; native Windows test examples PE-inspected, not executed here. Previous v0.12 modal form was demonstrated by the project owner on Windows. No third-party language speed claims.

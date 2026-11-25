@@ -8,6 +8,8 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 		return t, true
 	}
 	switch e.s {
+	case "arena_used", "arena_committed", "array_fill", "game_open", "game_running", "game_present", "game_key", "game_close":
+		return c.quantumBuiltin(e), true
 	case "ui_form", "https_get":
 		return c.sentinelBuiltin(e), true
 	case "ui_dialog":
@@ -130,7 +132,7 @@ func (c *compiler) floatOp(op string) string {
 // Runtime sections contain hand-written x86-64, with relocations resolved by Forge.
 // Ordered dependency closure keeps unused helpers out of tiny binaries.
 func (a *asm) libertyRuntime() {
-	order := []string{"ui_form", "ui_form_proc", "https_get", "https_error", "tcp_exchange", "net_connect", "net_send", "net_shutdown", "net_recv", "net_close", "net_error", "find_bytes", "clock_ms", "sleep_ms", "has_prefix", "has_suffix", "raw_bool", "raw_int", "raw_float", "raw_string", "print:float", "input", "concat", "parseint", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
+	order := []string{"game_open", "game_running", "game_present", "game_key", "game_close", "game_error", "arena_used", "arena_committed", "array_fill", "ui_form", "ui_form_proc", "https_get", "https_error", "tcp_exchange", "net_connect", "net_send", "net_shutdown", "net_recv", "net_close", "net_error", "find_bytes", "clock_ms", "sleep_ms", "has_prefix", "has_suffix", "raw_bool", "raw_int", "raw_float", "raw_string", "print:float", "input", "concat", "parseint", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "oscommit", "readbyte", "text_error", "float_error"}
 	for _, name := range order {
 		if name == "ui_form_proc" && a.target != "windows" {
 			continue
@@ -139,7 +141,7 @@ func (a *asm) libertyRuntime() {
 			continue
 		}
 		key := name
-		if name == "ui_form" || name == "https_get" || name == "net_connect" || name == "net_send" || name == "net_shutdown" || name == "net_recv" || name == "net_close" || name == "clock_ms" || name == "sleep_ms" || name == "osalloc" || name == "readbyte" || name == "file_open" || name == "file_chunk_read" || name == "file_chunk_write" || name == "file_close" {
+		if name == "oscommit" || name == "game_open" || name == "game_running" || name == "game_present" || name == "game_key" || name == "game_close" || name == "ui_form" || name == "https_get" || name == "net_connect" || name == "net_send" || name == "net_shutdown" || name == "net_recv" || name == "net_close" || name == "clock_ms" || name == "sleep_ms" || name == "osalloc" || name == "readbyte" || name == "file_open" || name == "file_chunk_read" || name == "file_chunk_write" || name == "file_close" {
 			key += ":" + a.target
 		}
 		t, ok := libertyCode[key]

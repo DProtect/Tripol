@@ -89,7 +89,7 @@ func TestInfinityAllLibraries(t *testing.T) {
 			t.Fatal("unused libraries changed binary", target)
 		}
 	}
-	if len(standardNames) != 30 {
+	if len(standardNames) != 40 {
 		t.Fatal(len(standardNames))
 	}
 }

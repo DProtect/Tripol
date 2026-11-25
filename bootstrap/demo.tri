@@ -1,0 +1,7 @@
+import "lexer.tri"
+source="func doble(n) => n * 2\nshow doble(5)"
+tokens=boot_lex(source)
+for i in range(len(tokens)/3) {
+    j=i*3
+    show tokens[j], slice(source,tokens[j+1],tokens[j+2])
+}

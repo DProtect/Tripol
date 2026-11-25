@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.14.0 — QUANTUM
+
+- 40 standard modules, 225 callable functions (including library helpers).
+- Native software framebuffer, Windows GDI game window and foreground key polling; Linux canvas rendering, Windows PE verification only.
+- Demand-enabled 256 MiB arena reservation; scratch reuse and memory metrics.
+- Growable integer buffer with explicit reassignment, physics, animation, vector, image and lexical path helpers.
+- Short returning functions, experimental turbo profile and broader scalar TIR inlining.
+- Non-mutating Guard Fix preview, Benchmark Arena and experimental self-hosted lexer.
+- No general GC, full GUI toolkit, arbitrary sprites, audio, Discord bot or complete self-hosting.
+
 ## 0.13.0 — INFINITY (experimental)
 
 - Explicit `f"...{name}..."` interpolation and scalar constant default parameters.

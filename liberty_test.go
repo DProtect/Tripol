@@ -130,7 +130,7 @@ for i in range(0,17){s=s+s}
 show s`, "TRIPOL runtime error: invalid input, text too long or allocation failed\n", true)
 	runCase(t, `s="abcdefghijklmnopqrstuvwxyz"
 for i in range(0,400000){s="abcdefghijklmnopqrstuvwxyz"+"x"}
-show s`, "TRIPOL runtime error: invalid input, text too long or allocation failed\n", true)
+show s`, "abcdefghijklmnopqrstuvwxyzx\n", false)
 }
 func TestLocalModules(t *testing.T) {
 	d := t.TempDir()

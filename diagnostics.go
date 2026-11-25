@@ -19,6 +19,8 @@ type diagnostic struct {
 	Column     int    `json:"column,omitempty"`
 	Hint       string `json:"hint,omitempty"`
 	Suggestion string `json:"suggestion,omitempty"`
+	FixBefore  string `json:"fix_before,omitempty"`
+	FixAfter   string `json:"fix_after,omitempty"`
 	Detail     string `json:"detail,omitempty"`
 	ExitStatus int    `json:"exit_status,omitempty"`
 }
@@ -203,6 +205,11 @@ func printDiagnostic(d diagnostic) {
 	}
 	if d.Suggestion != "" {
 		fmt.Fprintln(os.Stderr, "  Did you mean:", d.Suggestion+"?")
+	}
+	if d.FixAfter != "" {
+		fmt.Fprintln(os.Stderr, "  Suggested change (not applied):")
+		fmt.Fprintln(os.Stderr, "  -", d.FixBefore)
+		fmt.Fprintln(os.Stderr, "  +", d.FixAfter)
 	}
 }
 func diagnosticOptions() {

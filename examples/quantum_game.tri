@@ -1,0 +1,30 @@
+import tripol.game
+import tripol.canvas
+import tripol.colors
+import tripol.events
+import tripol.physics
+
+w=320
+h=180
+pixels=canvas.create(w,h)
+x=150
+y=80
+show game.window("TRIPOL QUANTUM",960,540)
+while game.running() {
+    if events.pressed(events.escape()) {break}
+    if events.pressed(events.left()) or game.key(65) {x-=3}
+    if events.pressed(events.right()) or game.key(68) {x+=3}
+    if events.pressed(events.up()) or game.key(87) {y-=3}
+    if events.pressed(events.down()) or game.key(83) {y+=3}
+    x=physics.clamp_position(x,16,w)
+    y=physics.clamp_position(y,16,h)
+    canvas.clear(pixels,colors.rgb(15,23,42))
+    canvas.rectangle(pixels,w,h,0,150,w,30,colors.rgb(30,41,59))
+    canvas.rectangle(pixels,w,h,48,30,16,16,colors.rgb(251,191,36))
+    canvas.rectangle(pixels,w,h,x,y,16,16,colors.rgb(34,211,238))
+    canvas.rectangle(pixels,w,h,x+4,y+4,3,3,16777215)
+    canvas.rectangle(pixels,w,h,x+10,y+4,3,3,16777215)
+    game.present(pixels,w,h)
+    game.wait(16)
+}
+show game.close()

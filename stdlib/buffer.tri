@@ -1,0 +1,28 @@
+// Growable integer buffer. Internal representation: [logical length, storage...].
+// Always reassign the return from push; growth returns a new backing array.
+func create(initial=4)->ints {
+ assert initial>=0 and initial<=65534,"Invalid buffer capacity"
+ return ints(initial+1)
+}
+func capacity(b:ints)->int {assert len(b)>=1,"Invalid buffer";return len(b)-1}
+func size(b:ints)->int {cap=capacity(b);assert b[0]>=0 and b[0]<=cap,"Invalid buffer size";return b[0]}
+func push(b:ints,value:int)->ints {
+ n=size(b);cap=capacity(b)
+ if n==cap {
+  assert n<65534,"Buffer full"
+  next=min(65534,max(1,cap*2))
+  c=create(next)
+  for i in range(n) {c[i+1]=b[i+1]}
+  c[n+1]=value;c[0]=n+1
+  return c
+ }
+ b[n+1]=value;b[0]=n+1
+ return b
+}
+func get(b:ints,index:int)->int {assert index>=0 and index<size(b),"Buffer index out of bounds";return b[index+1]}
+func set(b:ints,index:int,value:int)->int {assert index>=0 and index<size(b),"Buffer index out of bounds";b[index+1]=value;return value}
+func pop(b:ints)->int {
+ n=size(b);assert n>0,"Empty buffer"
+ v=b[n];b[n]=0;b[0]=n-1;return v
+}
+func values(b:ints)->ints {n=size(b);a=ints(n);for i in range(n) {a[i]=b[i+1]};return a}

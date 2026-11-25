@@ -1,0 +1,4 @@
+import tripol.canvas
+pixels=canvas.create(320,180)
+repeat 1000 {canvas.clear(pixels,123456)}
+show sum(pixels)

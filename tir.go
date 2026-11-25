@@ -134,7 +134,7 @@ func (c *compiler) inlineTIR(f fn, args []*expr) bool {
 		return false
 	}
 	ir, ok := lowerTIR(f)
-	if !ok || len(args) > 1 {
+	if !ok || (len(args) > 1 && !a.turbo) {
 		return false
 	}
 	// Evaluation remains left-to-right and exactly once, even for unused parameters.
@@ -203,7 +203,7 @@ func (n *tirNode) String() string {
 func inspectTIR(file string) {
 	fs, ss, _ := loadProject(file)
 	generate(fs, ss, "linux", false, nil)
-	fmt.Println("TRIPOL TIR R1 — lowered scalar functions")
+	fmt.Println("TRIPOL TIR R2 — lowered scalar functions")
 	n := 0
 	for _, f := range fs {
 		if ir, ok := lowerTIR(f); ok {
@@ -211,5 +211,5 @@ func inspectTIR(file string) {
 			n++
 		}
 	}
-	fmt.Printf("%d lowered functions; only small zero/one-argument functions may inline.\n", n)
+	fmt.Printf("%d lowered functions; nano: zero/one argument; turbo: up to four arguments may inline.\n", n)
 }

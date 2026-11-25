@@ -174,7 +174,7 @@ show a[-1]`, "TRIPOL runtime error: array index out of bounds\n", true},
 a[2]=1`, "TRIPOL runtime error: array index out of bounds\n", true},
 		{`a=ints(-1)`, "TRIPOL runtime error: invalid input, text too long or allocation failed\n", true},
 		{`a=ints(65536)`, "TRIPOL runtime error: invalid input, text too long or allocation failed\n", true},
-		{`for i in range(0,20){v=ints(65535)}`, "TRIPOL runtime error: invalid input, text too long or allocation failed\n", true},
+		{`for i in range(0,513){v=ints(65535)}`, "TRIPOL runtime error: invalid input, text too long or allocation failed\n", true},
 	} {
 		t.Run(c.s, func(t *testing.T) { runCase(t, c.s, c.w, c.bad) })
 	}

@@ -1,0 +1,27 @@
+import tripol.canvas
+import tripol.colors
+// Pixel transformations; all return independent dynamic arrays.
+func flip_x(pixels:ints,w:int,h:int)->ints {
+ assert len(pixels)==canvas.size(w,h),"Invalid image"
+ b=ints(len(pixels));for y in range(h) {for x in range(w) {b[y*w+x]=pixels[y*w+w-1-x]}};return b
+}
+func flip_y(pixels:ints,w:int,h:int)->ints {
+ assert len(pixels)==canvas.size(w,h),"Invalid image"
+ b=ints(len(pixels));for y in range(h) {for x in range(w) {b[y*w+x]=pixels[(h-1-y)*w+x]}};return b
+}
+func crop(pixels:ints,w:int,h:int,x:int,y:int,cw:int,ch:int)->ints {
+ assert len(pixels)==canvas.size(w,h),"Invalid image"
+ n=canvas.size(cw,ch);assert x>=0 and y>=0 and x<=w-cw and y<=h-ch,"Invalid crop"
+ b=ints(n);for r in range(ch) {for c in range(cw) {b[r*cw+c]=pixels[(y+r)*w+x+c]}};return b
+}
+func grayscale(pixels:ints)->ints {
+ b=ints(len(pixels));for i in range(len(pixels)) {c=pixels[i];b[i]=colors.gray((colors.red(c)*299+colors.green(c)*587+colors.blue(c)*114)/1000)};return b
+}
+// Small P3 (ASCII PPM) image export; text limits, not a PNG/JPEG codec.
+func ppm(pixels:ints,w:int,h:int)->string {
+ assert len(pixels)==canvas.size(w,h) and len(pixels)<=256,"PPM R1 max 256 pixels"
+ s="P3\n"+text(w)+" "+text(h)+"\n255\n"
+ for c in pixels {s=s+text(colors.red(c))+" "+text(colors.green(c))+" "+text(colors.blue(c))+"\n"}
+ return s
+}
+func save_ppm(path:string,pixels:ints,w:int,h:int)->int {return write_text(path,ppm(pixels,w,h))}

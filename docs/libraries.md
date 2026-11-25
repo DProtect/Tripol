@@ -1,4 +1,4 @@
-# Standard library — 30 modules, 164 callable functions
+# Standard library — 40 modules, 225 callable functions
 
 Exact source and signatures: `tripol docs NAME`, `tripol libs`, or [stdlib](../stdlib). Counts include seven JSON scanner helper functions; use the documented high-level APIs for stable behavior. Modules are embedded and offline. In nano mode unused routines are eliminated; imports do not imply runtime dependencies.
 
@@ -48,4 +48,21 @@ Exact source and signatures: `tripol docs NAME`, `tripol libs`, or [stdlib](../s
 | matrix | 6 | Flat row-major integer matrices; explicit shapes, checked math |
 | sequences | 4 | Integer sequences, Fibonacci, factorial and triangular numbers |
 
-Collections return independent arrays capped at 65535 elements. They are not amortized growable vectors or dictionaries. RLE uses `[value,count,...]` pairs, may expand data, limits to 32767 runs and 65535 decoded elements, and validates all counts. `checksum` is noncryptographic and unsuitable for authentication. `ui.warning`, `ui.error`, `ui.retry`, and `ui.choose` use native message boxes; choose returns Win32 IDs Yes=6, No=7, Cancel=2. No custom widgets/canvas yet.
+Collections return independent arrays capped at 65535 elements. They are not amortized growable vectors or dictionaries. RLE uses `[value,count,...]` pairs, may expand data, limits to 32767 runs and 65535 decoded elements, and validates all counts. `checksum` is noncryptographic and unsuitable for authentication. `ui.warning`, `ui.error`, `ui.retry`, and `ui.choose` use native message boxes; choose returns Win32 IDs Yes=6, No=7, Cancel=2. No custom widgets yet; see Quantum canvas and game APIs below.
+
+## Quantum additions
+
+| Module | Functions | Notes |
+|---|---:|---|
+| animation | 6 | Interpolation, easing and frame selection |
+| buffer | 8 | Growable int buffer, explicit reassignment on push; cap 65,534 values |
+| canvas | 6 | RGB24 framebuffer, clipping, fill and pixel access; 65,535 pixels max |
+| events | 7 | Foreground key state (Windows) and common key codes |
+| game | 6 | Single Win32 window, GDI presentation, pump, key polling, close, wait |
+| image | 6 | Flip, crop, grayscale, small P3 PPM export (<=256 pixels) |
+| memory | 4 | Virtual reservation, used and committed/enabled page counts, not RSS |
+| path | 6 | Lexical separators/basename/dirname/extension/join; no normalization |
+| physics | 5 | AABB, bounds, integration, gravity; not a rigid-body solver |
+| vector | 7 | Float64 vector helpers and int array scaling |
+
+For graphics limitations, see [graphics](graphics.md). `buffer.push` must be assigned back; it grows by copying, old backing storage stays allocated. `path` does not resolve symlinks or validate filesystem paths. The game window is Windows-only and PE-inspected, actual execution pending.

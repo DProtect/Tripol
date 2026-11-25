@@ -1,0 +1,15 @@
+// Discrete, axis-aligned 2D collision helpers; no general rigid-body solver.
+func overlap(x:int,y:int,w:int,h:int,u:int,v:int,a:int,b:int)->bool {
+ assert w>=0 and h>=0 and a>=0 and b>=0,"Negative collision extent"
+ return w>0 and h>0 and a>0 and b>0 and x<u+a and u<x+w and y<v+b and v<y+h
+}
+func contains(x:int,y:int,w:int,h:int,px:int,py:int)->bool {
+ assert w>=0 and h>=0,"Negative collision extent"
+ return px>=x and py>=y and px<x+w and py<y+h
+}
+func clamp_position(pos:int,extent:int,limit:int)->int {
+ assert extent>=0 and limit>=extent,"Invalid movement bounds"
+ return max(0,min(pos,limit-extent))
+}
+func integrate(pos:float,velocity:float,dt:float)->float {assert dt>=0.0,"Negative dt";return pos+velocity*dt}
+func gravity(velocity:float,acceleration:float,dt:float)->float {return integrate(velocity,acceleration,dt)}

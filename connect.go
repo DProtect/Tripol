@@ -35,8 +35,14 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 	if a.needed("iat:10") {
 		groups = append(groups, group{dll: "WS2_32.dll", names: []string{"WSAStartup", "socket", "connect", "setsockopt", "send", "shutdown", "recv", "closesocket", "WSACleanup"}, first: 10})
 	}
-	if a.needed("iat:19") || a.needed("iat:20") {
+	if a.needed("iat:19") || a.needed("iat:20") || a.needed("game_state") {
 		names := []string{"MessageBoxA", "DialogBoxIndirectParamW", "SetWindowLongPtrA", "GetWindowLongPtrA", "SetWindowTextA", "SetDlgItemTextA", "GetDlgItemTextA", "EndDialog"}
+		if a.needed("game_state") {
+			for len(names) < 31 {
+				names = append(names, "")
+			}
+			names = append(names, "CreateWindowExA", "IsWindow", "PeekMessageA", "TranslateMessage", "DispatchMessageA", "DestroyWindow", "GetDC", "ReleaseDC", "GetClientRect", "GetAsyncKeyState", "GetForegroundWindow")
+		}
 		for i := range names {
 			if !a.needed(fmt.Sprintf("iat:%d", 19+i)) {
 				names[i] = ""
@@ -48,12 +54,18 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 		groups = append(groups, group{dll: "WINHTTP.dll", names: []string{"WinHttpOpen", "WinHttpConnect", "WinHttpOpenRequest", "WinHttpSendRequest", "WinHttpReceiveResponse", "WinHttpReadData", "WinHttpCloseHandle", "WinHttpSetTimeouts", "WinHttpSetOption", "WinHttpQueryHeaders"}, first: 30})
 	}
 
+	if a.needed("iat:61") {
+		groups = append(groups, group{dll: "GDI32.dll", names: []string{"StretchDIBits"}, first: 61})
+	}
 	size := 1024
 	if len(groups) > 2 {
 		size = 1536
 	}
 	if a.needed("iat:20") || a.needed("iat:30") {
 		size = 3072
+	}
+	if a.needed("game_state") {
+		size = 4096
 	}
 	id := make([]byte, size)
 	cursor := align((len(groups)+1)*20, 16)
@@ -99,11 +111,17 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 			j++
 		}
 	}
-	if cursor > len(id)-32 {
+	reserve := 40
+	if a.needed("game_state") {
+		reserve += 16
+		a.labels["game_state"] = rva - textRVA + len(id) - reserve
+		a.labels["game_buffer"] = a.labels["game_state"] + 8
+	}
+	if cursor > len(id)-reserve {
 		die("network import table overflow")
 	}
 	if a.needed("arena_state") || a.needed("guard_state") {
-		a.labels["arena_state"] = rva - textRVA + len(id) - 32
+		a.labels["arena_state"] = rva - textRVA + len(id) - 40
 		a.labels["guard_state"] = rva - textRVA + len(id) - 8
 	}
 	return id, firstIAT, iatSize, (len(groups) + 1) * 20

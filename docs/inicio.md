@@ -31,3 +31,13 @@ show saludo("Ana", 25)
 ```
 
 Prueba `tripol libs`, `tripol docs collections` y `tripol ir main.tri`.
+
+## Primer juego 2D (Windows x64, experimental)
+
+```cmd
+tripol new MiJuego2D --template game
+cd MiJuego2D
+tripol run
+```
+
+Usa WASD o las flechas y Esc para salir. El motor dibuja en un arreglo RGB y presenta la imagen mediante GDI. La ejecución de la ventana todavía requiere validación real en Windows. `tripol run examples/quantum_memory.tri` desde el código fuente comprueba la reserva y la reutilización de memoria. `tripol fix main.tri` muestra una sugerencia de cambio sin modificar código.

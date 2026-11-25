@@ -19,3 +19,5 @@
 | TP9000 | Internal compiler error | Not applicable |
 
 `try { show 10/0 } catch code { show code } finally { show "done" }` prints 10 then done. Catch receives the integer native error code. Finally executes on successful/recoverable paths, not on fatal native failure or OS termination. A failure inside finally propagates. `throw` accepts int; values outside 100–255 normalize to 100. The native runtime still has no general resource-unwinding machinery for I/O failures. See [language](language.md).
+
+`tripol fix FILE.tri` validates a project and previews an unambiguous single identifier spelling correction on the diagnostic line when available. It never edits a source file; ambiguous occurrences and qualified names are not rewritten. JSON diagnostics include `fix_before` / `fix_after` if a preview exists. First-error reporting remains.

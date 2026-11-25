@@ -1,13 +1,14 @@
 # Roadmap
 
-TRIPOL is experimental. These are goals, not promised versions or dates.
+TRIPOL is experimental. Goals, not promised versions or dates.
 
-1. Validate new Windows UI variants/HTTPS and native ABI; add automated Windows tests and signed release distribution when feasible.
-2. Expand error recovery with safe cleanup for native resources, richer diagnostics and source locations.
-3. Extend memory management beyond explicit scratch regions, with escape analysis and ownership or other proven approaches.
-4. Improve JSON typed access, HTTPS headers/POST, WebSocket and authenticated bot APIs; never embed secrets in source.
-5. Add custom windows, layouts, events, drawing and audio.
-6. Extend the TIR R1 scalar subset into a general typed intermediate representation, optimizer and reproducible cross-language benchmarks; add ARM64/WebAssembly where practical.
-7. Grow Vault into a trustworthy package ecosystem and eventually self-host the compiler in TRIPOL.
+1. Validate QUANTUM Win32 graphics, HTTPS and native ABI in actual Windows CI; signed release distribution.
+2. Improve renderer: resize/paint handling, native custom window class, sprites, image decoding, audio and UI events.
+3. General safe memory reclamation, stronger ownership/reference analysis and growable collections/maps.
+4. Full typed control-flow TIR, register allocation, checked optimization and additional reproducible benchmark workloads.
+5. HTTPS headers/POST, WebSocket/authenticated Discord; never embed secrets in source.
+6. Standard crypto via reviewed implementations or OS APIs, database, environment and process tools.
+7. Vault registry, formatting, multiple diagnostics, debugging, Studio and self-hosting beyond the experimental lexer.
+8. Additional targets ARM64/WebAssembly when practical.
 
 Correctness, simplicity, reproducibility and free access come before performance marketing.

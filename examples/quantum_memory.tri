@@ -1,0 +1,14 @@
+import tripol.memory
+show "Capacity:", memory.capacity()
+show "Initial:", memory.used(), memory.committed()
+repeat 32 {
+    data = ints(65535)
+    data[0] = 42
+}
+show "Used:", memory.used()
+show "Committed:", memory.committed()
+before = memory.used()
+repeat 1000 {
+    scratch {temporary = ints(65535); temporary[0] = 7}
+}
+show "Scratch reused:", memory.used() == before
