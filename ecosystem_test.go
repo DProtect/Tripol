@@ -55,7 +55,7 @@ show byte_at("abc",1),byte_at("é",0)`, "[1, 2, 3]\n[]\n[0, 0]\n98 195\n"},
 	for i, c := range cases {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			runCase(t, c.src, c.want, false)
-			p := filepath.Join(t.TempDir(), "debug")
+			p := filepath.Join(t.TempDir(), "debug.exe")
 			os.WriteFile(p, compileProfile(c.src, runtime.GOOS, "debug"), 0755)
 			out, e := exec.Command(p).CombinedOutput()
 			if e != nil || string(out) != c.want {
@@ -109,7 +109,7 @@ func TestVaultPackages(t *testing.T) {
 	main := filepath.Join(d, "main.tri")
 	os.WriteFile(main, []byte("import vault.demo\nshow demo.result(7)"), 0644)
 	fs, ss, _ := loadProject(main)
-	p := filepath.Join(d, "app")
+	p := filepath.Join(d, "app.exe")
 	os.WriteFile(p, compileParsed(fs, ss, runtime.GOOS, "nano"), 0755)
 	out, e := exec.Command(p).CombinedOutput()
 	if e != nil || string(out) != "196\n" {
@@ -128,7 +128,7 @@ func TestVaultDependencies(t *testing.T) {
 	main := filepath.Join(d, "main.tri")
 	os.WriteFile(main, []byte("import vault.bar\nshow bar.square(5)"), 0644)
 	fs, ss, _ := loadProject(main)
-	out := filepath.Join(d, "app")
+	out := filepath.Join(d, "app.exe")
 	os.WriteFile(out, compileParsed(fs, ss, runtime.GOOS, "nano"), 0755)
 	b, e := exec.Command(out).CombinedOutput()
 	if e != nil || string(b) != "26\n" {
@@ -184,7 +184,7 @@ func TestVaultLock(t *testing.T) {
 func TestEcosystemJSON(t *testing.T) {
 	src := `import tripol.json
 show json.quote("\u0001\t\r\n\"\\é")`
-	p := filepath.Join(t.TempDir(), "app")
+	p := filepath.Join(t.TempDir(), "app.exe")
 	os.WriteFile(p, compile(src, runtime.GOOS), 0755)
 	b, e := exec.Command(p).CombinedOutput()
 	var s string

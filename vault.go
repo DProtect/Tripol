@@ -78,6 +78,15 @@ func vaultPath(root, hash string) string {
 	return filepath.Join(root, ".tripol", "packages", hash+".tri")
 }
 func vaultSource(root, name string, x vaultEntry) []byte {
+	// Resolve both paths: Windows temporary directories can contain 8.3 aliases.
+	root, e := filepath.Abs(root)
+	if e != nil {
+		die("Vault root: %v", e)
+	}
+	root, e = filepath.EvalSymlinks(root)
+	if e != nil {
+		die("Vault root: %v", e)
+	}
 	p := vaultPath(root, x.SHA256)
 	resolved, e := filepath.EvalSymlinks(p)
 	if e != nil {
