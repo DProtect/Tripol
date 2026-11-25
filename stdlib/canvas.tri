@@ -1,8 +1,8 @@
 import tripol.colors
 // Software framebuffer, one int64 packed RGB pixel per element, row-major.
 func size(w:int,h:int)->int {
- assert w>0 and h>0 and w<=65535 and h<=65535,"Invalid canvas size"
- assert w*h<=65535,"Canvas exceeds 65535 pixels"
+ assert w>0 and h>0 and w<=2048 and h<=2048,"Invalid canvas size"
+ assert w*h<=4194304,"Canvas exceeds 4194304 pixels"
  return w*h
 }
 func create(w:int,h:int)->ints {return ints(size(w,h))}
@@ -29,7 +29,42 @@ func rectangle(pixels:ints,w:int,h:int,x:int,y:int,rw:int,rh:int,color:int)->int
  x0=max(x,0);y0=max(y,0);x1=min(x+rw,w);y1=min(y+rh,h)
  if x0>=x1 or y0>=y1 {return 0}
  for row in range(y0,y1) {
-  for col in range(x0,x1) {pixels[row*w+col]=color}
+  array_fill_range(pixels,row*w+x0,x1-x0,color)
  }
  return (x1-x0)*(y1-y0)
+}
+// Bresenham line; bounded coordinates prevent excessively long raster loops.
+func line(p:ints,w:int,h:int,x:int,y:int,ex:int,ey:int,color:int)->int {
+ assert len(p)==size(w,h) and colors.valid(color),"Invalid canvas"
+ assert x>=-4096 and x<=4096 and y>=-4096 and y<=4096 and ex>=-4096 and ex<=4096 and ey>=-4096 and ey<=4096,"Line coordinates out of range"
+ dx=abs(ex-x);dy=-abs(ey-y);sx=1;sy=1
+ if x>ex {sx=-1};if y>ey {sy=-1}
+ err=dx+dy;n=0
+ while true {
+  if pixel(p,w,h,x,y,color) {n+=1}
+  if x==ex and y==ey {break}
+  e=2*err
+  if e>=dy {err+=dy;x+=sx}
+  if e<=dx {err+=dx;y+=sy}
+ }
+ return n
+}
+// Filled disk using clipped horizontal spans.
+func circle(p:ints,w:int,h:int,x:int,y:int,r:int,color:int)->int {
+ assert len(p)==size(w,h) and colors.valid(color) and r>=0 and r<=2048,"Invalid circle"
+ assert x>=-4096 and x<=4096 and y>=-4096 and y<=4096,"Circle coordinates out of range"
+ total=0;span=r
+ for dy in range(0,r+1) {
+  while span*span+dy*dy>r*r {span-=1}
+  total+=rectangle(p,w,h,x-span,y+dy,span*2+1,1,color)
+  if dy>0 {total+=rectangle(p,w,h,x-span,y-dy,span*2+1,1,color)}
+ }
+ return total
+}
+// Constant opacity for one pixel, 0..100.
+func blend(p:ints,w:int,h:int,x:int,y:int,color:int,opacity:int)->bool {
+ assert len(p)==size(w,h) and colors.valid(color) and opacity>=0 and opacity<=100,"Invalid blend"
+ if x<0 or y<0 or x>=w or y>=h {return false}
+ p[y*w+x]=colors.mix(p[y*w+x],color,opacity)
+ return true
 }

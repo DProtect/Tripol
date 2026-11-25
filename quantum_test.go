@@ -69,7 +69,7 @@ show bad()`, `func f(n) => n+1 show f(1)`} {
 		})
 	}
 	runCase(t, `import tripol.canvas
-try {p=canvas.create(256,256)} catch e {show e}
+try {p=canvas.create(2049,1)} catch e {show e}
 try {p=canvas.create(2,2);canvas.clear(p,-1)} catch e {show e}`, "12\n12\n", false)
 }
 func TestQuantumPE(t *testing.T) {

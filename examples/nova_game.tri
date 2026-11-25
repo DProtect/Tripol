@@ -1,0 +1,27 @@
+import tripol.game
+import tripol.canvas
+import tripol.sprite
+import tripol.physics
+w=1280;h=720
+p=canvas.create(w,h)
+ship=sprite.solid(48,32,0)
+canvas.rectangle(ship,48,32,0,12,48,8,65535)
+canvas.rectangle(ship,48,32,14,0,20,32,65535)
+canvas.rectangle(ship,48,32,20,4,8,10,16777215)
+x=616;y=344
+game.window("TRIPOL NOVA",1280,720)
+while game.running() {
+ if game.key(27) {break}
+ if game.key(65) or game.key(37) {x-=8}
+ if game.key(68) or game.key(39) {x+=8}
+ if game.key(87) or game.key(38) {y-=8}
+ if game.key(83) or game.key(40) {y+=8}
+ x=physics.clamp_position(x,48,w);y=physics.clamp_position(y,32,h)
+ canvas.clear(p,986895)
+ canvas.circle(p,w,h,220,150,100,2516582)
+ canvas.line(p,w,h,0,600,w-1,600,6710886)
+ sprite.draw_key(p,w,h,ship,48,32,x,y,0)
+ game.present(p,w,h)
+ game.wait(16)
+}
+game.close()

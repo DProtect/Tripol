@@ -7,50 +7,19 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
 )
 
-const version = "0.14.0"
+const version = "0.23.0"
 
 type token struct {
 	s, k      string
 	line, col int
 }
 
-var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(\+=|-=|\*=|/=|%=|==|!=|<=|>=|&&|\|\||->|=>|[+*/%<>=!(){}\[\],.:;\-]))`)
-
 func die(f string, a ...any) { panic(fmt.Errorf(f, a...)) }
-func lex(s string) []token {
-	var ts []token
-	line, col := 1, 1
-	for len(s) > 0 {
-		m := lexRE.FindStringSubmatch(s)
-		if m == nil {
-			panic(diagnose("lexer", fmt.Sprintf("unexpected character %q", s[0]), "", line, col))
-		}
-		k := 0
-		for i := 1; i < len(m); i++ {
-			if m[i] != "" {
-				k = i
-				break
-			}
-		}
-		if k > 2 {
-			ts = append(ts, token{m[0], []string{"", "", "", "nl", "str", "int", "id", "op"}[k], line, col})
-		}
-		if k == 3 {
-			line++
-			col = 1
-		} else {
-			col += len(m[0])
-		}
-		s = s[len(m[0]):]
-	}
-	return append(ts, token{"<eof>", "eof", line, col})
-}
 
 type expr struct {
 	op, s string
@@ -531,17 +500,22 @@ type fix struct {
 	label string
 }
 type asm struct {
-	b         []byte
-	labels    map[string]int
-	fixes     []fix
-	serial    int
-	data      map[string]string
-	dataOrder []string
-	target    string
-	opt       bool
-	turbo     bool
-	guard     bool
-	trace     bool
+	b                    []byte
+	labels               map[string]int
+	fixes                []fix
+	references           map[string]bool
+	serial               int
+	data                 map[string]string
+	dataOrder            []string
+	target               string
+	opt                  bool
+	turbo                bool
+	hyper                bool
+	loopRegs             map[int]byte
+	loopInvariant        map[*expr]bool
+	loopIndexNonnegative bool
+	guard                bool
+	trace                bool
 }
 
 func (a *asm) emit(b ...byte) { a.b = append(a.b, b...) }
@@ -566,10 +540,10 @@ func (a *asm) label(s string) {
 	}
 	a.labels[s] = len(a.b)
 }
-func (a *asm) fresh() string { a.serial++; return fmt.Sprintf("@%d", a.serial) }
+func (a *asm) fresh() string { a.serial++; return "@" + strconv.Itoa(a.serial) }
 func (a *asm) rel(s string, b ...byte) {
 	a.emit(b...)
-	a.fixes = append(a.fixes, fix{len(a.b), s})
+	a.addFix(fix{len(a.b), s})
 	a.u32(0)
 }
 func (a *asm) call(s string)      { a.rel(s, 0xe8) }
@@ -585,6 +559,10 @@ func (a *asm) str(s string) {
 	a.rel(l, 0x48, 0x8d, 0x05)
 }
 func (a *asm) load(off int) {
+	if r, ok := a.loopRegs[off]; ok {
+		a.regMove(0, r)
+		return
+	}
 	if a.opt && off >= -128 && off <= 127 {
 		a.emit(0x48, 0x8b, 0x45, byte(off))
 		return
@@ -593,6 +571,10 @@ func (a *asm) load(off int) {
 	a.u32(off)
 }
 func (a *asm) store(off int) {
+	if r, ok := a.loopRegs[off]; ok {
+		a.regMove(r, 0)
+		return
+	}
 	if a.opt && off >= -128 && off <= 127 {
 		a.emit(0x48, 0x89, 0x45, byte(off))
 		return
@@ -628,6 +610,7 @@ type compiler struct {
 	loops         [][2]string
 	protected     []int
 	scratchScopes []int
+	tirCache      map[string]tirFunction
 }
 
 func (c *compiler) err(s string) {
@@ -653,6 +636,10 @@ func (c *compiler) require(a, b string) {
 }
 func (c *compiler) expression(e *expr) string {
 	a := c.a
+	if a.loopInvariant[e] {
+		a.regMove(0, 15)
+		return "int"
+	}
 	if a.opt {
 		if k, n, ok := fold(e); ok && e.op != "int" && e.op != "bool" {
 			a.imm(n)
@@ -721,8 +708,18 @@ func (c *compiler) expression(e *expr) string {
 		if c.inlineTIR(f, args) {
 			return f.ret
 		}
+		if _, ok := c.recurrence(f); ok {
+			c.registerArgs(args)
+			a.call("fn:" + e.s)
+			return f.ret
+		}
+		if _, ok := c.nativeTIR(f); ok {
+			c.registerArgs(args)
+			a.call("fn:" + e.s)
+			return f.ret
+		}
 		for i, x := range args {
-			if isStandardFunction(f.name) && !mutableArrayFunction(f.name) && f.args[i].typ == "ints" && c.promoteFixed(x) {
+			if isStandardFunction(f.name) && (!mutableArrayFunction(f.name) || i > 0) && f.args[i].typ == "ints" && c.promoteFixed(x) {
 				// A standard-library read-only array argument receives a stack view.
 			} else {
 				c.require(c.expression(x), f.args[i].typ)
@@ -757,6 +754,22 @@ func (c *compiler) expression(e *expr) string {
 		}
 		return t
 	}
+	// A promoted left variable is unchanged during call-free RHS evaluation.
+	if a.loopRegs != nil && e.op == "bin" && e.args[0].op == "var" && (e.s == "+" || e.s == "-" || e.s == "*") {
+		if v, ok := c.lookup(e.args[0].s); ok {
+			if r, ok := a.loopRegs[v.off]; ok {
+				c.require(c.expression(e.args[1]), "int")
+				if e.s == "-" {
+					a.regMove(1, r)
+					a.regArith("-", 1, 0)
+					a.regMove(0, 1)
+				} else {
+					a.regArith(e.s, 0, r)
+				}
+				return "int"
+			}
+		}
+	}
 	t := c.expression(e.args[0])
 	op := e.s
 	if op == "&&" || op == "||" {
@@ -774,6 +787,12 @@ func (c *compiler) expression(e *expr) string {
 	}
 	if a.opt && t == "int" && e.args[1].op == "int" && e.args[1].n <= 2147483647 {
 		n := e.args[1].n
+		if (op == "/" || op == "%") && c.positiveIndex(e.args[0]) && a.nonnegativePowerOfTwo(n, op == "%") {
+			return "int"
+		}
+		if (op == "/" || op == "%") && a.divPowerOfTwo(n, op == "%") {
+			return "int"
+		}
 		if (n == 0 && (op == "+" || op == "-")) || (n == 1 && op == "*") {
 			return "int"
 		}
@@ -814,6 +833,9 @@ func (c *compiler) expression(e *expr) string {
 		c.require(v.typ, t)
 		if strings.HasPrefix(v.typ, "array:") {
 			c.err("array requires an index")
+		}
+		if t == "int" && a.integerMemoryOp(op, v.off) {
+			return "int"
 		}
 		a.loadRCX(v.off)
 	} else {
@@ -890,7 +912,12 @@ func (c *compiler) block(ss []stmt, nested bool) {
 		}()
 	}
 	a := c.a
-	for _, s := range ss {
+	for i := 0; i < len(ss); i++ {
+		s := ss[i]
+		if i+1 < len(ss) && c.divisionPair(s, ss[i+1]) {
+			i++
+			continue
+		}
 		c.line = s.line
 		if s.source != "" {
 			c.source = s.source
@@ -953,6 +980,17 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				a.u32(v.off)
 			}
 		case "decl", "assign":
+			// In a validated, call-free register loop, update the promoted
+			// scalar in place. The RHS is evaluated before modifying it.
+			if a.loopRegs != nil && s.op == "assign" && s.e.op == "bin" && s.e.args[0].op == "var" && s.e.args[0].s == s.name && (s.e.s == "+" || s.e.s == "-" || s.e.s == "*") {
+				if v, ok := c.lookup(s.name); ok {
+					if r, ok := a.loopRegs[v.off]; ok && v.mut {
+						c.require(c.expression(s.e.args[1]), "int")
+						a.regArith(s.e.s, r, 0)
+						continue
+					}
+				}
+			}
 			if s.e.op == "array" {
 				c.arrayDeclare(s)
 				continue
@@ -983,6 +1021,17 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				}
 				v = variable{t, -8 * c.slots, s.mut || s.op == "assign"}
 				c.scopes[len(c.scopes)-1][s.name] = v
+				if a.loopRegs != nil && t == "int" {
+					used := false
+					for _, r := range a.loopRegs {
+						if r == 11 {
+							used = true
+						}
+					}
+					if !used {
+						a.loopRegs[v.off] = 11
+					}
+				}
 			}
 			a.store(v.off)
 		case "showmany":
@@ -1006,7 +1055,9 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			if c.ret == "" {
 				c.err("return outside function")
 			}
-			if a.opt && s.e.op == "call" && s.e.s == c.current.name && len(s.e.args) == len(c.current.args) {
+			// Direct self tail calls reuse the frame even in debug, unless
+			// tracing asks for real call frames.
+			if !a.trace && s.e.op == "call" && s.e.s == c.current.name && len(s.e.args) == len(c.current.args) {
 				for i, x := range s.e.args {
 					c.require(c.expression(x), c.current.args[i].typ)
 					a.emit(0x50)
@@ -1092,6 +1143,17 @@ func (c *compiler) function(f fn, main bool) {
 		c.scopes[0][p.name] = variable{p.typ, 16 + 8*(len(f.args)-1-i), true}
 	}
 	a.label("fn:" + f.name)
+	if !main {
+		if r, ok := c.recurrence(f); ok {
+			a.emitRecurrence(f, r)
+			return
+		}
+		if ir, ok := c.nativeTIR(f); ok {
+			a.emitRegTIR(ir.root, 0, []byte{1, 2})
+			a.emit(0xc3)
+			return
+		}
+	}
 	if a.trace && main {
 		a.emit(0x45, 0x31, 0xff)
 	}
@@ -1255,11 +1317,15 @@ func put64(b []byte, o int, v uint64) { binary.LittleEndian.PutUint64(b[o:], v) 
 func elf(a *asm) []byte {
 	const base = 0x400000
 	const off = 0x100
-	arena := a.needed("arena_state") || a.needed("guard_state")
+	bot := a.needed("bot_state")
+	arena := a.needed("arena_state") || a.needed("guard_state") || bot
 	arenaOff := align(off+len(a.b), 0x1000)
 	if arena {
 		a.labels["arena_state"] = arenaOff - off
 		a.labels["guard_state"] = arenaOff - off + 32
+		if bot {
+			a.labels["bot_state"] = arenaOff - off + 48
+		}
 	}
 	a.finish()
 	b := make([]byte, off+len(a.b))
@@ -1279,7 +1345,11 @@ func elf(a *asm) []byte {
 		put64(b, 184, uint64(arenaOff))
 		put64(b, 192, uint64(base+arenaOff))
 		put64(b, 200, uint64(base+arenaOff))
-		put64(b, 216, 40)
+		memsz := 40
+		if bot {
+			memsz = 48 + botStateSize
+		}
+		put64(b, 216, uint64(memsz))
 		put64(b, 224, 0x1000)
 	}
 	put32(b, 64, 1)
@@ -1322,7 +1392,25 @@ func pe(a *asm) []byte {
 		}
 		imports = append(imports, "VirtualFree")
 	}
-	if a.needed("iat:10") || a.needed("iat:19") || a.needed("iat:20") || a.needed("iat:30") || a.needed("game_state") {
+	if a.needed("iat:63") {
+		for len(imports) < 63 {
+			imports = append(imports, "")
+		}
+		imports = append(imports, "QueryPerformanceCounter", "QueryPerformanceFrequency")
+	}
+	if a.needed("iat:65") {
+		for len(imports) < 65 {
+			imports = append(imports, "")
+		}
+		imports = append(imports, "GetEnvironmentVariableA")
+	}
+	if a.needed("iat:70") {
+		for len(imports) < 70 {
+			imports = append(imports, "")
+		}
+		imports = append(imports, "CreateThread", "WaitForSingleObject")
+	}
+	if a.needed("iat:63") || a.needed("iat:10") || a.needed("iat:19") || a.needed("iat:20") || a.needed("iat:30") || a.needed("game_state") || a.needed("gw_state") {
 		id, iat, iatSize, importSize = networkImports(a, imports, idRVA, textRVA)
 	} else {
 		// Preserve logical IAT labels while packing only used imports.
@@ -1362,6 +1450,15 @@ func pe(a *asm) []byte {
 		iatSize = 8 * (count + 1)
 		importSize = 40
 	}
+	virtualIDSize := len(id)
+	if a.needed("bot_state") {
+		a.labels["bot_state"] = idRVA - textRVA + len(id)
+		virtualIDSize += botStateSize
+	}
+	if a.needed("gw_state") {
+		a.labels["gw_state"] = idRVA - textRVA + virtualIDSize
+		virtualIDSize += 65584
+	}
 	a.finish()
 	b := make([]byte, header+raw+len(id))
 	copy(b, "MZ")
@@ -1383,7 +1480,7 @@ func pe(a *asm) []byte {
 	put32(b, o+36, 0x200)
 	put16(b, o+40, 6)
 	put16(b, o+48, 6)
-	put32(b, o+56, align(idRVA+len(id), 0x1000))
+	put32(b, o+56, align(idRVA+virtualIDSize, 0x1000))
 	put32(b, o+60, header)
 	put16(b, o+68, 3)
 	put16(b, o+70, 0x100)
@@ -1405,7 +1502,7 @@ func pe(a *asm) []byte {
 	put32(b, s+36, 0x60000020)
 	s += 40
 	copy(b[s:], ".idata")
-	put32(b, s+8, len(id))
+	put32(b, s+8, virtualIDSize)
 	put32(b, s+12, idRVA)
 	put32(b, s+16, len(id))
 	put32(b, s+20, header+raw)
@@ -1422,13 +1519,19 @@ func compileProfile(src, target, profile string) []byte {
 func compileParsed(fs []fn, ss []stmt, target, profile string) []byte {
 	// Validate every function before eliminating any unreachable code.
 	if profile != "debug" {
-		generate(fs, ss, target, false, nil)
+		generateCode(fs, ss, target, false, nil)
 	}
-	return generate(fs, ss, target, profile != "debug", reachable(fs, ss), profile == "turbo")
+	return generate(fs, ss, target, profile != "debug", reachable(fs, ss), profile == "turbo", profile == "turbo" || profile == "balanced")
 }
-func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool, turbo ...bool) []byte {
-	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt, trace: diagnosticTrace, turbo: len(turbo) > 0 && turbo[0]}
-	c := compiler{a: a, fs: map[string]fn{}}
+
+// Type-check all bodies, including unreachable ones. The validation pass does not
+// link runtime templates or serialize an executable that would be discarded.
+func generateCode(fs []fn, ss []stmt, target string, opt bool, live map[string]bool, turbo ...bool) *asm {
+	if target != "linux" && target != "windows" {
+		die("unsupported target %s", target)
+	}
+	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt, trace: diagnosticTrace, turbo: len(turbo) > 0 && turbo[0], hyper: len(turbo) > 1 && turbo[1]}
+	c := compiler{a: a, fs: map[string]fn{}, tirCache: map[string]tirFunction{}}
 	for _, f := range fs {
 		if _, ok := c.fs[f.name]; ok {
 			die("duplicate function %s", f.name)
@@ -1448,6 +1551,10 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool,
 			c.function(f, false)
 		}
 	}
+	return a
+}
+func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool, turbo ...bool) []byte {
+	a := generateCode(fs, ss, target, opt, live, turbo...)
 	a.rt()
 	a.dialogTemplate()
 	// First-use order is deterministic and linear in the number of literals.
@@ -1468,11 +1575,15 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool,
 func cli() {
 	diagnosticOptions()
 	args := os.Args[1:]
+	if len(args) > 0 && args[0] == "arena" {
+		arenaCLI(args[1:])
+		return
+	}
 	if vaultCLI(args) {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.14.0 — QUANTUM\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol bench-build [FILE.tri] [--runs N]\ntripol run [FILE.tri] [--profile nano|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|turbo|debug]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL 0.23.0 — ORIGIN\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search] [--tripol-only] [--json FILE]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {
@@ -1552,7 +1663,7 @@ func cli() {
 		if len(args) == 4 && args[2] == "--template" {
 			template = args[3]
 		} else if len(args) != 2 {
-			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game]")
+			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]")
 		}
 		newProjectTemplate(src, template)
 		return
@@ -1561,8 +1672,14 @@ func cli() {
 	target := runtime.GOOS
 	out := ""
 	runs := 5
+	internal := false
 	for i := 2; i < len(args); i++ {
 		switch args[i] {
+		case "--internal":
+			if cmd != "bench" {
+				die("--internal requires bench")
+			}
+			internal = true
 		case "-o", "--output", "--target", "--profile", "--runs":
 			if i+1 >= len(args) {
 				die("missing option value")
@@ -1575,7 +1692,7 @@ func cli() {
 					die("--runs requires bench and a count from 1 to 100")
 				}
 			} else if args[i] == "--profile" {
-				if v != "nano" && v != "turbo" && v != "debug" {
+				if v != "nano" && v != "balanced" && v != "turbo" && v != "debug" {
 					die("unknown profile %s", v)
 				}
 				profile = v
@@ -1614,7 +1731,11 @@ func cli() {
 		out = filepath.Join(d, "program"+ext)
 		write(out, bin)
 		if cmd == "bench" {
-			benchmark(out, runs)
+			if internal {
+				benchmarkInternal(out, runs)
+			} else {
+				benchmark(out, runs)
+			}
 		} else {
 			runNative(out)
 		}

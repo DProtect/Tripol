@@ -11,6 +11,10 @@ func needsFrame(ss []stmt) bool {
 	return false
 }
 func (a *asm) loadRCX(off int) {
+	if r, ok := a.loopRegs[off]; ok {
+		a.regMove(1, r)
+		return
+	}
 	if a.opt && off >= -128 && off <= 127 {
 		a.emit(0x48, 0x8b, 0x4d, byte(off))
 		return

@@ -66,9 +66,13 @@ func (c *compiler) showValue(e *expr, newline bool) {
 func (c *compiler) ecosystemBuiltin(e *expr) string {
 	a := c.a
 	switch e.s {
-	case "platform_name", "compiler_version", "monotonic_ms":
+	case "platform_name", "compiler_version", "monotonic_ms", "monotonic_ns":
 		if len(e.args) != 0 {
 			c.err(e.s + " expects no arguments")
+		}
+		if e.s == "monotonic_ns" {
+			a.call("clock_ns")
+			return "int"
 		}
 		if e.s == "monotonic_ms" {
 			a.call("clock_ms")

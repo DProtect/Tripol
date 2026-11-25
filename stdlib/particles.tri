@@ -1,0 +1,9 @@
+// Each particle: x,y,vx,vy,life (integer ticks). Caller owns storage.
+func create(n:int)->ints {assert n>=0 and n<=65535,"Invalid particle count";return ints(n*5)}
+func count(p:ints)->int {assert len(p)%5==0,"Invalid particles";return len(p)/5}
+func step(p:ints)->int {
+ alive=0
+ for i in range(count(p)) {b=i*5;if p[b+4]>0 {p[b]=p[b]+p[b+2];p[b+1]=p[b+1]+p[b+3];p[b+4]=p[b+4]-1;if p[b+4]>0 {alive+=1}}}
+ return alive
+}
+func alive(p:ints)->int {n=0;for i in range(count(p)) {if p[i*5+4]>0 {n+=1}};return n}

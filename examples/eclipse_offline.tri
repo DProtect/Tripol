@@ -1,0 +1,6 @@
+import tripol.discord
+
+discord.reply("!hola", "Hola compa!")
+discord.reply("!ping", "Pong!")
+show discord.preview("!hola")
+show discord.preview("!ping")

@@ -1,0 +1,32 @@
+name: Compiler CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: false
+      - run: go test -count=1 -v .
+      - run: go vet .
+      - run: go build -trimpath .
+      - if: runner.os == 'Linux'
+        run: |
+          ./tripol build examples/hello.tri --target linux -o hello
+          ./hello
+      - if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./tripol.exe build examples/hello.tri --target windows -o hello.exe
+          ./hello.exe
+          ./tripol.exe build examples/origin_bot.tri --target windows -o origin-bot.exe

@@ -1,0 +1,11 @@
+import tripol.time
+start=time.now_ns()
+a=0;b=0;c=0;d=0
+for i in range(6000000) {
+    a+=i%16
+    b+=a%8
+    if i%2==0 { c+=b%32 } else { d+=a%32 }
+}
+ns=time.elapsed_ns(start)
+show a,b,c,d
+show "TRIPOL_NS:",ns

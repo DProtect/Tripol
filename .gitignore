@@ -6,3 +6,12 @@ __pycache__/
 
 # Local native compiler binary
 /tripol
+
+# Local secrets and build/benchmark output
+.env
+.env.*
+!.env.example
+*.local.tri
+*.pem
+*.key
+arena-*.json

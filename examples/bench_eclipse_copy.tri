@@ -1,0 +1,12 @@
+import tripol.arrays
+import tripol.time
+n=input_int()
+data=ints(n)
+for i in range(n){data[i]=i%1024}
+start=time.now_ns()
+b=arrays.copy(data)
+ns=time.elapsed_ns(start)
+s=0
+for i in range(n){s+=b[i]}
+show s
+show "TRIPOL_NS:",ns

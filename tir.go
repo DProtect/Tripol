@@ -101,6 +101,21 @@ func (a *asm) emitTIR(n *tirNode, arity int) {
 			a.j(0x80, "err")
 			return
 		}
+		// For multi-argument scalar expressions, operate directly on the
+		// original argument stack slot. No temporary expression push/pop.
+		if n.right.op == tirParam && arity > 1 {
+			off := byte(8 * (arity - 1 - int(n.right.value)))
+			switch n.op {
+			case tirAdd:
+				a.emit(0x49, 0x03, 0x43, off)
+			case tirSub:
+				a.emit(0x49, 0x2b, 0x43, off)
+			case tirMul:
+				a.emit(0x49, 0x0f, 0xaf, 0x43, off)
+			}
+			a.j(0x80, "err")
+			return
+		}
 		if n.right.op == tirConst && n.right.value >= -128 && n.right.value <= 127 {
 			v := byte(n.right.value)
 			switch n.op {
@@ -133,9 +148,21 @@ func (c *compiler) inlineTIR(f fn, args []*expr) bool {
 	if !a.opt || a.trace {
 		return false
 	}
-	ir, ok := lowerTIR(f)
-	if !ok || (len(args) > 1 && !a.turbo) {
+	if len(args) > 1 && !a.turbo {
 		return false
+	}
+	ir, cached := c.tirCache[f.name]
+	if !cached {
+		ir, _ = lowerTIR(f)
+		c.tirCache[f.name] = ir
+	}
+	if ir.root == nil {
+		return false
+	}
+	if a.hyper && len(args) > 1 {
+		c.registerArgs(args)
+		a.emitRegTIR(ir.root, 0, []byte{1, 2})
+		return true
 	}
 	// Evaluation remains left-to-right and exactly once, even for unused parameters.
 	if len(args) == 1 {
@@ -203,7 +230,7 @@ func (n *tirNode) String() string {
 func inspectTIR(file string) {
 	fs, ss, _ := loadProject(file)
 	generate(fs, ss, "linux", false, nil)
-	fmt.Println("TRIPOL TIR R2 — lowered scalar functions")
+	fmt.Println("TRIPOL TIR R4 — lowered scalar functions")
 	n := 0
 	for _, f := range fs {
 		if ir, ok := lowerTIR(f); ok {
@@ -211,5 +238,5 @@ func inspectTIR(file string) {
 			n++
 		}
 	}
-	fmt.Printf("%d lowered functions; nano: zero/one argument; turbo: up to four arguments may inline.\n", n)
+	fmt.Printf("%d lowered functions; nano: zero/one argument; balanced: register leaf ABI; turbo: up to four arguments may inline.\n", n)
 }

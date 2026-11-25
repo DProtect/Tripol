@@ -1,0 +1,28 @@
+// Fixed-capacity string->int map; 1..32 key bytes, 1..4096 slots.
+// Linear scan, no hash collisions. Row: key length, value, 32 key bytes.
+func create(capacity=32)->ints {assert capacity>=1 and capacity<=4096,"Invalid dictionary capacity";return ints(capacity*34)}
+func capacity(d:ints)->int {assert len(d)>=34 and len(d)%34==0 and len(d)<=139264,"Invalid dictionary";return len(d)/34}
+func locate(d:ints,key:string)->int {
+ assert len(key)>0 and len(key)<=32,"Invalid key length"
+ for i in range(capacity(d)) {
+  b=i*34
+  if d[b]==len(key) {
+   same=true
+   for j in range(len(key)) {if d[b+2+j]!=byte_at(key,j) {same=false;break}}
+   if same {return b}
+  }
+ }
+ return -1
+}
+func contains(d:ints,key:string)->bool {return locate(d,key)>=0}
+func get(d:ints,key:string,fallback=0)->int {b=locate(d,key);if b<0 {return fallback};return d[b+1]}
+func size(d:ints)->int {n=0;for i in range(capacity(d)) {if d[i*34]>0 {n+=1}};return n}
+func set(d:ints,key:string,value:int)->bool {
+ b=locate(d,key)
+ if b<0 {for i in range(capacity(d)) {if d[i*34]==0 {b=i*34;break}}}
+ if b<0 {return false}
+ d[b]=len(key);d[b+1]=value
+ for j in range(len(key)) {d[b+2+j]=byte_at(key,j)}
+ return true
+}
+func remove(d:ints,key:string)->bool {b=locate(d,key);if b<0 {return false};d[b]=0;d[b+1]=0;return true}

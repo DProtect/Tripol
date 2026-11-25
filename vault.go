@@ -343,33 +343,53 @@ func vaultCLI(args []string) bool {
 func benchBuild(args []string) {
 	src := "main.tri"
 	runs := 10
+	profile := "nano"
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
 		src = args[0]
 		args = args[1:]
 	}
-	if len(args) > 0 {
-		if len(args) != 2 || args[0] != "--runs" {
-			die("usage: tripol bench-build [FILE.tri] [--runs N]")
+	for len(args) > 0 {
+		if len(args) < 2 {
+			die("missing benchmark option value")
 		}
-		n, e := strconv.Atoi(args[1])
-		if e != nil || n < 1 || n > 100 {
-			die("runs must be 1..100")
+		switch args[0] {
+		case "--runs":
+			n, e := strconv.Atoi(args[1])
+			if e != nil || n < 1 || n > 100 {
+				die("runs must be 1..100")
+			}
+			runs = n
+		case "--profile":
+			profile = args[1]
+			if profile != "nano" && profile != "balanced" && profile != "turbo" && profile != "debug" {
+				die("unknown profile %s", profile)
+			}
+		default:
+			die("unknown benchmark option %s", args[0])
 		}
-		runs = n
+		args = args[2:]
 	}
-	build := func() []byte { fs, ss, _ := loadProject(src); return compileParsed(fs, ss, "windows", "nano") }
+	build := func() []byte { fs, ss, _ := loadProject(src); return compileParsed(fs, ss, "windows", profile) }
 	ref := build()
+	sample := func(n int) float64 {
+		start := time.Now()
+		for i := 0; i < n; i++ {
+			if !bytes.Equal(ref, build()) {
+				die("non-deterministic compilation")
+			}
+		}
+		return float64(time.Since(start)) / float64(time.Millisecond)
+	}
+	batch := 1
+	for batch < 1024 && sample(batch) < 15 {
+		batch *= 2
+	}
 	times := make([]float64, runs)
 	for i := range times {
-		start := time.Now()
-		b := build()
-		times[i] = float64(time.Since(start)) / float64(time.Millisecond)
-		if !bytes.Equal(ref, b) {
-			die("non-deterministic compilation")
-		}
+		times[i] = sample(batch) / float64(batch)
 	}
 	sort.Float64s(times)
 	median := (times[(runs-1)/2] + times[runs/2]) / 2
-	fmt.Printf("Build median: %.3f ms | Min: %.3f ms | Max: %.3f ms | Output: %d bytes\n", median, times[0], times[runs-1], len(ref))
-	fmt.Println("Windows x64 nano; includes source loading and compilation, excludes executable write and compiler startup. One warm-up excluded.")
+	fmt.Printf("Build median: %.6f ms | Min: %.6f ms | Max: %.6f ms | Output: %d bytes\n", median, times[0], times[runs-1], len(ref))
+	fmt.Printf("Windows x64 %s; %d builds per sample; includes source loading, compilation and deterministic equality check, excludes executable write and compiler startup. Warm-up and calibration excluded.\n", profile, batch)
 }

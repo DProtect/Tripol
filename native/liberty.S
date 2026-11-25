@@ -309,6 +309,25 @@
  rep stosq
  mov rax,rdx
  ret
+.section .text.array_fill_range,"ax"
+ # rax=array, rcx=start, rdx=count, r8=value; validate before writing.
+ test rcx,rcx
+ js bounds
+ test rdx,rdx
+ js bounds
+ mov r9,[rax]
+ cmp rcx,r9
+ ja bounds
+ sub r9,rcx
+ cmp rdx,r9
+ ja bounds
+ lea rdi,[rax+rcx*8+8]
+ mov rax,r8
+ mov rcx,rdx
+ cld
+ rep stosq
+ mov rax,rdx
+ ret
 .section .text.readbyte_linux,"ax"
  mov rsi,rax
  xor edi,edi
@@ -622,7 +641,7 @@
  ret
 .section .text.ints_alloc,"ax"
  # Runtime-sized int64 array: [length][elements...], bounded arena allocation.
- cmp rax,65535
+ cmp rax,4194304
  ja text_error
  push rbp
  mov rbp,rsp
@@ -762,6 +781,51 @@
  and rsp,-16
  sub rsp,32
  call [rip+iat8]
+ leave
+ ret
+
+# Nanosecond monotonic clock, not Unix time. On Windows QPC is converted
+# using a 128-bit product to avoid overflowing before division.
+.section .text.clock_ns_linux,"ax"
+ sub rsp,16
+ mov eax,228
+ mov edi,1
+ mov rsi,rsp
+ syscall
+ test rax,rax
+ js text_error
+ imul rax,[rsp],1000000000
+ jo text_error
+ add rax,[rsp+8]
+ jo text_error
+ add rsp,16
+ ret
+.section .text.clock_ns_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,48
+ lea rcx,[rsp+32]
+ call [rip+iat63]
+ test eax,eax
+ jz text_error
+ lea rcx,[rsp+40]
+ call [rip+iat64]
+ test eax,eax
+ jz text_error
+ mov rax,[rsp+32]
+ mov rcx,[rsp+40]
+ test rax,rax
+ js text_error
+ test rcx,rcx
+ jle text_error
+ mov edx,1000000000
+ mul rdx
+ cmp rdx,rcx
+ jae text_error
+ div rcx
+ test rax,rax
+ js text_error
  leave
  ret
 
@@ -1461,7 +1525,7 @@ method: .short 71,69,84,0
  lea rdx,[rip+game_state]
  mov [rdx],rax
  xor ecx,ecx
- mov edx,262144
+ mov edx,16777216
  mov r8d,0x3000
  mov r9d,4
  call qword ptr [rip+iat4]
@@ -1576,7 +1640,7 @@ method: .short 71,69,84,0
  jg game_error
  mov r8,rcx
  imul r8,rdx
- cmp r8,65535
+ cmp r8,4194304
  ja game_error
  cmp [rax],r8
  jne game_error
@@ -1674,3 +1738,771 @@ method: .short 71,69,84,0
  jmp exit
 1: .ascii "TRIPOL runtime error: game window requires Windows or graphics operation failed\n"
 2:
+
+.section .text.discord_request_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,2048
+ test byte ptr [rsp],0
+ sub rsp,2048
+ test byte ptr [rsp],0
+ mov [rsp+72],rax # path
+ mov [rsp+64],rcx # token
+ mov [rsp+160],rdx # body
+ mov qword ptr [rsp+168],0 # body length
+ mov qword ptr [rsp+80],0
+ mov qword ptr [rsp+88],0
+ mov qword ptr [rsp+96],0
+ # Fixed trusted host, path ASCII and bounded, token restricted to safe chars.
+ mov rsi,[rsp+72]
+ lea rdi,[rsp+256]
+ xor ecx,ecx
+ cmp byte ptr [rsi],47
+ jne 9f
+3: movzx eax,byte ptr [rsi+rcx]
+ mov [rdi+rcx*2],ax
+ test eax,eax
+ jz 4f
+ cmp eax,33
+ jb 9f
+ cmp eax,126
+ ja 9f
+ inc ecx
+ cmp ecx,1024
+ jbe 3b
+ jmp 9f
+4: # Build wide Authorization header; no CR/LF in token.
+ lea rsi,[rip+discord_header]
+ lea rdi,[rsp+2400]
+ mov ecx,19
+ rep movsw
+ mov rsi,[rsp+64]
+ xor ecx,ecx
+ cmp byte ptr [rsi],0
+ je 9f
+.dtoken:
+ movzx eax,byte ptr [rsi+rcx]
+ test eax,eax
+ jz .dheader_end
+ cmp eax,45
+ je .dtok_ok
+ cmp eax,46
+ je .dtok_ok
+ cmp eax,95
+ je .dtok_ok
+ cmp eax,48
+ jb 9f
+ cmp eax,57
+ jbe .dtok_ok
+ cmp eax,65
+ jb 9f
+ cmp eax,90
+ jbe .dtok_ok
+ cmp eax,97
+ jb 9f
+ cmp eax,122
+ ja 9f
+.dtok_ok:
+ mov [rdi+rcx*2],ax
+ inc ecx
+ cmp ecx,512
+ jbe .dtoken
+ jmp 9f
+.dheader_end:
+ lea rdi,[rdi+rcx*2]
+ lea rsi,[rip+discord_header_end]
+ mov ecx,35
+ rep movsw
+ mov rax,[rsp+160]
+ call strlen
+ cmp rax,16384
+ ja 9f
+ mov [rsp+168],rax
+ mov eax,65536
+ call alloc
+ mov [rsp+104],rax
+ # Open with default proxy policy. No custom certificate exceptions.
+ lea rcx,[rip+discord_agent]
+ xor edx,edx
+ xor r8d,r8d
+ xor r9d,r9d
+ mov qword ptr [rsp+32],0
+ call qword ptr [rip+iat30]
+ test rax,rax
+ jz 9f
+ mov [rsp+80],rax
+ mov rcx,rax
+ mov edx,5000
+ mov r8d,5000
+ mov r9d,5000
+ mov qword ptr [rsp+32],5000
+ call qword ptr [rip+iat37]
+ test eax,eax
+ jz 9f
+ mov rcx,[rsp+80]
+ lea rdx,[rip+discord_host]
+ mov r8d,443
+ xor r9d,r9d
+ call qword ptr [rip+iat31]
+ test rax,rax
+ jz 9f
+ mov [rsp+88],rax
+ mov rcx,rax
+ lea rdx,[rip+discord_get]
+ cmp qword ptr [rsp+168],0
+ je .dverb
+ lea rdx,[rip+discord_post]
+.dverb:
+ lea r8,[rsp+256]
+ xor r9d,r9d
+ mov qword ptr [rsp+32],0
+ mov qword ptr [rsp+40],0
+ mov qword ptr [rsp+48],0x00800000
+ call qword ptr [rip+iat32]
+ test rax,rax
+ jz 9f
+ mov [rsp+96],rax
+ # WINHTTP_OPTION_REDIRECT_POLICY=88, NEVER=0.
+ mov rcx,rax
+ mov edx,88
+ mov dword ptr [rsp+144],0
+ lea r8,[rsp+144]
+ mov r9d,4
+ call qword ptr [rip+iat38]
+ test eax,eax
+ jz 9f
+ mov rcx,[rsp+96]
+ lea rdx,[rsp+2400]
+ mov r8d,-1
+ mov r9,[rsp+160]
+ mov rax,[rsp+168]
+ test rax,rax
+ jnz .dbody
+ xor r9d,r9d
+.dbody:
+ mov [rsp+32],rax
+ mov [rsp+40],rax
+ mov qword ptr [rsp+48],0
+ call qword ptr [rip+iat33]
+ test eax,eax
+ jz 9f
+ mov rcx,[rsp+96]
+ xor edx,edx
+ call qword ptr [rip+iat34]
+ test eax,eax
+ jz 9f
+ # WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER.
+ mov rcx,[rsp+96]
+ mov edx,0x20000013
+ xor r8d,r8d
+ lea r9,[rsp+144]
+ mov dword ptr [rsp+148],4
+ lea rax,[rsp+148]
+ mov [rsp+32],rax
+ mov qword ptr [rsp+40],0
+ call qword ptr [rip+iat39]
+ test eax,eax
+ jz 9f
+ cmp dword ptr [rsp+144],200
+ jb 9f
+ cmp dword ptr [rsp+144],299
+ ja 9f
+ mov qword ptr [rsp+112],0
+5: mov rcx,[rsp+96]
+ mov rdx,[rsp+104]
+ add rdx,[rsp+112]
+ mov r8d,65536
+ sub r8,[rsp+112]
+ lea r9,[rsp+152]
+ call qword ptr [rip+iat35]
+ test eax,eax
+ jz 9f
+ mov eax,[rsp+152]
+ test eax,eax
+ jz 6f
+ add [rsp+112],rax
+ cmp qword ptr [rsp+112],65536
+ jae 9f
+ jmp 5b
+6: mov rax,[rsp+104]
+ mov rcx,[rsp+112]
+ mov byte ptr [rax+rcx],0
+ xor edx,edx
+7: cmp rdx,rcx
+ je 8f
+ cmp byte ptr [rax+rdx],0
+ je 9f
+ inc rdx
+ jmp 7b
+8: mov qword ptr [rsp+120],1
+ jmp 10f
+9: mov qword ptr [rsp+120],0
+10: mov rcx,[rsp+96]
+ test rcx,rcx
+ jz 11f
+ call qword ptr [rip+iat36]
+11: mov rcx,[rsp+88]
+ test rcx,rcx
+ jz 12f
+ call qword ptr [rip+iat36]
+12: mov rcx,[rsp+80]
+ test rcx,rcx
+ jz 13f
+ call qword ptr [rip+iat36]
+13: cmp qword ptr [rsp+120],0
+ je discord_error
+ # Reclaim unused response buffer suffix.
+ mov edx,65535
+ sub rdx,[rsp+112]
+ lea r8,[rip+arena_state]
+ sub [r8],rdx
+ add [r8+8],rdx
+ mov rax,[rsp+104]
+ leave
+ ret
+ .balign 2
+
+discord_header: .short 65,117,116,104,111,114,105,122,97,116,105,111,110,58,32,66,111,116,32
+discord_header_end: .short 13,10,67,111,110,116,101,110,116,45,84,121,112,101,58,32,97,112,112,108,105,99,97,116,105,111,110,47,106,115,111,110,13,10,0
+discord_host: .short 100,105,115,99,111,114,100,46,99,111,109,0
+discord_agent: .short 84,82,73,80,79,76,0
+discord_get: .short 71,69,84,0
+discord_post: .short 80,79,83,84,0
+
+.section .text.discord_request_linux,"ax"
+ jmp discord_error
+.section .text.discord_error,"ax"
+ lea rsi,[rip+1f]
+ mov edx,2f-1f
+ call writeerr
+ mov eax,15
+ jmp exit
+1: .ascii "TRIPOL Discord request failed (Windows HTTPS, token, permissions, rate limit or response limit). Stopped; do not retry blindly.\n"
+2:
+
+.section .text.env_get_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,2048
+ test byte ptr [rsp],0
+ sub rsp,2112
+ test byte ptr [rsp],0
+ mov rcx,rax
+ lea rdx,[rsp+64]
+ mov r8d,4096
+ call qword ptr [rip+iat65]
+ cmp eax,4096
+ jae 1f
+ mov [rsp+40],rax
+ lea rax,[rax+1]
+ call alloc
+ mov rcx,[rsp+40]
+ lea rsi,[rsp+64]
+ mov rdi,rax
+ rep movsb
+ mov byte ptr [rdi],0
+ leave
+ ret
+1: xor eax,eax
+ inc eax
+ call alloc
+ mov byte ptr [rax],0
+ leave
+ ret
+.section .text.env_get_linux,"ax"
+ lea rax,[rip+1f]
+ ret
+1: .byte 0
+
+# SSE2 equality of dynamic int64 arrays. Two elements per vector; scalar tail.
+.section .text.array_equal,"ax"
+ mov r8,[rax]
+ cmp r8,[rcx]
+ jne 4f
+ add rax,8
+ add rcx,8
+1: cmp r8,2
+ jb 2f
+ movdqu xmm0,[rax]
+ movdqu xmm1,[rcx]
+ pcmpeqd xmm0,xmm1
+ pmovmskb edx,xmm0
+ cmp edx,65535
+ jne 4f
+ add rax,16
+ add rcx,16
+ sub r8,2
+ jmp 1b
+2: test r8,r8
+ jz 3f
+ mov rdx,[rax]
+ cmp rdx,[rcx]
+ jne 4f
+3: mov eax,1
+ ret
+4: xor eax,eax
+ ret
+
+# Bounded state slots. Never retain references to temporary arena objects.
+.section .text.bot_slot_set,"ax"
+ cmp rax,38
+ ja text_error
+ imul rax,rax,528
+ lea rdi,[rip+bot_state]
+ add rdi,rax
+ mov rsi,rcx
+ xor edx,edx
+1: cmp byte ptr [rsi+rdx],0
+ je 2f
+ inc rdx
+ cmp rdx,512
+ jbe 1b
+ jmp text_error
+2: lea rcx,[rdx+1]
+ cld
+ rep movsb
+ # Clear old suffix, including secrets, on replacement.
+ mov ecx,527
+ sub rcx,rdx
+ xor eax,eax
+ rep stosb
+ mov eax,1
+ ret
+
+.section .text.bot_slot_get,"ax"
+ cmp rax,38
+ ja text_error
+ imul rax,rax,528
+ lea rdx,[rip+bot_state]
+ add rax,rdx
+ push rbp
+ mov rbp,rsp
+ sub rsp,16
+ mov [rbp-8],rax
+ call strlen
+ inc rax
+ mov [rbp-16],rax
+ call alloc
+ mov rdi,rax
+ mov rsi,[rbp-8]
+ mov rcx,[rbp-16]
+ cld
+ rep movsb
+ leave
+ ret
+
+# Copy independent int array in one allocation, no redundant zero fill.
+.section .text.array_copy,"ax"
+ push rbp
+ mov rbp,rsp
+ sub rsp,16
+ mov [rbp-8],rax
+ mov rcx,[rax]
+ cmp rcx,4194304
+ ja text_error
+ inc rcx
+ mov [rbp-16],rcx
+ lea rax,[rcx*8]
+ call alloc
+ mov rdi,rax
+ mov rsi,[rbp-8]
+ mov rcx,[rbp-16]
+ cld
+ rep movsq
+ leave
+ ret
+
+# Find first matching int64; bounded and read-only.
+# AVX2 first-match search with CPUID/XGETBV gate; scalar fallback and tail.
+.section .text.array_find,"ax"
+ mov r8,[rax]
+ test r8,r8
+ jz .af_none
+ lea r10,[rax+8]
+ mov r9,rcx
+ mov rdi,r10
+ cmp r8,32
+ jb .af_scalar
+ push rbx
+ xor eax,eax
+ cpuid
+ cmp eax,7
+ jb .af_fallback
+ mov eax,1
+ cpuid
+ and ecx,0x18000000 # AVX + OSXSAVE
+ cmp ecx,0x18000000
+ jne .af_fallback
+ xor ecx,ecx
+ xgetbv
+ and eax,6
+ cmp eax,6
+ jne .af_fallback
+ mov eax,7
+ xor ecx,ecx
+ cpuid
+ test ebx,32
+ jz .af_fallback
+ pop rbx
+ vmovq xmm0,r9
+ vpbroadcastq ymm0,xmm0
+ mov rcx,r8
+.af_pair:
+ cmp rcx,8
+ jb .af_vector
+ vpcmpeqq ymm1,ymm0,[rdi]
+ vpcmpeqq ymm2,ymm0,[rdi+32]
+ vpor ymm3,ymm1,ymm2
+ vptest ymm3,ymm3
+ jnz .af_pair_hit
+ add rdi,64
+ sub rcx,8
+ jmp .af_pair
+.af_pair_hit:
+ vpmovmskb edx,ymm1
+ test edx,edx
+ jnz .af_hit
+ add rdi,32
+ vpmovmskb edx,ymm2
+ jmp .af_hit
+.af_vector:
+ cmp rcx,4
+ jb .af_tail
+ vpcmpeqq ymm1,ymm0,[rdi]
+ vpmovmskb edx,ymm1
+ test edx,edx
+ jnz .af_hit
+ add rdi,32
+ sub rcx,4
+ jmp .af_vector
+.af_hit:
+ bsf edx,edx
+ shr edx,3
+ mov rax,rdi
+ sub rax,r10
+ shr rax,3
+ add rax,rdx
+ vzeroupper
+ ret
+.af_tail:
+ vzeroupper
+ test rcx,rcx
+ jz .af_none
+ mov rax,r9
+ jmp .af_scan
+.af_fallback:
+ pop rbx
+.af_scalar:
+ mov rax,r9
+ mov rcx,r8
+.af_scan:
+ cld
+ repne scasq
+ jne .af_none
+ lea rax,[rdi-8]
+ sub rax,r10
+ shr rax,3
+ ret
+.af_none:
+ mov rax,-1
+ ret
+
+# NEXUS Gateway. Fixed TLS host, no redirects. One synchronous receive worker
+# at a time; no arena use on worker. Main waits locally, not network polling.
+# gw_state: session, connection, websocket, thread, signed length, padding, data.
+.section .text.gw_open_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,96
+ lea rax,[rip+gw_state]
+ mov [rsp+72],rax
+ cmp qword ptr [rax],0
+ jne .gwopen_bad
+ mov qword ptr [rsp+64],0
+ lea rcx,[rip+.gwagent]
+ xor edx,edx
+ xor r8d,r8d
+ xor r9d,r9d
+ mov qword ptr [rsp+32],0
+ call qword ptr [rip+iat30]
+ test rax,rax
+ jz .gwopen_bad
+ mov r10,[rsp+72]
+ mov [r10],rax
+ mov rcx,rax
+ mov edx,10000
+ mov r8d,10000
+ mov r9d,10000
+ mov qword ptr [rsp+32],120000
+ call qword ptr [rip+iat37]
+ test eax,eax
+ jz .gwopen_fail
+ mov r10,[rsp+72]
+ mov rcx,[r10]
+ lea rdx,[rip+.gwhost]
+ mov r8d,443
+ xor r9d,r9d
+ call qword ptr [rip+iat31]
+ test rax,rax
+ jz .gwopen_fail
+ mov r10,[rsp+72]
+ mov [r10+8],rax
+ mov rcx,rax
+ lea rdx,[rip+.gwget]
+ lea r8,[rip+.gwpath]
+ xor r9d,r9d
+ mov qword ptr [rsp+32],0
+ mov qword ptr [rsp+40],0
+ mov qword ptr [rsp+48],0x00800000
+ call qword ptr [rip+iat32]
+ test rax,rax
+ jz .gwopen_fail
+ mov [rsp+64],rax
+ mov rcx,rax
+ mov edx,88
+ mov dword ptr [rsp+80],0
+ lea r8,[rsp+80]
+ mov r9d,4
+ call qword ptr [rip+iat38]
+ test eax,eax
+ jz .gwopen_fail
+ mov rcx,[rsp+64]
+ mov edx,114
+ xor r8d,r8d
+ xor r9d,r9d
+ call qword ptr [rip+iat38]
+ test eax,eax
+ jz .gwopen_fail
+ mov rcx,[rsp+64]
+ xor edx,edx
+ xor r8d,r8d
+ xor r9d,r9d
+ mov qword ptr [rsp+32],0
+ mov qword ptr [rsp+40],0
+ mov qword ptr [rsp+48],0
+ call qword ptr [rip+iat33]
+ test eax,eax
+ jz .gwopen_fail
+ mov rcx,[rsp+64]
+ xor edx,edx
+ call qword ptr [rip+iat34]
+ test eax,eax
+ jz .gwopen_fail
+ mov rcx,[rsp+64]
+ xor edx,edx
+ call qword ptr [rip+iat66]
+ test rax,rax
+ jz .gwopen_fail
+ mov r10,[rsp+72]
+ mov [r10+16],rax
+ mov rcx,[rsp+64]
+ call qword ptr [rip+iat36]
+ mov eax,1
+ leave
+ ret
+.gwopen_fail:
+ mov rcx,[rsp+64]
+ test rcx,rcx
+ jz .gwopen_cleanup
+ call qword ptr [rip+iat36]
+.gwopen_cleanup:
+ call gw_close
+.gwopen_bad:
+ xor eax,eax
+ leave
+ ret
+ .balign 2
+.gwagent: .short 84,82,73,80,79,76,0
+.gwhost: .short 103,97,116,101,119,97,121,46,100,105,115,99,111,114,100,46,103,103,0
+.gwget: .short 71,69,84,0
+.gwpath: .short 47,63,118,61,49,48,38,101,110,99,111,100,105,110,103,61,106,115,111,110,0
+
+.section .text.gw_send_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,48
+ mov [rsp+32],rax
+ call strlen
+ cmp rax,4096
+ ja gw_abort
+ mov r9d,eax
+ mov r8,[rsp+32]
+ lea rcx,[rip+gw_state]
+ mov rcx,[rcx+16]
+ test rcx,rcx
+ jz gw_abort
+ mov edx,2
+ call qword ptr [rip+iat67]
+ test eax,eax
+ jnz gw_abort
+ mov eax,1
+ leave
+ ret
+
+# The OS thread uses Win64 ABI, preserves nonvolatile registers, and writes
+# only its own bounded buffer. Completion is synchronized by thread wait.
+.section .text.gw_worker,"ax"
+ push rbx
+ sub rsp,64
+ mov rbx,rcx
+ mov qword ptr [rbx+32],0
+.gww_loop:
+ mov rcx,[rbx+16]
+ lea rdx,[rbx+48]
+ add rdx,[rbx+32]
+ mov r8d,65535
+ sub r8d,[rbx+32]
+ jz .gww_bad
+ lea r9,[rsp+40]
+ lea rax,[rsp+44]
+ mov [rsp+32],rax
+ call qword ptr [rip+iat68]
+ test eax,eax
+ jnz .gww_bad
+ mov eax,[rsp+40]
+ add [rbx+32],rax
+ cmp qword ptr [rbx+32],65535
+ ja .gww_bad
+ cmp dword ptr [rsp+44],3
+ je .gww_loop
+ cmp dword ptr [rsp+44],2
+ jne .gww_bad
+ mov rax,[rbx+32]
+ test rax,rax
+ jz .gww_bad
+ mov byte ptr [rbx+rax+48],0
+ xor ecx,ecx
+.gww_nul:
+ cmp rcx,rax
+ je .gww_done
+ cmp byte ptr [rbx+rcx+48],0
+ je .gww_bad
+ inc rcx
+ jmp .gww_nul
+.gww_bad:
+ mov qword ptr [rbx+32],-1
+.gww_done:
+ xor eax,eax
+ add rsp,64
+ pop rbx
+ ret
+
+.section .text.gw_receive_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,80
+ cmp rax,1000
+ ja gw_abort
+ mov [rsp+56],rax
+ lea r10,[rip+gw_state]
+ mov [rsp+64],r10
+ cmp qword ptr [r10+16],0
+ je gw_abort
+ cmp qword ptr [r10+24],0
+ jne .gwr_wait
+ xor ecx,ecx
+ xor edx,edx
+ lea r8,[rip+gw_worker]
+ mov r9,r10
+ mov qword ptr [rsp+32],0
+ mov qword ptr [rsp+40],0
+ call qword ptr [rip+iat70]
+ test rax,rax
+ jz gw_abort
+ mov r10,[rsp+64]
+ mov [r10+24],rax
+.gwr_wait:
+ mov rcx,[r10+24]
+ mov edx,[rsp+56]
+ call qword ptr [rip+iat71]
+ cmp eax,258
+ je .gwr_empty
+ test eax,eax
+ jnz gw_abort
+ mov r10,[rsp+64]
+ mov rcx,[r10+24]
+ call qword ptr [rip+iat7]
+ mov r10,[rsp+64]
+ mov qword ptr [r10+24],0
+ mov rax,[r10+32]
+ test rax,rax
+ js .gwr_failed
+ inc rax
+ mov [rsp+56],rax
+ call alloc
+ mov rdi,rax
+ mov r10,[rsp+64]
+ lea rsi,[r10+48]
+ mov rcx,[rsp+56]
+ cld
+ rep movsb
+ leave
+ ret
+.gwr_empty:
+ lea rax,[rip+.gwempty]
+ leave
+ ret
+.gwr_failed:
+ lea rax,[rip+.gwfailed]
+ leave
+ ret
+.gwempty: .byte 0
+.gwfailed: .asciz "!"
+
+.section .text.gw_close_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,48
+ lea rax,[rip+gw_state]
+ mov [rsp+32],rax
+ cmp qword ptr [rax+24],0
+ jne gw_abort
+ mov rcx,[rax+16]
+ test rcx,rcx
+ jz .gwc_conn
+ call qword ptr [rip+iat36]
+.gwc_conn:
+ mov rax,[rsp+32]
+ mov rcx,[rax+8]
+ test rcx,rcx
+ jz .gwc_session
+ call qword ptr [rip+iat36]
+.gwc_session:
+ mov rax,[rsp+32]
+ mov rcx,[rax]
+ test rcx,rcx
+ jz .gwc_done
+ call qword ptr [rip+iat36]
+.gwc_done:
+ mov rax,[rsp+32]
+ mov qword ptr [rax],0
+ mov qword ptr [rax+8],0
+ mov qword ptr [rax+16],0
+ mov eax,1
+ leave
+ ret
+
+.section .text.gw_open_linux,"ax"
+ xor eax,eax
+ ret
+.section .text.gw_close_linux,"ax"
+ mov eax,1
+ ret
+.section .text.gw_send_linux,"ax"
+ jmp gw_abort
+.section .text.gw_receive_linux,"ax"
+ jmp gw_abort
+.section .text.gw_abort,"ax"
+ lea rsi,[rip+.gwerr]
+ mov edx,.gwerrend-.gwerr
+ call writeerr
+ mov eax,15
+ jmp exit
+.gwerr: .ascii "TRIPOL Discord Gateway stopped (transport, heartbeat or protocol error). Check connection and bot configuration.\n"
+.gwerrend:

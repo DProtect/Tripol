@@ -1,3 +1,57 @@
+=== RUN   TestApexRecurrence
+=== RUN   TestApexRecurrence/0
+=== RUN   TestApexRecurrence/1
+=== RUN   TestApexRecurrence/2
+=== RUN   TestApexRecurrence/3
+=== RUN   TestApexRecurrence/4
+=== RUN   TestApexRecurrence/5
+=== RUN   TestApexRecurrence/6
+=== RUN   TestApexRecurrence/7
+=== RUN   TestApexRecurrence/8
+--- PASS: TestApexRecurrence (0.02s)
+    --- PASS: TestApexRecurrence/0 (0.00s)
+    --- PASS: TestApexRecurrence/1 (0.00s)
+    --- PASS: TestApexRecurrence/2 (0.00s)
+    --- PASS: TestApexRecurrence/3 (0.00s)
+    --- PASS: TestApexRecurrence/4 (0.00s)
+    --- PASS: TestApexRecurrence/5 (0.00s)
+    --- PASS: TestApexRecurrence/6 (0.00s)
+    --- PASS: TestApexRecurrence/7 (0.00s)
+    --- PASS: TestApexRecurrence/8 (0.00s)
+=== RUN   TestApexLoopProofs
+=== RUN   TestApexLoopProofs/0
+=== RUN   TestApexLoopProofs/1
+=== RUN   TestApexLoopProofs/2
+=== RUN   TestApexLoopProofs/3
+=== RUN   TestApexLoopProofs/4
+=== RUN   TestApexLoopProofs/5
+=== RUN   TestApexLoopProofs/6
+=== RUN   TestApexLoopProofs/7
+=== RUN   TestApexLoopProofs/8
+=== RUN   TestApexLoopProofs/9
+=== RUN   TestApexLoopProofs/10
+=== RUN   TestApexLoopProofs/11
+=== RUN   TestApexLoopProofs/12
+=== RUN   TestApexLoopProofs/13
+=== RUN   TestApexLoopProofs/14
+--- PASS: TestApexLoopProofs (0.02s)
+    --- PASS: TestApexLoopProofs/0 (0.00s)
+    --- PASS: TestApexLoopProofs/1 (0.00s)
+    --- PASS: TestApexLoopProofs/2 (0.00s)
+    --- PASS: TestApexLoopProofs/3 (0.00s)
+    --- PASS: TestApexLoopProofs/4 (0.00s)
+    --- PASS: TestApexLoopProofs/5 (0.00s)
+    --- PASS: TestApexLoopProofs/6 (0.00s)
+    --- PASS: TestApexLoopProofs/7 (0.00s)
+    --- PASS: TestApexLoopProofs/8 (0.00s)
+    --- PASS: TestApexLoopProofs/9 (0.00s)
+    --- PASS: TestApexLoopProofs/10 (0.00s)
+    --- PASS: TestApexLoopProofs/11 (0.00s)
+    --- PASS: TestApexLoopProofs/12 (0.00s)
+    --- PASS: TestApexLoopProofs/13 (0.00s)
+    --- PASS: TestApexLoopProofs/14 (0.00s)
+=== RUN   TestApexDivisionPairsRandom
+--- PASS: TestApexDivisionPairsRandom (0.00s)
 === RUN   TestAtlasLibraries
 === RUN   TestAtlasLibraries/0
 === RUN   TestAtlasLibraries/1
@@ -7,13 +61,13 @@
 === RUN   TestAtlasLibraries/5
 === RUN   TestAtlasLibraries/6
 === RUN   TestAtlasLibraries/7
---- PASS: TestAtlasLibraries (0.03s)
+--- PASS: TestAtlasLibraries (0.01s)
     --- PASS: TestAtlasLibraries/0 (0.00s)
     --- PASS: TestAtlasLibraries/1 (0.00s)
-    --- PASS: TestAtlasLibraries/2 (0.01s)
+    --- PASS: TestAtlasLibraries/2 (0.00s)
     --- PASS: TestAtlasLibraries/3 (0.00s)
     --- PASS: TestAtlasLibraries/4 (0.00s)
-    --- PASS: TestAtlasLibraries/5 (0.01s)
+    --- PASS: TestAtlasLibraries/5 (0.00s)
     --- PASS: TestAtlasLibraries/6 (0.00s)
     --- PASS: TestAtlasLibraries/7 (0.00s)
 === RUN   TestAtlasFilesConsole
@@ -66,6 +120,44 @@
 --- PASS: TestConnectRefused (0.00s)
 === RUN   TestConnectFindBytes
 --- PASS: TestConnectFindBytes (0.01s)
+=== RUN   TestCoreLexerParity
+--- PASS: TestCoreLexerParity (0.13s)
+=== RUN   TestCoreSignedDivision
+--- PASS: TestCoreSignedDivision (0.00s)
+=== RUN   TestCoreMemoryOperands
+--- PASS: TestCoreMemoryOperands (0.00s)
+=== RUN   TestCoreDivisionEvaluation
+--- PASS: TestCoreDivisionEvaluation (0.00s)
+=== RUN   TestCoreFixIndex
+--- PASS: TestCoreFixIndex (0.00s)
+=== RUN   TestEclipseBotState
+=== RUN   TestEclipseBotState/nano
+=== RUN   TestEclipseBotState/balanced
+=== RUN   TestEclipseBotState/turbo
+=== RUN   TestEclipseBotState/debug
+--- PASS: TestEclipseBotState (0.01s)
+    --- PASS: TestEclipseBotState/nano (0.00s)
+    --- PASS: TestEclipseBotState/balanced (0.00s)
+    --- PASS: TestEclipseBotState/turbo (0.00s)
+    --- PASS: TestEclipseBotState/debug (0.00s)
+=== RUN   TestEclipseBotCapacity
+--- PASS: TestEclipseBotCapacity (0.00s)
+=== RUN   TestEclipseBotInvalid
+--- PASS: TestEclipseBotInvalid (0.00s)
+=== RUN   TestEclipseBotPE
+--- PASS: TestEclipseBotPE (0.00s)
+=== RUN   TestEclipseArrays
+=== RUN   TestEclipseArrays/nano
+=== RUN   TestEclipseArrays/balanced
+=== RUN   TestEclipseArrays/turbo
+=== RUN   TestEclipseArrays/debug
+--- PASS: TestEclipseArrays (0.00s)
+    --- PASS: TestEclipseArrays/nano (0.00s)
+    --- PASS: TestEclipseArrays/balanced (0.00s)
+    --- PASS: TestEclipseArrays/turbo (0.00s)
+    --- PASS: TestEclipseArrays/debug (0.00s)
+=== RUN   TestEclipseDispatch
+--- PASS: TestEclipseDispatch (0.00s)
 === RUN   TestEcosystemLibraries
 === RUN   TestEcosystemLibraries/0
 === RUN   TestEcosystemLibraries/1
@@ -75,14 +167,14 @@
 === RUN   TestEcosystemLibraries/5
 === RUN   TestEcosystemLibraries/6
 === RUN   TestEcosystemLibraries/7
---- PASS: TestEcosystemLibraries (0.02s)
+--- PASS: TestEcosystemLibraries (0.01s)
     --- PASS: TestEcosystemLibraries/0 (0.00s)
     --- PASS: TestEcosystemLibraries/1 (0.00s)
     --- PASS: TestEcosystemLibraries/2 (0.00s)
     --- PASS: TestEcosystemLibraries/3 (0.00s)
     --- PASS: TestEcosystemLibraries/4 (0.00s)
     --- PASS: TestEcosystemLibraries/5 (0.00s)
-    --- PASS: TestEcosystemLibraries/6 (0.01s)
+    --- PASS: TestEcosystemLibraries/6 (0.00s)
     --- PASS: TestEcosystemLibraries/7 (0.00s)
 === RUN   TestEcosystemBounds
 === RUN   TestEcosystemBounds/show_byte_at("abc",-1)
@@ -93,9 +185,9 @@
     --- PASS: TestEcosystemBounds/show_byte_at("abc",3) (0.00s)
     --- PASS: TestEcosystemBounds/show_byte_at("",0) (0.00s)
 === RUN   TestEcosystemNoAllocRead
---- PASS: TestEcosystemNoAllocRead (0.04s)
+--- PASS: TestEcosystemNoAllocRead (0.02s)
 === RUN   TestEcosystemNoUnused
---- PASS: TestEcosystemNoUnused (0.02s)
+--- PASS: TestEcosystemNoUnused (0.01s)
 === RUN   TestVaultPackages
 --- PASS: TestVaultPackages (0.00s)
 === RUN   TestVaultDependencies
@@ -129,11 +221,43 @@
 === RUN   TestEcosystemTimeSystem
 --- PASS: TestEcosystemTimeSystem (0.02s)
 === RUN   TestEcosystemTextNoAlloc
---- PASS: TestEcosystemTextNoAlloc (0.02s)
+--- PASS: TestEcosystemTextNoAlloc (0.01s)
 === RUN   TestEcosystemShowValues
 --- PASS: TestEcosystemShowValues (0.00s)
 === RUN   TestVaultExplicitDependencies
 --- PASS: TestVaultExplicitDependencies (0.00s)
+=== RUN   TestNexusGatewayConfiguration
+=== RUN   TestNexusGatewayConfiguration/nano
+=== RUN   TestNexusGatewayConfiguration/balanced
+=== RUN   TestNexusGatewayConfiguration/turbo
+=== RUN   TestNexusGatewayConfiguration/debug
+--- PASS: TestNexusGatewayConfiguration (0.01s)
+    --- PASS: TestNexusGatewayConfiguration/nano (0.00s)
+    --- PASS: TestNexusGatewayConfiguration/balanced (0.00s)
+    --- PASS: TestNexusGatewayConfiguration/turbo (0.00s)
+    --- PASS: TestNexusGatewayConfiguration/debug (0.00s)
+=== RUN   TestNexusGatewayDispatch
+--- PASS: TestNexusGatewayDispatch (0.02s)
+=== RUN   TestNexusGatewayImports
+=== RUN   TestNexusGatewayImports/nano
+=== RUN   TestNexusGatewayImports/balanced
+=== RUN   TestNexusGatewayImports/turbo
+=== RUN   TestNexusGatewayImports/debug
+--- PASS: TestNexusGatewayImports (0.01s)
+    --- PASS: TestNexusGatewayImports/nano (0.00s)
+    --- PASS: TestNexusGatewayImports/balanced (0.00s)
+    --- PASS: TestNexusGatewayImports/turbo (0.00s)
+    --- PASS: TestNexusGatewayImports/debug (0.00s)
+=== RUN   TestNexusVectorSearch
+=== RUN   TestNexusVectorSearch/nano
+=== RUN   TestNexusVectorSearch/balanced
+=== RUN   TestNexusVectorSearch/turbo
+=== RUN   TestNexusVectorSearch/debug
+--- PASS: TestNexusVectorSearch (0.14s)
+    --- PASS: TestNexusVectorSearch/nano (0.03s)
+    --- PASS: TestNexusVectorSearch/balanced (0.03s)
+    --- PASS: TestNexusVectorSearch/turbo (0.03s)
+    --- PASS: TestNexusVectorSearch/debug (0.04s)
 === RUN   TestGuardNested
 --- PASS: TestGuardNested (0.00s)
 === RUN   TestGuardBounds
@@ -197,10 +321,46 @@
 === RUN   TestHorizonModulesPE
 --- PASS: TestHorizonModulesPE (0.00s)
 === RUN   TestHorizonTemplate
-Created /tmp/TestHorizonTemplate3499885056/001/records (records)
-cd /tmp/TestHorizonTemplate3499885056/001/records
+Created /tmp/TestHorizonTemplate832960794/001/records (records)
+cd /tmp/TestHorizonTemplate832960794/001/records
 tripol run
 --- PASS: TestHorizonTemplate (0.00s)
+=== RUN   TestHyperRegisterLoops
+=== RUN   TestHyperRegisterLoops/0
+=== RUN   TestHyperRegisterLoops/1
+=== RUN   TestHyperRegisterLoops/2
+=== RUN   TestHyperRegisterLoops/3
+=== RUN   TestHyperRegisterLoops/4
+=== RUN   TestHyperRegisterLoops/5
+=== RUN   TestHyperRegisterLoops/6
+=== RUN   TestHyperRegisterLoops/7
+=== RUN   TestHyperRegisterLoops/8
+=== RUN   TestHyperRegisterLoops/9
+=== RUN   TestHyperRegisterLoops/10
+=== RUN   TestHyperRegisterLoops/11
+--- PASS: TestHyperRegisterLoops (0.02s)
+    --- PASS: TestHyperRegisterLoops/0 (0.00s)
+    --- PASS: TestHyperRegisterLoops/1 (0.00s)
+    --- PASS: TestHyperRegisterLoops/2 (0.00s)
+    --- PASS: TestHyperRegisterLoops/3 (0.00s)
+    --- PASS: TestHyperRegisterLoops/4 (0.00s)
+    --- PASS: TestHyperRegisterLoops/5 (0.00s)
+    --- PASS: TestHyperRegisterLoops/6 (0.00s)
+    --- PASS: TestHyperRegisterLoops/7 (0.00s)
+    --- PASS: TestHyperRegisterLoops/8 (0.00s)
+    --- PASS: TestHyperRegisterLoops/9 (0.00s)
+    --- PASS: TestHyperRegisterLoops/10 (0.00s)
+    --- PASS: TestHyperRegisterLoops/11 (0.00s)
+=== RUN   TestHyperRegisterABI
+--- PASS: TestHyperRegisterABI (0.00s)
+=== RUN   TestHyperDifferential
+--- PASS: TestHyperDifferential (0.00s)
+=== RUN   TestHyperClock
+--- PASS: TestHyperClock (0.05s)
+=== RUN   TestHyperInternalMarker
+--- PASS: TestHyperInternalMarker (0.00s)
+=== RUN   TestHyperProfileCode
+--- PASS: TestHyperProfileCode (0.00s)
 === RUN   TestInfinitySyntax
 --- PASS: TestInfinitySyntax (0.00s)
 === RUN   TestInfinityReject
@@ -232,7 +392,7 @@ tripol run
 === RUN   TestInfinityNumbers
 --- PASS: TestInfinityNumbers (0.00s)
 === RUN   TestInfinityAllLibraries
---- PASS: TestInfinityAllLibraries (0.02s)
+--- PASS: TestInfinityAllLibraries (0.01s)
 === RUN   TestInfinityOptimizations
 --- PASS: TestInfinityOptimizations (0.00s)
 === RUN   TestTIRInline
@@ -310,7 +470,7 @@ tripol run
 === RUN   TestLibertyPE
 --- PASS: TestLibertyPE (0.00s)
 === RUN   TestLibertyArenaLimit
---- PASS: TestLibertyArenaLimit (0.02s)
+--- PASS: TestLibertyArenaLimit (0.01s)
 === RUN   TestLocalModules
 === RUN   TestLocalModules/cycle.tri
 === RUN   TestLocalModules/bad.tri
@@ -348,7 +508,7 @@ tripol run
 === RUN   TestPrograms/show_1<2_show_2>=2_show_2>3
 === RUN   TestPrograms/show_""
 === RUN   TestPrograms/show_"¡Hola,_TRIPOL!"
---- PASS: TestPrograms (0.02s)
+--- PASS: TestPrograms (0.01s)
     --- PASS: TestPrograms/show_"Hola" (0.00s)
     --- PASS: TestPrograms/show_2_+_3_*_4_show_(2_+_3)_*_4 (0.00s)
     --- PASS: TestPrograms/x=1_x=x+3_show_x (0.00s)
@@ -378,7 +538,7 @@ tripol run
 === RUN   TestTraps/show_9223372036854775807*2
 === RUN   TestTraps/show_-(-9223372036854775807-1)
 === RUN   TestTraps/show_-9223372036854775807-2
---- PASS: TestTraps (0.01s)
+--- PASS: TestTraps (0.00s)
     --- PASS: TestTraps/show_1/0 (0.00s)
     --- PASS: TestTraps/show_9223372036854775807+1 (0.00s)
     --- PASS: TestTraps/show_(-9223372036854775807-1)/-1 (0.00s)
@@ -439,7 +599,7 @@ tripol run
 === RUN   TestNanoPrograms/12
 === RUN   TestNanoPrograms/13
 === RUN   TestNanoPrograms/14
---- PASS: TestNanoPrograms (0.09s)
+--- PASS: TestNanoPrograms (0.07s)
     --- PASS: TestNanoPrograms/0 (0.00s)
     --- PASS: TestNanoPrograms/1 (0.00s)
     --- PASS: TestNanoPrograms/2 (0.00s)
@@ -451,7 +611,7 @@ tripol run
     --- PASS: TestNanoPrograms/8 (0.00s)
     --- PASS: TestNanoPrograms/9 (0.00s)
     --- PASS: TestNanoPrograms/10 (0.00s)
-    --- PASS: TestNanoPrograms/11 (0.07s)
+    --- PASS: TestNanoPrograms/11 (0.06s)
     --- PASS: TestNanoPrograms/12 (0.00s)
     --- PASS: TestNanoPrograms/13 (0.00s)
     --- PASS: TestNanoPrograms/14 (0.00s)
@@ -503,7 +663,7 @@ tripol run
 === RUN   TestNexusSyntax/6
 === RUN   TestNexusSyntax/7
 === RUN   TestNexusSyntax/8
---- PASS: TestNexusSyntax (0.01s)
+--- PASS: TestNexusSyntax (0.00s)
     --- PASS: TestNexusSyntax/0 (0.00s)
     --- PASS: TestNexusSyntax/1 (0.00s)
     --- PASS: TestNexusSyntax/2 (0.00s)
@@ -553,21 +713,81 @@ tripol run
 --- PASS: TestNexusPE (0.00s)
 === RUN   TestNexusTemplates
 === RUN   TestNexusTemplates/basic
-Created /tmp/TestNexusTemplatesbasic132648839/001/basic
-cd /tmp/TestNexusTemplatesbasic132648839/001/basic
+Created /tmp/TestNexusTemplatesbasic2367908910/001/basic
+cd /tmp/TestNexusTemplatesbasic2367908910/001/basic
 tripol run main.tri
 === RUN   TestNexusTemplates/calculator
-Created /tmp/TestNexusTemplatescalculator3038539027/001/calculator (calculator)
-cd /tmp/TestNexusTemplatescalculator3038539027/001/calculator
+Created /tmp/TestNexusTemplatescalculator320295265/001/calculator (calculator)
+cd /tmp/TestNexusTemplatescalculator320295265/001/calculator
 tripol run
 === RUN   TestNexusTemplates/files
-Created /tmp/TestNexusTemplatesfiles298932302/001/files (files)
-cd /tmp/TestNexusTemplatesfiles298932302/001/files
+Created /tmp/TestNexusTemplatesfiles1773778792/001/files (files)
+cd /tmp/TestNexusTemplatesfiles1773778792/001/files
 tripol run
 --- PASS: TestNexusTemplates (0.00s)
     --- PASS: TestNexusTemplates/basic (0.00s)
     --- PASS: TestNexusTemplates/calculator (0.00s)
     --- PASS: TestNexusTemplates/files (0.00s)
+=== RUN   TestNovaHD
+--- PASS: TestNovaHD (0.01s)
+=== RUN   TestNovaDrawing
+--- PASS: TestNovaDrawing (0.00s)
+=== RUN   TestNovaDictionary
+--- PASS: TestNovaDictionary (0.00s)
+=== RUN   TestNovaParticles
+--- PASS: TestNovaParticles (0.00s)
+=== RUN   TestNovaTurbo
+--- PASS: TestNovaTurbo (0.00s)
+=== RUN   TestNovaParser
+--- PASS: TestNovaParser (0.00s)
+=== RUN   TestOmegaReduction
+=== RUN   TestOmegaReduction/0
+=== RUN   TestOmegaReduction/1
+=== RUN   TestOmegaReduction/2
+=== RUN   TestOmegaReduction/3
+=== RUN   TestOmegaReduction/4
+=== RUN   TestOmegaReduction/5
+=== RUN   TestOmegaReduction/6
+=== RUN   TestOmegaReduction/7
+=== RUN   TestOmegaReduction/8
+=== RUN   TestOmegaReduction/9
+=== RUN   TestOmegaReduction/10
+=== RUN   TestOmegaReduction/11
+=== RUN   TestOmegaReduction/12
+--- PASS: TestOmegaReduction (0.02s)
+    --- PASS: TestOmegaReduction/0 (0.00s)
+    --- PASS: TestOmegaReduction/1 (0.00s)
+    --- PASS: TestOmegaReduction/2 (0.00s)
+    --- PASS: TestOmegaReduction/3 (0.00s)
+    --- PASS: TestOmegaReduction/4 (0.00s)
+    --- PASS: TestOmegaReduction/5 (0.00s)
+    --- PASS: TestOmegaReduction/6 (0.00s)
+    --- PASS: TestOmegaReduction/7 (0.00s)
+    --- PASS: TestOmegaReduction/8 (0.00s)
+    --- PASS: TestOmegaReduction/9 (0.00s)
+    --- PASS: TestOmegaReduction/10 (0.00s)
+    --- PASS: TestOmegaReduction/11 (0.00s)
+    --- PASS: TestOmegaReduction/12 (0.00s)
+=== RUN   TestOmegaReductionRandom
+--- PASS: TestOmegaReductionRandom (0.00s)
+=== RUN   TestOmegaSIMD
+--- PASS: TestOmegaSIMD (0.00s)
+=== RUN   TestOmegaDiscordParsing
+--- PASS: TestOmegaDiscordParsing (0.00s)
+=== RUN   TestOmegaDiscordPE
+--- PASS: TestOmegaDiscordPE (0.00s)
+=== RUN   TestOriginAutomaticChannels
+=== RUN   TestOriginAutomaticChannels/nano
+=== RUN   TestOriginAutomaticChannels/balanced
+=== RUN   TestOriginAutomaticChannels/turbo
+=== RUN   TestOriginAutomaticChannels/debug
+--- PASS: TestOriginAutomaticChannels (0.27s)
+    --- PASS: TestOriginAutomaticChannels/nano (0.07s)
+    --- PASS: TestOriginAutomaticChannels/balanced (0.07s)
+    --- PASS: TestOriginAutomaticChannels/turbo (0.07s)
+    --- PASS: TestOriginAutomaticChannels/debug (0.06s)
+=== RUN   TestOriginBinary
+--- PASS: TestOriginBinary (0.00s)
 === RUN   TestQuantumMemory
 --- PASS: TestQuantumMemory (0.01s)
 === RUN   TestQuantumCanvas
@@ -613,7 +833,7 @@ tripol run
 === RUN   TestJSONRead/""
 === RUN   TestJSONRead/"true_false"
 === RUN   TestJSONRead/"[[]]"
---- PASS: TestJSONRead (0.08s)
+--- PASS: TestJSONRead (0.03s)
     --- PASS: TestJSONRead/"{\"a\":[1,true,null,{\"b\":-1.2e-4}],\"c\":\"hola\"}" (0.00s)
     --- PASS: TestJSONRead/"[]" (0.00s)
     --- PASS: TestJSONRead/"{}" (0.00s)
@@ -630,14 +850,14 @@ tripol run
     --- PASS: TestJSONRead/"1e" (0.00s)
     --- PASS: TestJSONRead/"{\"a\"_1}" (0.00s)
     --- PASS: TestJSONRead/"\"\\q\"" (0.00s)
-    --- PASS: TestJSONRead/"\"\\u0x00\"" (0.01s)
+    --- PASS: TestJSONRead/"\"\\u0x00\"" (0.00s)
     --- PASS: TestJSONRead/"" (0.00s)
     --- PASS: TestJSONRead/"true_false" (0.00s)
     --- PASS: TestJSONRead/"[[]]" (0.00s)
 === RUN   TestTraceFrames
 --- PASS: TestTraceFrames (0.00s)
 === RUN   TestSentinelPE
---- PASS: TestSentinelPE (0.01s)
+--- PASS: TestSentinelPE (0.00s)
 === RUN   TestFixSuggestion
 --- PASS: TestFixSuggestion (0.00s)
 === RUN   TestVectorLength
@@ -665,9 +885,9 @@ tripol run
     --- PASS: TestVectorLength/255 (0.00s)
     --- PASS: TestVectorLength/4095 (0.00s)
     --- PASS: TestVectorLength/4096 (0.00s)
-    --- PASS: TestVectorLength/65535 (0.01s)
+    --- PASS: TestVectorLength/65535 (0.00s)
 === RUN   TestScratchMemory
---- PASS: TestScratchMemory (0.02s)
+--- PASS: TestScratchMemory (0.01s)
 === RUN   TestScratchEscape
 === RUN   TestScratchEscape/s="a";scratch_{s="b"+"c"}
 === RUN   TestScratchEscape/a=ints(2);scratch_{a[0]=1}
@@ -678,6 +898,34 @@ tripol run
     --- PASS: TestScratchEscape/a=ints(2);scratch_{a[0]=1} (0.00s)
     --- PASS: TestScratchEscape/struct_R_{s:string};r=R("a");scratch_{r.s="b"} (0.00s)
     --- PASS: TestScratchEscape/func_f()->string_{scratch_{return_"a"};return_"b"} (0.00s)
+=== RUN   TestTitanRegisterBranches
+=== RUN   TestTitanRegisterBranches/0
+=== RUN   TestTitanRegisterBranches/1
+=== RUN   TestTitanRegisterBranches/2
+=== RUN   TestTitanRegisterBranches/3
+=== RUN   TestTitanRegisterBranches/4
+=== RUN   TestTitanRegisterBranches/5
+=== RUN   TestTitanRegisterBranches/6
+=== RUN   TestTitanRegisterBranches/7
+=== RUN   TestTitanRegisterBranches/8
+=== RUN   TestTitanRegisterBranches/9
+--- PASS: TestTitanRegisterBranches (0.01s)
+    --- PASS: TestTitanRegisterBranches/0 (0.00s)
+    --- PASS: TestTitanRegisterBranches/1 (0.00s)
+    --- PASS: TestTitanRegisterBranches/2 (0.00s)
+    --- PASS: TestTitanRegisterBranches/3 (0.00s)
+    --- PASS: TestTitanRegisterBranches/4 (0.00s)
+    --- PASS: TestTitanRegisterBranches/5 (0.00s)
+    --- PASS: TestTitanRegisterBranches/6 (0.00s)
+    --- PASS: TestTitanRegisterBranches/7 (0.00s)
+    --- PASS: TestTitanRegisterBranches/8 (0.00s)
+    --- PASS: TestTitanRegisterBranches/9 (0.00s)
+=== RUN   TestTitanRandomSignedDivision
+--- PASS: TestTitanRandomSignedDivision (0.00s)
+=== RUN   TestTitanRegisterMachineCode
+--- PASS: TestTitanRegisterMachineCode (0.00s)
+=== RUN   TestTitanArenaOutput
+--- PASS: TestTitanArenaOutput (0.00s)
 === RUN   TestVelocityText
 === RUN   TestVelocityText/show_text(0)_show_text(-123)_show_text(9223372036854775807)_show_text(-9223372036854775807-1)
 === RUN   TestVelocityText/show_slice("abcdef",1,4)_show_len(slice("a",1,1))_show_slice("hello",0,5)
@@ -743,21 +991,21 @@ tripol run
 === RUN   TestVelocityArrays/a=ints(2)_show_a[-1]
 === RUN   TestVelocityArrays/a=ints(2)_a[2]=1
 === RUN   TestVelocityArrays/a=ints(-1)
-=== RUN   TestVelocityArrays/a=ints(65536)
+=== RUN   TestVelocityArrays/a=ints(4194305)
 === RUN   TestVelocityArrays/for_i_in_range(0,513){v=ints(65535)}
 === RUN   TestVelocityArrays/a=ints(2);show_a==a
 === RUN   TestVelocityArrays/const_a=ints(2);a[0]=1
 === RUN   TestVelocityArrays/a=ints(2);a[0]="s"
 === RUN   TestVelocityArrays/a=ints(2.0)
---- PASS: TestVelocityArrays (0.56s)
+--- PASS: TestVelocityArrays (0.50s)
     --- PASS: TestVelocityArrays/n=5_v=ints(n)_for_i_in_range(0,len(v)){v[i]=i*10}_show_v[0]_show_v[4]_show_len(v) (0.00s)
     --- PASS: TestVelocityArrays/func_make(n)->ints{return_ints(n)}_func_update(v:ints)->int{v[1]=99;return_v[1]}_a=make(3)_b=a_show_update(b)_show_a[1]_show_a[2] (0.00s)
     --- PASS: TestVelocityArrays/a=ints(0)_show_len(a) (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2)_show_a[-1] (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2)_a[2]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(-1) (0.00s)
-    --- PASS: TestVelocityArrays/a=ints(65536) (0.00s)
-    --- PASS: TestVelocityArrays/for_i_in_range(0,513){v=ints(65535)} (0.55s)
+    --- PASS: TestVelocityArrays/a=ints(4194305) (0.00s)
+    --- PASS: TestVelocityArrays/for_i_in_range(0,513){v=ints(65535)} (0.50s)
     --- PASS: TestVelocityArrays/a=ints(2);show_a==a (0.00s)
     --- PASS: TestVelocityArrays/const_a=ints(2);a[0]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);a[0]="s" (0.00s)
@@ -783,4 +1031,4 @@ tripol run
 === RUN   TestVisionRecoverableOps
 --- PASS: TestVisionRecoverableOps (0.00s)
 PASS
-ok  	tripol	1.161s
+ok  	tripol	1.644s

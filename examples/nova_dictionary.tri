@@ -1,0 +1,7 @@
+import tripol.dictionary
+jugador=dictionary.create()
+dictionary.set(jugador,"vida",100)
+dictionary.set(jugador,"nivel",5)
+dictionary.set(jugador,"vida",dictionary.get(jugador,"vida")-20)
+show "Vida:",dictionary.get(jugador,"vida")
+show "Nivel:",dictionary.get(jugador,"nivel")

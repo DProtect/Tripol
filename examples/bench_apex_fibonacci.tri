@@ -1,0 +1,8 @@
+import tripol.time
+func fib(n:int)->int {if n<=1 {return n};return fib(n-1)+fib(n-2)}
+n=input_int()
+start=time.now_ns()
+s=fib(n)
+ns=time.elapsed_ns(start)
+show s
+show "TRIPOL_NS:",ns

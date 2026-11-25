@@ -1,0 +1,10 @@
+import tripol.discord
+
+// Configure DISCORD_TOKEN in a private terminal. Replace YOUR_CHANNEL_ID.
+discord.login_env()
+discord.channel("YOUR_CHANNEL_ID")
+discord.activity("Programando en TRIPOL")
+discord.welcome("Hola! Ya estoy conectado.")
+discord.reply("!hola", "Hola compa!")
+discord.reply("!ping", "Pong!")
+discord.run()

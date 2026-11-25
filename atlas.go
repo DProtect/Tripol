@@ -9,7 +9,7 @@ import (
 //go:embed stdlib/*.tri
 var standardSources embed.FS
 
-var standardNames = []string{"animation", "arrays", "bits", "buffer", "canvas", "checksum", "collections", "colors", "compression", "console", "convert", "datetime", "discord", "encoding", "errors", "events", "files", "game", "geometry", "http", "https", "image", "json", "math", "matrix", "memory", "network", "path", "physics", "random", "search", "sequences", "sort", "stats", "system", "text", "time", "ui", "validate", "vector"}
+var standardNames = []string{"animation", "arrays", "binary", "bits", "buffer", "camera", "canvas", "checksum", "collections", "colors", "compression", "console", "convert", "datetime", "dictionary", "discord", "encoding", "env", "errors", "events", "files", "game", "geometry", "http", "https", "image", "json", "math", "matrix", "memory", "network", "particles", "path", "physics", "random", "search", "sequences", "simd", "sort", "sprite", "stats", "system", "testing", "text", "time", "ui", "validate", "vector"}
 
 type stdLoader struct {
 	state     map[string]int
@@ -106,7 +106,7 @@ func isStandardFunction(name string) bool {
 	return false
 }
 func listLibraries() {
-	fmt.Println("TRIPOL Quantum — built-in standard libraries")
+	fmt.Println("TRIPOL Core — built-in standard libraries")
 	for _, name := range standardNames {
 		_, fs, _ := parseUnit(standardSource(name))
 		fmt.Printf("tripol.%s (%d functions)\n", name, len(fs))

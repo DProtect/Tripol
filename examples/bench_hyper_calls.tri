@@ -1,0 +1,8 @@
+func mix(a,b,c,d) {return (a+b)*(c-d)}
+s=0
+for i in range(0,6000000) {
+    a=i%256
+    b=i%64
+    s+=mix(a,b,17,3)
+}
+show s

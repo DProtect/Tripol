@@ -1,7 +1,7 @@
 // Growable integer buffer. Internal representation: [logical length, storage...].
 // Always reassign the return from push; growth returns a new backing array.
 func create(initial=4)->ints {
- assert initial>=0 and initial<=65534,"Invalid buffer capacity"
+ assert initial>=0 and initial<=4194303,"Invalid buffer capacity"
  return ints(initial+1)
 }
 func capacity(b:ints)->int {assert len(b)>=1,"Invalid buffer";return len(b)-1}
@@ -9,8 +9,8 @@ func size(b:ints)->int {cap=capacity(b);assert b[0]>=0 and b[0]<=cap,"Invalid bu
 func push(b:ints,value:int)->ints {
  n=size(b);cap=capacity(b)
  if n==cap {
-  assert n<65534,"Buffer full"
-  next=min(65534,max(1,cap*2))
+  assert n<4194303,"Buffer full"
+  next=min(4194303,max(1,cap*2))
   c=create(next)
   for i in range(n) {c[i+1]=b[i+1]}
   c[n+1]=value;c[0]=n+1

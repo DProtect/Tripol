@@ -50,8 +50,15 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 		}
 		groups = append(groups, group{dll: "USER32.dll", names: names, first: 19})
 	}
-	if a.needed("iat:30") {
-		groups = append(groups, group{dll: "WINHTTP.dll", names: []string{"WinHttpOpen", "WinHttpConnect", "WinHttpOpenRequest", "WinHttpSendRequest", "WinHttpReceiveResponse", "WinHttpReadData", "WinHttpCloseHandle", "WinHttpSetTimeouts", "WinHttpSetOption", "WinHttpQueryHeaders"}, first: 30})
+	if a.needed("iat:30") || a.needed("gw_state") {
+		names := []string{"WinHttpOpen", "WinHttpConnect", "WinHttpOpenRequest", "WinHttpSendRequest", "WinHttpReceiveResponse", "WinHttpReadData", "WinHttpCloseHandle", "WinHttpSetTimeouts", "WinHttpSetOption", "WinHttpQueryHeaders"}
+		if a.needed("iat:66") || a.needed("iat:67") || a.needed("iat:68") {
+			for len(names) < 36 {
+				names = append(names, "")
+			}
+			names = append(names, "WinHttpWebSocketCompleteUpgrade", "WinHttpWebSocketSend", "WinHttpWebSocketReceive")
+		}
+		groups = append(groups, group{dll: "WINHTTP.dll", names: names, first: 30})
 	}
 
 	if a.needed("iat:61") {
@@ -61,7 +68,7 @@ func networkImports(a *asm, kernel []string, rva, textRVA int) ([]byte, int, int
 	if len(groups) > 2 {
 		size = 1536
 	}
-	if a.needed("iat:20") || a.needed("iat:30") {
+	if a.needed("iat:20") || a.needed("iat:30") || a.needed("gw_state") {
 		size = 3072
 	}
 	if a.needed("game_state") {

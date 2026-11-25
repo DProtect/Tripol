@@ -1,0 +1,3 @@
+import tripol.discord
+
+discord.listen("YOUR_CHANNEL_ID", "!hola", "Hola desde TRIPOL!")

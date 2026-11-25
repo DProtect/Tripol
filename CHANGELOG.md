@@ -1,4 +1,76 @@
+# ORIGIN v0.23.0
+
+- Discord Gateway replies route automatically to the received channel; optional channel filter remains. `send_to`, `event_channel`, `all_channels`, `has_channel` added. No reconnect, slash commands or live Gateway validation yet.
+- `tripol.binary`: eight validated byte-array and endian conversion functions.
+- AVX2 search checks two vectors per loop while preserving first match and scalar fallback.
+- Public release preparation: CI configuration, security reporting, conduct, contribution templates, open-core boundaries.
+- Linux tests: 139 groups, 371 subtests. Windows PE cross-built; Windows CI not executed locally.
+
 # Changelog
+
+## 0.22.0 — NEXUS
+
+- Experimental native Windows Gateway (TLS WebSocket, bounded receive worker, Hello/Identify, sequence/heartbeat/ACK, READY and MESSAGE_CREATE). `run` now uses Gateway; `run_rest` is explicit fallback. Stop on disconnect, reconnect request, invalid session or missed ACK; no Resume or automatic reconnect. Offline protocol/PE tests only, live Windows verification pending.
+- Easier Discord API: `setup`, `welcome`, `activity`, `status`, `ping`, `connected`; 30 callable Discord functions including protocol helpers. `json.get_raw_large` supports Gateway payloads up to 65535 bytes.
+- AVX2 first-match int64 search with CPUID and XGETBV checks, scalar fallback and tail. 21-sample Linux search median 0.574797 → 0.156361 ms.
+- 47 libraries, 284 callable functions; 137 top-level test groups and 367 subtests passed on Linux. No Rust toolchain or native Windows execution in release environment.
+
+## 0.21.0 — ECLIPSE
+
+- Discord R3: `login`, `login_env`, `channel`, `say`, `reply`, `run`, `reset`, `configured`, `preview`, `dispatch` and parsing helper. Up to 16 exact replies, immutable configuration snapshots in bounded process-local storage, scratch reuse for polling and registration. Existing Discord R2 API retained. No Gateway, live connection or presence validated.
+- ArrayCore R2: native independent `arrays.copy` and bounded `search.linear` / `arrays.contains`, using `rep movsq` / `repne scasq`; no unchecked arithmetic introduced.
+- Arena: copy and search cases, original four unchanged. Linux 21-sample comparison: copy 4.299 → 2.865 ms, search 1.021 → 0.581 ms.
+- 47 libraries, 273 callable functions, including 20 Discord functions (helpers included).
+- General memory reclamation, AVX2, WebSocket, native Windows execution CI and full SSA remain pending.
+
+## 0.20.0 — OMEGA
+
+- ArrayCore R1: checked pointer traversal and four-way sequential unrolling of verified zero-based dynamic array reductions in Balanced/Turbo. Overflow order and bounds errors preserved, including overflow before an eventual bounds failure. Guards, tracing and unsupported loops use generic code.
+- VectorCore R1: `tripol.simd.equal`, SSE2 exact equality of two int64 arrays. No automatic AVX2 yet.
+- Discord R2: Windows-only native HTTPS authenticated GET and POST to fixed discord.com host; one-channel REST polling, environment token, safe mention default, fail-stop on HTTP errors including rate limits. Template `tripol new NAME --template discord`. Not a Gateway client; no live Windows or Discord connection verified. See docs/discord.md.
+- `tripol.env.get` (Windows); 47 modules and 262 callable functions (including helpers). 127 groups and 347 subtests pass on Linux; Windows cross-build and import inspection only.
+- Reproducible Arena comparisons: array reduction 5.32x faster, other workloads roughly unchanged. No general compiler speed gain or fresh Rust result claimed.
+
+## 0.19.0 — APEX
+
+- RegisterFlow R3 (restricted): private register argument convention for validated two-call integer recurrences with a literal base threshold. Preserves recursive call order and checked combining operation; no benchmark-name special cases. Generic ABI for guards, tracing and unsupported forms.
+- DivisionCore: hoist one total, invariant power-of-two operation in call-free Turbo loops; specialize nonnegative loop indexes; lower modulo-zero tests directly; combine adjacent quotient/remainder updates while preserving each overflow trap.
+- Arena: checked array summation, `--json FILE` exports samples, medians and output verification. Existing three workloads unchanged.
+- 122 top-level test groups / 334 first-level subtests in Linux. No Rust installed on release host; Windows compiler/installer cross-built, native execution pending.
+- No new syntax or libraries. Full CFG/SSA, SIMD, general memory reclamation and additional platforms remain future work.
+
+## 0.18.0 — TITAN
+
+- RegisterFlow R2: up to four outer integer accumulators, call-free conditional branches and loop control, with conservative fallback and explicit register save/restore.
+- Shorter checked signed power-of-two division and remainder lowering; 150 additional deterministic random signed cases.
+- Built-in `tripol arena` runs three paired TRIPOL/Rust workloads with checked i64 arithmetic, runtime inputs, output validation, alternating samples and timeouts. No Python/Cargo requirement. Rust execution not tested here because rustc is unavailable. TRIPOL-only mode verified.
+- 45 modules, 253 callable library functions; 119 top-level test groups and 310 subtests pass on Linux. Windows cross-build only. Full SSA, AVX2, general memory reclamation and incremental compilation remain pending.
+
+## 0.17.0 — HYPER
+
+- Register-backed straight-line integer range loops: index, bound, one outer accumulator and one local scalar; direct checked updates. Conservative fallback around calls, nested flow, guards and tracing.
+- Private R8–R11 argument ABI for eligible pure int64 leaf functions; register-based expression lowering and selective spills; balanced and turbo profiles.
+- High-resolution monotonic nanosecond timing and explicit internal benchmark markers. Calibrated build batches and profile selection.
+- 45 modules, 253 callable functions. 115 top-level test groups and 300 subtests; existing runtime test helper also exercised under balanced/turbo. 100 deterministic four-argument differential cases. Linux runtime tests and Windows cross-build/PE inspection only.
+- Full control-flow TIR, general register allocation, SIMD AVX2 and memory reclamation remain pending.
+
+## 0.16.0 — CORE
+
+- Single-pass byte lexer, differential-tested against 0.15 over 20,008 inputs (including invalid syntax, UTF-8 and byte positions).
+- O(1) average relocation-reference lookup and per-build scalar TIR cache. Full unoptimized source-body validation remains; discarded validation executable no longer linked.
+- Checked arithmetic directly on stack memory operands, direct integer variable comparison branches, range counter increment proof and signed constant power-of-two division/remainder.
+- 45 modules and 251 functions retained; 109 top-level tests and 288 subtests passed on Linux. Windows cross-build only.
+- Reproducible compilation and runtime comparisons in benchmarks/core.py. No general GC, register calling convention or full TIR control-flow rewrite yet.
+
+## 0.15.0 — NOVA
+
+- 45 embedded modules, 251 callable functions.
+- Dynamic int arrays up to 4,194,304 elements; growable buffers up to 4,194,303 values. Arena remains 256 MiB, no general reclamation.
+- Software framebuffer up to 2048×2048, 16 MiB Win32 staging allocation, checked native horizontal span fills, clipped RGB sprites, line/circle drawing and opacity blending.
+- Fixed-capacity string-to-int maps, camera transforms, particle helpers and testing assertions.
+- TIR multi-argument scalar arithmetic operates directly on argument stack slots while preserving overflow checks.
+- Self-hosted experimental integer expression parser/evaluator (not the production parser).
+- 104 test groups, 288 subtests; Linux execution, Windows cross-build and PE inspection. No GPU, PNG, audio, multithreading, general GUI toolkit or full self-hosting.
 
 ## 0.14.0 — QUANTUM
 
@@ -31,3 +103,5 @@
 - 21 embedded standard libraries; syntax highlighting updated; documentation reorganized.
 
 Earlier releases and their full history remain in Git. v0.11 — VISION & GUARD introduced initial diagnostics and dialogs; v0.10 — CONNECT native TCP/HTTP; v0.9 — ECOSYSTEM Vault; v0.8 — ATLAS standard libraries. The original bootstrap was replaced by a native code emitter in v0.2.
+
+Direct self tail calls with full argument lists reuse the frame in all profiles unless tracing. Other recursion remains subject to the OS stack limit.

@@ -1,0 +1,4 @@
+func equal_int(actual:int,expected:int)->bool {assert actual==expected,"Integer expectation failed";return true}
+func equal_text(actual:string,expected:string)->bool {assert actual==expected,"Text expectation failed";return true}
+func equal_bool(actual:bool,expected:bool)->bool {assert actual==expected,"Boolean expectation failed";return true}
+func near(actual:float,expected:float,tolerance:float)->bool {assert tolerance>=0.0 and actual>=expected-tolerance and actual<=expected+tolerance,"Float expectation failed";return true}

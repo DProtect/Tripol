@@ -96,7 +96,11 @@ func valid(s:string)->bool {
 }
 // Exact JSON key spelling (quoted, including escape sequences); empty on missing or invalid.
 func get_raw(s:string,key:string)->string {
- if len(key)>512 or not valid(s) {return ""};n=len(s);i=ws(s,0,n)
+ if len(s)>4096 {return ""};return get_raw_large(s,key)
+}
+// Gateway-sized bounded input, up to 65535 bytes; same grammar and depth.
+func get_raw_large(s:string,key:string)->string {
+ n=len(s);if len(key)>512 or n>65535 {return ""};end=value(s,0,n,0);if end<0 or ws(s,end,n)!=n {return ""};i=ws(s,0,n)
  if byte_at(s,i)!=123 {return ""};i=ws(s,i+1,n)
  if byte_at(s,i)==125 {return ""}
  wanted=quote(key)

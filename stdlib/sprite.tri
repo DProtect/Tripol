@@ -1,0 +1,17 @@
+import tripol.canvas
+import tripol.colors
+// Sprite pixels are RGB24 arrays. Source must not alias destination.
+func draw_key(dst:ints,w:int,h:int,src:ints,sw:int,sh:int,x:int,y:int,key:int)->int {
+ assert len(dst)==canvas.size(w,h) and len(src)==canvas.size(sw,sh),"Invalid sprite shape"
+ assert x>=-4096 and x<=4096 and y>=-4096 and y<=4096,"Sprite coordinate out of range"
+ n=0
+ for row in range(max(0,-y),max(0,min(sh,h-y))) {
+  for col in range(max(0,-x),max(0,min(sw,w-x))) {
+   c=src[row*sw+col];assert colors.valid(c),"Invalid sprite color"
+   if c!=key {dst[(y+row)*w+x+col]=c;n+=1}
+  }
+ }
+ return n
+}
+func draw(dst:ints,w:int,h:int,src:ints,sw:int,sh:int,x:int,y:int)->int {return draw_key(dst,w,h,src,sw,sh,x,y,-1)}
+func solid(w:int,h:int,color:int)->ints {p=canvas.create(w,h);canvas.clear(p,color);return p}

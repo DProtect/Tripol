@@ -1,0 +1,4 @@
+import tripol.canvas
+p=canvas.create(320,180)
+repeat 1000 {canvas.rectangle(p,320,180,0,0,320,180,7)}
+show sum(p)

@@ -22,7 +22,11 @@ func runCase(t *testing.T, s, w string, bad bool) {
 		ext = ".exe"
 	}
 	p := filepath.Join(t.TempDir(), "test"+ext)
-	if e := os.WriteFile(p, compile(s, runtime.GOOS), 0755); e != nil {
+	profile := os.Getenv("TRIPOL_TEST_PROFILE")
+	if profile == "" {
+		profile = "nano"
+	}
+	if e := os.WriteFile(p, compileProfile(s, runtime.GOOS, profile), 0755); e != nil {
 		t.Fatal(e)
 	}
 	o, e := exec.Command(p).CombinedOutput()

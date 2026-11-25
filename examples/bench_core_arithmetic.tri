@@ -1,0 +1,7 @@
+s=0
+for i in range(0,12000000) {
+    a=i%1024
+    b=i%256
+    s+=(a+b)*(a-b)
+}
+show s

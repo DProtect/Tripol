@@ -1,0 +1,8 @@
+import tripol.time
+n=input_int()
+start=time.now_ns()
+s=0
+for i in range(n) { x=i-n/2; s+=x/8; s+=x%8 }
+ns=time.elapsed_ns(start)
+show s
+show "TRIPOL_NS:",ns

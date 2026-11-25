@@ -1,0 +1,4 @@
+import "parser.tri"
+show boot_eval("2+3*4"),boot_eval("(2+3)*4"),boot_eval("-5+10%3")
+try {show boot_eval("2+")} catch e {show e}
+try {show boot_eval("2/0")} catch e {show e}

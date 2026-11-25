@@ -90,7 +90,7 @@ func (c *compiler) nexusBuiltin(e *expr) (string, bool) {
 	return "", false
 }
 func learn() {
-	fmt.Print(`TRIPOL 0.14 — Learn in five minutes
+	fmt.Print(`TRIPOL 0.23 — Learn in five minutes
 
 1. Show values:
    show "Hello, TRIPOL!"
@@ -155,7 +155,16 @@ func newProjectTemplate(dir, template string) {
 		return
 	}
 	templates := map[string]string{
-		"game": quantumGameExample,
+		"game": novaGameExample,
+		"discord": `import tripol.discord
+
+discord.login_env()
+// Optional: discord.channel("YOUR_CHANNEL_ID")
+discord.activity("Programando en TRIPOL")
+discord.reply("!hola", "Hola desde TRIPOL!")
+discord.reply("!ping", "Pong!")
+discord.run()
+`,
 		"ecosystem": `import tripol.sort
 import tripol.time
 import tripol.system
@@ -189,7 +198,7 @@ show "Saved:", read_text("profile.txt")
 	}
 	source, ok := templates[template]
 	if !ok {
-		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem or game", template)
+		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem, game or discord", template)
 	}
 	if err := os.Mkdir(dir, 0755); err != nil {
 		die("cannot create project: %v", err)

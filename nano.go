@@ -21,12 +21,33 @@ func (a *asm) cmpImm(n int64) {
 }
 func (c *compiler) branchFalse(e *expr, label string) {
 	a := c.a
+	if c.branchModulo(e, label) {
+		return
+	}
 	if a.opt && e.op == "bin" && e.args[1].op == "int" && e.args[1].n <= math.MaxInt32 {
 		if cc, ok := compareCode[e.s]; ok {
 			c.require(c.expression(e.args[0]), "int")
 			a.cmpImm(e.args[1].n)
 			a.j((cc-0x10)^1, label)
 			return
+		}
+	}
+	if a.opt && e.op == "bin" && e.args[1].op == "var" {
+		if cc, ok := compareCode[e.s]; ok {
+			if v, ok := c.lookup(e.args[1].s); ok && v.typ == "int" {
+				c.require(c.expression(e.args[0]), "int")
+				if r, ok := a.loopRegs[v.off]; ok {
+					rex := byte(0x48)
+					if r >= 8 {
+						rex |= 1
+					}
+					a.emit(rex, 0x3b, 0xc0|(r&7))
+				} else {
+					a.memOperand([]byte{0x48, 0x3b}, 0, v.off)
+				}
+				a.j((cc-0x10)^1, label)
+				return
+			}
 		}
 	}
 	c.require(c.expression(e), "bool")
@@ -172,6 +193,16 @@ func (c *compiler) rangeLoop(s stmt) {
 	if _, ok := c.lookup(s.name); ok {
 		c.err("duplicate or shadowed variable " + s.name)
 	}
+	if c.arrayReduction(s) {
+		return
+	}
+	acc, registerLoop := c.loopPlan(s)
+	var invariant *expr
+	var matches map[*expr]bool
+	if registerLoop {
+		invariant, matches = c.invariantPlan(s)
+	}
+	regs := []byte{10, 12, 13, 14}
 	old := c.slots
 	c.require(c.expression(s.e), "int")
 	v := c.alloc("int", false)
@@ -179,6 +210,32 @@ func (c *compiler) rangeLoop(s stmt) {
 	c.require(c.expression(s.bound), "int")
 	bound := c.alloc("int", false)
 	a.store(bound.off)
+	if registerLoop {
+		a.load(v.off)
+		a.regMove(8, 0)
+		a.load(bound.off)
+		a.regMove(9, 0)
+		promoted := map[int]byte{v.off: 8, bound.off: 9}
+		for i, binding := range acc {
+			r := regs[i]
+			if r >= 12 {
+				a.emit(0x41, 0x50|(r&7))
+			}
+			a.load(binding.off)
+			a.regMove(r, 0)
+			promoted[binding.off] = r
+		}
+		if invariant != nil {
+			a.emit(0x41, 0x57)
+			c.require(c.expression(invariant), "int")
+			a.regMove(15, 0)
+			a.loopInvariant = matches
+		}
+		if t, n, ok := fold(s.e); ok && t == "int" && n >= 0 {
+			a.loopIndexNonnegative = true
+		}
+		a.loopRegs = promoted
+	}
 	c.scopes = append(c.scopes, map[string]variable{s.name: v})
 	defer func() {
 		c.scopes = c.scopes[:len(c.scopes)-1]
@@ -188,20 +245,52 @@ func (c *compiler) rangeLoop(s stmt) {
 	}()
 	start, inc, end := a.fresh(), a.fresh(), a.fresh()
 	a.label(start)
-	a.load(v.off)
-	a.loadRCX(bound.off)
-	a.emit(0x48, 0x39, 0xc8)
+	if registerLoop {
+		a.emit(0x4d, 0x39, 0xc8)
+	} else if a.opt {
+		a.load(v.off)
+		a.memOperand([]byte{0x48, 0x3b}, 0, bound.off)
+	} else {
+		a.load(v.off)
+		a.loadRCX(bound.off)
+		a.emit(0x48, 0x39, 0xc8)
+	}
 	a.j(0x8d, end)
 	c.loops = append(c.loops, [2]string{end, inc})
 	c.block(s.yes, true)
 	c.loops = c.loops[:len(c.loops)-1]
 	a.label(inc)
-	a.load(v.off)
-	a.emit(0x48, 0x83, 0xc0, 1)
-	a.j(0x80, "err")
-	a.store(v.off)
+	if registerLoop {
+		a.emit(0x49, 0xff, 0xc0)
+	} else if a.opt {
+		// The immutable loop index was strictly below its signed bound; +1 cannot overflow.
+		a.memOperand([]byte{0x48, 0x83}, 0, v.off)
+		a.emit(1)
+	} else {
+		a.load(v.off)
+		a.emit(0x48, 0x83, 0xc0, 1)
+		a.j(0x80, "err")
+		a.store(v.off)
+	}
 	a.jmp(start)
 	a.label(end)
+	if registerLoop {
+		a.loopRegs = nil
+		a.loopInvariant = nil
+		a.loopIndexNonnegative = false
+		if invariant != nil {
+			a.popReg(15)
+		}
+		for i, binding := range acc {
+			a.regMove(0, regs[i])
+			a.store(binding.off)
+		}
+		for i := len(acc) - 1; i >= 0; i-- {
+			if regs[i] >= 12 {
+				a.popReg(regs[i])
+			}
+		}
+	}
 }
 func newProject(dir string) {
 	if err := os.Mkdir(dir, 0755); err != nil {
@@ -257,11 +346,11 @@ func (c *compiler) arrayDeclare(s stmt) {
 	c.scopes[len(c.scopes)-1][s.name] = v
 }
 
-func (a *asm) needed(label string) bool {
-	for _, f := range a.fixes {
-		if f.label == label {
-			return true
-		}
+func (a *asm) addFix(f fix) {
+	if a.references == nil {
+		a.references = make(map[string]bool)
 	}
-	return false
+	a.references[f.label] = true
+	a.fixes = append(a.fixes, f)
 }
+func (a *asm) needed(label string) bool { return a.references[label] }

@@ -1,0 +1,8 @@
+import tripol.discord
+
+discord.login_env()
+discord.activity("TRIPOL ORIGIN")
+discord.reply("!hola", "Hola desde TRIPOL!")
+discord.reply("!ping", "Pong!")
+discord.reply("!ayuda", "Comandos: !hola, !ping, !ayuda")
+discord.run()

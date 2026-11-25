@@ -1,4 +1,346 @@
 import tripol.https
+import tripol.env
+import tripol.json
+import tripol.time
+import tripol.errors
 // Public Discord API discovery, no bot token or authentication required.
 func gateway()->string {return https.get("discord.com","/api/v10/gateway")}
 func api_host()->string {return "discord.com"}
+// Native Windows REST helpers; Gateway R4 below.
+func token()->string {
+ t=env.get("DISCORD_TOKEN")
+ assert len(t)>0 and len(t)<=512,"Set DISCORD_TOKEN in your environment"
+ return t
+}
+func channel_path(channel:string)->string {
+ assert len(channel)>0 and len(channel)<=20,"Invalid Discord channel ID"
+ for i in range(len(channel)) {b=byte_at(channel,i);assert b>=48 and b<=57,"Channel ID must contain digits only"}
+ return "/api/v10/channels/"+channel+"/messages"
+}
+func send(channel:string,message:string)->bool {
+ assert len(message)>0 and len(message)<=512,"Discord message limit: 512 UTF-8 bytes"
+ body="{\"content\":"+json.quote(message)+",\"allowed_mentions\":{\"parse\":[]}}"
+ result=discord_request(channel_path(channel),token(),body)
+ return len(result)>0
+}
+func latest(channel:string)->string {
+ result=discord_request(channel_path(channel)+"?limit=1",token(),"")
+ if not json.valid(result) {return ""}
+ if len(result)<3 {return ""}
+ if byte_at(result,0)!=91 {return ""}
+ start=json.ws(result,1,len(result))
+ end=json.value(result,start,len(result),0)
+ if end<0 {return ""}
+ if byte_at(result,start)!=123 {return ""}
+ return slice(result,start,end)
+}
+func message_id(message:string)->int {
+ raw=json.get_raw(message,"id")
+ if len(raw)<3 or len(raw)>21 {return 0}
+ if byte_at(raw,0)!=34 or byte_at(raw,len(raw)-1)!=34 {return 0}
+ for i in range(1,len(raw)-1) {b=byte_at(raw,i);if b<48 or b>57 {return 0}}
+ return errors.int_or(slice(raw,1,len(raw)-1),0)
+}
+func matches(message:string,command:string)->bool {
+ if len(message)==0 {return false}
+ author=json.get_raw(message,"author")
+ if len(author)==0 {return false}
+ if json.get_raw(author,"bot")=="true" {return false}
+ if len(json.get_raw(message,"webhook_id"))>0 {return false}
+ return json.get_raw(message,"content")==json.quote(command)
+}
+// Single command in a quiet test channel; polls only the newest message.
+func listen(channel:string,command:string,response:string)->int {
+ assert len(command)>0 and len(command)<=128,"Invalid command"
+ assert len(response)>0 and len(response)<=512,"Invalid response"
+ last=0
+ scratch {last=message_id(latest(channel))}
+ show "TRIPOL Discord bot listening (REST). Ctrl+C to stop."
+ while true {
+  time.sleep(2500)
+  scratch {
+   message=latest(channel)
+   id=message_id(message)
+   if id>last {
+    last=id
+    if matches(message,command) {send(channel,response)}
+   }
+  }
+ }
+ return 0
+}
+
+// R3: a single process-local bot with up to 16 exact commands.
+// Configuration is copied to fixed private storage, outside temporary arenas.
+func login(secret:string)->bool {
+ assert len(secret)>0 and len(secret)<=512,"Invalid bot token length"
+ for i in range(len(secret)) {
+  b=byte_at(secret,i)
+  assert (b>=48 and b<=57) or (b>=65 and b<=90) or (b>=97 and b<=122) or b==45 or b==46 or b==95,"Invalid bot token characters"
+ }
+ return bot_slot_set(0,secret)
+}
+func login_env()->bool {
+ ok=false
+ scratch {ok=login(token())}
+ return ok
+}
+func channel(id:string)->bool {
+ assert len(id)>0 and len(id)<=20,"Invalid Discord channel ID"
+ for i in range(len(id)) {b=byte_at(id,i);assert b>=48 and b<=57,"Channel ID must contain digits only"}
+ return bot_slot_set(1,id)
+}
+func reply(command:string,response:string)->bool {
+ assert len(command)>0 and len(command)<=128,"Invalid command"
+ assert len(response)>0 and len(response)<=512,"Invalid response"
+ found=false
+ scratch {
+  for i in range(16) {
+   slot=2+i*2
+   existing=bot_slot_get(slot)
+   if existing==command or existing=="" {
+    bot_slot_set(slot,command)
+    bot_slot_set(slot+1,response)
+    found=true
+    break
+   }
+  }
+ }
+ assert found,"Maximum 16 Discord commands"
+ return found
+}
+func reset()->bool {
+ for i in range(39) {bot_slot_set(i,"")}
+ return true
+}
+func configured()->bool {
+ ok=false
+ scratch {ok=len(bot_slot_get(0))>0}
+ return ok
+}
+// Offline command lookup; never returns token or channel.
+func preview(command:string)->string {
+ match=-1
+ scratch {
+  for i in range(16) {
+   slot=2+i*2
+   existing=bot_slot_get(slot)
+   if existing=="" {break}
+   if existing==command {match=slot+1;break}
+  }
+ }
+ if match<0 {return ""}
+ return bot_slot_get(match)
+}
+// Resolve a raw message offline; same matching rules as run().
+func dispatch(message:string)->string {
+ match=-1
+ scratch {
+  for i in range(16) {
+   slot=2+i*2
+   command=bot_slot_get(slot)
+   if command=="" {break}
+   if matches(message,command) {match=slot+1;break}
+  }
+ }
+ if match<0 {return ""}
+ return bot_slot_get(match)
+}
+func send_to(id:string,message:string)->bool {
+ assert len(message)>0 and len(message)<=512,"Invalid Discord message"
+ ok=false
+ scratch {
+  secret=bot_slot_get(0)
+  assert len(secret)>0,"Call discord.login first"
+  body="{\"content\":"+json.quote(message)+",\"allowed_mentions\":{\"parse\":[]}}"
+  result=discord_request(channel_path(id),secret,body)
+  ok=len(result)>0
+ }
+ return ok
+}
+// A selected channel is optional for Gateway replies, but required for unsolicited messages.
+func has_channel()->bool {
+ ok=false
+ scratch {ok=len(bot_slot_get(1))>0}
+ return ok
+}
+func all_channels()->bool {return bot_slot_set(1,"")}
+func say(message:string)->bool {
+ ok=false
+ scratch {
+  assert has_channel(),"Select a channel before calling discord.say"
+  ok=send_to(bot_slot_get(1),message)
+ }
+ return ok
+}
+func parse_latest(result:string)->string {
+ if not json.valid(result) or len(result)<3 {return ""}
+ if byte_at(result,0)!=91 {return ""}
+ start=json.ws(result,1,len(result))
+ end=json.value(result,start,len(result),0)
+ if end<0 {return ""}
+ if byte_at(result,start)!=123 {return ""}
+ return slice(result,start,end)
+}
+func run_rest()->int {
+ assert configured() and has_channel(),"REST requires login and a selected channel"
+ last=0
+ scratch {
+  raw=discord_request(channel_path(bot_slot_get(1))+"?limit=1",bot_slot_get(0),"")
+  last=message_id(parse_latest(raw))
+ }
+ show "TRIPOL Discord R3 (REST) - Ctrl+C to stop."
+ while true {
+  time.sleep(2500)
+  scratch {
+   raw=discord_request(channel_path(bot_slot_get(1))+"?limit=1",bot_slot_get(0),"")
+   message=parse_latest(raw)
+   id=message_id(message)
+   if id>last {
+    last=id
+    response=dispatch(message)
+    if len(response)>0 {say(response)}
+   }
+  }
+ }
+ return 0
+}
+
+
+// R5 Gateway configuration: optional channel filter, exact prefix commands.
+// Shortcut for a locally configured single-channel bot.
+func setup(secret:string,id:string)->bool {
+ login(secret)
+ return channel(id)
+}
+func status(value:string)->bool {
+ assert value=="online" or value=="idle" or value=="dnd" or value=="invisible","Invalid Discord status"
+ return bot_slot_set(34,value)
+}
+func activity(value:string)->bool {
+ assert len(value)<=128,"Activity limit 128 bytes"
+ return bot_slot_set(35,value)
+}
+// Send once after READY instead of making a REST request before connecting.
+func welcome(value:string)->bool {
+ assert len(value)<=512,"Welcome limit 512 bytes"
+ return bot_slot_set(36,value)
+}
+func connected()->bool {
+ ok=false
+ scratch {ok=bot_slot_get(38)=="ready"}
+ return ok
+}
+// Last heartbeat round trip in ms; -1 until the first ACK.
+func ping()->int {
+ result=-1
+ scratch {result=errors.int_or(bot_slot_get(37),-1)}
+ return result
+}
+func identify_payload()->string {
+ secret=bot_slot_get(0)
+ state=bot_slot_get(34)
+ if state=="" {state="online"}
+ act=bot_slot_get(35)
+ activities="[]"
+ if len(act)>0 {activities="[{\"name\":"+json.quote(act)+",\"type\":0}]"}
+ // GUILDS | GUILD_MESSAGES | MESSAGE_CONTENT (privileged).
+ return "{\"op\":2,\"d\":{\"token\":"+json.quote(secret)+",\"intents\":33281,\"properties\":{\"os\":\"windows\",\"browser\":\"TRIPOL\",\"device\":\"TRIPOL\"},\"presence\":{\"since\":null,\"activities\":"+activities+",\"status\":"+json.quote(state)+",\"afk\":false}}}"
+}
+func heartbeat_payload(sequence:int)->string {
+ if sequence<0 {return "{\"op\":1,\"d\":null}"}
+ return "{\"op\":1,\"d\":"+text(sequence)+"}"
+}
+// Validate the event channel ID and apply the optional channel filter.
+func event_channel(event:string)->string {
+ if json.get_raw_large(event,"op")!="0" or json.get_raw_large(event,"t")!="\"MESSAGE_CREATE\"" {return ""}
+ d=json.get_raw_large(event,"d")
+ raw=json.get_raw_large(d,"channel_id")
+ if len(raw)<3 or len(raw)>22 {return ""}
+ if byte_at(raw,0)!=34 or byte_at(raw,len(raw)-1)!=34 {return ""}
+ for i in range(1,len(raw)-1) {b=byte_at(raw,i);if b<48 or b>57 {return ""}}
+ id=slice(raw,1,len(raw)-1)
+ filter=bot_slot_get(1)
+ if len(filter)>0 and filter!=id {return ""}
+ return id
+}
+// Offline testable Gateway MESSAGE_CREATE dispatch. Optional channel filter,
+// exact command content, no bots or webhooks. No token or network required.
+func gateway_reply(event:string)->string {
+ slot_found=-1
+ scratch {
+  if json.get_raw_large(event,"op")=="0" and json.get_raw_large(event,"t")=="\"MESSAGE_CREATE\"" {
+   d=json.get_raw_large(event,"d")
+   if len(event_channel(event))>0 {
+    author=json.get_raw_large(d,"author")
+    if len(author)>0 and json.get_raw_large(author,"bot")!="true" and len(json.get_raw_large(d,"webhook_id"))==0 {
+     content=json.get_raw_large(d,"content")
+     for i in range(16) {
+      slot=2+i*2
+      command=bot_slot_get(slot)
+      if command=="" {break}
+      if content==json.quote(command) {slot_found=slot+1;break}
+     }
+    }
+   }
+  }
+ }
+ if slot_found<0 {return ""}
+ return bot_slot_get(slot_found)
+}
+func run()->int {
+ assert configured(),"Call discord.login first"
+ scratch {assert has_channel() or len(bot_slot_get(36))==0,"Welcome requires a selected channel"}
+ assert gw_open(),"Gateway TLS/WebSocket open failed (Windows only)"
+ bot_slot_set(37,"");bot_slot_set(38,"")
+ show "TRIPOL Discord Gateway connecting..."
+ interval=0; sequence=-1; next_heartbeat=0; sent=0; awaiting=false; done=false
+ started=time.now_ms(); ready=false
+ while not done {
+  scratch {
+   // Wait on a local thread handle, not a REST request. Wakes on data arrival.
+   event=gw_receive(100)
+   if event=="!" {done=true;show "Gateway closed or receive failed."}
+   else if len(event)>0 {
+    op=errors.int_or(json.get_raw_large(event,"op"),-1)
+    if op==10 and interval==0 {
+     d=json.get_raw_large(event,"d")
+     interval=errors.int_or(json.get_raw_large(d,"heartbeat_interval"),0)
+     if interval<1000 or interval>300000 {gw_abort()}
+     next_heartbeat=time.now_ms()+time.now_ns()%interval
+     gw_send(identify_payload())
+    } else if op==0 {
+     seq=errors.int_or(json.get_raw_large(event,"s"),-1)
+     if seq>=0 {sequence=seq}
+     kind=json.get_raw_large(event,"t")
+     if kind=="\"READY\"" and not ready {
+      ready=true;bot_slot_set(38,"ready")
+      show "TRIPOL Discord Gateway READY - Ctrl+C to stop."
+      greeting=bot_slot_get(36)
+      if len(greeting)>0 {say(greeting)}
+     } else if ready and kind=="\"MESSAGE_CREATE\"" {
+      response=gateway_reply(event)
+      if len(response)>0 {send_to(event_channel(event),response)}
+     }
+    } else if op==11 {
+     if awaiting {bot_slot_set(37,text(time.now_ms()-sent));awaiting=false}
+    } else if op==1 {
+     gw_send(heartbeat_payload(sequence));sent=time.now_ms();awaiting=true
+    } else if op==7 or op==9 {
+     done=true;show "Gateway requested reconnect or invalidated the session. Stopped safely."
+    }
+   }
+   if not done {
+    now=time.now_ms()
+    if not ready and now-started>30000 {gw_abort()}
+    if interval>0 and now>=next_heartbeat {
+     if awaiting {gw_abort()}
+     gw_send(heartbeat_payload(sequence));sent=now;awaiting=true
+     next_heartbeat=now+interval
+    }
+   }
+  }
+ }
+ gw_close();bot_slot_set(38,"")
+ return 1
+}

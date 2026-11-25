@@ -1,0 +1,5 @@
+// Integer camera translation and bounded integer zoom.
+func screen(world:int,origin:int,zoom=1)->int {assert zoom>=1 and zoom<=16,"Invalid zoom";return (world-origin)*zoom}
+func world(screen_pos:int,origin:int,zoom=1)->int {assert zoom>=1 and zoom<=16,"Invalid zoom";return screen_pos/zoom+origin}
+func follow(pos:int,view:int,limit:int)->int {assert view>=0 and limit>=view,"Invalid camera bounds";return max(0,min(pos-view/2,limit-view))}
+func visible(x:int,y:int,w:int,h:int,vw:int,vh:int)->bool {return w>0 and h>0 and vw>0 and vh>0 and x<vw and y<vh and x+w>0 and y+h>0}

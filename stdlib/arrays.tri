@@ -10,17 +10,12 @@ func count(a:ints, value:int) -> int {
     return n
 }
 func contains(a:ints, value:int) -> bool {
-    for item in a { if item==value { return true } }
-    return false
+    return array_find(a,value)>=0
 }
 func reversed(a:ints) -> ints {
     b=ints(len(a))
     for i in range(len(a)) { b[i]=a[len(a)-1-i] }
     return b
 }
-func copy(a:ints) -> ints {
-    b=ints(len(a))
-    for i in range(len(a)) { b[i]=a[i] }
-    return b
-}
+func copy(a:ints) -> ints { return array_copy(a) }
 func length(a:ints) -> int { return len(a) }

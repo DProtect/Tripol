@@ -3,3 +3,7 @@ func now_ms() -> int {return monotonic_ms()}
 func elapsed(start:int) -> int {return now_ms()-start}
 func sleep(ms:int) -> int {return sleep_ms(ms)}
 func seconds(ms:int) -> float {return float(ms)/1000.0}
+
+// High-resolution monotonic timestamps; origin is unspecified.
+func now_ns() -> int {return monotonic_ns()}
+func elapsed_ns(start:int) -> int {return now_ns()-start}

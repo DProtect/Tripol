@@ -1,0 +1,9 @@
+import tripol.discord
+
+discord.login_env()
+discord.channel("YOUR_CHANNEL_ID")
+discord.say("Hola! Ya estoy funcionando")
+discord.reply("!hola", "Hola compa!")
+discord.reply("!ping", "Pong!")
+discord.reply("!ayuda", "Comandos: !hola, !ping, !ayuda")
+discord.run()

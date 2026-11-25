@@ -1,0 +1,184 @@
+{
+  "arch": "amd64",
+  "os": "linux",
+  "profile": "turbo",
+  "runs": 3,
+  "rust": "not requested",
+  "version": "0.22.0",
+  "workloads": [
+    {
+      "case": "division",
+      "contestants": [
+        {
+          "build_median_ms": 2.322456,
+          "build_samples_ms": [
+            2.872942,
+            2.322456,
+            1.997432
+          ],
+          "bytes": 1586,
+          "internal_median_ms": 10.630489,
+          "internal_samples_ms": [
+            10.630489,
+            10.051776,
+            10.740221
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 10.978742,
+          "process_samples_ms": [
+            10.978742,
+            10.45429,
+            11.098558
+          ]
+        }
+      ],
+      "input": "12000000",
+      "verified_output": "-750000"
+    },
+    {
+      "case": "registers",
+      "contestants": [
+        {
+          "build_median_ms": 2.322031,
+          "build_samples_ms": [
+            2.322031,
+            2.672933,
+            2.088216
+          ],
+          "bytes": 1679,
+          "internal_median_ms": 8.013855,
+          "internal_samples_ms": [
+            8.070658,
+            8.013855,
+            7.858336
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 8.31587,
+          "process_samples_ms": [
+            8.528834,
+            8.31587,
+            8.247599
+          ]
+        }
+      ],
+      "input": "6000000",
+      "verified_output": "45000000 21000000 42000000 46500000"
+    },
+    {
+      "case": "fibonacci",
+      "contestants": [
+        {
+          "build_median_ms": 2.555875,
+          "build_samples_ms": [
+            2.111351,
+            2.629262,
+            2.555875
+          ],
+          "bytes": 1491,
+          "internal_median_ms": 3.856391,
+          "internal_samples_ms": [
+            3.869379,
+            3.788801,
+            3.856391
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 4.186076,
+          "process_samples_ms": [
+            4.186076,
+            4.072469,
+            4.186727
+          ]
+        }
+      ],
+      "input": "30",
+      "verified_output": "832040"
+    },
+    {
+      "case": "arrays",
+      "contestants": [
+        {
+          "build_median_ms": 2.200252,
+          "build_samples_ms": [
+            2.017412,
+            2.200252,
+            2.45071
+          ],
+          "bytes": 1835,
+          "internal_median_ms": 0.272812,
+          "internal_samples_ms": [
+            0.284959,
+            0.272812,
+            0.272091
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 4.641087,
+          "process_samples_ms": [
+            4.641087,
+            5.97422,
+            4.248719
+          ]
+        }
+      ],
+      "input": "1000000",
+      "verified_output": "511370976"
+    },
+    {
+      "case": "copy",
+      "contestants": [
+        {
+          "build_median_ms": 2.051813,
+          "build_samples_ms": [
+            2.470138,
+            1.922101,
+            2.051813
+          ],
+          "bytes": 1935,
+          "internal_median_ms": 2.985839,
+          "internal_samples_ms": [
+            2.985839,
+            3.07491,
+            2.79026
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 7.886698,
+          "process_samples_ms": [
+            7.886698,
+            8.084809,
+            7.251061
+          ]
+        }
+      ],
+      "input": "1000000",
+      "verified_output": "511370976"
+    },
+    {
+      "case": "search",
+      "contestants": [
+        {
+          "build_median_ms": 2.293708,
+          "build_samples_ms": [
+            2.38302,
+            2.293708,
+            2.282472
+          ],
+          "bytes": 1924,
+          "internal_median_ms": 0.169449,
+          "internal_samples_ms": [
+            0.338799,
+            0.158463,
+            0.169449
+          ],
+          "name": "TRIPOL",
+          "process_median_ms": 4.556803,
+          "process_samples_ms": [
+            4.643589,
+            4.556803,
+            4.291382
+          ]
+        }
+      ],
+      "input": "1000000",
+      "verified_output": "-1"
+    }
+  ]
+}

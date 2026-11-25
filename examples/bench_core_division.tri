@@ -1,0 +1,8 @@
+// Runtime integer division/remainder; signed values, no constant folding of x.
+s=0
+for i in range(0,12000000) {
+    x=i-6000000
+    s+=x/8
+    s+=x%8
+}
+show s
