@@ -13,14 +13,14 @@ import (
 	"strings"
 )
 
-const version = "0.5.0"
+const version = "0.6.0"
 
 type token struct {
 	s, k string
 	line int
 }
 
-var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){}\[\],:;\-]))`)
+var lexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(\+=|-=|\*=|/=|%=|==|!=|<=|>=|&&|\|\||->|[+*/%<>=!(){}\[\],:;\-]))`)
 
 func die(f string, a ...any) { panic(fmt.Errorf(f, a...)) }
 func lex(s string) []token {
@@ -109,7 +109,7 @@ func (p *parser) end() {
 }
 func (p *parser) name() string {
 	t := p.t()
-	if t.k != "id" || strings.Contains("|import|func|return|show|let|const|if|else|while|for|in|range|break|continue|true|false|int|bool|string|float|ints|void|", "|"+t.s+"|") {
+	if t.k != "id" || strings.Contains("|import|func|return|show|let|const|if|else|while|for|in|range|repeat|and|or|not|break|continue|true|false|int|bool|string|float|ints|void|", "|"+t.s+"|") {
 		p.err("expected identifier")
 	}
 	return p.take().s
@@ -144,22 +144,55 @@ func (p *parser) statement() stmt {
 	switch t.s {
 	case "break", "continue":
 		s.op = p.take().s
+	case "repeat":
+		p.take()
+		s.op = "for"
+		s.name = fmt.Sprintf("@repeat%d", p.i)
+		s.e = &expr{op: "int"}
+		s.bound = p.expression(1)
+		s.yes = p.block()
+		return s
 	case "for":
 		p.take()
 		s.op = "for"
 		s.name = p.name()
 		p.need("in")
-		p.need("range")
-		p.need("(")
-		s.e = p.expression(1)
-		p.need(",")
-		s.bound = p.expression(1)
-		p.need(")")
-		s.yes = p.block()
+		if p.eat("range") {
+			p.need("(")
+			first := p.expression(1)
+			if p.eat(",") {
+				s.e = first
+				s.bound = p.expression(1)
+			} else {
+				s.e = &expr{op: "int"}
+				s.bound = first
+			}
+			p.need(")")
+			s.yes = p.block()
+		} else {
+			array := p.name()
+			item := s.name
+			s.name = fmt.Sprintf("@each%d", p.i)
+			s.e = &expr{op: "int"}
+			s.bound = &expr{op: "call", s: "@array_len", args: []*expr{{op: "var", s: array}}}
+			body := p.block()
+			s.yes = append([]stmt{{op: "decl", name: item, line: t.line, e: &expr{op: "index", s: array, args: []*expr{{op: "var", s: s.name}}}}}, body...)
+		}
 		return s
 	case "show", "return":
 		s.op = p.take().s
 		s.e = p.expression(1)
+		if s.op == "show" && p.eat(",") {
+			args := []*expr{s.e}
+			for {
+				args = append(args, p.expression(1))
+				if !p.eat(",") {
+					break
+				}
+			}
+			s.op = "showmany"
+			s.e = &expr{op: "list", args: args}
+		}
 	case "if", "while":
 		s.op = p.take().s
 		s.e = p.expression(1)
@@ -167,7 +200,17 @@ func (p *parser) statement() stmt {
 		if s.op == "if" {
 			p.skip()
 			if p.eat("else") {
-				s.no = p.block()
+				p.skip()
+				if p.t().s == "if" {
+					p.depth++
+					if p.depth > 256 {
+						p.err("nesting limit")
+					}
+					s.no = []stmt{p.statement()}
+					p.depth--
+				} else {
+					s.no = p.block()
+				}
 			}
 		}
 		return s
@@ -181,11 +224,14 @@ func (p *parser) statement() stmt {
 		p.need("=")
 		s.e = p.expression(1)
 	default:
-		if t.k == "id" && p.ts[p.i+1].s == "=" {
+		if t.k == "id" && strings.Contains("|=|+=|-=|*=|/=|%=|", "|"+p.ts[p.i+1].s+"|") && p.ts[p.i+1].s != "|" {
 			s.op = "assign"
 			s.name = p.name()
-			p.need("=")
+			op := p.take().s
 			s.e = p.expression(1)
+			if op != "=" {
+				s.e = &expr{op: "bin", s: op[:1], args: []*expr{{op: "var", s: s.name}, s.e}}
+			}
 		} else {
 			s.op = "expr"
 			s.e = p.expression(1)
@@ -201,7 +247,7 @@ func (p *parser) statement() stmt {
 	return s
 }
 
-var prec = map[string]int{"||": 1, "&&": 2, "==": 3, "!=": 3, "<": 4, ">": 4, "<=": 4, ">=": 4, "+": 5, "-": 5, "*": 6, "/": 6, "%": 6}
+var prec = map[string]int{"||": 1, "or": 1, "&&": 2, "and": 2, "==": 3, "!=": 3, "<": 4, ">": 4, "<=": 4, ">=": 4, "+": 5, "-": 5, "*": 6, "/": 6, "%": 6}
 
 func (p *parser) expression(min int) *expr {
 	p.depth++
@@ -212,9 +258,16 @@ func (p *parser) expression(min int) *expr {
 	t := p.take()
 	e := &expr{s: t.s}
 	switch {
-	case t.s == "-" || t.s == "!":
+	case t.s == "-" || t.s == "!" || t.s == "not":
+		if t.s == "not" {
+			e.s = "!"
+		}
 		e.op = "un"
-		e.args = []*expr{p.expression(7)}
+		if t.s == "not" {
+			e.args = []*expr{p.expression(3)}
+		} else {
+			e.args = []*expr{p.expression(7)}
+		}
 	case t.s == "[":
 		e.op = "array"
 		if !p.eat("]") {
@@ -277,7 +330,14 @@ func (p *parser) expression(min int) *expr {
 	}
 	for prec[p.t().s] >= min {
 		op := p.take().s
-		e = &expr{op: "bin", s: op, args: []*expr{e, p.expression(prec[op] + 1)}}
+		priority := prec[op]
+		if op == "and" {
+			op = "&&"
+		}
+		if op == "or" {
+			op = "||"
+		}
+		e = &expr{op: "bin", s: op, args: []*expr{e, p.expression(priority + 1)}}
 	}
 	return e
 }
@@ -709,6 +769,22 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				c.scopes[len(c.scopes)-1][s.name] = v
 			}
 			a.store(v.off)
+		case "showmany":
+			for i, x := range s.e.args {
+				if i > 0 {
+					a.str(" ")
+					a.call("raw_string")
+				}
+				t := c.expression(x)
+				switch t {
+				case "int", "string", "bool", "float":
+					a.call("raw_" + t)
+				default:
+					c.err("show requires scalar or string")
+				}
+			}
+			a.str("\n")
+			a.call("raw_string")
 		case "show":
 			t := c.expression(s.e)
 			if t == "ints" {
@@ -1128,22 +1204,38 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool)
 func cli() {
 	args := os.Args[1:]
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.5.0 — VELOCITY\ntripol new NAME\ntripol run FILE.tri [--profile nano|debug]\ntripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check FILE.tri\ntripol bench FILE.tri [--runs 1..100] [--profile nano|debug]\ntripol --version")
+		fmt.Println("TRIPOL 0.6.0 — NEXUS\ntripol new NAME [--template basic|calculator|files]\ntripol learn\ntripol doctor\ntripol run [FILE.tri] [--profile nano|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--profile nano|debug]\ntripol --version")
 		return
 	}
 	if args[0] == "--version" {
 		fmt.Println("TRIPOL " + version)
 		return
 	}
+	if args[0] == "learn" && len(args) == 1 {
+		learn()
+		return
+	}
+	if args[0] == "doctor" && len(args) == 1 {
+		doctor()
+		return
+	}
+	if args[0] == "run" || args[0] == "build" || args[0] == "check" || args[0] == "bench" {
+		if len(args) == 1 || strings.HasPrefix(args[1], "-") {
+			args = append([]string{args[0], "main.tri"}, args[1:]...)
+		}
+	}
 	if len(args) < 2 {
-		die("source file required")
+		die("source file required; try tripol --help")
 	}
 	cmd, src := args[0], args[1]
 	if cmd == "new" {
-		if len(args) != 2 {
-			die("usage: tripol new NAME")
+		template := "basic"
+		if len(args) == 4 && args[2] == "--template" {
+			template = args[3]
+		} else if len(args) != 2 {
+			die("usage: tripol new NAME [--template basic|calculator|files]")
 		}
-		newProject(src)
+		newProjectTemplate(src, template)
 		return
 	}
 	profile := "nano"

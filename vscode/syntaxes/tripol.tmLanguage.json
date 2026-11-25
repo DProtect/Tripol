@@ -1,1 +1,53 @@
-{"name":"TRIPOL","scopeName":"source.tripol","patterns":[{"name":"comment.line.double-slash.tripol","match":"//.*$"},{"name":"comment.line.number-sign.tripol","match":"#.*$"},{"name":"string.quoted.double.tripol","begin":"\"","end":"\"","patterns":[{"name":"constant.character.escape.tripol","match":"\\\\."}]},{"name":"keyword.control.tripol","match":"\\b(import|if|else|while|for|in|break|continue|return|show)\\b"},{"name":"storage.type.tripol","match":"\\b(func|let|const|int|bool|string|float|ints)\\b"},{"name":"constant.language.tripol","match":"\\b(true|false)\\b"},{"name":"support.function.tripol","match":"\\b(len|range|input|parse_int|sqrt|read_text|write_text|append_text|text|slice)\\b"},{"name":"constant.numeric.tripol","match":"\\b[0-9]+(?:\\.[0-9]+)?\\b"},{"name":"keyword.operator.tripol","match":"[+*/%=<>!&|\\-]+"}]}
+{
+  "name": "TRIPOL",
+  "scopeName": "source.tripol",
+  "patterns": [
+    {
+      "name": "comment.line.double-slash.tripol",
+      "match": "//.*$"
+    },
+    {
+      "name": "comment.line.number-sign.tripol",
+      "match": "#.*$"
+    },
+    {
+      "name": "string.quoted.double.tripol",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.tripol",
+          "match": "\\\\."
+        }
+      ]
+    },
+    {
+      "name": "keyword.control.tripol",
+      "match": "\\b(import|if|else|while|repeat|for|in|break|continue|return|show)\\b"
+    },
+    {
+      "name": "storage.type.tripol",
+      "match": "\\b(func|let|const|int|bool|string|float|ints)\\b"
+    },
+    {
+      "name": "constant.language.tripol",
+      "match": "\\b(true|false)\\b"
+    },
+    {
+      "name": "support.function.tripol",
+      "match": "\\b(len|range|input|input_int|parse_int|sum|min|max|abs|sqrt|read_text|write_text|append_text|text|slice)\\b"
+    },
+    {
+      "name": "constant.numeric.tripol",
+      "match": "\\b[0-9]+(?:\\.[0-9]+)?\\b"
+    },
+    {
+      "name": "keyword.operator.tripol",
+      "match": "[+*/%=<>!&|\\-]+"
+    },
+    {
+      "name": "keyword.operator.word.tripol",
+      "match": "\\b(and|or|not)\\b"
+    }
+  ]
+}

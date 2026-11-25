@@ -1,10 +1,10 @@
-# TRIPOL v0.5.0 — VELOCITY
+# TRIPOL v0.6.0 — NEXUS
 
 Free, experimental Apache-2.0 programming language. Standalone Go compiler emits x86-64 machine code and PE32+ (Windows) or ELF64 (Linux) directly. No Python, GCC, Clang or Go installation is required to use the distributed compiler. Go 1.23+ is needed only to rebuild it.
 
 ## Windows x64
 
-Run `TRIPOL-v0.5-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.4 was confirmed by the project owner on Windows (calculator 2560 bytes, Fibonacci median 85.961 ms). v0.5 is cross-compiled and PE-inspected but its new runtime has not been executed in Windows. Portable ZIP is also available.
+Run `TRIPOL-v0.6-Setup-x64.exe` to update the per-user installation at `%LOCALAPPDATA%\Programs\TRIPOL`. Existing example files are preserved, and the installer adds the directory to the user's PATH. Close and reopen CMD; run `tripol --version`. The installer uses Windows PowerShell for PATH modification and is unsigned. v0.5 was confirmed by the project owner on Windows (file read/write and runtime-sized arrays). v0.6 is cross-compiled and PE-inspected; Windows execution still needs validation. Portable ZIP is also available.
 
 ```cmd
 tripol --version
@@ -17,6 +17,30 @@ tripol bench main.tri --runs 5
 ```
 
 Commands: `tripol check FILE.tri`, `tripol run FILE.tri [--profile nano|debug]`, `tripol build FILE.tri [-o OUTPUT] [--target windows|linux] [--profile nano|debug]`, `tripol bench FILE.tri [--runs 1..100] [--profile nano|debug]`, `tripol new NAME`. Default profile nano. Debug disables the AST/native optimization passes, not a source debugger. Benchmark includes OS process startup, compiles once, excludes one warm-up, closes stdin and discards stdout. Use noninteractive programs only; no built-in timeout. Targets x86-64 only.
+
+## Nexus: easier syntax
+
+```tripol
+name = input("Your name?")
+age = input_int("Your age?")
+show "Hello", name, age
+numbers = [10, 20, 30]
+for n in numbers { show n }
+show "Total:", sum(numbers)
+repeat 3 { show "TRIPOL" }
+for i in range(5) { show i }
+if age < 13 { show "Child" } else if age < 18 { show "Teen" } else { show "Adult" }
+```
+
+- `show a, b, c` writes scalar values separated by one space and ends with a newline. It streams values left to right without allocating concatenated strings. A later failure can leave partial output. Single-value `show` is unchanged.
+- `input(prompt)` and `input_int(prompt)` optionally print a text prompt on its own line. `input_int` uses the existing strict decimal integer parser; invalid input traps. `input()` remains valid.
+- `repeat n` and `range(n)` evaluate their integer count once; negative or zero counts perform zero iterations. `break` and `continue` work normally. `for value in array` iterates a named integer array with an immutable loop value; the initial length is captured, but each indexed access uses the current binding and retains bounds checking. Avoid rebinding the array during iteration.
+- `+=`, `-=`, `*=`, `/=`, `%=` work on existing mutable scalar variables, with checked arithmetic and existing type rules. `and`, `or`, `not` are short-circuit logical operators; `not` binds less tightly than comparison but more tightly than `and`/`or`. `repeat`, `and`, `or`, `not` are new reserved words. Older programs that used them as variable names need renaming.
+- `sum(array)` is a native checked integer accumulation over a named fixed or dynamic integer array; `sum` of an empty dynamic array is zero. `min(a,b)`, `max(a,b)`, `abs(a)` operate on int64; overflow traps. User-defined functions continue to take precedence over public built-ins.
+- `tripol run`, `tripol build`, `tripol check`, and `tripol bench` default to `main.tri` if no source is supplied. `tripol learn` displays an offline tutorial; `tripol doctor` reports the compiler location and supported host/targets (not a full hardware diagnostic).
+- `tripol new MyApp --template calculator` or `--template files` creates a ready-to-run example. `basic` is the default. Existing directories are not overwritten.
+
+Nexus adds language conveniences and native math, not a TIR, object system, networking, GUI or general memory allocator. Existing memory and platform limitations still apply.
 
 ## Interactive programs
 
@@ -104,7 +128,7 @@ CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
 mkdir -p installer/payload
 cp examples/hello.tri installer/payload/hello.tri
 CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o installer/payload/tripol.exe .
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.5-Setup-x64.exe ./installer
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o TRIPOL-v0.6-Setup-x64.exe ./installer
 ```
 
-See BENCHMARKS.md and test-results.txt. 24 test groups and 146 subtests passed on Linux; go vet passed. No claim of outperforming Rust or C. License Apache-2.0.
+See BENCHMARKS.md and test-results.txt. 30 test groups and 174 subtests passed on Linux; go vet passed. No claim of outperforming Rust or C. License Apache-2.0.

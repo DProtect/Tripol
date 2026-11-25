@@ -4,6 +4,9 @@ package main
 // The generated program uses only OS services; no C runtime is linked.
 func (c *compiler) builtin(e *expr) (string, bool) {
 	a := c.a
+	if t, ok := c.nexusBuiltin(e); ok {
+		return t, true
+	}
 	switch e.s {
 	case "ints":
 		if len(e.args) != 1 {
@@ -52,9 +55,7 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 		a.call("strlen")
 		return "int", true
 	case "input":
-		if len(e.args) != 0 {
-			c.err("input expects no arguments")
-		}
+		c.inputPrompt(e)
 		a.call("input")
 		return "string", true
 	case "parse_int":
@@ -105,7 +106,7 @@ func (c *compiler) floatOp(op string) string {
 // Runtime sections contain hand-written x86-64, with relocations resolved by Forge.
 // Ordered dependency closure keeps unused helpers out of tiny binaries.
 func (a *asm) libertyRuntime() {
-	order := []string{"print:float", "input", "concat", "parseint", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
+	order := []string{"raw_bool", "raw_int", "raw_float", "raw_string", "print:float", "input", "concat", "parseint", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "readbyte", "text_error", "float_error"}
 	for _, name := range order {
 		if !a.needed(name) {
 			continue

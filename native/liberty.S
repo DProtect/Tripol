@@ -550,3 +550,101 @@
  mov rax,rdx
  leave
  ret
+
+.section .text.raw_float,"ax"
+# rax = IEEE754 bits; format rounded fixed six decimals, trap outside int64 scaled range.
+ movq xmm0,rax
+ mov rdx,0x412e848000000000
+ movq xmm1,rdx
+ mulsd xmm0,xmm1
+ cvtsd2si rax,xmm0
+ mov rdx,0x8000000000000000
+ cmp rax,rdx
+ je float_error
+ push rbp
+ mov rbp,rsp
+ sub rsp,48
+ lea rsi,[rbp-1]
+ xor r8d,r8d
+ xor r9d,r9d
+ test rax,rax
+ jns 1f
+ mov r9b,1
+ neg rax
+1: mov ecx,10
+ mov r10d,6
+2: xor edx,edx
+ div rcx
+ add dl,48
+ dec rsi
+ mov [rsi],dl
+ inc r8
+ dec r10d
+ jnz 2b
+ dec rsi
+ mov byte ptr [rsi],46
+ inc r8
+3: xor edx,edx
+ div rcx
+ add dl,48
+ dec rsi
+ mov [rsi],dl
+ inc r8
+ test rax,rax
+ jnz 3b
+ test r9b,r9b
+ jz 4f
+ dec rsi
+ mov byte ptr [rsi],45
+ inc r8
+4: mov rdx,r8
+ call write
+ leave
+ ret
+
+.section .text.raw_string,"ax"
+ mov rsi,rax
+ xor edx,edx
+1: cmp byte ptr [rsi+rdx],0
+ je 2f
+ inc rdx
+ jmp 1b
+2: jmp write
+.section .text.raw_bool,"ax"
+ test rax,rax
+ jz 1f
+ lea rax,[rip+2f]
+ jmp raw_string
+1: lea rax,[rip+3f]
+ jmp raw_string
+2: .asciz "true"
+3: .asciz "false"
+.section .text.raw_int,"ax"
+ push rbp
+ mov rbp,rsp
+ sub rsp,48
+ lea rsi,[rbp-1]
+ xor r8d,r8d
+ xor r9d,r9d
+ test rax,rax
+ jns 1f
+ mov r9b,1
+ neg rax
+1: mov ecx,10
+2: xor edx,edx
+ div rcx
+ add dl,48
+ dec rsi
+ mov [rsi],dl
+ inc r8
+ test rax,rax
+ jnz 2b
+ test r9b,r9b
+ jz 3f
+ dec rsi
+ mov byte ptr [rsi],45
+ inc r8
+3: mov rdx,r8
+ call write
+ leave
+ ret

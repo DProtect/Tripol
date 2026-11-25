@@ -105,7 +105,7 @@
 === RUN   TestPrograms/show_1<2_show_2>=2_show_2>3
 === RUN   TestPrograms/show_""
 === RUN   TestPrograms/show_"¡Hola,_TRIPOL!"
---- PASS: TestPrograms (0.06s)
+--- PASS: TestPrograms (0.01s)
     --- PASS: TestPrograms/show_"Hola" (0.00s)
     --- PASS: TestPrograms/show_2_+_3_*_4_show_(2_+_3)_*_4 (0.00s)
     --- PASS: TestPrograms/x=1_x=x+3_show_x (0.00s)
@@ -119,8 +119,8 @@
     --- PASS: TestPrograms/show_!false_&&_true_show_false||true (0.00s)
     --- PASS: TestPrograms/show_false_&&_(1/0==1)_show_true_||_(1/0==1) (0.00s)
     --- PASS: TestPrograms/show_"a"=="a"_show_"a"!="b" (0.00s)
-    --- PASS: TestPrograms/show_"a\nb\t\"c" (0.01s)
-    --- PASS: TestPrograms/#_comment_show_5_//_comment (0.03s)
+    --- PASS: TestPrograms/show_"a\nb\t\"c" (0.00s)
+    --- PASS: TestPrograms/#_comment_show_5_//_comment (0.00s)
     --- PASS: TestPrograms/show_-7/3_show_-7%3 (0.00s)
     --- PASS: TestPrograms/func_f(x){if_x==0{return_1}else{return_2}}_show_f(0) (0.00s)
     --- PASS: TestPrograms/x=0_if_true{let_y=3;x=y}_show_x (0.00s)
@@ -196,7 +196,7 @@
 === RUN   TestNanoPrograms/12
 === RUN   TestNanoPrograms/13
 === RUN   TestNanoPrograms/14
---- PASS: TestNanoPrograms (0.09s)
+--- PASS: TestNanoPrograms (0.08s)
     --- PASS: TestNanoPrograms/0 (0.00s)
     --- PASS: TestNanoPrograms/1 (0.00s)
     --- PASS: TestNanoPrograms/2 (0.00s)
@@ -208,7 +208,7 @@
     --- PASS: TestNanoPrograms/8 (0.00s)
     --- PASS: TestNanoPrograms/9 (0.00s)
     --- PASS: TestNanoPrograms/10 (0.00s)
-    --- PASS: TestNanoPrograms/11 (0.08s)
+    --- PASS: TestNanoPrograms/11 (0.07s)
     --- PASS: TestNanoPrograms/12 (0.00s)
     --- PASS: TestNanoPrograms/13 (0.00s)
     --- PASS: TestNanoPrograms/14 (0.00s)
@@ -252,13 +252,90 @@
 --- PASS: TestNanoSize (0.00s)
 === RUN   TestProfileEquivalence
 --- PASS: TestProfileEquivalence (0.00s)
+=== RUN   TestNexusSyntax
+=== RUN   TestNexusSyntax/0
+=== RUN   TestNexusSyntax/1
+=== RUN   TestNexusSyntax/2
+=== RUN   TestNexusSyntax/3
+=== RUN   TestNexusSyntax/4
+=== RUN   TestNexusSyntax/5
+=== RUN   TestNexusSyntax/6
+=== RUN   TestNexusSyntax/7
+=== RUN   TestNexusSyntax/8
+--- PASS: TestNexusSyntax (0.01s)
+    --- PASS: TestNexusSyntax/0 (0.00s)
+    --- PASS: TestNexusSyntax/1 (0.00s)
+    --- PASS: TestNexusSyntax/2 (0.00s)
+    --- PASS: TestNexusSyntax/3 (0.00s)
+    --- PASS: TestNexusSyntax/4 (0.00s)
+    --- PASS: TestNexusSyntax/5 (0.00s)
+    --- PASS: TestNexusSyntax/6 (0.00s)
+    --- PASS: TestNexusSyntax/7 (0.00s)
+    --- PASS: TestNexusSyntax/8 (0.00s)
+=== RUN   TestNexusInput
+=== RUN   TestNexusInput/nano
+=== RUN   TestNexusInput/debug
+--- PASS: TestNexusInput (0.00s)
+    --- PASS: TestNexusInput/nano (0.00s)
+    --- PASS: TestNexusInput/debug (0.00s)
+=== RUN   TestNexusReject
+=== RUN   TestNexusReject/x+=1
+=== RUN   TestNexusReject/const_x=1;_x+=2
+=== RUN   TestNexusReject/for_x_in_"a"_{show_x}
+=== RUN   TestNexusReject/x="a";for_y_in_x_{show_y}
+=== RUN   TestNexusReject/repeat_true_{show_1}
+=== RUN   TestNexusReject/show_min(1,true)
+=== RUN   TestNexusReject/show_sum(1)
+=== RUN   TestNexusReject/show_input_int(1)
+=== RUN   TestNexusReject/a=[1];_show_"a",a
+=== RUN   TestNexusReject/show_1,
+=== RUN   TestNexusReject/x=1;_for_x_in_range(3){show_x}
+--- PASS: TestNexusReject (0.00s)
+    --- PASS: TestNexusReject/x+=1 (0.00s)
+    --- PASS: TestNexusReject/const_x=1;_x+=2 (0.00s)
+    --- PASS: TestNexusReject/for_x_in_"a"_{show_x} (0.00s)
+    --- PASS: TestNexusReject/x="a";for_y_in_x_{show_y} (0.00s)
+    --- PASS: TestNexusReject/repeat_true_{show_1} (0.00s)
+    --- PASS: TestNexusReject/show_min(1,true) (0.00s)
+    --- PASS: TestNexusReject/show_sum(1) (0.00s)
+    --- PASS: TestNexusReject/show_input_int(1) (0.00s)
+    --- PASS: TestNexusReject/a=[1];_show_"a",a (0.00s)
+    --- PASS: TestNexusReject/show_1, (0.00s)
+    --- PASS: TestNexusReject/x=1;_for_x_in_range(3){show_x} (0.00s)
+=== RUN   TestNexusTraps
+=== RUN   TestNexusTraps/show_abs(-9223372036854775807-1)
+=== RUN   TestNexusTraps/a=[9223372036854775807,1];show_sum(a)
+=== RUN   TestNexusTraps/x=9223372036854775807;x+=1
+--- PASS: TestNexusTraps (0.00s)
+    --- PASS: TestNexusTraps/show_abs(-9223372036854775807-1) (0.00s)
+    --- PASS: TestNexusTraps/a=[9223372036854775807,1];show_sum(a) (0.00s)
+    --- PASS: TestNexusTraps/x=9223372036854775807;x+=1 (0.00s)
+=== RUN   TestNexusPE
+--- PASS: TestNexusPE (0.00s)
+=== RUN   TestNexusTemplates
+=== RUN   TestNexusTemplates/basic
+Created /tmp/TestNexusTemplatesbasic356100656/001/basic
+cd /tmp/TestNexusTemplatesbasic356100656/001/basic
+tripol run main.tri
+=== RUN   TestNexusTemplates/calculator
+Created /tmp/TestNexusTemplatescalculator261808558/001/calculator (calculator)
+cd /tmp/TestNexusTemplatescalculator261808558/001/calculator
+tripol run
+=== RUN   TestNexusTemplates/files
+Created /tmp/TestNexusTemplatesfiles2488872610/001/files (files)
+cd /tmp/TestNexusTemplatesfiles2488872610/001/files
+tripol run
+--- PASS: TestNexusTemplates (0.00s)
+    --- PASS: TestNexusTemplates/basic (0.00s)
+    --- PASS: TestNexusTemplates/calculator (0.00s)
+    --- PASS: TestNexusTemplates/files (0.00s)
 === RUN   TestVelocityText
 === RUN   TestVelocityText/show_text(0)_show_text(-123)_show_text(9223372036854775807)_show_text(-9223372036854775807-1)
 === RUN   TestVelocityText/show_slice("abcdef",1,4)_show_len(slice("a",1,1))_show_slice("hello",0,5)
 === RUN   TestVelocityText/show_slice("abc",-1,2)
 === RUN   TestVelocityText/show_slice("abc",0,4)
 === RUN   TestVelocityText/show_slice("abc",2,1)
---- PASS: TestVelocityText (0.01s)
+--- PASS: TestVelocityText (0.00s)
     --- PASS: TestVelocityText/show_text(0)_show_text(-123)_show_text(9223372036854775807)_show_text(-9223372036854775807-1) (0.00s)
     --- PASS: TestVelocityText/show_slice("abcdef",1,4)_show_len(slice("a",1,1))_show_slice("hello",0,5) (0.00s)
     --- PASS: TestVelocityText/show_slice("abc",-1,2) (0.00s)
@@ -273,11 +350,11 @@
 === RUN   TestVelocityFiles/3
 === RUN   TestVelocityFiles/4
 === RUN   TestVelocityFiles/5
---- PASS: TestVelocityFiles (0.02s)
+--- PASS: TestVelocityFiles (0.01s)
     --- PASS: TestVelocityFiles/nano (0.00s)
     --- PASS: TestVelocityFiles/debug (0.00s)
     --- PASS: TestVelocityFiles/0 (0.00s)
-    --- PASS: TestVelocityFiles/1 (0.01s)
+    --- PASS: TestVelocityFiles/1 (0.00s)
     --- PASS: TestVelocityFiles/2 (0.00s)
     --- PASS: TestVelocityFiles/3 (0.00s)
     --- PASS: TestVelocityFiles/4 (0.00s)
@@ -324,7 +401,7 @@
 === RUN   TestVelocityArrays/const_a=ints(2);a[0]=1
 === RUN   TestVelocityArrays/a=ints(2);a[0]="s"
 === RUN   TestVelocityArrays/a=ints(2.0)
---- PASS: TestVelocityArrays (0.02s)
+--- PASS: TestVelocityArrays (0.01s)
     --- PASS: TestVelocityArrays/n=5_v=ints(n)_for_i_in_range(0,len(v)){v[i]=i*10}_show_v[0]_show_v[4]_show_len(v) (0.00s)
     --- PASS: TestVelocityArrays/func_make(n)->ints{return_ints(n)}_func_update(v:ints)->int{v[1]=99;return_v[1]}_a=make(3)_b=a_show_update(b)_show_a[1]_show_a[2] (0.00s)
     --- PASS: TestVelocityArrays/a=ints(0)_show_len(a) (0.00s)
@@ -332,11 +409,11 @@
     --- PASS: TestVelocityArrays/a=ints(2)_a[2]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(-1) (0.00s)
     --- PASS: TestVelocityArrays/a=ints(65536) (0.00s)
-    --- PASS: TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)} (0.01s)
+    --- PASS: TestVelocityArrays/for_i_in_range(0,20){v=ints(65535)} (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);show_a (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);show_a==a (0.00s)
     --- PASS: TestVelocityArrays/const_a=ints(2);a[0]=1 (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2);a[0]="s" (0.00s)
     --- PASS: TestVelocityArrays/a=ints(2.0) (0.00s)
 PASS
-ok  	tripol	0.239s
+ok  	tripol	0.176s

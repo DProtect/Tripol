@@ -1,0 +1,8 @@
+name = input("Como te llamas?")
+show "Hola", name
+numbers = [10, 20, 30, 40, 50]
+for n in numbers {
+    show "Numero:", n
+}
+show "Total:", sum(numbers)
+repeat 3 { show "TRIPOL" }

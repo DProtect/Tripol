@@ -1,0 +1,5 @@
+a = ints(65535)
+for i in range(len(a)) { a[i] = i }
+total = 0
+repeat 500 { total += sum(a) }
+show total
