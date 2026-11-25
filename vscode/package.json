@@ -1,7 +1,7 @@
 {
   "name": "tripol-language",
   "displayName": "TRIPOL Language",
-  "description": "Syntax highlighting for TRIPOL .tri files",
+  "description": "Official TRIPOL syntax highlighting, snippets and editor configuration",
   "version": "0.24.0",
   "publisher": "tripol",
   "engines": {
@@ -30,6 +30,22 @@
         "scopeName": "source.tripol",
         "path": "./syntaxes/tripol.tmLanguage.json"
       }
+    ],
+    "snippets": [
+      {
+        "language": "tripol",
+        "path": "./snippets/tripol.json"
+      }
     ]
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tripollas/Tripol.git",
+    "directory": "vscode"
+  },
+  "homepage": "https://github.com/Tripollas/Tripol",
+  "bugs": {
+    "url": "https://github.com/Tripollas/Tripol/issues"
   }
 }

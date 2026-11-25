@@ -10,7 +10,7 @@ A free, experimental programming language that turns readable code directly into
 
 ![Version](https://img.shields.io/badge/version-0.24.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
 
-[Official website](https://dprotect.github.io/Tripol/) · [Online docs](https://dprotect.github.io/Tripol/docs/) · [Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
+[Official website](https://tripollas.github.io/Tripol/) · [Online docs](https://tripollas.github.io/Tripol/docs/) · [Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
 
 </div>
 
@@ -28,9 +28,13 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 New: `arrays.copy_into(destination, source)` reuses equal-sized storage and returns false without modifying the destination on a size mismatch. Arena now supports `--timeout SECONDS`, `copy-reuse`, and p95 in JSON. The static bilingual website is in `website/`; see `docs/website.md`.
 
+## Community and tools
+
+[Releases](https://github.com/Tripollas/Tripol/releases) · [VS Code extension](vscode/) · [Practical projects](examples/projects/) · [Security policy](SECURITY.md) · [Release and community checklist](docs/ecosystem-release.md)
+
 ## Quick start
 
-Install the Windows x64 distribution (`TRIPOL-v0.24-Setup-x64.exe`) when provided by the project maintainer, or [build from source](docs/build.md). The installer is unsigned, per-user and configures PATH. Binary release assets are not currently published in this repository.
+Install the Windows x64 distribution (`TRIPOL-v0.24-Setup-x64.exe`) when provided by the project maintainer, or [build from source](docs/build.md). The installer is unsigned, per-user and configures PATH. Check GitHub Releases for published assets; the installer is not available there until the release draft has been reviewed and published.
 
 ```cmd
 tripol --version
