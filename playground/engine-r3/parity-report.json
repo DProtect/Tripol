@@ -1,8 +1,7 @@
 {
   "total": 100,
   "counts": {
-    "match": 97,
-    "mismatch": 3
+    "match": 100
   },
   "rows": [
     {
@@ -109,9 +108,9 @@
     },
     {
       "name": "Console input",
-      "status": "mismatch",
+      "status": "match",
       "native": "Your name: \nHello Ada\n",
-      "wasm": "Your name: Hello Ada\n"
+      "wasm": "Your name: \nHello Ada\n"
     },
     {
       "name": "Assertions",
@@ -463,9 +462,9 @@
     },
     {
       "name": "Two inputs",
-      "status": "mismatch",
+      "status": "match",
       "native": "Name: \nCity: \nAda from Bogota\n",
-      "wasm": "Name: City: Ada from Bogota\n"
+      "wasm": "Name: \nCity: \nAda from Bogota\n"
     },
     {
       "name": "Boolean interpolation",
@@ -601,9 +600,9 @@
     },
     {
       "name": "Simple chatbot",
-      "status": "mismatch",
+      "status": "match",
       "native": "You: \nBot: Hello!\n",
-      "wasm": "You: Bot: Hello!\n"
+      "wasm": "You: \nBot: Hello!\n"
     }
   ]
 }
