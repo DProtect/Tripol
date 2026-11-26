@@ -36,17 +36,13 @@ The compiler and standard library source code live in [`main`](https://github.co
 
 OVERDRIVE is a pre-release. The previous v0.24 downloads remain archived in downloads/. The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
 
-## Playground R2
+## Playground R3 / WEB ENGINE R1 (experimental)
 
-[Open the interactive playground](https://tripollas.github.io/Tripol/playground/). It shares the official monochrome website styles and includes 23 editable examples.
+[Open the playground](https://tripollas.github.io/Tripol/playground/?v=3). 100 editable bilingual examples in eight categories, with search, syntax highlighting, completion, file open/download, share links, local draft, diagnostics and console. All 100 examples have verified output in the educational interpreter.
 
-- Syntax highlighting, local identifier and keyword completion, auto-indent, matching delimiters, and indentation formatting.
-- Example search, open/download `.tri`, local draft persistence, shareable source links, and copyable console output.
-- Error-line navigation, elapsed time, input, stop, reset and a bilingual syntax guide.
-- Local bounded Web Worker with int64, booleans, strings, functions, integer arrays, loops, indexed iteration and basic scalar interpolation. Interpolation does not support nested fields or inner quotes.
-- R2 is an educational interpreter, not the native compiler. Imports, files, networking and graphics are unavailable. No external server is required. Shared links contain source code; never include secrets.
+The optional Web Engine R1 uses the production Go parser and validation pass to emit actual WASM for a scalar subset (int64, bool, checked arithmetic, branches, loops, scalar functions and selected pure math functions). The browser compiler binary is built and tested by the main branch's Web Engine workflow. Until that build succeeds and its assets deploy, the interpreter remains available. No silent fallback from WASM mode. Generated modules require the TRIPOL host ABI, and are not standalone executables. Strings, arrays, input and general libraries are not supported by the WASM backend yet.
 
-Run `node playground/test.cjs` to validate 23 examples, 12 error cases, one escaped-brace case and 11 editor helper checks. Serve the site over HTTP(S) for the browser Worker.
+Run `node playground/test-r3.cjs` for the interpreter and editor regression suite. Use `go test ./core -run TestWebEngineR1` on main and the Web Engine workflow for actual WASM validation.
 
 ## Local development
 
