@@ -128,6 +128,16 @@ func (e *webEmitter) expression(x *expr)string{
    op:=int64(77);if name=="atomic_add"{op=78};e.val(op,a,b,c);return "int"
   }
   if name=="sleep_ms"{if len(x.args)!=1{webReject("sleep requires milliseconds")};a,t:=e.save(x.args[0]);if t!="int"{webReject("sleep requires int")};z:=e.constant(0);e.val(81,a,z,z);return "int"}
+  // Graphics host operations use the actual TRIPOL framebuffer or vertex arrays.
+  if name=="game_key"||name=="native_mouse_axis"||name=="pad_read"{webReject("Live input is not yet supported by the browser graphics preview")}
+  if name=="game_open"||name=="game_running"||name=="game_present"||name=="game_close"||name=="native_gl_frame"{
+   spec:=map[string]struct{op int64;args []string}{
+    "game_open":{82,[]string{"string","int","int"}},"game_running":{83,nil},
+    "game_present":{84,[]string{"ints","int","int"}},"game_close":{85,nil},
+    "native_gl_frame":{86,[]string{"ints","int"}},
+   }[name];if len(x.args)!=len(spec.args){webReject("invalid graphics arguments for %s",name)}
+   z:=e.constant(0);v:=[3]uint32{z,z,z};for i,a:=range x.args{tmp,t:=e.save(a);if t!=spec.args[i]&&!(spec.args[i]=="ints"&&webElem(t)=="int"){webReject("invalid graphics argument for %s",name)};v[i]=tmp};e.val(spec.op,v[0],v[1],v[2]);return "bool"
+  }
   if name=="thread_sum"{webReject("native worker threads require a browser concurrency adapter")}
   if name=="audio_play_file"||name=="native_beep"{webReject("audio playback requires a browser user-gesture adapter; WAV generation is available")}
 
@@ -234,7 +244,7 @@ func (e *webEmitter) body()webCode{var b webCode;n:=e.locals-e.params;if n==0{b.
 func CompileWeb(source string)(out []byte,err error){
  defer func(){if v:=recover();v!=nil{out=nil;err=fmt.Errorf("%v",v)}}()
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
- imports,_,_:=parseUnit(source);for _,n:=range imports{switch n{case "@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:thread":default:webReject("library %s requires a browser adapter or native target",n)}}
+ imports,_,_:=parseUnit(source);for _,n:=range imports{switch n{case "@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:thread","@std:game","@std:events":default:webReject("library %s requires a browser adapter or native target",n)}}
  fs,ss:=parse(source);validateCode(fs,ss,"linux")
  m:=&webModule{funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{}}
  m.signature([]byte{0x7f},nil) // tick(line)

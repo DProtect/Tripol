@@ -39,3 +39,9 @@ Allowlisted is not equivalent to fully compatible. Required smoke tests for date
 - audio: portable PCM/WAV generation and virtual export only. Native playback/tone requests reject explicitly.
 - time/thread: bounded sleep (<=1000 ms) requires an isolated worker with SharedArrayBuffer and Atomics.wait; no native worker sum or general parallel thread implementation.
 - Remaining adapters: live game/window/input, native dialogs, browser-authorized HTTPS, Discord server-side credentials, shared-memory atomics and parallel workers. No raw TCP or secret-bearing Discord bot in a public static page. Browser-specific semantics must be tested separately from native parity.
+
+## WEB GRAPHICS PREVIEW R1 (experimental, CI gated)
+- The real browser compiler lowers game.window, game.running, game.present, game.close and game.gl_frame to host operations 82–86. Framebuffer values and triangle vertices originate in generated WASM, not a source-code simulation.
+- Preview is bounded to 512×512 pixels, 120 frames, 16 MiB of frame data and 1000 triangles per frame. During an open preview window, sleep_ms records frame playback delay (up to 1000 ms), rather than blocking. Frames are replayed after execution; this is not a real-time interactive game loop. Use finite loops and explicit close. No native window or device access is exposed.
+- Keyboard/mouse/controller polling deliberately fails with a diagnostic until a live input protocol is implemented. Graphics operations outside the supported contract may fail. WebGPU presentation is optional; a software Canvas 2D renderer handles devices without WebGPU. Native behavior is unchanged.
+- Required smoke checks compile and execute real pixel and triangle programs and verify exact frame payloads. Existing 100-example native differential tests remain mandatory.
