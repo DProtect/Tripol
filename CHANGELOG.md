@@ -23,6 +23,7 @@
 - MEMORY R2: branch-sensitive scoped temporary reclamation with escape fallback and exception regression tests.
 - SIMPLE R1: expression interpolation, dynamic integer list initializers, friendly error-code descriptions and localized diagnostic labels.
 - TRIPOL Academy: nine offline bilingual lessons with native output regression tests and exercises.
+- SIMPLE R1: native project test command with explicit test selection, exit-status checks, timeouts and bounded logs.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)

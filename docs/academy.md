@@ -143,3 +143,7 @@ Integer overflow or division by zero
 ```
 
 try/catch recupera errores comprobados. No todos los fallos son recuperables. / try/catch handles checked errors. Not all failures are recoverable.
+
+## Test your projects
+
+Write `assert` checks in files ending in `.test.tri` and run `tripol test examples/academy` from the repository root. `tripol test` selects only immediate `*.test.tri` files in the current directory; `tripol test FILE.tri` explicitly selects one file. Every selected program is compiled with the balanced profile, run in a separate temporary working directory and checked for exit status. Ten seconds per program, two minutes total execution budget, at most 64 tests. Output from failed tests is limited to 64 KiB. A caught assertion is not a failure. This is not a sandbox; only run trusted project tests, which have ordinary native process permissions. No package installation or network access is performed by the runner itself.
