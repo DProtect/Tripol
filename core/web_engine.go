@@ -184,7 +184,13 @@ func (e *webEmitter) expression(x *expr)string{
    if len(x.args)>len(f.args){webReject("wrong record argument count")};values:=make([]*expr,len(f.args));for i:=range values{if i<len(x.args){values[i]=x.args[i]}else if i<len(f.defaults){values[i]=f.defaults[i]};if values[i]==nil{webReject("missing field value")}}
    h:=e.aggregate(f.args,values);e.code.inst(0x20,h);return f.name
   }
-  f:=e.module.find(x.s);if len(x.args)>len(f.f.args){webReject("wrong argument count")};for i,a:=range f.f.args{var arg *expr;if i<len(x.args){arg=x.args[i]}else if i<len(f.f.defaults){arg=f.f.defaults[i]};if arg==nil||e.expression(arg)!=a.typ{webReject("invalid argument for %s",x.s)}}
+  f:=e.module.find(x.s);if len(x.args)>len(f.f.args){webReject("wrong argument count")};for i,a:=range f.f.args{var arg *expr;if i<len(x.args){arg=x.args[i]}else if i<len(f.f.defaults){arg=f.f.defaults[i]};if arg==nil{webReject("missing argument %d (%s) for %s at line %d",i+1,a.name,x.s,e.line)}
+   actual:=e.expression(arg)
+   // Native validation already checked the call. Standard-library read-only
+   // integer-array parameters accept a fixed local array as a borrowed view.
+   // WASM represents both fixed and dynamic arrays as collection handles.
+   borrow:=a.typ=="ints"&&strings.HasPrefix(actual,"array:")&&arg.op=="var"&&isStandardFunction(f.f.name)&&(!mutableArrayFunction(f.f.name)||i>0)
+   if actual!=a.typ&&!borrow{webReject("invalid argument %d (%s) for %s: expected %s, got %s at line %d",i+1,a.name,x.s,a.typ,actual,e.line)}}
   e.code.inst(0x10,f.index);return f.f.ret
  }
  webReject("unsupported expression %s (%s) at line %d",x.op,x.s,e.line);return ""
