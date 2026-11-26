@@ -43,14 +43,18 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
  ['import tripol.math\nshow math.square(7)','49\n']
  ];
  function execute(src,input){const r=tripolCompileWeb(src);if(!r.ok)throw Error(r.error);return host.execute(r.wasm,{input}).output}
- for(const [s,w,i] of cases)assert.equal(execute(s,i),w,s);
- assert.throws(()=>execute('show 9223372036854775807 + 1'),/overflow/i);
- assert.throws(()=>execute('a=ints(1)\nshow a[1]'),/bounds/i);
- assert.equal(tripolCompileWeb('show missing').ok,false);
- assert.throws(()=>execute('import tripol.files\nshow files.read("demo.txt")'),/not found/i);
- assert.throws(()=>execute('import tripol.files\nfiles.write("../escape.txt","x")'),/relative virtual/i);
- assert.throws(()=>execute('import tripol.io\na=ints(1)\na[0]=256\nio.write("bad.bin",a)'),/invalid binary/i);
- console.log('PASS required '+(cases.length+3)+' R3 checks');
+ const smokeRows=[];
+ function check(name,fn){try{fn();smokeRows.push({name,status:'pass'})}catch(e){smokeRows.push({name,status:'fail',diagnostic:String(e.message||e)});console.error('FAIL',name,String(e.message||e))}}
+ for(const [s,w,i] of cases)check(s,()=>assert.equal(execute(s,i),w,s));
+ check('integer overflow',()=>assert.throws(()=>execute('show 9223372036854775807 + 1'),/overflow/i));
+ check('array bounds',()=>assert.throws(()=>execute('a=ints(1)\nshow a[1]'),/bounds/i));
+ check('unknown identifier',()=>assert.equal(tripolCompileWeb('show missing').ok,false));
+ check('virtual file isolation',()=>assert.throws(()=>execute('import tripol.files\nshow files.read("demo.txt")'),/not found/i));
+ check('virtual path traversal',()=>assert.throws(()=>execute('import tripol.files\nfiles.write("../escape.txt","x")'),/relative virtual/i));
+ check('binary value range',()=>assert.throws(()=>execute('import tripol.io\na=ints(1)\na[0]=256\nio.write("bad.bin",a)'),/invalid binary/i));
+ const smokeFailures=smokeRows.filter(r=>r.status==='fail');
+ fs.writeFileSync(path.join(__dirname,'smoke-report.json'),JSON.stringify({total:smokeRows.length,passed:smokeRows.length-smokeFailures.length,failed:smokeFailures.length,rows:smokeRows},null,2));
+ console.log('SMOKE',smokeRows.length-smokeFailures.length+'/'+smokeRows.length);
  // Native oracle: compare stdout from native x86-64 with actual WASM.
  // Report every disagreement (including unsupported examples), never substitute
  // the educational interpreter's result for the native compiler.
@@ -66,7 +70,7 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
    try{const wasm=execute(source,input);rows.push({name,status:wasm===actual.stdout?'match':'mismatch',native:actual.stdout,wasm})}catch(e){rows.push({name,status:'wasm-rejected',detail:e.message})}
   }}finally{fs.rmSync(dir,{recursive:true,force:true})}
   const counts={};for(const r of rows)counts[r.status]=(counts[r.status]||0)+1;
-  fs.writeFileSync(path.join(__dirname,'parity-report.json'),JSON.stringify({total:rows.length,counts,rows},null,2));console.log('PARITY',counts);assert.equal(rows.length,100,'Expected all Playground examples');assert.equal(counts.match,100,'Native/WebAssembly parity must be 100/100 before publishing')
+  fs.writeFileSync(path.join(__dirname,'parity-report.json'),JSON.stringify({total:rows.length,counts,rows},null,2));console.log('PARITY',counts);check('100 Playground examples',()=>assert.equal(rows.length,100));check('native/WASM parity',()=>assert.equal(counts.match,100,'Native/WebAssembly parity must be 100/100 before publishing'))
 
   // Library probes cover the candidate modules, not every function. Keep the
   // full report even when a module has partial/unsupported browser operations.
@@ -84,5 +88,6 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
   fs.writeFileSync(path.join(__dirname,'library-parity-report.json'),JSON.stringify({total:libRows.length,counts:libraryCounts,rows:libRows},null,2));console.log('LIBRARY PARITY',libraryCounts);
 
  }
- process.exit(0)
+ const failed=smokeRows.filter(r=>r.status==='fail');fs.writeFileSync(path.join(__dirname,'smoke-report.json'),JSON.stringify({total:smokeRows.length,passed:smokeRows.length-failed.length,failed:failed.length,rows:smokeRows},null,2));
+ process.exit(failed.length?1:0)
 })().catch(e=>{console.error(e);process.exit(1)});
