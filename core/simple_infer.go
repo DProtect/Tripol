@@ -65,7 +65,7 @@ func inferSimpleFunctions(fs []fn,main []stmt){
    if isList(e.s){return e.s}
    if name,method,ok:=strings.Cut(e.s,".");ok&&isList(env[name]){
     for _,x:=range e.args{guess(x,env,owner)}
-    switch method{case "get","remove_at","set":return listElement(env[name]);case "add","size","capacity","clear":return "int"}
+    switch method{case "get","remove_at","set":return listElement(env[name]);case "add","size","capacity","clear","sort":return "int";case "contains","remove":return "bool"}
    }
    for _,x:=range e.args{guess(x,env,owner)}
    switch e.s{case "input","text","slice":return "string";case "len","abs","min","max","input_int","parse_int","sum","@array_len":return "int";case "float","sqrt":return "float";case "ints":return "ints"}

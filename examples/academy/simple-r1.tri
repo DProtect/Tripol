@@ -1,0 +1,9 @@
+func greet(name) => f"Hola, {name}"
+names=list(["Carlos","Ana"])
+names.add("Pedro")
+names.remove("Carlos")
+names.sort()
+for name in names {show greet(name)}
+player={"name":"Alex","health":100,"active":true}
+player["health"]-=20
+show player

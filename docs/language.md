@@ -113,3 +113,5 @@ A dictionary literal is a statically shaped reference with up to 64 unique nonem
 ### Simple function inference
 
 A function with a single return expression and no explicit return annotation can infer a scalar return type and omitted parameter types from local expression constraints and calls in the same source unit. For example `func greet(name) => "Hello "+name` and `func double(n) => n*2`. The function is monomorphic; inconsistent calls are rejected by normal type checking. Defaults and explicit signatures are preserved. Ambiguous parameters retain the integer default. Multiple statements, imported call sites and recursive return inference may need explicit annotations.
+
+Integer, boolean and string lists support `contains(value)`, `remove(value)` (first match, returns bool) and `sort()` (in-place, stable, returns size; maximum 4096 items). Strings sort lexicographically by UTF-8 bytes, not locale collation. Float lists retain indexed access, add/remove_at and iteration; value-search and sorting are not included for floats in R1.

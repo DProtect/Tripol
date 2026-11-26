@@ -33,11 +33,13 @@ func (c *compiler) listMethod(e *expr)(string,bool){
  if !ok||!isList(v.typ){return "",false}
  elem:=listElement(v.typ)
  a:=c.a
- count,known:=map[string]int{"add":1,"remove_at":1,"get":1,"set":2,"size":0,"capacity":0,"clear":0}[method]
+ count,known:=map[string]int{"add":1,"remove_at":1,"get":1,"set":2,"size":0,"capacity":0,"clear":0,"contains":1,"remove":1,"sort":0}[method]
  if !known{c.err("unknown list method "+method)}
  if len(e.args)!=count{c.err("wrong list argument count")}
- if (method=="add"||method=="remove_at"||method=="set"||method=="clear")&&!v.mut{c.err("cannot modify constant "+name)}
+ if (method=="add"||method=="remove_at"||method=="set"||method=="clear"||method=="remove"||method=="sort")&&!v.mut{c.err("cannot modify constant "+name)}
+ if (method=="contains"||method=="remove"||method=="sort")&&elem=="float"{c.err("this method supports int, bool and string lists")}
  a.load(v.off)
+ if method=="sort"{c.sortList(elem);return "int",true}
  if count==0 {
   if method=="capacity"{a.emit(0x48,0x8b,0x00);return "int",true}
   a.emit(0x48,0x8b,0x40,0x08)
@@ -45,7 +47,7 @@ func (c *compiler) listMethod(e *expr)(string,bool){
   return "int",true
  }
  a.emit(0x50)
- argType:="int";if method=="add"{argType=elem};c.require(c.expression(e.args[0]),argType)
+ argType:="int";if method=="add"||method=="contains"||method=="remove"{argType=elem};c.require(c.expression(e.args[0]),argType)
  if count==2{
   a.emit(0x50);c.require(c.expression(e.args[1]),elem)
   // RAX=value, RCX=index, RDX=stable handle; reload backing after argument calls.
@@ -53,6 +55,7 @@ func (c *compiler) listMethod(e *expr)(string,bool){
   a.emit(0x48,0x89,0x44,0xca,0x08);return elem,true
  }
  a.emit(0x48,0x89,0xc1,0x58)
+ if method=="contains"||method=="remove"{c.findList(elem,method=="remove");return "bool",true}
  switch method{
  case "add":a.call("list_add")
  case "remove_at":a.call("list_remove")
