@@ -35,3 +35,30 @@
 .pg-notes{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 0;color:var(--muted);font-size:12px}.pg-notes p{margin:5px 0}.pg-notes .button{white-space:nowrap;flex-shrink:0}
 @media(max-width:1120px){.pg-studio{grid-template-columns:160px minmax(0,1fr)}.pg-console-pane{grid-column:1/-1;border-top:1px solid var(--line)}.pg-editor-pane{border-right:0}#output{min-height:160px;max-height:350px}.pg-intro{align-items:flex-start}}
 @media(max-width:650px){.pg-body .playground{width:calc(100% - 30px);padding-top:30px}.pg-intro{display:block}.pg-engine{display:inline-block;margin-top:14px}.pg-studio{grid-template-columns:1fr}.pg-examples{border-right:0}.pg-example-list{display:flex;overflow:auto;max-height:none}.pg-example-list button{white-space:nowrap;min-height:44px}.pg-editor{min-height:350px}.pg-editor-head{flex-wrap:wrap;min-height:70px}.pg-tools{justify-content:flex-start}.pg-pane-head button{min-height:44px}.pg-notes{display:block}.pg-notes .button{margin-top:12px}.pg-editor-status{font-size:9px}}
+
+/* R2 editor: aligned native textarea and safe DOM token layer. */
+.pg-studio{grid-template-columns:190px minmax(0,1.65fr) minmax(0,1fr)}
+.pg-search{padding:8px 10px;border-bottom:1px solid var(--line)}
+.pg-search input{width:100%;min-width:0;padding:8px 9px;margin:0;background:#080808;border:1px solid var(--line);border-radius:8px;font-size:12px}
+.pg-code-stack{position:relative;display:grid;grid-template: minmax(0,1fr)/minmax(0,1fr);min-width:0;flex:1;isolation:isolate;background:#080808}
+.pg-editor .pg-code-stack>pre,.pg-editor .pg-code-stack>textarea{grid-area:1/1;width:100%;height:100%;min-height:0;min-width:0;text-align:left;font:14px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:0;tab-size:4;white-space:pre;padding:16px 12px;margin:0;box-sizing:border-box;overflow:scroll;scrollbar-width:thin;border:0}
+.pg-editor .pg-code-stack>pre{pointer-events:none;background:transparent;color:#dcdcdc;user-select:none;scrollbar-color:transparent transparent}
+.pg-editor .pg-code-stack>textarea{z-index:1;position:relative;color:#ededed;background:transparent;caret-color:white;resize:none}
+.pg-code-stack.highlight-on>textarea{color:transparent;-webkit-text-fill-color:transparent;caret-color:#fff}
+.pg-code-stack.highlight-on>textarea::selection{background:#ffffff30}
+.pg-editor pre#lines{line-height:1.8;white-space:pre}
+.pg-token-keyword{color:#d3b4f0}.pg-token-type{color:#8ed6c4}.pg-token-function{color:#a9c9fa}.pg-token-string{color:#b9d99e}.pg-token-number{color:#e8bf91}.pg-token-literal{color:#e8bf91}.pg-token-comment{color:#909090}.pg-token-operator{color:#d8c8e7}.pg-token-punct{color:#bcbcbc}
+.pg-completion{position:absolute;z-index:5;left:16px;bottom:14px;width:min(290px,calc(100% - 32px));padding:6px;border:1px solid #ffffff38;border-radius:12px;background:#171717f5;box-shadow:0 15px 45px #000a;display:grid;gap:2px;max-height:230px;overflow:auto}
+.pg-completion button{border:1px solid transparent;border-radius:6px;background:transparent;color:#ddd;text-align:left;padding:7px 10px;font:13px ui-monospace,Consolas,monospace}
+.pg-completion button.active,.pg-completion button:hover{border-color:#ffffff30;background:#ffffff12;color:white}
+.pg-completion button small{float:right;color:#aaa;font:10px system-ui}
+.pg-error-jump{margin:10px 12px 0;padding:9px 12px;background:#ff777712;color:#ffaaaa;border:1px solid #ff777744;border-radius:8px;text-align:left;font:12px system-ui}
+.pg-guide{margin:20px 0 0;border-radius:16px;padding:14px 18px}
+.pg-guide summary{cursor:pointer;color:#ddd;font-size:14px;font-weight:650}
+.pg-guide-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding-top:16px}
+.pg-guide-grid>div{min-width:0;color:#aaa;font-size:12px}.pg-guide-grid b{color:white}
+.pg-guide-grid pre{background:#080808;padding:12px;border:1px solid var(--line);border-radius:8px;overflow:auto;font-size:12px;color:#ddd}
+.pg-example-empty{font-size:12px;color:#aaa;padding:8px}
+.pg-editor-status{flex-wrap:wrap}
+@media(max-width:1120px){.pg-studio{grid-template-columns:170px minmax(0,1fr)}}
+@media(max-width:650px){.pg-studio{grid-template-columns:1fr}.pg-guide-grid{grid-template-columns:1fr}.pg-editor .pg-code-stack>pre,.pg-editor .pg-code-stack>textarea{font-size:13px}.pg-editor pre#lines{font-size:13px}}
