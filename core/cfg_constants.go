@@ -1,5 +1,12 @@
 package core
 
+import (
+ "os"
+ "runtime"
+ "strconv"
+ "sync"
+)
+
 // Forward scalar facts over structured, acyclic control flow. Only int/bool
 // values are tracked. Calls cannot mutate scalar caller slots; nevertheless
 // call arguments and aggregate access are left unchanged (some intrinsics
@@ -100,10 +107,49 @@ func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
  }
  return result
 }
+// Bounded worker pool: independently optimize function bodies. Workers do
+// not emit code, modify the input AST, share mutable facts or publish output.
+// The original function order is retained for deterministic native images.
+func cfgWorkerCount(n int)int{
+ jobs:=runtime.GOMAXPROCS(0)
+ if jobs>4{jobs=4}
+ if value:=os.Getenv("TRIPOL_JOBS");value!=""{
+  if requested,e:=strconv.Atoi(value);e==nil&&requested>=1&&requested<=4{jobs=requested}
+ }
+ if n<64||jobs<2{return 1}
+ return jobs
+}
 func optimizeCFG(fs []fn,ss []stmt)([]fn,[]stmt,cfgConstantStats){
+ return optimizeCFGWorkers(fs,ss,cfgWorkerCount(len(fs)))
+}
+func optimizeCFGWorkers(fs []fn,ss []stmt,workers int)([]fn,[]stmt,cfgConstantStats){
  stats:=cfgConstantStats{}
  if diagnosticTrace{return fs,ss,stats}
  out:=append([]fn(nil),fs...)
- for i,f:=range fs{if !f.record{out[i].body=propagateBlock(f.body,scalarFacts{},&stats)}}
+ if workers<1{workers=1};if workers>4{workers=4}
+ if len(fs)<workers{workers=len(fs)}
+ local:=make([]cfgConstantStats,len(fs))
+ work:=func(i int){
+  f:=fs[i]
+  if !f.record{out[i].body=propagateBlock(f.body,scalarFacts{},&local[i])}
+ }
+ if workers<=1{
+  for i:=range fs{work(i)}
+ }else{
+  var wg sync.WaitGroup
+  // Static disjoint ranges avoid task-channel allocation and shared writes.
+  for worker:=0;worker<workers;worker++{
+   start,end:=len(fs)*worker/workers,len(fs)*(worker+1)/workers
+   wg.Add(1)
+   go func(start,end int){defer wg.Done();for i:=start;i<end;i++{work(i)}}(start,end)
+  }
+  wg.Wait()
+ }
+ for _,r:=range local{
+  stats.Substitutions+=r.Substitutions
+  stats.Joins+=r.Joins
+  stats.ConstantBranches+=r.ConstantBranches
+  stats.LoopInvariants+=r.LoopInvariants
+ }
  return out,propagateBlock(ss,scalarFacts{},&stats),stats
 }

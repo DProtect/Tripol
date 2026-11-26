@@ -44,6 +44,7 @@ jobs:
           set -o pipefail
           go test ./core -run '^$' -bench BenchmarkValidationBuffer -benchmem -count=3 | tee benchmark-results/compiler-validation.txt
           "$RUNNER_TEMP/tripol027" compile-report examples/academy/simple-r1.tri --profile turbo --target linux --json > benchmark-results/compiler-stages.json
+          go test ./core -run '^$' -bench BenchmarkCFGWorkers -benchmem -count=3 | tee benchmark-results/cfg-workers.txt
       - uses: actions/upload-artifact@v4
         with:
           name: quantum-x-measurements
