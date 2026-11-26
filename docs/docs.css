@@ -96,3 +96,34 @@
 .docs-page .docs-article .doc-tok-option,.docs-page .docs-article .doc-tok-variable{color:var(--syn-type)}
 .docs-page .docs-article pre code,.docs-page .docs-article pre.signature{font-variant-ligatures:none;tab-size:4}
 @media(forced-colors:active){.docs-page .docs-article .doc-tok{color:CanvasText!important}}
+
+/* DOCS LIVE R1 — minimal interactive editor, isolated from documentation layout. */
+.docs-page .doc-code-actions,.docs-page .doc-live-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.docs-page .doc-signature-actions{display:flex;justify-content:flex-end;margin:-7px 0 13px}
+.docs-page .doc-live-action{color:#eee;background:#202020;border-color:#494949;white-space:nowrap}
+.docs-page .doc-live-panel{margin:0 0 16px;border:1px solid #303030;border-radius:11px;min-width:0;overflow:hidden;background:#0d0d0d}
+.docs-page .code-shell .doc-live-panel{margin:0;border:0;border-radius:0}
+.docs-page .doc-live-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:10px 13px;background:#151515;border-bottom:1px solid #292929}
+.docs-page .doc-live-file{font:11px ui-monospace,monospace;color:#aaa}
+.docs-page .doc-live-tools button{font:11px system-ui,sans-serif;padding:6px 9px;min-height:30px}
+.docs-page .doc-live-run{background:#f7f7f7;color:#101010;border:1px solid #f7f7f7;border-radius:7px;cursor:pointer;font-weight:650}
+.docs-page .doc-live-run:disabled{opacity:.5;cursor:wait}
+.docs-page .doc-live-stack{position:relative;height:clamp(210px,32vh,390px);min-width:0;background:#0b0b0b}
+.docs-page .docs-article .doc-live-stack .doc-live-highlight,.docs-page .doc-live-stack .doc-live-editor{position:absolute;inset:0;width:100%;height:100%;min-height:0;min-width:0;max-width:none;margin:0;padding:16px;border:0;border-radius:0;box-sizing:border-box;font:13px/23px ui-monospace,SFMono-Regular,Consolas,monospace;font-variant-ligatures:none;letter-spacing:0;word-spacing:0;white-space:pre;tab-size:4;overflow:scroll;scrollbar-width:thin;scrollbar-gutter:stable;text-align:left;resize:none}
+.docs-page .doc-live-stack .doc-live-highlight{pointer-events:none;visibility:hidden;background:#0b0b0b;color:#eee;scrollbar-color:transparent transparent;user-select:none}
+.docs-page .doc-live-stack .doc-live-editor{z-index:1;background:transparent;color:#eee;caret-color:#fff;outline:none;scrollbar-color:#555 #171717}
+.docs-page .doc-live-stack.painted .doc-live-highlight{visibility:visible}
+.docs-page .doc-live-stack.painted .doc-live-editor{color:transparent;-webkit-text-fill-color:transparent}
+.docs-page .doc-live-stack .doc-live-editor:focus-visible{outline:none;box-shadow:inset 0 0 0 1px #ffffff40}
+.docs-page .doc-live-editor::selection{background:#ffffff40}
+.docs-page .doc-live-input{border-top:1px solid #292929;padding:8px 13px}
+.docs-page .doc-live-input summary{cursor:pointer;color:#aaa;font:12px system-ui}
+.docs-page .doc-live-stdin{display:block;width:100%;margin:8px 0 2px;border:1px solid #333;border-radius:7px;background:#101010;color:#eee;padding:8px;font:12px/1.5 ui-monospace,monospace;resize:vertical;box-sizing:border-box}
+.docs-page .doc-live-console{border-top:1px solid #292929;background:#090909}
+.docs-page .doc-live-status{font:11px/1.5 system-ui;color:#aaa;padding:9px 14px;border-bottom:1px solid #222}
+.docs-page .doc-live-status[data-state=ok]{color:#b9d99e}
+.docs-page .doc-live-status[data-state=error]{color:#ffaaaa}
+.docs-page .docs-article .doc-live-output{min-height:62px;max-height:240px;overflow:auto;padding:12px 14px;background:#090909;border-radius:0;white-space:pre-wrap;overflow-wrap:anywhere;color:#e6e6e6;font:13px/1.65 ui-monospace,monospace}
+.docs-page .docs-article .doc-live-help{font-size:11px;line-height:1.5;margin:0;padding:9px 14px;color:#999;border-top:1px solid #242424}
+@media(max-width:760px){.docs-page .doc-live-toolbar{padding:8px}.docs-page .doc-live-tools{gap:5px}.docs-page .doc-live-tools button{padding:5px 7px}.docs-page .doc-code-actions{gap:5px}.docs-page .docs-article .doc-live-stack .doc-live-highlight,.docs-page .doc-live-stack .doc-live-editor{font-size:12px;line-height:21px;padding:12px}}
+@media(forced-colors:active){.docs-page .doc-live-stack.painted .doc-live-highlight{visibility:hidden}.docs-page .doc-live-stack.painted .doc-live-editor{color:CanvasText;-webkit-text-fill-color:CanvasText}}
