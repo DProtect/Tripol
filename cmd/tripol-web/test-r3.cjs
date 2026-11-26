@@ -48,7 +48,7 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
    try{const wasm=execute(source,input);rows.push({name,status:wasm===actual.stdout?'match':'mismatch',native:actual.stdout,wasm})}catch(e){rows.push({name,status:'wasm-rejected',detail:e.message})}
   }}finally{fs.rmSync(dir,{recursive:true,force:true})}
   const counts={};for(const r of rows)counts[r.status]=(counts[r.status]||0)+1;
-  fs.writeFileSync(path.join(__dirname,'parity-report.json'),JSON.stringify({total:rows.length,counts,rows},null,2));console.log('PARITY',counts)
+  fs.writeFileSync(path.join(__dirname,'parity-report.json'),JSON.stringify({total:rows.length,counts,rows},null,2));console.log('PARITY',counts);assert.equal(rows.length,100,'Expected all Playground examples');assert.equal(counts.match,100,'Native/WebAssembly parity must be 100/100 before publishing')
  }
  process.exit(0)
 })().catch(e=>{console.error(e);process.exit(1)});
