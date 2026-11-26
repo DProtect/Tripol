@@ -141,7 +141,7 @@ func TestVaultDependencies(t *testing.T) {
 	}
 }
 func TestVaultReject(t *testing.T) {
-	for i, c := range []struct{ name, src, version string }{{"math", "func f(n){return n}", "1.0.0"}, {"../x", "func f(n){return n}", "1.0.0"}, {"foo", "show 1", "1.0.0"}, {"foo", "func f(n){return true}", "1.0.0"}, {"foo", "import vault.missing\nfunc f(n){return n}", "1.0.0"}, {"foo", "import \"../evil.tri\"\nfunc f(n){return n}", "1.0.0"}, {"foo", "func f(n){return n}", "latest"}} {
+	for i, c := range []struct{ name, src, version string }{{"math", "func f(n){return n}", "1.0.0"}, {"../x", "func f(n){return n}", "1.0.0"}, {"foo", "show 1", "1.0.0"}, {"foo", "func f(n)->int{return true}", "1.0.0"}, {"foo", "import vault.missing\nfunc f(n){return n}", "1.0.0"}, {"foo", "import \"../evil.tri\"\nfunc f(n){return n}", "1.0.0"}, {"foo", "func f(n){return n}", "latest"}} {
 		t.Run(fmt.Sprint(i), func(t *testing.T) {
 			d := t.TempDir()
 			p := filepath.Join(d, "p.tri")
