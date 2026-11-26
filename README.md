@@ -26,6 +26,8 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 ## QUANTUM X — 0.27.1
 
+- SIMPLE R1: scalar function inference, typed scalar lists, fixed-schema mixed-scalar dictionary literals and the native teaching shell (`tripol shell`).
+
 - SIMPLE R1: expression interpolation, integer list initializers, readable error descriptions and nine offline bilingual [Academy lessons](docs/academy.md) (`tripol learn es list`).
 
 - Experimental native WGL/OpenGL triangles, GDI fallback, XInput and focused mouse input, clipped tile maps, sprite transforms and particle bursts. The expanded pixel-art demo includes a menu, scrolling camera and optional audio. Actual hardware acceleration requires a compatible driver and local validation.

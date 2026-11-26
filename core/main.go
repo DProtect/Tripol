@@ -36,6 +36,8 @@ type stmt struct {
 }
 type param struct{ name, typ string }
 type fn struct {
+ implicit []bool
+ inferRet bool
 	name, ret string
 	args      []param
 	defaults  []*expr
@@ -451,7 +453,7 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 			}
 			fs = append(fs, f)
 		} else if p.eat("func") {
-			f := fn{line: p.t().line, name: p.name(), ret: "int"}
+			f := fn{line: p.t().line, name: p.name(), ret: "int", inferRet:true}
 			p.need("(")
 			if !p.eat(")") {
 				for {
@@ -473,6 +475,7 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 						p.err("required parameter after optional parameter")
 					}
 					f.defaults = append(f.defaults, def)
+                    f.implicit=append(f.implicit,!typed&&def==nil)
 					f.args = append(f.args, a)
 					if p.eat(")") {
 						break
@@ -481,6 +484,7 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 				}
 			}
 			if p.eat("->") {
+                f.inferRet=false
 				f.ret = p.typ()
 			}
 			if p.eat("=>") {
@@ -495,7 +499,8 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 		}
 		p.skip()
 	}
-	return imports, fs, ss
+	inferSimpleFunctions(fs,ss)
+ return imports, fs, ss
 }
 func parse(s string) ([]fn, []stmt) {
 	imports, fs, ss := parseUnit(s)
@@ -1615,6 +1620,7 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool,
 func cli() {
 	diagnosticOptions()
 	args := os.Args[1:]
+ if len(args)>0&&args[0]=="shell"{shellCLI(args[1:]);return}
 	if len(args)>0&&args[0]=="test"{projectTestCLI(args[1:]);return}
 	if len(args)>0&&args[0]=="fmt"{formatCLI(args[1:]);return}
 	if len(args)>0&&args[0]=="lsp"{if len(args)!=1{die("usage: tripol lsp")};if e:=serveLSP(os.Stdin,os.Stdout);e!=nil{die("%v",e)};return}

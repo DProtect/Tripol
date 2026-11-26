@@ -109,3 +109,7 @@ player["health"] -= 20
 show player
 ```
 A dictionary literal is a statically shaped reference with up to 64 unique nonempty literal keys and independently inferred scalar types. It supports checked literal-key lookup, assignment, integer compound assignment, aliases, display and len. Keys and their types cannot change; no dynamic lookup or insertion in this literal type. Use `tripol.dictionary` for runtime string-to-int keys. These are native arena references, not a dynamically typed object model. General reclamation remains limited.
+
+### Simple function inference
+
+A function with a single return expression and no explicit return annotation can infer a scalar return type and omitted parameter types from local expression constraints and calls in the same source unit. For example `func greet(name) => "Hello "+name` and `func double(n) => n*2`. The function is monomorphic; inconsistent calls are rejected by normal type checking. Defaults and explicit signatures are preserved. Ambiguous parameters retain the integer default. Multiple statements, imported call sites and recursive return inference may need explicit annotations.
