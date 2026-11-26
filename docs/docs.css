@@ -127,3 +127,5 @@
 .docs-page .docs-article .doc-live-help{font-size:11px;line-height:1.5;margin:0;padding:9px 14px;color:#999;border-top:1px solid #242424}
 @media(max-width:760px){.docs-page .doc-live-toolbar{padding:8px}.docs-page .doc-live-tools{gap:5px}.docs-page .doc-live-tools button{padding:5px 7px}.docs-page .doc-code-actions{gap:5px}.docs-page .docs-article .doc-live-stack .doc-live-highlight,.docs-page .doc-live-stack .doc-live-editor{font-size:12px;line-height:21px;padding:12px}}
 @media(forced-colors:active){.docs-page .doc-live-stack.painted .doc-live-highlight{visibility:hidden}.docs-page .doc-live-stack.painted .doc-live-editor{color:CanvasText;-webkit-text-fill-color:CanvasText}}
+
+.doc-live-files{padding:8px 14px;border-top:1px solid #292929}.doc-live-file-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;font-size:12px;color:#bbb}.doc-live-file-row span{overflow-wrap:anywhere;min-width:0}
