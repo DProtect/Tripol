@@ -141,3 +141,9 @@
 .docs-page .doc-expected .code-shell{margin:5px 0}.docs-page .doc-expected .code-head{display:none}.docs-page .doc-expected pre{padding:9px 12px;margin:5px 0;background:#0a0a0a;color:#b9d99e;font-size:12px}
 .docs-page .docs-article .doc-function-note{font-size:12px;color:#aaa;border-left:2px solid #555;padding-left:10px;margin:12px 0 0}
 @media(max-width:650px){.docs-page .doc-function-info{grid-template-columns:1fr}}
+
+/* Learning order R3.3 */
+.docs-page .side-lib-level{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#999;font-weight:650;padding:14px 10px 5px;border-top:1px solid #252525;margin-top:8px}
+.docs-page .side-lib-level:first-child{border-top:0;margin-top:0;padding-top:4px}
+.docs-page .docs-article .catalog-lib-level{grid-column:1/-1;margin:20px 0 0;padding:10px 0 2px;border-top:1px solid #292929;font-size:17px;color:#eee;letter-spacing:-.01em}
+.docs-page .docs-article .catalog-lib-level:first-child{border-top:0;margin-top:0}

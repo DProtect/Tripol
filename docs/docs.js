@@ -5,7 +5,7 @@ let lang='en';try{if(localStorage.getItem('tripol-language')==='es')lang='es'}ca
 const chosen=new URLSearchParams(location.search).get('lang');if(chosen==='en'||chosen==='es')lang=chosen;
 const root=document.body.dataset.docRoot||'./';
 // A freshly loaded script must also load its matching stylesheet.
-for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='learning-r3.2'){u.searchParams.set('v','learning-r3.2');link.href=u.href}}
+for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='learning-r3.3'){u.searchParams.set('v','learning-r3.3');link.href=u.href}}
 function localLinks(){for(const a of $$('a[href]')){const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||/^(https?:|mailto:)/i.test(raw)&&a.origin!==location.origin)continue;const u=new URL(raw,location.href);if(!u.pathname.endsWith('.html'))continue;u.searchParams.set('lang',lang);a.href=u.href;}}
 // Shared navigation and current release label on all reference pages.
 const side=document.querySelector('#doc-side');
@@ -16,6 +16,43 @@ const guide=side.querySelector('nav[aria-label="Guides"]');
 for(const [file,label] of [['genesis','GENESIS R2'],['update','UPDATE R1']]){let a=guide.querySelector('a[href$="'+file+'.html"]');if(!a){a=document.createElement('a');a.href=root+file+'.html';guide.append(a);}a.textContent=label;}
 const libs=side.querySelector('.side-libs');
 for(const [name,before,count] of [['queue','random',7],['stack','stats',7],['bitset','buffer',6],['profiler','queue',2]]){if(!libs.querySelector('a[href$="/'+name+'.html"]')){const a=document.createElement('a');a.href=root+'libraries/'+name+'.html';const label=document.createElement('span');label.textContent=name;const n=document.createElement('small');n.textContent=String(count);a.append(label,n);libs.insertBefore(a,libs.querySelector('a[href$="/'+before+'.html"]'));}}
+const LIBRARY_LEVELS=[{"en":"Beginner","es":"Principiante","names":["console","math","text","convert","random","datetime","arrays","collections","search","sort","validate","errors","files","path"]},{"en":"Intermediate","es":"Intermedio","names":["dictionary","buffer","stack","queue","sequences","stats","testing","time","json","colors","geometry","animation","vector","matrix","physics","canvas","sprite","camera","particles","image"]},{"en":"Advanced","es":"Avanzado","names":["binary","bits","bitset","encoding","checksum","compression","simd","memory","system","profiler","env","ui","game","events","network","http","https","discord"]}];
+const LIBRARY_COUNTS={"console":3,"math":12,"text":9,"convert":8,"random":3,"datetime":7,"arrays":8,"collections":6,"search":4,"sort":4,"validate":6,"errors":7,"files":5,"path":6,"dictionary":8,"buffer":8,"stack":7,"queue":7,"sequences":4,"stats":6,"testing":4,"time":6,"json":15,"colors":8,"geometry":6,"animation":6,"vector":7,"matrix":6,"physics":5,"canvas":10,"sprite":6,"camera":4,"particles":6,"image":6,"binary":8,"bits":6,"bitset":6,"encoding":4,"checksum":3,"compression":3,"simd":1,"memory":4,"system":5,"profiler":2,"env":1,"ui":7,"game":7,"events":14,"network":3,"http":3,"https":1,"discord":34};
+
+function libraryLearningOrder(){
+ const groups=LIBRARY_LEVELS;
+ const nameOf=a=>a.getAttribute('href')?.match(/\/?([^/]+)\.html(?:[?#].*)?$/)?.[1];
+ function reorder(container,selector,kind){
+  if(!container)return;
+  const links=new Map([...container.querySelectorAll(selector)].map(a=>[nameOf(a),a]));
+  const fragment=document.createDocumentFragment();
+  groups.forEach((g,i)=>{
+   const header=document.createElement(kind==='side'?'div':'h3');
+   header.className=kind==='side'?'side-lib-level':'catalog-lib-level';
+   header.dataset.es=g.es;header.textContent=g.en;header.dataset.level=String(i);fragment.append(header);
+   for(const name of g.names){
+    let a=links.get(name);
+    if(!a&&kind==='side'){a=document.createElement('a');a.href=root+'libraries/'+name+'.html';const label=document.createElement('span'),n=document.createElement('small');label.textContent=name;a.append(label,n)}
+    if(!a)continue;
+    links.delete(name);a.dataset.level=String(i);
+    const n=a.querySelector('small');if(n){if(kind==='side')n.textContent=String(LIBRARY_COUNTS[name]);else if(n.firstChild?.nodeType===3)n.firstChild.nodeValue=String(LIBRARY_COUNTS[name])+' '}
+    if(kind==='catalog'&&typeof a.dataset.filter==='string'){a.dataset.filter+=' '+g.en+' '+g.es+' '+DOC_SEARCH.filter(x=>x.url.startsWith('libraries/'+name+'.html#')).map(x=>x.title).join(' ')}
+    fragment.append(a)
+   }
+  });
+  // Preserve future modules even before they receive a difficulty classification.
+  for(const a of links.values())fragment.append(a);
+  container.replaceChildren(fragment)
+ }
+ reorder(document.querySelector('.side-libs'),'a','side');
+ reorder(document.querySelector('#library-grid'),'.library-card','catalog');
+}
+function refreshLevelHeadings(container){
+ if(!container)return;
+ for(const h of container.querySelectorAll('.side-lib-level,.catalog-lib-level'))h.hidden=![...container.querySelectorAll('a[data-level="'+h.dataset.level+'"]')].some(a=>!a.hidden)
+}
+
+libraryLearningOrder();
 for(const a of side.querySelectorAll('nav a')){a.removeAttribute('aria-current');if(new URL(a.href,location.href).pathname===location.pathname)a.setAttribute('aria-current','page');}
 const translate=(en,es)=>lang==='es'?es:en;
 let labels=[], placeholders=[];
@@ -197,8 +234,8 @@ $$('.docs-article pre').forEach(pre=>{if(pre.classList.contains('signature'))ret
 function buildToc(){const target=$('#toc-links');target.replaceChildren();$$('.docs-article h2,.docs-article .function-card h3').forEach((h,i)=>{const id=h.id||h.closest('.function-card')?.id||('section-'+i);if(!h.id&&!h.closest('.function-card'))h.id=id;const a=document.createElement('a');a.href='#'+id;a.textContent=h.textContent.replace(/\s*#\s*$/,'');if(h.tagName==='H3')a.className='sub';target.append(a)});}
 installAllLive();registerLabels();apply();$('#doc-lang').addEventListener('click',()=>{lang=lang==='en'?'es':'en';apply()});
 $('#doc-menu').addEventListener('click',()=>{$('#doc-menu').setAttribute('aria-expanded',String(side.classList.toggle('open')))});
-$('#side-filter').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();$$('.side-libs a').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q))});
-const lf=$('#library-filter');if(lf)lf.addEventListener('input',()=>{let n=0;const q=lf.value.trim().toLowerCase();$$('.library-card').forEach(a=>{a.hidden=!a.dataset.filter.toLowerCase().includes(q);if(!a.hidden)n++});$('#library-empty').hidden=!!n});
+$('#side-filter').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();$('.side-libs a').forEach(a=>a.hidden=!a.textContent.toLowerCase().includes(q));refreshLevelHeadings(libs)});
+const lf=$('#library-filter');if(lf)lf.addEventListener('input',()=>{let n=0;const q=lf.value.trim().toLowerCase();$$('.library-card').forEach(a=>{a.hidden=!a.dataset.filter.toLowerCase().includes(q);if(!a.hidden)n++});$('#library-empty').hidden=!!n;refreshLevelHeadings($('#library-grid'))});
 const dialog=$('#doc-search'),input=$('#global-search');
 function renderSearch(){const q=input.value.trim().toLowerCase();const list=DOC_SEARCH.filter(item=>[item.title,item.detail,item.es||''].join(' ').toLowerCase().includes(q)).slice(0,30);const results=$('#search-results');results.replaceChildren();if(!list.length){const p=document.createElement('p');p.textContent=translate('No results. Try a library or function name.','Sin resultados. Prueba una biblioteca o función.');results.append(p);return}list.forEach(item=>{const a=document.createElement('a');a.className='search-item';const u=new URL(root+item.url,location.href);u.searchParams.set('lang',lang);a.href=u.href;const title=document.createElement('strong');title.textContent=item.title;const detail=document.createElement('small');detail.textContent=lang==='es'&&item.es?item.es:item.detail;a.append(title,detail);results.append(a)})}
 function openSearch(){if(!dialog.open)dialog.showModal();renderSearch();input.focus()}
