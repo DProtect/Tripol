@@ -3,6 +3,7 @@ package core
 import (
  "bytes"
  "context"
+ "fmt"
  pecheck "debug/pe"
  "os"
  "os/exec"
@@ -17,7 +18,7 @@ func TestGenesisWindowsNative(t *testing.T){
  fs,ss,_:=loadProject("compiler/windows.tri")
  stage:=filepath.Join(t.TempDir(),"stage.exe")
  if e:=os.WriteFile(stage,compileParsed(fs,ss,runtime.GOOS,"nano"),0755);e!=nil{t.Fatal(e)}
- for _,tc:=range []struct{src,want string;status int}{
+ for i,tc:=range []struct{src,want string;status int}{
  {"func multiply(a:int,b:int)->int {return a*b}\nfor i in range(3) {show multiply(i,5)}","0\n5\n10\n",0},
  {"a=9223372036854775807;show -a-1","-9223372036854775808\n",0},
  {"a=7;show a/0","",10},
@@ -26,7 +27,8 @@ func TestGenesisWindowsNative(t *testing.T){
  {"func first(n:int)->int {\n return second(n)+1\n}\nfunc second(n:int)->int {\n if n==0 {return 0}\n return first(n-1)\n}\nx=2\nif false and 1/0==0 {show 99} else if (x+1)>2 and not (x==0 or false) {show first(3)} else {show 88}\nif true or 1/0==0 {show 42}\nwhile x>0 and true {show x;x=x-1}\n","4\n42\n2\n1\n",0},
 
  }{
-  t.Run(tc.src,func(t *testing.T){
+  t.Run(fmt.Sprintf("case_%02d",i),func(t *testing.T){
+   t.Log(tc.src)
    dir:=t.TempDir();src:=filepath.Join(dir,"input.tri");out:=filepath.Join(dir,"genesis.exe")
    if e:=os.WriteFile(src,[]byte(tc.src),0600);e!=nil{t.Fatal(e)}
    ctx,cancel:=context.WithTimeout(context.Background(),15*time.Second);defer cancel()
