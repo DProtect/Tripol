@@ -4,6 +4,12 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
 (async()=>{
  const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync(path.join(__dirname,'tripol-compiler.wasm')),go.importObject);go.run(instance);
  const cases=[
+ ['import tripol.files\nfiles.write("demo.txt","hello")\nfiles.append("demo.txt","!")\nshow files.read("demo.txt")','hello!\n'],
+ ['import tripol.io\na=ints(2)\na[0]=255\nio.write("demo.bin",a)\nshow io.read("demo.bin")','[255, 0]\n'],
+ ['import tripol.atomic\na=ints(1)\nshow atomic.add(a,0,4),atomic.compare_exchange(a,0,4,9),atomic.load(a,0)','4 true 9\n'],
+ ['import tripol.system\nshow system.platform(),system.architecture(),system.is_linux(),system.is_windows()','web wasm32 false false\n'],
+ ['import tripol.memory\na=ints(2)\nshow memory.capacity()==6291456, memory.used()>=16, memory.available()==memory.capacity()-memory.used()','true true true\n'],
+ ['import tripol.audio\na=audio.square_wave(440,1)\nshow len(audio.wav_mono(a))','88\n'],
  ['import tripol.datetime\nshow datetime.leap(2024),datetime.leap(1900),datetime.days_in_month(2024,2)','true false 29\n'],
  ['import tripol.text\nshow text.size("é😀"),text.index_of("éabc","a"),text.part("é",0,2),text.to_int("-42")','6 2 é -42\n'],
  ['import tripol.json\nshow json.quote("é😀"),json.valid("{\"a\":1}")','"é😀" true\n'],
@@ -38,6 +44,9 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
  assert.throws(()=>execute('show 9223372036854775807 + 1'),/overflow/i);
  assert.throws(()=>execute('a=ints(1)\nshow a[1]'),/bounds/i);
  assert.equal(tripolCompileWeb('show missing').ok,false);
+ assert.throws(()=>execute('import tripol.files\nshow files.read("demo.txt")'),/not found/i);
+ assert.throws(()=>execute('import tripol.files\nfiles.write("../escape.txt","x")'),/relative virtual/i);
+ assert.throws(()=>execute('import tripol.io\na=ints(1)\na[0]=256\nio.write("bad.bin",a)'),/invalid binary/i);
  console.log('PASS required '+(cases.length+3)+' R3 checks');
  // Native oracle: compare stdout from native x86-64 with actual WASM.
  // Report every disagreement (including unsupported examples), never substitute
