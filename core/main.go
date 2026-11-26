@@ -1623,6 +1623,7 @@ func cli() {
 		return
 	}
 	if args[0] == "learn" {
+        if len(args)==3 {academyCLI(args[1:]);return}
 		if len(args) == 2 && args[1] == "es" {
 			learnSpanish()
 			return

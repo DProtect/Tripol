@@ -20,11 +20,13 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 | Current release | Built-in modules | Callable library functions* | Hello world (Windows / Linux) |
 |---|---:|---:|---:|
-| **0.27.1 — QUANTUM X (development)** | 64 | 381 (including scanner helpers) | see v0.24 baseline |
+| **0.27.1 — QUANTUM X (development)** | 64 | 383 (including scanner helpers) | see v0.24 baseline |
 
 *Includes JSON scanner helpers. Sizes are measured for `examples/hello.tri` in nano mode, not a promise for arbitrary programs. TRIPOL is pre-1.0 and is not yet a replacement for mature production languages.*
 
 ## QUANTUM X — 0.27.1
+
+- SIMPLE R1: expression interpolation, integer list initializers, readable error descriptions and nine offline bilingual [Academy lessons](docs/academy.md) (`tripol learn es list`).
 
 - Experimental native WGL/OpenGL triangles, GDI fallback, XInput and focused mouse input, clipped tile maps, sprite transforms and particle bursts. The expanded pixel-art demo includes a menu, scrolling camera and optional audio. Actual hardware acceleration requires a compatible driver and local validation.
 
