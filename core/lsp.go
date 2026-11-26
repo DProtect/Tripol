@@ -91,7 +91,7 @@ func validateEditorProject(doc lspDocument,docs map[string]lspDocument)(out []ma
   return append(out,map[string]any{"range":lspRange{lspPosition{0,0},lspPosition{0,0}},"severity":2,"source":"TRIPOL","code":"TP1005","message":warning})
  }
  target:=runtime.GOOS;if target!="windows"{target="linux"}
- generateCode(fs,ss,target,false,nil)
+ validateCode(fs,ss,target)
  return out
 }
 func(s *lspServer) publish(doc lspDocument){

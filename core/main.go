@@ -1564,14 +1564,20 @@ func compileProfile(src, target, profile string) []byte {
 func compileParsed(fs []fn, ss []stmt, target, profile string) []byte {
 	// Validate every function before eliminating any unreachable code.
 	if profile != "debug" {
-		generateCode(fs, ss, target, false, nil)
+		validateCode(fs, ss, target)
 	}
-	return generate(fs, ss, target, profile != "debug", reachable(fs, ss), profile == "turbo", profile == "turbo" || profile == "balanced")
+    var live map[string]bool
+    if profile!="debug"{live=reachable(fs,ss)}
+	return generate(fs, ss, target, profile != "debug", live, profile == "turbo", profile == "turbo" || profile == "balanced")
 }
 
 // Type-check all bodies, including unreachable ones. The validation pass does not
 // link runtime templates or serialize an executable that would be discarded.
 func generateCode(fs []fn, ss []stmt, target string, opt bool, live map[string]bool, turbo ...bool) *asm {
+ return generateCodeMode(fs,ss,target,opt,live,false,turbo...)
+}
+func validateCode(fs []fn,ss []stmt,target string)*asm{return generateCodeMode(fs,ss,target,false,nil,true)}
+func generateCodeMode(fs []fn, ss []stmt, target string, opt bool, live map[string]bool, discard bool, turbo ...bool) *asm {
 	if target != "linux" && target != "windows" {
 		die("unsupported target %s", target)
 	}
@@ -1591,9 +1597,11 @@ func generateCode(fs []fn, ss []stmt, target string, opt bool, live map[string]b
 	}
 	c.validateTypes(fs)
 	c.function(fn{name: "@main", body: ss}, true)
+    if discard{a.resetValidationBody()}
 	for _, f := range fs {
 		if !f.record && (!opt || live[f.name]) {
 			c.function(f, false)
+            if discard{a.resetValidationBody()}
 		}
 	}
 	return a

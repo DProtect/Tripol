@@ -17,7 +17,8 @@ func buildScalarSSA(f fn)(ssaProgram,bool){
  // CSE is restricted to a single dominating block of pure integer
  // operations. A repeated checked operation cannot newly trap after the
  // identical earlier operation succeeded.
- seen:=map[string]int{}
+ type valueKey struct{op string;literal int64;left,right int}
+ seen:=map[valueKey]int{}
  add:=func(v ssaValue)int{
   if v.op!="param.i64"{
    if len(v.args)>0{
@@ -29,7 +30,8 @@ func buildScalarSSA(f fn)(ssaProgram,bool){
      if k,n,ok:=fold(&expr{op:kind,s:op,args:args});ok&&k=="int"{v=ssaValue{op:"const.i64",literal:n};p.propagated++}
     }
    }
-   key:=fmt.Sprintf("%s:%d:%v",v.op,v.literal,v.args)
+   key:=valueKey{op:v.op,literal:v.literal,left:-1,right:-1}
+   if len(v.args)>0{key.left=v.args[0]};if len(v.args)>1{key.right=v.args[1]}
    if i,ok:=seen[key];ok{p.reused++;return i}
    seen[key]=len(p.values)
   }

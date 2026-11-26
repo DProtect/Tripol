@@ -168,6 +168,14 @@ func reachable(fs []fn, ss []stmt) map[string]bool {
 	}
 	visit = func(ss []stmt) {
 		for _, s := range ss {
+            // Match the optimized emitter exactly. Validation has already
+            // checked both branches, including invalid dead code.
+            if s.op=="if"||s.op=="while"{
+                if t,v,ok:=fold(s.e);ok&&t=="bool"{
+                    if s.op=="if"{if v!=0{visit(s.yes)}else{visit(s.no)};continue}
+                    if v==0{continue}
+                }
+            }
 			ex(s.e)
 			ex(s.bound)
 			visit(s.yes)

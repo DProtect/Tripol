@@ -6,7 +6,7 @@ import "fmt"
 // four or six volatile registers hold values across operations. Excess live values
 // receive frame slots. No calls, joins or unsafe speculative evaluation.
 type ssaLocation struct { reg byte; spill int; present bool }
-type ssaAllocation struct { locations []ssaLocation; frame int; spills int; registers int }
+type ssaAllocation struct { locations []ssaLocation; frame int; spills int; registers int; reusedSlots int }
 func allocateSSA(p ssaProgram) ssaAllocation {
  a:=ssaAllocation{locations:make([]ssaLocation,len(p.values))}
  last:=make([]int,len(p.values));for i:=range last{last[i]=-1}
@@ -17,12 +17,21 @@ func allocateSSA(p ssaProgram) ssaAllocation {
  for _,v:=range p.values{if v.op=="div.checked.i64"||v.op=="rem.checked.i64"{regs=regs[:4];break}}
  a.registers=len(regs)
  owners:=map[byte]int{}
+ // Release a spill slot after its last use. The current instruction
+ // reads both operands before saving its result, so same-step reuse is safe.
+ expiry:=make([][]int,len(p.values)+1)
+ free:=[]int{}
  for i:=range p.values {
+  for _,slot:=range expiry[i]{free=append(free,slot)}
   for r,owner:=range owners {if last[owner]<=i{delete(owners,r)}}
   if last[i]<0{continue}
   found:=false
   for _,r:=range regs{if _,ok:=owners[r];!ok{owners[r]=i;a.locations[i]=ssaLocation{reg:r,present:true};found=true;break}}
-  if !found{a.frame+=8;a.spills++;a.locations[i]=ssaLocation{spill:-a.frame,present:true}}
+  if !found{
+   slot:=0
+   if len(free)>0{slot=free[len(free)-1];free=free[:len(free)-1];a.reusedSlots++}else{a.frame+=8;slot=-a.frame}
+   a.spills++;a.locations[i]=ssaLocation{spill:slot,present:true};expiry[last[i]]=append(expiry[last[i]],slot)
+  }
  }
  return a
 }
@@ -82,5 +91,5 @@ func (c *compiler) emitNativeSSA(f fn)bool{
 }
 func ssaLocationReport(p ssaProgram)string{
  a:=allocateSSA(p)
- return fmt.Sprintf("linear scan: %d value registers; %d spill slots",a.registers,a.spills)
+ return fmt.Sprintf("linear scan: %d value registers; %d spill slots; %d spilled values; %d reused slots",a.registers,a.frame/8,a.spills,a.reusedSlots)
 }
