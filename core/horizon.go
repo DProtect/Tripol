@@ -6,7 +6,7 @@ import "fmt"
 func (c *compiler) isRecord(t string) bool { f, ok := c.fs[t]; return ok && f.record }
 func (c *compiler) validType(t string) bool {
 	switch t {
-	case "int", "float", "bool", "string", "ints", "list":
+	case "int", "float", "bool", "string", "ints", "list", "string_list", "bool_list", "float_list":
 		return true
 	}
 	return c.isRecord(t)

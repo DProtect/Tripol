@@ -25,7 +25,7 @@ func TestSimpleExpressionsAndLists(t *testing.T) {
  }
 }
 func TestSimpleReject(t *testing.T){
- for _,src:=range []string{`a=list(["text"])`,`show f"{}"`,`show f"{1;2}"`,`show f"{1 2}"`,`show f"{1+}"`,`show f"{1.5}"`}{
+ for _,src:=range []string{`a=list(["text",1])`,`show f"{}"`,`show f"{1;2}"`,`show f"{1 2}"`,`show f"{1+}"`,`show f"{1.5}"`}{
   t.Run(src,func(t *testing.T){defer func(){if recover()==nil{t.Fatal("accepted invalid program")}}();compile(src,"linux")})
  }
 }

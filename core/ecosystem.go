@@ -25,7 +25,9 @@ func (c *compiler) showValue(e *expr, newline bool) {
 	if !c.promoteFixed(e) {
 		t = c.expression(e)
 	}
-	if t == "list" { a.emit(0x48,0x8b,0x40,0x08); t = "ints" }
+	if isDictionary(t){c.showDictionary(t,newline);return}
+    elem:="int"
+    if isList(t) { elem=listElement(t);a.emit(0x48,0x8b,0x40,0x08); t = "ints" }
 	if t != "ints" {
 		if c.isRecord(t) {
 			c.err("show requires scalar, string or integer array")
@@ -51,7 +53,7 @@ func (c *compiler) showValue(e *expr, newline bool) {
 	a.call("raw_string")
 	a.label(first)
 	a.emit(0x48, 0x8b, 0x0c, 0x24, 0x48, 0x8b, 0x54, 0x24, 0x08, 0x48, 0x8b, 0x44, 0xca, 0x08)
-	a.call("raw_int")
+	a.call("raw_"+elem)
 	a.emit(0x48, 0xff, 0x04, 0x24)
 	a.jmp(loop)
 	a.label(end)

@@ -95,7 +95,7 @@ func (p *parser) name() string {
 }
 func (p *parser) typ() string {
 	switch p.t().s {
-	case "int", "bool", "string", "float", "ints", "list":
+	case "int", "bool", "string", "float", "ints", "list", "string_list", "bool_list", "float_list":
 		return p.take().s
 	}
 	if p.t().k == "id" {
@@ -296,7 +296,17 @@ func (p *parser) expression(min int) *expr {
 		} else {
 			e.args = []*expr{p.expression(7)}
 		}
-	case t.s == "[":
+	case t.s == "{":
+        e.op="dictionary"
+        p.skip()
+        if !p.eat("}") {
+            for {
+                key:=p.expression(1);if key.op!="string"{p.err("dictionary key must be a string literal")}
+                p.need(":");value:=p.expression(1);e.args=append(e.args,key,value)
+                p.skip();if p.eat("}"){break};p.need(",");p.skip();if p.eat("}"){break}
+            }
+        }
+    case t.s == "[":
 		e.op = "array"
 		if !p.eat("]") {
 			for {
@@ -673,17 +683,20 @@ func (c *compiler) expression(e *expr) string {
 		}
 		a.load(v.off)
 		return v.typ
+	case "dictionary":return c.dictionaryLiteral(e)
 	case "array":
 		c.err("array literal only allowed in a local declaration")
 	case "index":
+        if v,ok:=c.lookup(e.s);ok&&isDictionary(v.typ){return c.dictionaryGet(v,e.args[0])}
 		v := c.arrayVar(e.s)
 		c.arrayIndex(v, e.args[0])
-		if v.typ == "ints" || v.typ=="list" {
+		if v.typ == "ints" || isList(v.typ) {
 			a.emit(0x48, 0x8b, 0x44, 0xc1, 0x08)
 		} else {
 			a.emit(0x48, 0x8b, 0x84, 0xc5)
 			a.u32(v.off)
 		}
+        if isList(v.typ){return listElement(v.typ)}
 		return "int"
 	case "field":
 		t := c.expression(e.args[0])
@@ -860,7 +873,7 @@ func (c *compiler) expression(e *expr) string {
 		a.call("concat")
 		return "string"
 	}
-	if t == "ints" || t == "list" || c.isRecord(t) {
+	if t == "ints" || isList(t) || isDictionary(t) || c.isRecord(t) {
 		c.err("aggregate references do not support operators")
 	}
 	if op == "==" || op == "!=" {
@@ -971,24 +984,27 @@ func (c *compiler) block(ss []stmt, nested bool) {
 		case "fieldassign":
 			c.recordAssign(s)
 		case "indexassign":
+            if v,ok:=c.lookup(s.name);ok&&isDictionary(v.typ){c.dictionaryAssign(v,s);continue}
 			v := c.arrayVar(s.name)
 			if !v.mut {
 				c.err("cannot modify constant " + s.name)
 			}
-			c.arrayIndex(v, s.bound)
+			elem:="int";if isList(v.typ){elem=listElement(v.typ)}
+            if s.typ!=""&&elem!="int"{c.err("compound indexed assignment requires integers")}
+            c.arrayIndex(v, s.bound)
 			a.emit(0x50) // preserve the single evaluated index
 			if s.typ != "" {
-				if v.typ == "ints" || v.typ=="list" { a.emit(0x48, 0x8b, 0x44, 0xc1, 0x08) } else { a.emit(0x48, 0x8b, 0x84, 0xc5); a.u32(v.off) }
+				if v.typ == "ints" || isList(v.typ) { a.emit(0x48, 0x8b, 0x44, 0xc1, 0x08) } else { a.emit(0x48, 0x8b, 0x84, 0xc5); a.u32(v.off) }
 				a.emit(0x50) // old element before RHS
 			}
-			c.require(c.expression(s.e), "int")
+			c.require(c.expression(s.e), elem)
 			if s.typ != "" { a.emit(0x48, 0x89, 0xc1, 0x58); c.compoundInteger(s.typ) }
 			a.emit(0x59)
-			if v.typ == "ints" || v.typ=="list" {
+			if v.typ == "ints" || isList(v.typ) {
 				// Preserve value while loading the array reference in rdx.
 				a.emit(0x48, 0x8b, 0x95)
 				a.u32(v.off)
-				if v.typ=="list"{a.emit(0x48,0x8b,0x52,0x08,0x48,0x3b,0x0a);a.j(0x83,"bounds")}
+				if isList(v.typ){a.emit(0x48,0x8b,0x52,0x08,0x48,0x3b,0x0a);a.j(0x83,"bounds")}
 				a.emit(0x48, 0x89, 0x44, 0xca, 0x08)
 			} else {
 				a.emit(0x48, 0x89, 0x84, 0xcd)

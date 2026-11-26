@@ -87,7 +87,7 @@ Default fields must be trailing scalar constants of the declared type. Construct
 
 ## SIMPLE R1
 
-`numbers=list([10,20,30])` initializes a growable integer list. Unlike `numbers=[10,20,30]` (fixed stack array), it can grow with `numbers.add(40)`. The initializer is evaluated left to right once, with up to 400 integer expressions. `list([])` creates an empty list. Existing list(capacity) and fixed arrays retain their behavior. String lists, generic lists and dictionary literals are not implemented.
+`numbers=list([10,20,30])` initializes a growable integer list. Unlike `numbers=[10,20,30]` (fixed stack array), it can grow with `numbers.add(40)`. The initializer is evaluated left to right once, with up to 400 integer expressions. `list([])` creates an empty list. Existing list(capacity) and fixed arrays retain their behavior. Lists now also infer homogeneous string, bool and float elements from a nonempty initializer. Use `string_list()`, `bool_list()` or `float_list()` for an empty typed list. Mixed lists are rejected. Methods, iteration, display and checked indexing work for these scalar lists. Numeric `sum` and compound indexed assignment remain integer-only.
 
 ```tripol
 import tripol.errors
@@ -96,3 +96,16 @@ numbers.add(40)
 show f"Total items: {len(numbers)}"
 try {show numbers[99]} catch code {show errors.message(code)}
 ```
+
+### Natural dictionaries
+
+```tripol
+player = {
+    "name": "Alex",
+    "health": 100,
+    "active": true
+}
+player["health"] -= 20
+show player
+```
+A dictionary literal is a statically shaped reference with up to 64 unique nonempty literal keys and independently inferred scalar types. It supports checked literal-key lookup, assignment, integer compound assignment, aliases, display and len. Keys and their types cannot change; no dynamic lookup or insertion in this literal type. Use `tripol.dictionary` for runtime string-to-int keys. These are native arena references, not a dynamically typed object model. General reclamation remains limited.

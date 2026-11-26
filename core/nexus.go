@@ -28,9 +28,9 @@ func (c *compiler) nexusBuiltin(e *expr) (string, bool) {
 		return "int", true
 	case "@array_len":
 		v := c.arrayVar(e.args[0].s)
-		if v.typ == "ints" || v.typ=="list" {
+		if v.typ == "ints" || isList(v.typ) {
 			a.load(v.off)
-			if v.typ=="list"{a.emit(0x48,0x8b,0x40,0x08)}
+			if isList(v.typ){a.emit(0x48,0x8b,0x40,0x08)}
 			a.emit(0x48, 0x8b, 0x00)
 		} else {
 			a.imm(int64(arrayLen(v)))
@@ -67,6 +67,7 @@ func (c *compiler) nexusBuiltin(e *expr) (string, bool) {
 			c.err("sum expects a named integer array")
 		}
 		v := c.arrayVar(e.args[0].s)
+        if isList(v.typ)&&v.typ!="list"{c.err("sum requires integer elements")}
 		if v.typ == "ints" || v.typ=="list" {
 			a.load(v.off)
 			if v.typ=="list"{a.emit(0x48,0x8b,0x40,0x08)}

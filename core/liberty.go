@@ -42,7 +42,7 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 		return c.ecosystemBuiltin(e), true
 	case "byte_at":
 		return c.byteAt(e), true
-	case "list":
+	case "list", "string_list", "bool_list", "float_list":
 		return c.listCreate(e), true
 	case "ints":
 		if len(e.args) != 1 {
@@ -89,7 +89,8 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 			}
 		}
 		t := c.expression(e.args[0])
-		if t == "list" { a.emit(0x48,0x8b,0x40,0x08); t = "ints" }
+		if isList(t) { a.emit(0x48,0x8b,0x40,0x08); t = "ints" }
+        if isDictionary(t){a.imm(int64(len(dictionaryFields(t))));return "int",true}
 		if t == "ints" {
 			a.emit(0x48, 0x8b, 0x00)
 			return "int", true

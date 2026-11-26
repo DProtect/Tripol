@@ -24,6 +24,7 @@
 - SIMPLE R1: expression interpolation, dynamic integer list initializers, friendly error-code descriptions and localized diagnostic labels.
 - TRIPOL Academy: nine offline bilingual lessons with native output regression tests and exercises.
 - SIMPLE R1: native project test command with explicit test selection, exit-status checks, timeouts and bounded logs.
+- SIMPLE R1: inferred homogeneous scalar lists, typed empty list constructors and mixed-scalar fixed-schema dictionary literals.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)

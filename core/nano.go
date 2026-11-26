@@ -306,7 +306,7 @@ func newProject(dir string) {
 func arrayLen(v variable) int { n, _ := strconv.Atoi(strings.TrimPrefix(v.typ, "array:")); return n }
 func (c *compiler) arrayVar(name string) variable {
 	v, ok := c.lookup(name)
-	if !ok || !strings.HasPrefix(v.typ, "array:") && v.typ != "ints" && v.typ!="list" {
+	if !ok || !strings.HasPrefix(v.typ, "array:") && v.typ != "ints" && !isList(v.typ) {
 		c.err("expected array: " + name)
 	}
 	return v
@@ -314,9 +314,9 @@ func (c *compiler) arrayVar(name string) variable {
 func (c *compiler) arrayIndex(v variable, e *expr) {
 	c.require(c.expression(e), "int")
 	a := c.a
-	if v.typ == "ints" || v.typ=="list" {
+	if v.typ == "ints" || isList(v.typ) {
 		a.loadRCX(v.off)
-		if v.typ=="list"{a.emit(0x48,0x8b,0x49,0x08)}
+		if isList(v.typ){a.emit(0x48,0x8b,0x49,0x08)}
 		a.emit(0x48, 0x3b, 0x01)
 	} else {
 		a.emit(0x48, 0x3d)
