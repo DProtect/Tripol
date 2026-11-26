@@ -43,6 +43,9 @@ function execute(binary,options={}){
    if(op===10){if(a<0n||a>262144n||b<4n||b>8n)fail(line,'Collection allocation limit reached');const n=Number(a),kind=Number(b);reserve(n,line);if(collections.length>=50000)fail(line,'Collection count limit');const id=BigInt(collections.length);collections.push({kind,capacity:n,items:kind===4?Array(n).fill(0n):[]});return id}
    const list=collection(a,line),items=list.items;
    switch(op){
+    case 40:return BigInt(items.indexOf(b));
+    case 41:{reserve(items.length,line);if(collections.length>=50000)fail(line,'Collection count limit');const id=BigInt(collections.length);collections.push({kind:4,capacity:items.length,items:items.slice()});return id}
+    case 42:{const src=collection(b,line).items;if(src.length!==items.length)return 0n;for(let i=0;i<src.length;i++)items[i]=src[i];return 1n}
     case 11:return items[index(list,b,line)];
     case 12:items[index(list,b,line)]=c;return c;
     case 13:return BigInt(items.length);
