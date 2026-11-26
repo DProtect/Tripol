@@ -107,6 +107,30 @@ func (e *webEmitter) expression(x *expr)string{
   }
  case "call":
   name:=strings.TrimPrefix(x.s,"@builtin:")
+  // Target metadata is compiled for the web, never borrowed from Linux.
+  if name=="system.architecture"{e.code.i64(e.module.stringID("wasm32"));return "string"}
+  if name=="memory.capacity"{e.code.i64(6291456);return "int"}
+  if name=="platform_name"||name=="compiler_version"{if len(x.args)!=0{webReject("metadata takes no arguments")};v:="web";if name=="compiler_version"{v=version};e.code.i64(e.module.stringID(v));return "string"}
+  if name=="arena_used"||name=="arena_committed"{z:=e.constant(0);e.val(70,z,z,z);return "int"}
+  if name=="read_text"||name=="write_text"||name=="append_text"||name=="read_bytes"||name=="write_bytes"{
+   spec:=map[string]struct{op int64;args []string;ret string}{
+    "read_text":{71,[]string{"string"},"string"},"write_text":{72,[]string{"string","string"},"int"},
+    "append_text":{73,[]string{"string","string"},"int"},"read_bytes":{74,[]string{"string","int"},"ints"},
+    "write_bytes":{75,[]string{"string","ints"},"int"},
+   }[name];if len(x.args)!=len(spec.args){webReject("invalid file arguments")};z:=e.constant(0);v:=[3]uint32{z,z,z};for i,a:=range x.args{tmp,t:=e.save(a);if t!=spec.args[i]&&!(spec.args[i]=="ints"&&webElem(t)=="int"){webReject("invalid argument for %s",name)};v[i]=tmp};e.val(spec.op,v[0],v[1],v[2]);return spec.ret
+  }
+  if name=="atomic_load"||name=="atomic_exchange"||name=="atomic_add"||name=="atomic_compare_exchange"{
+   n:=2;if name=="atomic_exchange"||name=="atomic_add"{n=3};if name=="atomic_compare_exchange"{n=4};if len(x.args)!=n{webReject("invalid atomic arguments")}
+   a,t:=e.save(x.args[0]);b,u:=e.save(x.args[1]);if webElem(t)!="int"||u!="int"{webReject("invalid atomic array or index")};z:=e.constant(0)
+   if n==2{e.val(76,a,b,z);return "int"}
+   c,v:=e.save(x.args[2]);if v!="int"{webReject("atomic value requires int")}
+   if n==4{d,w:=e.save(x.args[3]);if w!="int"{webReject("atomic value requires int")};e.val(79,a,b,c);e.code.raw(0x1a);e.val(80,a,b,d);return "bool"}
+   op:=int64(77);if name=="atomic_add"{op=78};e.val(op,a,b,c);return "int"
+  }
+  if name=="sleep_ms"{if len(x.args)!=1{webReject("sleep requires milliseconds")};a,t:=e.save(x.args[0]);if t!="int"{webReject("sleep requires int")};z:=e.constant(0);e.val(81,a,z,z);return "int"}
+  if name=="thread_sum"{webReject("native worker threads require a browser concurrency adapter")}
+  if name=="audio_play_file"||name=="native_beep"{webReject("audio playback requires a browser user-gesture adapter; WAV generation is available")}
+
   if name=="text"||name=="parse_int"||name=="byte_at"||name=="slice"||name=="has_prefix"||name=="has_suffix"||name=="find_bytes"||name=="input_int"{
    spec:=map[string]struct{op int64;args []string;ret string}{
     "text":{50,[]string{"int"},"string"},"parse_int":{51,[]string{"string"},"int"},
@@ -204,7 +228,7 @@ func (e *webEmitter) body()webCode{var b webCode;n:=e.locals-e.params;if n==0{b.
 func CompileWeb(source string)(out []byte,err error){
  defer func(){if v:=recover();v!=nil{out=nil;err=fmt.Errorf("%v",v)}}()
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
- imports,_,_:=parseUnit(source);for _,n:=range imports{switch n{case "@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto":default:webReject("library %s requires a browser adapter or native target",n)}}
+ imports,_,_:=parseUnit(source);for _,n:=range imports{switch n{case "@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:thread":default:webReject("library %s requires a browser adapter or native target",n)}}
  fs,ss:=parse(source);validateCode(fs,ss,"linux")
  m:=&webModule{funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{}}
  m.signature([]byte{0x7f},nil) // tick(line)
