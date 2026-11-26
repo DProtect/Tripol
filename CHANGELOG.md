@@ -33,6 +33,7 @@
 - COMPILER REVOLUTION: checked immediate arithmetic and register-free immediate-only SSA values.
 - COMPILER REVOLUTION: conservative loop-invariant scalar propagation and range-bound simplification without speculative traps.
 - COMPILER REVOLUTION: TIR PARALLEL R1 bounded independent CFG optimization with deterministic serial/parallel regression and benchmarks.
+- COMPILER REVOLUTION: TIR CACHE R1 opt-in content-addressed native build cache with compiler digest, expanded AST key, target/profile separation and corruption checks.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)
