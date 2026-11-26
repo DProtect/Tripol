@@ -39,12 +39,10 @@ jobs:
           python benchmarks/compare_versions.py --old "$RUNNER_TEMP/tripol026" --new "$RUNNER_TEMP/tripol027" --runs 7 --out benchmark-results/compare.json
           python benchmarks/quantum_x.py --compiler "$RUNNER_TEMP/tripol027" --runs 7 --out benchmark-results/languages.json
       - name: Measure compiler validation and stage breakdown
+        shell: bash
         run: |
-          go test ./core -run '^
-        with:
-          name: quantum-x-measurements
-          path: benchmark-results/
- -bench BenchmarkValidationBuffer -benchmem -count=3 | tee benchmark-results/compiler-validation.txt
+          set -o pipefail
+          go test ./core -run '^$' -bench BenchmarkValidationBuffer -benchmem -count=3 | tee benchmark-results/compiler-validation.txt
           "$RUNNER_TEMP/tripol027" compile-report examples/academy/simple-r1.tri --profile turbo --target linux --json > benchmark-results/compiler-stages.json
       - uses: actions/upload-artifact@v4
         with:
