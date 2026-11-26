@@ -22,7 +22,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: go test ./core -run TestWebEngineR1 -count=1
+      - name: Go compiler regressions
+        id: compiler_tests
+        continue-on-error: true
+        run: go test ./core -run TestWebEngineR1 -count=1
       - name: Build browser compiler
         run: |
           mkdir -p web-dist
@@ -36,7 +39,17 @@ jobs:
           cp cmd/tripol-web/host-r3.js web-dist/host-r3.js
           test -s web-dist/wasm_exec.js
           test -s web-dist/tripol-compiler.wasm
+      - name: Audit public library documentation
+        id: docs_audit
+        continue-on-error: true
+        run: |
+          git fetch origin gh-pages
+          cp cmd/tripol-web/audit-docs.cjs web-dist/audit-docs.cjs
+          node --experimental-global-webcrypto web-dist/audit-docs.cjs origin/gh-pages
+          rm web-dist/audit-docs.cjs
       - name: Test real compiler and generated WebAssembly
+        id: wasm_tests
+        continue-on-error: true
         run: |
           cp cmd/tripol-web/test-r3.cjs web-dist/test-r3.cjs
           go build -trimpath -o web-dist/tripol-native .
@@ -44,6 +57,19 @@ jobs:
           git show origin/gh-pages:playground/examples-r3.js > web-dist/examples-r3.js
           node --experimental-global-webcrypto web-dist/test-r3.cjs web-dist/examples-r3.js "$(pwd)/web-dist/tripol-native"
           rm web-dist/tripol-native web-dist/examples-r3.js web-dist/test-r3.cjs
+      - name: Upload diagnostic reports even on failed tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tripol-web-diagnostics
+          path: web-dist/*report.json
+          if-no-files-found: warn
+      - name: Require successful compiler and runtime checks
+        if: always()
+        run: |
+          test "${{ steps.compiler_tests.outcome }}" = success
+          test "${{ steps.docs_audit.outcome }}" = success
+          test "${{ steps.wasm_tests.outcome }}" = success
       - name: Mark verified engine
         run: |
           printf '{"verified":true,"abi":3,"commit":"%s"}\n' "$GITHUB_SHA" > web-dist/manifest.json
