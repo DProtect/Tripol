@@ -4,6 +4,9 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
 (async()=>{
  const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync(path.join(__dirname,'tripol-compiler.wasm')),go.importObject);go.run(instance);
  const cases=[
+ ['import tripol.datetime\nshow datetime.leap(2024),datetime.leap(1900),datetime.days_in_month(2024,2)','true false 29\n'],
+ ['import tripol.text\nshow text.size("é😀"),text.index_of("éabc","a"),text.part("é",0,2),text.to_int("-42")','6 2 é -42\n'],
+ ['import tripol.json\nshow json.quote("é😀"),json.valid("{\"a\":1}")','"é😀" true\n'],
  ['import tripol.arrays\nvalues = arrays.make(4, 7)\nshow arrays.total(values)\ncopy = ints(4)\nassert arrays.copy_into(copy, values)\nshow copy','28\n[7, 7, 7, 7]\n'],
  ['import tripol.arrays\na=arrays.make(3,9)\nb=arrays.copy(a)\nb[0]=3\nshow arrays.contains(a,9),a[0],b[0]','true 9 3\n'],
  ['import tripol.collections\na=ints(2)\na[0]=5\na[1]=6\nshow collections.append(a,7)','[5, 6, 7]\n'],
@@ -52,6 +55,22 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
   }}finally{fs.rmSync(dir,{recursive:true,force:true})}
   const counts={};for(const r of rows)counts[r.status]=(counts[r.status]||0)+1;
   fs.writeFileSync(path.join(__dirname,'parity-report.json'),JSON.stringify({total:rows.length,counts,rows},null,2));console.log('PARITY',counts);assert.equal(rows.length,100,'Expected all Playground examples');assert.equal(counts.match,100,'Native/WebAssembly parity must be 100/100 before publishing')
+
+  // Library probes cover the candidate modules, not every function. Keep the
+  // full report even when a module has partial/unsupported browser operations.
+  const probes={"math":"show math.square(7)","arrays":"a=arrays.make(4,7)\nshow arrays.total(a)","collections":"a=ints(2)\na[0]=7\nshow collections.append(a,9)","datetime":"show datetime.leap(2024),datetime.leap(1900),datetime.days_in_month(2024,2)","bits":"show bits.set(0,5),bits.count(31)","bitset":"a=bitset.create(100)\nshow bitset.add(a,65),bitset.contains(a,65),bitset.count(a)","binary":"show binary.u16_le(513)","buffer":"b=buffer.create(1)\nb=buffer.push(b,10)\nb=buffer.push(b,20)\nshow buffer.values(b)","checksum":"show checksum.adler32(\"abc\")","colors":"show colors.rgb(255,0,0),colors.invert(0)","compression":"a=ints(3)\na[0]=7\na[1]=7\na[2]=7\nshow compression.rle_decode(compression.rle_encode(a))","console":"show console.line(\"hello\")","convert":"show convert.celsius_to_fahrenheit(20.0)","dictionary":"d=dictionary.create(2)\nshow dictionary.set(d,\"key\",42),dictionary.get(d,\"key\")","encoding":"show encoding.hex_text(\"é\")","geometry":"show geometry.distance(0.0,0.0,3.0,4.0)","json":"show json.quote(\"é😀\"),json.valid(\"{\\\"a\\\":1}\")","matrix":"show matrix.identity(2)","path":"show path.basename(\"a/b.txt\"),path.extension(\"a/b.txt\")","physics":"show physics.integrate(1.0,2.0,3.0)","random":"show random.next(1)","search":"a=ints(2)\na[1]=7\nshow search.linear(a,7)","sequences":"show sequences.fibonacci(8)","simd":"a=ints(2)\nb=ints(2)\nshow simd.equal(a,b)","sort":"a=ints(3)\na[0]=9\na[1]=2\na[2]=1\nshow sort.ascending(a)","stats":"a=ints(2)\na[0]=2\na[1]=4\nshow stats.mean(a),stats.variance(a)","text":"show text.size(\"é😀\"),text.index_of(\"éabc\",\"a\"),text.part(\"é\",0,2),text.to_int(\"-42\")","validate":"show validate.integer(\"-12\"),validate.ascii(\"é\")","vector":"show vector.length2(3.0,4.0)","stack":"s=stack.create(2)\nshow stack.push(s,7),stack.pop(s)","queue":"q=queue.create(2)\nshow queue.push(q,9),queue.pop(q)","animation":"show animation.smoothstep(0.5)","camera":"show camera.screen(12,2,3)","particles":"p=particles.create(2)\nshow particles.burst(p,1,2),particles.step(p)","canvas":"p=canvas.create(3,2)\nshow canvas.clear(p,0),canvas.rectangle(p,3,2,1,0,2,1,255)\nshow p","sprite":"p=sprite.solid(2,2,255)\nshow sprite.rotate90(p,2,2)","testing":"show testing.equal_int(4,4)","errors":"show errors.int_or(\"42\",0),errors.int_or(\"bad\",9)","network":"show network.ipv4(127,0,0,1)","http":"show http.status(\"HTTP/1.0 200 OK\"),http.body(\"HTTP/1.0 200 OK\\r\\n\\r\\nhello\")","image":"p=ints(2)\np[0]=1\np[1]=2\nshow image.flip_x(p,2,1)","time":"show time.seconds(2500),time.now_ms()>=0","profiler":"s=profiler.start()\nshow profiler.elapsed(s)>=0","heap":"h=heap.create(4)\nheap.push(h,8)\nheap.push(h,2)\nshow heap.pop(h)","utf8":"show utf8.count(\"é😀\"),utf8.scalar_at(\"é😀\",2)","csv":"show csv.fields(\"a,b,c\"),csv.escape(\"é\")","stream":"c=stream.create()\na=ints(2)\na[0]=1\na[1]=2\nshow stream.read_u16(c,a)","regex":"show regex.matches(\"a*b\",\"aaab\")","cli":"show cli.integer(\"--n=7\",\"n\",0)","crypto":"show crypto.sha256_text(\"abc\")"};
+  const libDir=fs.mkdtempSync(path.join(os.tmpdir(),'tripol-library-'));const libRows=[];
+  try{for(const [name,body] of Object.entries(probes)){
+   const source='import tripol.'+name+'\n'+body,file=path.join(libDir,'main.tri'),bin=path.join(libDir,'program');fs.writeFileSync(file,source);
+   const build=cp.spawnSync(native,['build',file,'--target','linux','-o',bin],{encoding:'utf8',timeout:10000});
+   if(build.status!==0){libRows.push({name,status:'native-rejected',detail:String(build.stderr||build.stdout||build.error||'').slice(0,500)});continue}
+   const actual=cp.spawnSync(bin,[],{encoding:'utf8',timeout:2000});
+   if(actual.status!==0){libRows.push({name,status:'native-runtime-error',detail:String(actual.stderr||actual.error||'').slice(0,500)});continue}
+   try{const wasm=execute(source);libRows.push({name,status:wasm===actual.stdout?'match':'mismatch',native:actual.stdout,wasm})}catch(e){libRows.push({name,status:'wasm-rejected',detail:e.message})}
+  }}finally{fs.rmSync(libDir,{recursive:true,force:true})}
+  const libraryCounts={};for(const r of libRows)libraryCounts[r.status]=(libraryCounts[r.status]||0)+1;
+  fs.writeFileSync(path.join(__dirname,'library-parity-report.json'),JSON.stringify({total:libRows.length,counts:libraryCounts,rows:libRows},null,2));console.log('LIBRARY PARITY',libraryCounts);
+
  }
  process.exit(0)
 })().catch(e=>{console.error(e);process.exit(1)});
