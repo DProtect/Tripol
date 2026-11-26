@@ -21,6 +21,7 @@
 - INTELLISENSE R1: open-buffer project diagnostics, relative module navigation, hover/completion across open imports and cycle checking.
 - GENESIS R3: typed scalar AST, boolean locals, parameters and returns, compile-time type checking and invalid-program tests.
 - MEMORY R2: branch-sensitive scoped temporary reclamation with escape fallback and exception regression tests.
+- SIMPLE R1: expression interpolation, dynamic integer list initializers, friendly error-code descriptions and localized diagnostic labels.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)

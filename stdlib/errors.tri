@@ -39,3 +39,18 @@ func get_or(a:ints,index:int,fallback:int)->int {
  if index<0 or index>=len(a) {return fallback}
  return a[index]
 }
+
+func message(code:int)->string {
+ if code==10 {return "Integer overflow or division by zero"}
+ if code==11 {return "Index out of bounds"}
+ if code==12 {return "Assertion failed"}
+ if code>=100 and code<=255 {return "User-defined exception"}
+ return "Unknown error"
+}
+func message_es(code:int)->string {
+ if code==10 {return "Desbordamiento entero o division por cero"}
+ if code==11 {return "Indice fuera de rango"}
+ if code==12 {return "No se cumplio la condicion"}
+ if code>=100 and code<=255 {return "Excepcion definida por el programa"}
+ return "Error desconocido"
+}

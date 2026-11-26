@@ -201,10 +201,10 @@ func printDiagnostic(d diagnostic) {
 		}
 	}
 	if d.Hint != "" {
-		fmt.Fprintln(os.Stderr, "  Hint:", d.Hint)
+		label := "  Hint:"; if diagnosticSpanish {label="  Ayuda:"}; fmt.Fprintln(os.Stderr,label,d.Hint)
 	}
 	if d.Suggestion != "" {
-		fmt.Fprintln(os.Stderr, "  Did you mean:", d.Suggestion+"?")
+		label := "  Did you mean:"; if diagnosticSpanish {label="  Quisiste decir:"}; fmt.Fprintln(os.Stderr,label,d.Suggestion+"?")
 	}
 	if d.FixAfter != "" {
 		fmt.Fprintln(os.Stderr, "  Suggested change (not applied):")

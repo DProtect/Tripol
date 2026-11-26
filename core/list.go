@@ -4,7 +4,17 @@ import "strings"
 
 func (c *compiler) listCreate(e *expr) string {
  a:=c.a
- if len(e.args)>1{c.err("list expects optional capacity")}
+ if len(e.args)>1{c.err("list expects optional capacity or an integer literal array")}
+ if len(e.args)==1&&e.args[0].op=="array" {
+  items:=e.args[0].args
+  if len(items)>400{c.err("list initializer exceeds 400 elements")}
+  a.imm(int64(len(items)));a.call("list_new")
+  for _,item:=range items{
+   a.emit(0x50);c.require(c.expression(item),"int")
+   a.emit(0x48,0x89,0xc1,0x58,0x50);a.call("list_add");a.emit(0x58)
+  }
+  return "list"
+ }
  if len(e.args)==1 {c.require(c.expression(e.args[0]),"int")} else {a.imm(4)}
  a.call("list_new")
  return "list"

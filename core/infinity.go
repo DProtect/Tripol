@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/json"
 	"math"
-	"regexp"
 	"strings"
 )
 
@@ -39,7 +38,6 @@ func (c *compiler) callArguments(f fn, e *expr) []*expr {
 	return args
 }
 
-var interpolationName = regexp.MustCompile(`^[A-Za-z_][A-Za-z_0-9]*$`)
 
 // f"...{name}..." is opt-in, so existing JSON and literal braces remain intact.
 func (p *parser) interpolation() *expr {
@@ -64,16 +62,27 @@ func (p *parser) interpolation() *expr {
 		}
 		if s[i] == '{' {
 			flush()
-			j := strings.IndexByte(s[i+1:], '}')
-			if j < 0 {
-				p.err("unclosed interpolation")
+			j := i+1
+			quoted, escaped := false, false
+			for ; j<len(s); j++ {
+				b:=s[j]
+				if quoted {
+					if escaped {escaped=false;continue}
+					if b=='\\' {escaped=true;continue}
+					if b=='"' {quoted=false}
+					continue
+				}
+				if b=='"' {quoted=true;continue}
+				if b=='}' {break}
+				if b=='{' {p.err("unexpected nested interpolation brace")}
 			}
-			j += i + 1
-			name := s[i+1 : j]
-			if !interpolationName.MatchString(name) {
-				p.err("interpolation requires a variable name")
-			}
-			e.args = append(e.args, &expr{op: "var", s: name})
+			if j==len(s) {p.err("unclosed interpolation")}
+			field:=strings.TrimSpace(s[i+1:j])
+			if field=="" || len(field)>4096 || strings.ContainsAny(field,"\r\n"){p.err("expected a single interpolation expression")}
+			sub:=parser{ts:lex(field),depth:p.depth}
+			value:=sub.expression(1)
+			if sub.t().k!="eof" {p.err("expected end of interpolation expression")}
+			e.args=append(e.args,value)
 			i = j + 1
 		} else if s[i] == '}' {
 			p.err("unmatched interpolation brace")
