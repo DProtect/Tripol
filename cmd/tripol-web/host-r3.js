@@ -41,6 +41,7 @@ function execute(binary,options={}){
    if(op===54)return get(a).startsWith(get(b))?1n:0n;
    if(op===55)return get(a).endsWith(get(b))?1n:0n;
    if(op===56)return BigInt(get(a).indexOf(get(b)));
+   if(op>=60&&op<=63){if(a<0n||a>0xffffffffn||b<0n||b>(op>=62?31n:0xffffffffn))fail(line,'Invalid u32 argument');if(op===60)return a^b;if(op===61)return a&b;if(op===62)return ((a>>b)|(a<<(32n-b)))&0xffffffffn;return a>>b}
    if(op===58||op===59)return BigInt(Math.floor(performance.now()*(op===59?1000000:1)));
    if(op===30){const x=f64(a),y=f64(b);return numeric([()=>x+y,()=>x-y,()=>x*y,()=>x/y][Number(c)](),line)}
    if(op===31){const x=f64(a),y=f64(b);return [x===y,x!==y,x<y,x>y,x<=y,x>=y][Number(c)]?1n:0n}
