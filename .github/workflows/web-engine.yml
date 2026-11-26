@@ -33,6 +33,7 @@ jobs:
           else
             cp "$goroot/misc/wasm/wasm_exec.js" web-dist/wasm_exec.js
           fi
+          cp cmd/tripol-web/host-r2.js web-dist/host-r2.js
           test -s web-dist/wasm_exec.js
           test -s web-dist/tripol-compiler.wasm
       - name: Test real compiler and generated WebAssembly
@@ -42,7 +43,14 @@ jobs:
           require('./web-dist/wasm_exec.js');
           (async()=>{
             const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync('web-dist/tripol-compiler.wasm'),go.importObject);go.run(instance);
+            const host=require('./web-dist/host-r2.js');
             const cases=[
+              ['show "Hello, TRIPOL!"','Hello, TRIPOL!\n'],
+              ['name="TRIPOL"\nshow "Hello, "+name','Hello, TRIPOL\n'],
+              ['func greet(name:string)->string {return "Hi "+name}\nshow greet("Ada")','Hi Ada\n'],
+              ['a="TRI"+"POL"\nshow a=="TRIPOL", a!="Rust"','true true\n'],
+              ['show len("TRIPOL")','6\n'],
+              ['show len("á")','2\n'],
               ['show 42','42\n'],
               ['n=0\nfor i in range(1,6) {n+=i}\nshow n','15\n'],
               ['func double(n:int)->int {return n*2}\nshow double(21)','42\n'],
@@ -53,24 +61,17 @@ jobs:
             ];
             function execute(source){
               const r=tripolCompileWeb(source);assert.ok(r.ok,r.error);
-              let output='',steps=0;
-              const imports={tripol:{
-                tick(){if(++steps>100000)throw Error('limit')},
-                arithmetic(op,a,b){const v=[()=>a+b,()=>a-b,()=>a*b,()=>a/b,()=>a%b][op]();if(v<-(1n<<63n)||v>(1n<<63n)-1n)throw Error('overflow');return v},
-                show(v,k,last){output+=(k?String(v!==0n):String(v))+(last?'\n':' ')},
-                assertFail(){throw Error('assertion')}
-              }};
-              new WebAssembly.Instance(new WebAssembly.Module(r.wasm),imports).exports.run();return output
+              return host.execute(r.wasm).output
             }
             for(const [src,want] of cases)assert.equal(execute(src),want,src);
             assert.throws(()=>execute('show 9223372036854775807 + 1'),/overflow/);
             assert.equal(tripolCompileWeb('show missing').ok,false);
-            console.log('9 WASM checks passed');process.exit(0)
+            console.log('15 WASM checks passed');process.exit(0)
           })().catch(e=>{console.error(e);process.exit(1)})
           JS
       - name: Mark verified engine
         run: |
-          printf '{"verified":true,"abi":1,"commit":"%s"}\n' "$GITHUB_SHA" > web-dist/manifest.json
+          printf '{"verified":true,"abi":2,"commit":"%s"}\n' "$GITHUB_SHA" > web-dist/manifest.json
       - uses: actions/upload-artifact@v4
         with:
           name: tripol-web-engine
@@ -79,14 +80,14 @@ jobs:
         run: |
           git fetch origin gh-pages
           git worktree add --detach /tmp/tripol-pages origin/gh-pages
-          mkdir -p /tmp/tripol-pages/playground/engine-r1
-          cp web-dist/* /tmp/tripol-pages/playground/engine-r1/
+          mkdir -p /tmp/tripol-pages/playground/engine-r2
+          cp web-dist/* /tmp/tripol-pages/playground/engine-r2/
           cd /tmp/tripol-pages
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add playground/engine-r1
+          git add playground/engine-r2
           if ! git diff --cached --quiet; then
-            git commit -m "Publish verified TRIPOL Web Engine R1"
+            git commit -m "Publish verified TRIPOL Web Engine R2"
             git push origin HEAD:gh-pages
           fi
       - name: Request Pages rebuild
