@@ -8,6 +8,12 @@ import (
 func TestWebEngineR1(t *testing.T){
  for _,source:=range []string{
   "show 42",
+  "import tripol.files\nfiles.write(\"demo.txt\",\"hello\")\nshow files.read(\"demo.txt\")",
+  "import tripol.io\na=ints(2)\na[0]=255\nio.write(\"demo.bin\",a)\nshow io.read(\"demo.bin\")",
+  "import tripol.atomic\na=ints(1)\nshow atomic.add(a,0,4),atomic.compare_exchange(a,0,4,9),atomic.load(a,0)",
+  "import tripol.system\nshow system.platform(),system.architecture()",
+  "import tripol.memory\nshow memory.capacity(),memory.used()",
+  "import tripol.audio\na=audio.square_wave(440,1)\nshow len(audio.wav_mono(a))",
   "struct Player {name:string=\"Alex\";score:int=0}\np=Player()\np.score=100\nshow f\"{p.name}: {p.score}\"",
   "p={\"name\":\"Alex\",\"health\":100}\np[\"health\"]-=20\nshow p[\"name\"],p[\"health\"],len(p)",
   "show 1.25+2.5",
@@ -32,5 +38,5 @@ func TestWebEngineR1(t *testing.T){
   b,err:=CompileWeb(source);if err!=nil{t.Fatalf("%s: %v",source,err)}
   if len(b)<8||!bytes.Equal(b[:8],[]byte{0,97,115,109,1,0,0,0}){t.Fatal("missing WASM header")}
  }
- for _,source:=range []string{"show missing","show missing2","import tripol.files\nshow 1"}{if _,err:=CompileWeb(source);err==nil{t.Fatalf("accepted %s",source)}}
+ for _,source:=range []string{"show missing","show missing2","import tripol.env\nshow 1"}{if _,err:=CompileWeb(source);err==nil{t.Fatalf("accepted %s",source)}}
 }
