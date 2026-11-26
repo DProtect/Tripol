@@ -58,10 +58,10 @@ func readPGO(path string,fs []fn,ss []stmt,target string)map[string]uint64{
  return p.Counts
 }
 
-type pgoLog struct{ bytes.Buffer }
+type pgoLog struct{ buf bytes.Buffer }
 func (b *pgoLog) Write(p []byte)(int,error){
- if len(p)>pgoMaxLog-b.Len(){return 0,fmt.Errorf("PGO observation limit exceeded")}
- return b.Buffer.Write(p)
+ if len(p)>pgoMaxLog-b.buf.Len(){return 0,fmt.Errorf("PGO observation limit exceeded")}
+ return b.buf.Write(p)
 }
 func pgoCounts(log string,fs []fn)map[string]uint64{
  known:=map[string]string{}
@@ -91,7 +91,7 @@ func pgoTrainCLI(args []string){
  cmd.Stderr=&log
  cmd.WaitDelay=2*time.Second
  if e=cmd.Run();e!=nil{die("PGO training failed (30s / 8MiB log limit): %v",e)}
- counts:=pgoCounts(log.String(),fs)
+ counts:=pgoCounts(log.buf.String(),fs)
  data,e:=json.MarshalIndent(pgoProfile{key,runtime.GOOS,counts},"","  ");if e!=nil{die("%v",e)}
  out,e:=os.OpenFile(args[2],os.O_WRONLY|os.O_CREATE|os.O_EXCL,0600);if e!=nil{die("cannot create PGO profile: %v",e)}
  _,werr:=out.Write(append(data,'\n'));cerr:=out.Close()
