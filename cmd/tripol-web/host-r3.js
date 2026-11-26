@@ -31,7 +31,7 @@ function execute(binary,options={}){
   show(v,kind,last){emit(display(v,kind,0)+(last?'\n':' '))},
   value(op,a,b,c,line){
    if(op===21)return intern(scalar(a,Number(b)));
-   if(op===22){emit(get(a));const text=lines[cursor++]??'';if(encoder.encode(text).length>4096)fail(line,'Input limit reached');return intern(text)}
+   if(op===22){emit(get(a)+'\n');const text=lines[cursor++]??'';if(encoder.encode(text).length>4096)fail(line,'Input limit reached');return intern(text)}
    if(op===30){const x=f64(a),y=f64(b);return numeric([()=>x+y,()=>x-y,()=>x*y,()=>x/y][Number(c)](),line)}
    if(op===31){const x=f64(a),y=f64(b);return [x===y,x!==y,x<y,x>y,x<=y,x>=y][Number(c)]?1n:0n}
    if(op===32)return numeric(Number(a),line);
