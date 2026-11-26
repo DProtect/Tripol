@@ -18,9 +18,72 @@ for(const a of side.querySelectorAll('nav a')){a.removeAttribute('aria-current')
 const translate=(en,es)=>lang==='es'?es:en;
 let labels=[], placeholders=[];
 function registerLabels(){labels=$$('[data-es]').map(el=>({el,en:el.textContent,es:el.dataset.es}));placeholders=$$('[data-placeholder-es]').map(el=>({el,en:el.placeholder,es:el.dataset.placeholderEs}));}
-function apply(){document.documentElement.lang=lang;labels.forEach(({el,en,es})=>el.textContent=translate(en,es));placeholders.forEach(({el,en,es})=>el.placeholder=translate(en,es));$('#doc-lang').textContent=lang==='en'?'ES':'EN';$('#doc-lang').setAttribute('aria-label',translate('Switch to Spanish','Cambiar a inglés'));try{localStorage.setItem('tripol-language',lang)}catch{};try{const u=new URL(location.href);u.searchParams.set('lang',lang);history.replaceState(null,'',u.href)}catch{};localLinks();buildToc();if($('#doc-search').open)renderSearch();}
+function docsTokens(source,mode='tripol'){
+ const keywords=new Set('show let const func return if else while for in repeat break continue assert and or not import struct try catch finally throw scratch'.split(' '));
+ const types=new Set('int float bool string ints list string_list bool_list float_list'.split(' '));
+ const builtins=new Set('input input_int len sum range abs min max sqrt text slice parse_int'.split(' '));
+ const terminal=['cmd','sh','bash','shell','powershell','ps1'].includes(mode);
+ const pattern=terminal?/(?:https?:\/\/[^\s"'<>]+|#[^\r\n]*|"(?:\\.|[^"\\\r\n])*"?|'(?:\\.|[^'\\\r\n])*'?|\$[\w:]+|--?[\w][\w-]*|\b[\w.-]+(?:[\/\\][\w./\\-]+)+|\b\d+(?:\.\d+)?\b|[A-Za-z_][A-Za-z_0-9.-]*|[=|&<>]+|\s+|.)/gu:/(?:\/\/[^\r\n]*|#[^\r\n]*|f?"(?:\\.|[^"\\\r\n])*"?|'(?:\\.|[^'\\\r\n])*'?|\b(?:0[xX][\da-fA-F]+|\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b|[A-Za-z_][A-Za-z_0-9]*|==|!=|<=|>=|=>|->|\+=|-=|\*=|\/=|%=|&&|\|\||[+\-*/%=<>!]|[{}()[\],.:;]|\s+|.)/gu;
+ const out=[];const emit=(v,k='plain')=>{if(v)out.push({v,k})};
+ for(const m of source.matchAll(pattern)){
+  const v=m[0],after=source.slice(m.index+v.length);let k='plain';
+  if(v.startsWith('#')||(!terminal&&v.startsWith('//')))k='comment';
+  else if(!terminal&&v.startsWith('f"')){
+   let start=0,i=2;
+   while(i<v.length){
+    if(v[i]==='\\'){i+=2;continue}
+    if(v.slice(i,i+2)==='{{'||v.slice(i,i+2)==='}}'){i+=2;continue}
+    if(v[i]==='{'){const end=v.indexOf('}',i+1);if(end<0)break;const field=v.slice(i+1,end);if(!field.includes('{')&&!field.includes('\\')&&!field.includes('"')){emit(v.slice(start,i),'string');emit('{','interpolation');out.push(...docsTokens(field,'tripol'));emit('}','interpolation');start=end+1;i=start;continue}}
+    i++;
+   }
+   emit(v.slice(start),'string');continue;
+  }
+  else if(v.startsWith('"')||v.startsWith("'"))k='string';
+  else if(/^\d/.test(v))k='number';
+  else if(terminal){
+   if(/^https?:\/\//.test(v))k='path';
+   else if(v.startsWith('$')||/^[A-Z_][A-Z_0-9]+$/.test(v)&&after.startsWith('='))k='variable';
+   else if(/^--?[\w]/.test(v))k='option';
+   else if(/^(tripol|git|go|python|python3|cd|mkdir|cp|curl|node|rustc|cargo|npm|cmake|notepad|powershell|cmd|Read-Host|Get-ChildItem|Set-Location|echo|chmod|make)$/i.test(v))k='function';
+   else if(/[\/\\]/.test(v))k='path';
+   else if(/^[=|&<>]+$/.test(v))k='operator';
+  }else{
+   if(v==='true'||v==='false'||v==='null')k='literal';
+   else if(keywords.has(v))k='keyword';
+   else if(types.has(v))k='type';
+   else if(builtins.has(v)||/^[A-Za-z_]/.test(v)&&/^\s*\(/.test(after))k='function';
+   else if(v==='tripol'||v==='vault'||/^[A-Za-z_]/.test(v)&&/^\s*\./.test(after))k='namespace';
+   else if(/^[+\-*/%=<>!&|]/.test(v))k='operator';
+   else if(/^[{}()[\],.:;]$/.test(v))k='punct';
+  }
+  emit(v,k);
+ }
+ return out;
+}
+function codeMode(code){
+ const pre=code.closest('pre');const explicit=[...code.classList,...(pre?[...pre.classList]:[])].find(c=>c.startsWith('language-'));
+ if(explicit)return explicit.slice(9);
+ if(pre?.classList.contains('signature'))return 'tripol';
+ const s=code.textContent.trim();
+ if(/^(?:tripol|git|go|python3?|cd|rustc|cargo|npm|cmake|curl|mkdir|cp|notepad|powershell)\s|^--?[\w-]|^\$[\w:]+|^[A-Z_][A-Z_0-9]+=/.test(s))return 'sh';
+ if(/^(?:func|import|show|let|const|struct|if|for|while|try|scratch)\b|^[A-Za-z_]\w*\.[A-Za-z_]\w*|[=()[\]{}]/.test(s))return 'tripol';
+ return pre?'text':'tripol';
+}
+function highlightDocs(){
+ for(const code of [...document.querySelectorAll('.docs-article code, .docs-article pre:not(:has(code))')]){
+  const raw=code.textContent,mode=codeMode(code);
+  if(raw.length>100000||!raw||['text','output','plaintext'].includes(mode))continue;
+  if(code.dataset.syntaxReady==='yes'&&code._tripolSource===raw&&code.querySelector('.doc-tok'))continue;
+  if([...code.children].some(c=>!c.classList.contains('doc-tok')))continue;
+  const frag=document.createDocumentFragment();
+  for(const t of docsTokens(raw,mode)){if(t.k==='plain'){frag.append(document.createTextNode(t.v));continue}const span=document.createElement('span');span.className='doc-tok doc-tok-'+t.k;span.textContent=t.v;frag.append(span)}
+  code.replaceChildren(frag);code.dataset.syntaxReady='yes';code._tripolSource=raw;
+ }
+}
+
+function apply(){document.documentElement.lang=lang;labels.forEach(({el,en,es})=>el.textContent=translate(en,es));placeholders.forEach(({el,en,es})=>el.placeholder=translate(en,es));$('#doc-lang').textContent=lang==='en'?'ES':'EN';$('#doc-lang').setAttribute('aria-label',translate('Switch to Spanish','Cambiar a inglés'));try{localStorage.setItem('tripol-language',lang)}catch{};try{const u=new URL(location.href);u.searchParams.set('lang',lang);history.replaceState(null,'',u.href)}catch{};localLinks();highlightDocs();buildToc();if($('#doc-search').open)renderSearch();}
 let timer;function toast(msg){const t=$('#doc-toast');t.textContent=msg;t.classList.add('visible');clearTimeout(timer);timer=setTimeout(()=>t.classList.remove('visible'),1800)}
-$$('.docs-article pre').forEach(pre=>{if(pre.classList.contains('signature'))return;const shell=document.createElement('div');shell.className='code-shell';const head=document.createElement('div');head.className='code-head';const title=document.createElement('span');title.textContent=pre.querySelector('.language-tripol')?'TRIPOL':pre.querySelector('.language-cmd')?'TERMINAL':'CODE';const copy=document.createElement('button');copy.className='doc-copy';copy.dataset.es='Copiar';copy.textContent='Copy';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(pre.textContent);toast(translate('Copied to clipboard','Copiado al portapapeles'))}catch{const range=document.createRange();range.selectNodeContents(pre);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);toast(translate('Selected — copy manually','Seleccionado — copia manualmente'))}});head.append(title,copy);pre.before(shell);shell.append(head,pre)});
+$$('.docs-article pre').forEach(pre=>{if(pre.classList.contains('signature'))return;const shell=document.createElement('div');shell.className='code-shell';const head=document.createElement('div');head.className='code-head';const title=document.createElement('span');const mode=codeMode(pre.querySelector('code')||pre);title.textContent=mode==='tripol'?'TRIPOL':['cmd','sh','bash','shell','powershell','ps1'].includes(mode)?(mode==='powershell'?'POWERSHELL':'TERMINAL'):mode==='text'?'CODE':mode.toUpperCase();const copy=document.createElement('button');copy.className='doc-copy';copy.dataset.es='Copiar';copy.textContent='Copy';copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(pre.textContent);toast(translate('Copied to clipboard','Copiado al portapapeles'))}catch{const range=document.createRange();range.selectNodeContents(pre);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);toast(translate('Selected — copy manually','Seleccionado — copia manualmente'))}});head.append(title,copy);pre.before(shell);shell.append(head,pre)});
 function buildToc(){const target=$('#toc-links');target.replaceChildren();$$('.docs-article h2,.docs-article .function-card h3').forEach((h,i)=>{const id=h.id||h.closest('.function-card')?.id||('section-'+i);if(!h.id&&!h.closest('.function-card'))h.id=id;const a=document.createElement('a');a.href='#'+id;a.textContent=h.textContent.replace(/\s*#\s*$/,'');if(h.tagName==='H3')a.className='sub';target.append(a)});}
 registerLabels();apply();$('#doc-lang').addEventListener('click',()=>{lang=lang==='en'?'es':'en';apply()});
 $('#doc-menu').addEventListener('click',()=>{$('#doc-menu').setAttribute('aria-expanded',String(side.classList.toggle('open')))});
