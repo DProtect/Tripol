@@ -80,3 +80,19 @@
  .docs-page .doc-metrics>div{padding:10px 8px}
  .docs-page .doc-metrics strong{font-size:23px}
 }
+
+/* DOCS SYNTAX R1 — shared palette with the Playground, scoped to the article. */
+.docs-page .docs-article{--syn-keyword:#d3b4f0;--syn-type:#8ed6c4;--syn-function:#a9c9fa;--syn-string:#b9d99e;--syn-number:#e8bf91;--syn-comment:#909090;--syn-namespace:#a9c9fa;--syn-operator:#d8c8e7;--syn-punct:#bcbcbc}
+.docs-page .docs-article .doc-tok{font:inherit;letter-spacing:inherit;white-space:inherit}
+.docs-page .docs-article .doc-tok-keyword{color:var(--syn-keyword)}
+.docs-page .docs-article .doc-tok-type{color:var(--syn-type)}
+.docs-page .docs-article .doc-tok-function{color:var(--syn-function)}
+.docs-page .docs-article .doc-tok-string{color:var(--syn-string)}
+.docs-page .docs-article .doc-tok-number,.docs-page .docs-article .doc-tok-literal{color:var(--syn-number)}
+.docs-page .docs-article .doc-tok-comment{color:var(--syn-comment)}
+.docs-page .docs-article .doc-tok-namespace,.docs-page .docs-article .doc-tok-path{color:var(--syn-namespace)}
+.docs-page .docs-article .doc-tok-operator,.docs-page .docs-article .doc-tok-interpolation{color:var(--syn-operator)}
+.docs-page .docs-article .doc-tok-punct{color:var(--syn-punct)}
+.docs-page .docs-article .doc-tok-option,.docs-page .docs-article .doc-tok-variable{color:var(--syn-type)}
+.docs-page .docs-article pre code,.docs-page .docs-article pre.signature{font-variant-ligatures:none;tab-size:4}
+@media(forced-colors:active){.docs-page .docs-article .doc-tok{color:CanvasText!important}}
