@@ -1,0 +1,10 @@
+func even(n:int)->bool {return n%2==0}
+func choose(flag:bool,a:int,b:int)->int {if flag {return a};return b}
+func both(a:bool,b:bool)->bool {return a and b}
+flag=even(8)
+other=not even(5)
+flag=both(flag,other)
+show choose(flag,10,20)
+show choose(false and 1/0==0,1,2)
+if flag==true {show 7}
+for i in range(2) {if even(i) {show i}}

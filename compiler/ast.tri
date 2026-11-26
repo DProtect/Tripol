@@ -1,9 +1,10 @@
 import "parser.tri"
 import tripol.validate
-// Integer-expression AST. Row 0 holds the node count. Each subsequent
+// Typed expression AST. Row 0 holds the node count. Each subsequent
 // node is [kind, left/payload, right/payload]. Node 0 is the null link.
 // 1 literal, 2 variable token offset, 3 negate, 4..8 checked arithmetic,
-// 9 call (name token offset, argument chain), 10 argument (value,next).
+// 9 call, 10 argument, 11 bool literal, 12..17 comparisons,
+// 18 not, 19 and, 20 or.
 func ast_create(tokens:ints)->ints {
  return ints(1+3*min(1024,max(1,len(tokens)/3)))
 }
@@ -33,6 +34,8 @@ func ast_factor(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
   id=ast_factor(src,tok,c,tree,depth+1)
   return ast_node(tree,3,id,0)
  }
+ if word=="true" {return ast_node(tree,11,1,0)}
+ if word=="false" {return ast_node(tree,11,0,0)}
  if tok[pos]==2 {
   assert validate.integer(word),"Expected integer"
   return ast_node(tree,1,parse_int(word),0)
@@ -66,13 +69,52 @@ func ast_term(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
  }
  return left
 }
-func ast_expr(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
+func ast_add(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
  left=ast_term(src,tok,c,tree,depth)
  word=boot_peek(src,tok,c)
  while word=="+" or word=="-" {
   c[0]+=3;right=ast_term(src,tok,c,tree,depth);kind=4
   if word=="-" {kind=5}
   left=ast_node(tree,kind,left,right);word=boot_peek(src,tok,c)
+ }
+ return left
+}
+
+// Comparison binds more tightly than not/and/or; arithmetic is tighter.
+func ast_compare(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
+ left=ast_add(src,tok,c,tree,depth);word=boot_peek(src,tok,c);kind=0
+ if word=="==" {kind=12}
+ if word=="!=" {kind=13}
+ if word=="<" {kind=14}
+ if word=="<=" {kind=15}
+ if word==">" {kind=16}
+ if word==">=" {kind=17}
+ if kind==0 {return left}
+ c[0]+=3;right=ast_add(src,tok,c,tree,depth)
+ return ast_node(tree,kind,left,right)
+}
+func ast_not(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
+ assert depth<=64,"Boolean nesting limit"
+ word=boot_peek(src,tok,c)
+ if word=="not" or word=="!" {
+  c[0]+=3;child=ast_not(src,tok,c,tree,depth+1)
+  return ast_node(tree,18,child,0)
+ }
+ return ast_compare(src,tok,c,tree,depth)
+}
+func ast_and(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
+ left=ast_not(src,tok,c,tree,depth)
+ while boot_peek(src,tok,c)=="and" or boot_peek(src,tok,c)=="&&" {
+  c[0]+=3;right=ast_not(src,tok,c,tree,depth)
+  left=ast_node(tree,19,left,right)
+ }
+ return left
+}
+func ast_expr(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
+ left=ast_and(src,tok,c,tree,depth)
+ while boot_peek(src,tok,c)=="or" or boot_peek(src,tok,c)=="||" {
+  c[0]+=3;right=ast_and(src,tok,c,tree,depth)
+  left=ast_node(tree,20,left,right)
  }
  return left
 }
