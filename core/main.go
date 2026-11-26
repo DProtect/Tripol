@@ -1652,7 +1652,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {
@@ -1743,8 +1743,12 @@ func cli() {
 	out := ""
 	runs := 5
 	internal := false
+	useCache := false
 	for i := 2; i < len(args); i++ {
 		switch args[i] {
+		case "--cache":
+			if cmd != "build" { die("--cache requires build") }
+			useCache = true
 		case "--internal":
 			if cmd != "bench" {
 				die("--internal requires bench")
@@ -1783,7 +1787,8 @@ func cli() {
 		die("run requires local x86-64 target")
 	}
 	fs, ss, inputs := loadProject(src)
-	bin := compileParsed(fs, ss, target, profile)
+	var bin []byte
+	if useCache { bin = compileWithBuildCache(fs, ss, target, profile) } else { bin = compileParsed(fs, ss, target, profile) }
 	if cmd == "check" {
 		fmt.Println("OK")
 		return
