@@ -147,7 +147,7 @@ func optimizeCFGWorkers(fs []fn,ss []stmt,workers int)([]fn,[]stmt,cfgConstantSt
  local:=make([]cfgConstantStats,len(fs))
  work:=func(i int){
   f:=fs[i]
-  if !f.record{out[i].body=propagateBlock(f.body,scalarFacts{},&local[i])}
+  if !f.record{out[i].body=propagateBlock(eliminateReturnPhi(f.body),scalarFacts{},&local[i])}
  }
  if workers<=1{
   for i:=range fs{work(i)}
