@@ -44,7 +44,7 @@ func TestSSAReusableSpillSlots(t *testing.T){
  p:=ssaProgram{result:-1}
  for group:=0;group<2;group++{
   base:=len(p.values)
-  for i:=0;i<10;i++{p.values=append(p.values,ssaValue{op:"const.i64",literal:int64(i)})}
+  for i:=0;i<10;i++{p.values=append(p.values,ssaValue{op:"const.i64",literal:int64(i)+1<<40})}
   prev:=base
   for i:=1;i<10;i++{p.values=append(p.values,ssaValue{op:"add.checked.i64",args:[]int{prev,base+i}});prev=len(p.values)-1}
   if group==1{p.result=prev}
