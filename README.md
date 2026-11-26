@@ -36,11 +36,17 @@ The compiler and standard library source code live in [`main`](https://github.co
 
 OVERDRIVE is a pre-release. The previous v0.24 downloads remain archived in downloads/. The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
 
-## Playground R1
+## Playground R2
 
-[Open the interactive playground](https://tripollas.github.io/Tripol/playground/). It uses the official monochrome website styles and runs 20 editable examples or custom code in a local, bounded Web Worker. Includes console output, input, stop, reset, draft persistence, copy and `.tri` download. R1 interprets an educational subset, not the native compiler; imports, files, networking and graphics are unavailable. No server or external service is required.
+[Open the interactive playground](https://tripollas.github.io/Tripol/playground/). It shares the official monochrome website styles and includes 23 editable examples.
 
-Run `node playground/test.cjs` to check 20 example outputs and eight error/limit cases. Serve the site over HTTP(S) to use the browser Worker.
+- Syntax highlighting, local identifier and keyword completion, auto-indent, matching delimiters, and indentation formatting.
+- Example search, open/download `.tri`, local draft persistence, shareable source links, and copyable console output.
+- Error-line navigation, elapsed time, input, stop, reset and a bilingual syntax guide.
+- Local bounded Web Worker with int64, booleans, strings, functions, integer arrays, loops, indexed iteration and basic scalar interpolation. Interpolation does not support nested fields or inner quotes.
+- R2 is an educational interpreter, not the native compiler. Imports, files, networking and graphics are unavailable. No external server is required. Shared links contain source code; never include secrets.
+
+Run `node playground/test.cjs` to validate 23 examples, 12 error cases, one escaped-brace case and 11 editor helper checks. Serve the site over HTTP(S) for the browser Worker.
 
 ## Local development
 
