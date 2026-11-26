@@ -1,0 +1,377 @@
+{
+  "commit": "0cda3a15bd66ce843f527c73172a6a3662a9bba7",
+  "pagesRef": "origin/gh-pages",
+  "pages": 52,
+  "total": 52,
+  "counts": {
+    "executed": 42,
+    "compiler-rejected": 6,
+    "compiled-only": 4
+  },
+  "rows": [
+    {
+      "file": "docs/libraries/animation.html",
+      "index": 1,
+      "source": "import tripol.animation\n\nshow animation.smoothstep(0.5)",
+      "status": "executed",
+      "output": "0.500000\n"
+    },
+    {
+      "file": "docs/libraries/arrays.html",
+      "index": 1,
+      "source": "import tripol.arrays\n\nvalues = arrays.make(4, 7)\nshow arrays.total(values)\ncopy = ints(4)\nassert arrays.copy_into(copy, values)\nshow copy",
+      "status": "executed",
+      "output": "28\n[7, 7, 7, 7]\n"
+    },
+    {
+      "file": "docs/libraries/binary.html",
+      "index": 1,
+      "source": "import tripol.binary\n\ndata = binary.u16_le(4660)\nshow data\nshow binary.read_u16_le(data, 0)",
+      "status": "executed",
+      "output": "[52, 18]\n4660\n"
+    },
+    {
+      "file": "docs/libraries/bits.html",
+      "index": 1,
+      "source": "import tripol.bits\n\nflags = bits.set(0, 3)\nshow bits.test(flags, 3)",
+      "status": "executed",
+      "output": "true\n"
+    },
+    {
+      "file": "docs/libraries/bitset.html",
+      "index": 1,
+      "source": "import tripol.bitset\n\nb = bitset.create(130)\nshow bitset.add(b, 63)\nshow bitset.contains(b, 63)\nshow bitset.count(b)",
+      "status": "executed",
+      "output": "true\ntrue\n1\n"
+    },
+    {
+      "file": "docs/libraries/buffer.html",
+      "index": 1,
+      "source": "import tripol.buffer\n\nitems = buffer.create()\nitems = buffer.push(items, 42)\nshow buffer.values(items)",
+      "status": "executed",
+      "output": "[42]\n"
+    },
+    {
+      "file": "docs/libraries/camera.html",
+      "index": 1,
+      "source": "import tripol.camera\n\nshow camera.screen(120, 100, 2)",
+      "status": "executed",
+      "output": "40\n"
+    },
+    {
+      "file": "docs/libraries/canvas.html",
+      "index": 1,
+      "source": "import tripol.canvas\n\npixels = canvas.create(4, 4)\ncanvas.clear(pixels, 0)\ncanvas.pixel(pixels, 4, 4, 1, 1, 16777215)\nshow canvas.get(pixels, 4, 4, 1, 1)",
+      "status": "executed",
+      "output": "16777215\n"
+    },
+    {
+      "file": "docs/libraries/checksum.html",
+      "index": 1,
+      "source": "import tripol.checksum\n\nshow checksum.adler32(\"Hello\")",
+      "status": "executed",
+      "output": "93061621\n"
+    },
+    {
+      "file": "docs/libraries/collections.html",
+      "index": 1,
+      "source": "import tripol.collections\n\nitems = [1, 2]\nvalues = collections.append(items, 3)\nshow values\n",
+      "status": "executed",
+      "output": "[1, 2, 3]\n"
+    },
+    {
+      "file": "docs/libraries/colors.html",
+      "index": 1,
+      "source": "import tripol.colors\n\ncolor = colors.rgb(255, 128, 0)\nshow colors.green(color)",
+      "status": "executed",
+      "output": "128\n"
+    },
+    {
+      "file": "docs/libraries/compression.html",
+      "index": 1,
+      "source": "import tripol.compression\n\nitems = [4, 4, 4, 9]\nencoded = compression.rle_encode(items)\nshow compression.rle_decode(encoded)\n",
+      "status": "executed",
+      "output": "[4, 4, 4, 9]\n"
+    },
+    {
+      "file": "docs/libraries/console.html",
+      "index": 1,
+      "source": "import tripol.console\n\nconsole.line(\"Hello from TRIPOL\")",
+      "status": "executed",
+      "output": "Hello from TRIPOL\n"
+    },
+    {
+      "file": "docs/libraries/convert.html",
+      "index": 1,
+      "source": "import tripol.convert\n\nshow convert.celsius_to_fahrenheit(20.0)",
+      "status": "executed",
+      "output": "68.000000\n"
+    },
+    {
+      "file": "docs/libraries/datetime.html",
+      "index": 1,
+      "source": "import tripol.datetime\n\nshow datetime.days_in_month(2024, 2)",
+      "status": "executed",
+      "output": "29\n"
+    },
+    {
+      "file": "docs/libraries/dictionary.html",
+      "index": 1,
+      "source": "import tripol.dictionary\n\nscores = dictionary.create()\nassert dictionary.set(scores, \"Alice\", 100)\nshow dictionary.get(scores, \"Alice\")",
+      "status": "executed",
+      "output": "100\n"
+    },
+    {
+      "file": "docs/libraries/discord.html",
+      "index": 1,
+      "source": "import tripol.discord\n\ndiscord.reply(\"!hello\", \"Hello!\")\nshow discord.preview(\"!hello\")",
+      "status": "compiler-rejected",
+      "diagnostic": "Web Engine R3: library @std:discord requires a browser adapter or native target"
+    },
+    {
+      "file": "docs/libraries/encoding.html",
+      "index": 1,
+      "source": "import tripol.encoding\n\nshow encoding.hex_text(\"Hi\")",
+      "status": "executed",
+      "output": "4869\n"
+    },
+    {
+      "file": "docs/libraries/env.html",
+      "index": 1,
+      "source": "import tripol.env\n\nshow env.get(\"TEMP\")",
+      "status": "compiler-rejected",
+      "diagnostic": "Web Engine R3: library @std:env requires a browser adapter or native target"
+    },
+    {
+      "file": "docs/libraries/errors.html",
+      "index": 1,
+      "source": "import tripol.errors\n\nshow errors.int_or(\"invalid\", 0)",
+      "status": "executed",
+      "output": "0\n"
+    },
+    {
+      "file": "docs/libraries/events.html",
+      "index": 1,
+      "source": "import tripol.events\n\nshow events.space()",
+      "status": "compiler-rejected",
+      "diagnostic": "Web Engine R3: library @std:events requires a browser adapter or native target"
+    },
+    {
+      "file": "docs/libraries/files.html",
+      "index": 1,
+      "source": "import tripol.files\n\nshow files.write_line(\"hello.txt\", \"Hello\")\nshow files.read(\"hello.txt\")",
+      "status": "executed",
+      "output": "6\nHello\n\n"
+    },
+    {
+      "file": "docs/libraries/game.html",
+      "index": 1,
+      "source": "import tripol.game\n\nshow game.wait(10)",
+      "status": "compiler-rejected",
+      "diagnostic": "Web Engine R3: library @std:game requires a browser adapter or native target"
+    },
+    {
+      "file": "docs/libraries/geometry.html",
+      "index": 1,
+      "source": "import tripol.geometry\n\nshow geometry.circle(2.0)",
+      "status": "executed",
+      "output": "12.566371\n"
+    },
+    {
+      "file": "docs/libraries/http.html",
+      "index": 1,
+      "source": "import tripol.http\n\nresponse = \"HTTP/1.0 200 OK\\r\\n\\r\\nHello\"\nshow http.status(response)\nshow http.body(response)",
+      "status": "compiled-only",
+      "reason": "Input, timing or platform-dependent example"
+    },
+    {
+      "file": "docs/libraries/https.html",
+      "index": 1,
+      "source": "import tripol.https\n\nshow https.get(\"example.com\", \"/\")",
+      "status": "compiler-rejected",
+      "diagnostic": "Web Engine R3: library @std:https requires a browser adapter or native target"
+    },
+    {
+      "file": "docs/libraries/image.html",
+      "index": 1,
+      "source": "import tripol.image\n\npixels = [16777215, 0]\nshow image.flip_x(pixels, 2, 1)",
+      "status": "executed",
+      "output": "[0, 16777215]\n"
+    },
+    {
+      "file": "docs/libraries/json.html",
+      "index": 1,
+      "source": "import tripol.json\n\ndata = json.pair(\"name\", \"Alice\")\nshow json.valid(data)\nshow json.get_raw(data, \"name\")",
+      "status": "executed",
+      "output": "true\n\"Alice\"\n"
+    },
+    {
+      "file": "docs/libraries/math.html",
+      "index": 1,
+      "source": "import tripol.math\n\nshow math.power(2, 10)",
+      "status": "executed",
+      "output": "1024\n"
+    },
+    {
+      "file": "docs/libraries/matrix.html",
+      "index": 1,
+      "source": "import tripol.matrix\n\nshow matrix.identity(3)",
+      "status": "executed",
+      "output": "[1, 0, 0, 0, 1, 0, 0, 0, 1]\n"
+    },
+    {
+      "file": "docs/libraries/memory.html",
+      "index": 1,
+      "source": "import tripol.memory\n\nshow memory.used()\nshow memory.capacity()",
+      "status": "executed",
+      "output": "0\n6291456\n"
+    },
+    {
+      "file": "docs/libraries/network.html",
+      "index": 1,
+      "source": "import tripol.network\n\nshow network.ipv4(127, 0, 0, 1)",
+      "status": "compiled-only",
+      "reason": "Input, timing or platform-dependent example"
+    },
+    {
+      "file": "docs/libraries/particles.html",
+      "index": 1,
+      "source": "import tripol.particles\n\np = particles.create(3)\nshow particles.count(p)",
+      "status": "executed",
+      "output": "3\n"
+    },
+    {
+      "file": "docs/libraries/path.html",
+      "index": 1,
+      "source": "import tripol.path\n\nshow path.basename(\"src/main.tri\")",
+      "status": "executed",
+      "output": "main.tri\n"
+    },
+    {
+      "file": "docs/libraries/physics.html",
+      "index": 1,
+      "source": "import tripol.physics\n\nshow physics.overlap(0, 0, 10, 10, 5, 5, 10, 10)",
+      "status": "executed",
+      "output": "true\n"
+    },
+    {
+      "file": "docs/libraries/profiler.html",
+      "index": 1,
+      "source": "import tripol.profiler\n\nstarted = profiler.start()\nshow profiler.elapsed(started) >= 0",
+      "status": "compiled-only",
+      "reason": "Input, timing or platform-dependent example"
+    },
+    {
+      "file": "docs/libraries/queue.html",
+      "index": 1,
+      "source": "import tripol.queue\n\nitems = queue.create(8)\nassert queue.push(items, 10)\nassert queue.push(items, 20)\nshow queue.pop(items)\nshow queue.pop(items)",
+      "status": "executed",
+      "output": "10\n20\n"
+    },
+    {
+      "file": "docs/libraries/random.html",
+      "index": 1,
+      "source": "import tripol.random\n\nseed = random.next(123)\nshow random.bounded(seed, 10)",
+      "status": "executed",
+      "output": "1\n"
+    },
+    {
+      "file": "docs/libraries/search.html",
+      "index": 1,
+      "source": "import tripol.search\n\nitems = [1, 3, 5]\nshow search.binary(items, 3)\n",
+      "status": "executed",
+      "output": "1\n"
+    },
+    {
+      "file": "docs/libraries/sequences.html",
+      "index": 1,
+      "source": "import tripol.sequences\n\nshow sequences.fibonacci(10)",
+      "status": "executed",
+      "output": "[0, 1, 1, 2, 3, 5, 8, 13, 21, 34]\n"
+    },
+    {
+      "file": "docs/libraries/simd.html",
+      "index": 1,
+      "source": "import tripol.simd\n\nleft = [1, 2]\nright = [1, 2]\nshow simd.equal(left, right)\n",
+      "status": "executed",
+      "output": "true\n"
+    },
+    {
+      "file": "docs/libraries/sort.html",
+      "index": 1,
+      "source": "import tripol.sort\n\nitems = [4, 1, 3, 2]\nshow sort.ascending(items)\n",
+      "status": "executed",
+      "output": "[1, 2, 3, 4]\n"
+    },
+    {
+      "file": "docs/libraries/sprite.html",
+      "index": 1,
+      "source": "import tripol.sprite\n\nshow sprite.solid(2, 2, 16777215)",
+      "status": "executed",
+      "output": "[16777215, 16777215, 16777215, 16777215]\n"
+    },
+    {
+      "file": "docs/libraries/stack.html",
+      "index": 1,
+      "source": "import tripol.stack\n\nitems = stack.create(8)\nassert stack.push(items, 10)\nassert stack.push(items, 20)\nshow stack.pop(items)\nshow stack.pop(items)",
+      "status": "executed",
+      "output": "20\n10\n"
+    },
+    {
+      "file": "docs/libraries/stats.html",
+      "index": 1,
+      "source": "import tripol.stats\n\nitems = [1, 2, 3, 4]\nshow stats.mean(items)\n",
+      "status": "executed",
+      "output": "2.500000\n"
+    },
+    {
+      "file": "docs/libraries/system.html",
+      "index": 1,
+      "source": "import tripol.system\n\nshow system.platform()\nshow system.compiler()",
+      "status": "executed",
+      "output": "web\n0.27.1\n"
+    },
+    {
+      "file": "docs/libraries/testing.html",
+      "index": 1,
+      "source": "import tripol.testing\n\nassert testing.equal_int(2 + 2, 4)\nshow \"Passed\"",
+      "status": "executed",
+      "output": "Passed\n"
+    },
+    {
+      "file": "docs/libraries/text.html",
+      "index": 1,
+      "source": "import tripol.text\n\nshow text.starts_with(\"Hello\", \"He\")\nshow text.part(\"Hello\", 0, 2)",
+      "status": "executed",
+      "output": "true\nHe\n"
+    },
+    {
+      "file": "docs/libraries/time.html",
+      "index": 1,
+      "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
+      "status": "compiled-only",
+      "reason": "Input, timing or platform-dependent example"
+    },
+    {
+      "file": "docs/libraries/ui.html",
+      "index": 1,
+      "source": "import tripol.ui\n\nui.message(\"TRIPOL\", \"Hello!\")",
+      "status": "compiler-rejected",
+      "diagnostic": "Web Engine R3: library @std:ui requires a browser adapter or native target"
+    },
+    {
+      "file": "docs/libraries/validate.html",
+      "index": 1,
+      "source": "import tripol.validate\n\nshow validate.identifier(\"hello_world\")",
+      "status": "executed",
+      "output": "true\n"
+    },
+    {
+      "file": "docs/libraries/vector.html",
+      "index": 1,
+      "source": "import tripol.vector\n\nshow vector.length2(3.0, 4.0)",
+      "status": "executed",
+      "output": "5.000000\n"
+    }
+  ]
+}
