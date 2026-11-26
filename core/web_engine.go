@@ -107,6 +107,24 @@ func (e *webEmitter) expression(x *expr)string{
   }
  case "call":
   name:=strings.TrimPrefix(x.s,"@builtin:")
+  if name=="text"||name=="parse_int"||name=="byte_at"||name=="slice"||name=="has_prefix"||name=="has_suffix"||name=="find_bytes"||name=="input_int"{
+   spec:=map[string]struct{op int64;args []string;ret string}{
+    "text":{50,[]string{"int"},"string"},"parse_int":{51,[]string{"string"},"int"},
+    "byte_at":{52,[]string{"string","int"},"int"},"slice":{53,[]string{"string","int","int"},"string"},
+    "has_prefix":{54,[]string{"string","string"},"bool"},"has_suffix":{55,[]string{"string","string"},"bool"},
+    "find_bytes":{56,[]string{"string","string"},"int"},"input_int":{57,[]string{"string"},"int"},
+   }[name]
+   if len(x.args)!=len(spec.args){webReject("wrong argument count: %s",name)}
+   z:=e.constant(0);v:=[3]uint32{z,z,z};for i,a:=range x.args{tmp,t:=e.save(a);if t!=spec.args[i]{webReject("invalid argument for %s",name)};v[i]=tmp};e.val(spec.op,v[0],v[1],v[2]);return spec.ret
+  }
+  if name=="monotonic_ms"||name=="monotonic_ns"{if len(x.args)!=0{webReject("clock takes no arguments")};z:=e.constant(0);op:=int64(58);if name=="monotonic_ns"{op=59};e.val(op,z,z,z);return "int"}
+  if name=="array_equal"||name=="array_fill"||name=="array_fill_range"{
+   a,t:=e.save(x.args[0]);if webElem(t)!="int"{webReject("integer array required")};b,bt:=e.save(x.args[1]);z:=e.constant(0)
+   if name=="array_equal"{if webElem(bt)!="int"{webReject("integer array required")};e.val(43,a,b,z);return "bool"}
+   if bt!="int"{webReject("integer argument required")}
+   if name=="array_fill"{e.val(44,a,b,z);return "int"}
+   n,nt:=e.save(x.args[2]);v,vt:=e.save(x.args[3]);if nt!="int"||vt!="int"{webReject("integer arguments required")};e.val(45,a,b,n);packed:=e.temp();e.code.inst(0x21,packed);e.val(46,a,packed,v);return "int"
+  }
   if name=="array_find"||name=="array_copy"||name=="array_copy_into"{
    a,t:=e.save(x.args[0]);if webElem(t)!="int"{webReject("integer array required")};b:=e.constant(0);z:=e.constant(0)
    switch name{
@@ -183,7 +201,7 @@ func (e *webEmitter) body()webCode{var b webCode;n:=e.locals-e.params;if n==0{b.
 func CompileWeb(source string)(out []byte,err error){
  defer func(){if v:=recover();v!=nil{out=nil;err=fmt.Errorf("%v",v)}}()
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
- imports,_,_:=parseUnit(source);for _,n:=range imports{if n!="@std:math"&&n!="@std:arrays"&&n!="@std:collections"{webReject("library %s is not enabled in the browser target",n)}}
+ imports,_,_:=parseUnit(source);for _,n:=range imports{switch n{case "@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler":default:webReject("library %s requires a browser adapter or native target",n)}}
  fs,ss:=parse(source);validateCode(fs,ss,"linux")
  m:=&webModule{funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{}}
  m.signature([]byte{0x7f},nil) // tick(line)
