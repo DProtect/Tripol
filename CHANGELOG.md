@@ -30,6 +30,7 @@
 - TIR R6 compiler efficiency: per-body validation buffer reuse, constant-branch reachability pruning, typed SSA CSE keys and spill-slot recycling; regression tests and validation benchmarks.
 - Compiler stage report with native image digest, byte-equivalence regression and CI allocation benchmarks.
 - COMPILER REVOLUTION: post-validation scalar constant propagation through conditional joins and CFG report counters.
+- COMPILER REVOLUTION: checked immediate arithmetic and register-free immediate-only SSA values.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)

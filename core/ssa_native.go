@@ -6,12 +6,14 @@ import "fmt"
 // four or six volatile registers hold values across operations. Excess live values
 // receive frame slots. No calls, joins or unsafe speculative evaluation.
 type ssaLocation struct { reg byte; spill int; present bool }
-type ssaAllocation struct { locations []ssaLocation; frame int; spills int; registers int; reusedSlots int }
+type ssaAllocation struct { locations []ssaLocation; frame int; spills int; registers int; reusedSlots int; immediateValues int }
 func allocateSSA(p ssaProgram) ssaAllocation {
  a:=ssaAllocation{locations:make([]ssaLocation,len(p.values))}
  last:=make([]int,len(p.values));for i:=range last{last[i]=-1}
  for i,v:=range p.values{for _,operand:=range v.args{last[operand]=i}}
  last[p.result]=len(p.values)
+ immediate:=ssaImmediateOnly(p)
+ for i,yes:=range immediate{if yes{last[i]=-1;a.immediateValues++}}
  regs:=[]byte{8,9,10,11,1,2}
  // IDIV and CQO clobber RDX; RCX is reserved for the divisor.
  for _,v:=range p.values{if v.op=="div.checked.i64"||v.op=="rem.checked.i64"{regs=regs[:4];break}}
@@ -81,6 +83,8 @@ func (c *compiler) emitNativeSSA(f fn)bool{
   default:
    // Even a dead checked result is evaluated; error order is unchanged.
    load(v.args[0]);op:=map[string]string{"add.checked.i64":"+","sub.checked.i64":"-","mul.checked.i64":"*"}[v.op]
+   rhs:=p.values[v.args[1]]
+   if rhs.op=="const.i64"&&a.ssaArithmeticImmediate(op,rhs.literal){save(i);continue}
    right:=plan.locations[v.args[1]]
    if right.spill!=0{a.integerMemoryOp(op,right.spill)}else{a.regArith(op,0,right.reg)}
    save(i)
@@ -91,5 +95,5 @@ func (c *compiler) emitNativeSSA(f fn)bool{
 }
 func ssaLocationReport(p ssaProgram)string{
  a:=allocateSSA(p)
- return fmt.Sprintf("linear scan: %d value registers; %d spill slots; %d spilled values; %d reused slots",a.registers,a.frame/8,a.spills,a.reusedSlots)
+ return fmt.Sprintf("linear scan: %d value registers; %d spill slots; %d spilled values; %d reused slots; %d immediate-only values",a.registers,a.frame/8,a.spills,a.reusedSlots,a.immediateValues)
 }
