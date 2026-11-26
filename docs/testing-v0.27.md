@@ -73,7 +73,7 @@ Space/click/XInput A starts. Move with WASD/arrows or the left stick; collect go
 
 ## Editor
 
-Install the official v0.27.1 VSIX through VS Code's Extensions: Install from VSIX command. Open a .tri file, try import completion, function completion/hover and local function definition lookup. Save, then run TRIPOL: Check source. Try invalid code and inspect Problems. Explicit Build/Run commands require trusted workspace; check-on-save is optional and off by default. Use Format Document (or `tripol fmt main.tri`) and try the experimental `tripol lsp` stdio server. Cross-file indexing is still pending.
+Install the official v0.27.1 VSIX through VS Code's Extensions: Install from VSIX command. Open a .tri file, try import completion, function completion/hover and local function definition lookup. Save, then run TRIPOL: Check source. Try invalid code and inspect Problems. Explicit Build/Run commands require trusted workspace; check-on-save is optional and off by default. Use Format Document (or `tripol fmt main.tri`) and try the experimental `tripol lsp` stdio server. The experimental standalone LSP resolves imports across open buffers; test an unsaved change to an imported function and Go to Definition. Full disk-wide indexing is still pending.
 
 ## Updates and offline
 

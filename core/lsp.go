@@ -7,6 +7,7 @@ import (
  "io"
  "regexp"
  "runtime"
+ "sort"
  "strconv"
  "strings"
  "unicode/utf16"
@@ -74,29 +75,31 @@ func editorSymbols(text string)[]map[string]any{
  }
  return result
 }
-func validateEditorText(doc lspDocument)(out []map[string]any){
+func validateEditorText(doc lspDocument)(out []map[string]any){return validateEditorProject(doc,map[string]lspDocument{doc.URI:doc})}
+func validateEditorProject(doc lspDocument,docs map[string]lspDocument)(out []map[string]any){
  out=[]map[string]any{}
  defer func(){if p:=recover();p!=nil{
   d:=normalizeDiagnostic(p);line:=d.Line-1;if line<0{line=0}
+  if d.File!=""&&d.File!=doc.URI{d.Message="Imported source ("+d.File+"): "+d.Message;line=0;d.Column=1}
   lines:=strings.Split(doc.Text,"\n");if line>=len(lines){line=len(lines)-1}
   raw:=editorLine(doc.Text,line);col:=d.Column-1;if col<0{col=0};if col>len(raw){col=len(raw)}
   start:=utf16len(raw[:col]);end:=start;if col<len(raw){end++}
   out=append(out,map[string]any{"range":lspRange{lspPosition{line,start},lspPosition{line,end}},"severity":1,"source":"TRIPOL","code":d.Code,"message":d.Message})
  }}()
- imports,fs,ss:=parseNamed(doc.Text,doc.URI)
- libs:=standardLoader()
- for _,name:=range imports{
-  // Local/Vault resolution is intentionally not performed for unsaved buffers:
-  // do not read arbitrary files or execute compiler subprocesses from LSP.
-  if !strings.HasPrefix(name,"@std:"){return out}
-  libs.add(strings.TrimPrefix(name,"@std:"))
+ fs,ss,warning:=editorProject(doc,docs)
+ if warning!=""{
+  return append(out,map[string]any{"range":lspRange{lspPosition{0,0},lspPosition{0,0}},"severity":2,"source":"TRIPOL","code":"TP1005","message":warning})
  }
  target:=runtime.GOOS;if target!="windows"{target="linux"}
- generateCode(append(libs.functions,fs...),ss,target,false,nil)
+ generateCode(fs,ss,target,false,nil)
  return out
 }
 func(s *lspServer) publish(doc lspDocument){
- s.send(map[string]any{"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":map[string]any{"uri":doc.URI,"version":doc.Version,"diagnostics":validateEditorText(doc)}})
+ s.send(map[string]any{"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":map[string]any{"uri":doc.URI,"version":doc.Version,"diagnostics":validateEditorProject(doc,s.docs)}})
+}
+func(s *lspServer) publishOpenDocuments(){
+ keys:=make([]string,0,len(s.docs));for uri:=range s.docs{keys=append(keys,uri)};sort.Strings(keys)
+ for _,uri:=range keys{s.publish(s.docs[uri])}
 }
 func(s *lspServer) dispatch(req lspRequest)(stop bool){
  defer func(){if p:=recover();p!=nil{s.fail(req.ID,-32603,fmt.Sprint(p))}}()
@@ -118,12 +121,12 @@ func(s *lspServer) dispatch(req lspRequest)(stop bool){
  case "initialized","$/cancelRequest","textDocument/didSave":return false
  case "textDocument/didOpen":
   if len(p.TextDocument.Text)>editorSourceLimit||len(uri)>8192||uri==""||(!exists&&len(s.docs)>=32){return false}
-  s.docs[uri]=p.TextDocument;s.publish(p.TextDocument)
+  s.docs[uri]=p.TextDocument;s.publishOpenDocuments()
  case "textDocument/didChange":
   if !exists||len(p.ContentChanges)!=1||p.ContentChanges[0].Range!=nil||len(p.ContentChanges[0].Text)>editorSourceLimit||p.TextDocument.Version<doc.Version{return false}
-  doc.Text=p.ContentChanges[0].Text;doc.Version=p.TextDocument.Version;s.docs[uri]=doc;s.publish(doc)
+  doc.Text=p.ContentChanges[0].Text;doc.Version=p.TextDocument.Version;s.docs[uri]=doc;s.publishOpenDocuments()
  case "textDocument/didClose":
-  delete(s.docs,uri);s.send(map[string]any{"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":map[string]any{"uri":uri,"diagnostics":[]any{}}})
+  delete(s.docs,uri);s.send(map[string]any{"jsonrpc":"2.0","method":"textDocument/publishDiagnostics","params":map[string]any{"uri":uri,"diagnostics":[]any{}}});s.publishOpenDocuments()
  case "textDocument/completion":
   items:=[]map[string]any{}
   word:=editorWord(doc.Text,p.Position)
@@ -131,18 +134,19 @@ func(s *lspServer) dispatch(req lspRequest)(stop bool){
    if module=="tripol"{for _,name:=range standardNames{items=append(items,map[string]any{"label":name,"kind":9})}}else{for name,sig:=range moduleSignatures(module){items=append(items,map[string]any{"label":name,"kind":3,"detail":sig})}}
   }else{
    for _,k:=range strings.Fields("import func struct int bool float string ints list let const if else while for in range repeat return show assert try catch finally scratch throw break continue true false and or not"){items=append(items,map[string]any{"label":k,"kind":14})}
-   for _,sym:=range editorSymbols(doc.Text){items=append(items,map[string]any{"label":sym["name"],"kind":3})}
+   seen:=map[string]bool{}
+   for _,d:=range editorVisibleDocs(doc,s.docs){for _,sym:=range editorSymbols(d.Text){name:=sym["name"].(string);if !seen[name]{seen[name]=true;items=append(items,map[string]any{"label":name,"kind":3})}}}
   }
   s.reply(req.ID,items)
  case "textDocument/hover":
   word:=editorWord(doc.Text,p.Position);module,name,ok:=strings.Cut(word,".");if ok{
    if sig:=moduleSignatures(module)[name];sig!=""{s.reply(req.ID,map[string]any{"contents":map[string]string{"kind":"plaintext","value":sig}});break}
   }
+  for _,d:=range editorVisibleDocs(doc,s.docs){for _,m:=range lspSignature.FindAllStringSubmatch(d.Text,-1){if m[1]==word{s.reply(req.ID,map[string]any{"contents":map[string]string{"kind":"plaintext","value":"func "+m[1]+m[2]}});return false}}}
   s.reply(req.ID,nil)
  case "textDocument/definition":
-  word:=editorWord(doc.Text,p.Position);var result any
-  for _,sym:=range editorSymbols(doc.Text){if sym["name"]==word{result=map[string]any{"uri":uri,"range":sym["range"]};break}}
-  s.reply(req.ID,result)
+  word:=editorWord(doc.Text,p.Position)
+  defs:=editorDefinitions(doc,s.docs,word);if len(defs)==0{s.reply(req.ID,nil)}else if len(defs)==1{s.reply(req.ID,defs[0])}else{s.reply(req.ID,defs)}
  case "textDocument/documentSymbol":s.reply(req.ID,editorSymbols(doc.Text))
  case "textDocument/formatting":
   if !exists{s.reply(req.ID,[]any{});break}
