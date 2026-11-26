@@ -17,6 +17,7 @@
 - QUANTUM R3: mouse input, software tile maps, sprite rotation/scaling/opacity, particle pools, optional tones and improved pixel-art demonstration.
 - GENESIS R3: signature declaration pass, patched native function trampolines, forward calls, mutual recursion, else-if and short-circuit boolean conditions.
 - GENESIS R3 integer expression AST, separate native traversal and checked compound assignments.
+- TIR R6 native SSA checked division/remainder, scratch-register reservation and constant power-of-two lowering.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)
