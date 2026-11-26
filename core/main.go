@@ -539,6 +539,7 @@ type asm struct {
 	loopIndexNonnegative bool
 	guard                bool
 	trace                bool
+	profileTraining      bool
 }
 
 func (a *asm) emit(b ...byte) { a.b = append(a.b, b...) }
@@ -1212,6 +1213,7 @@ func (c *compiler) function(f fn, main bool) {
 	if a.trace {
 		c.traceEnter(f)
 	}
+	if a.profileTraining && !main { a.emitPGOEntry(f.name) }
 	c.restart = a.fresh()
 	a.label(c.restart)
 	c.block(f.body, false)
@@ -1569,6 +1571,9 @@ func compileProfile(src, target, profile string) []byte {
 	return compileParsed(fs, ss, target, profile)
 }
 func compileParsed(fs []fn, ss []stmt, target, profile string) []byte {
+ return compileParsedPGO(fs,ss,target,profile,nil)
+}
+func compileParsedPGO(fs []fn, ss []stmt, target, profile string, weights map[string]uint64) []byte {
 	// Validate every function before eliminating any unreachable code.
 	if profile != "debug" {
 		validateCode(fs, ss, target)
@@ -1576,7 +1581,7 @@ func compileParsed(fs []fn, ss []stmt, target, profile string) []byte {
 	}
     var live map[string]bool
     if profile!="debug"{live=reachable(fs,ss)}
-	return generate(fs, ss, target, profile != "debug", live, profile == "turbo", profile == "turbo" || profile == "balanced")
+	return linkCode(generateCodePGO(fs, ss, target, profile != "debug", live, false, weights, false, profile == "turbo", profile == "turbo" || profile == "balanced"))
 }
 
 // Type-check all bodies, including unreachable ones. The validation pass does not
@@ -1586,10 +1591,13 @@ func generateCode(fs []fn, ss []stmt, target string, opt bool, live map[string]b
 }
 func validateCode(fs []fn,ss []stmt,target string)*asm{return generateCodeMode(fs,ss,target,false,nil,true)}
 func generateCodeMode(fs []fn, ss []stmt, target string, opt bool, live map[string]bool, discard bool, turbo ...bool) *asm {
+ return generateCodePGO(fs,ss,target,opt,live,discard,nil,false,turbo...)
+}
+func generateCodePGO(fs []fn, ss []stmt, target string, opt bool, live map[string]bool, discard bool, weights map[string]uint64, training bool, turbo ...bool) *asm {
 	if target != "linux" && target != "windows" {
 		die("unsupported target %s", target)
 	}
-	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt, trace: diagnosticTrace, turbo: len(turbo) > 0 && turbo[0], hyper: len(turbo) > 1 && turbo[1]}
+	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt, trace: diagnosticTrace, profileTraining: training, turbo: len(turbo) > 0 && turbo[0], hyper: len(turbo) > 1 && turbo[1]}
 	c := compiler{a: a, fs: map[string]fn{}, tirCache: map[string]tirFunction{}}
 	for _, f := range fs {
 		if _, ok := c.fs[f.name]; ok {
@@ -1606,7 +1614,7 @@ func generateCodeMode(fs []fn, ss []stmt, target string, opt bool, live map[stri
 	c.validateTypes(fs)
 	c.function(fn{name: "@main", body: ss}, true)
     if discard{a.resetValidationBody()}
-	for _, f := range fs {
+	for _, f := range pgoOrder(fs,weights) {
 		if !f.record && (!opt || live[f.name]) {
 			c.function(f, false)
             if discard{a.resetValidationBody()}
@@ -1635,6 +1643,7 @@ func linkCode(a *asm)[]byte {
 func cli() {
 	diagnosticOptions()
 	args := os.Args[1:]
+ if len(args)>0&&args[0]=="pgo-train"{pgoTrainCLI(args[1:]);return}
  if len(args)>0&&args[0]=="compile-report"{compileReportCLI(args[1:]);return}
  if len(args)>0&&args[0]=="shell"{shellCLI(args[1:]);return}
 	if len(args)>0&&args[0]=="test"{projectTestCLI(args[1:]);return}
@@ -1654,7 +1663,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol pgo-train FILE.tri -o PROFILE.json\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache|--pgo PROFILE.json]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {
@@ -1746,8 +1755,12 @@ func cli() {
 	runs := 5
 	internal := false
 	useCache := false
+	pgoFile := ""
 	for i := 2; i < len(args); i++ {
 		switch args[i] {
+		case "--pgo":
+			if cmd!="build"||i+1>=len(args)||pgoFile!=""{die("--pgo requires build and one profile file")}
+			i++;pgoFile=args[i]
 		case "--cache":
 			if cmd != "build" { die("--cache requires build") }
 			useCache = true
@@ -1790,7 +1803,10 @@ func cli() {
 	}
 	fs, ss, inputs := loadProject(src)
 	var bin []byte
-	if useCache { bin = compileWithBuildCache(fs, ss, target, profile) } else { bin = compileParsed(fs, ss, target, profile) }
+	if pgoFile!="" {
+		if useCache||profile=="debug"||diagnosticTrace{die("--pgo requires an untraced, non-debug build without --cache")}
+		bin=compileParsedPGO(fs,ss,target,profile,readPGO(pgoFile,fs,ss,target))
+	} else if useCache { bin = compileWithBuildCache(fs, ss, target, profile) } else { bin = compileParsed(fs, ss, target, profile) }
 	if cmd == "check" {
 		fmt.Println("OK")
 		return
