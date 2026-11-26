@@ -49,6 +49,17 @@ func loopWrites(body []stmt,writes map[string]bool)bool{
  }
  return true
 }
+// Refine facts on the edge where a validated scalar comparison proves
+// equality. Facts are local to the branch; existing join rules govern exit.
+func refineCondition(e *expr,yes,no scalarFacts){
+ if e==nil{return}
+ if e.op=="var"{yes[e.s]=scalarFact{"bool",1};no[e.s]=scalarFact{"bool",0};return}
+ if e.op!="bin"||len(e.args)!=2||(e.s!="=="&&e.s!="!="){return}
+ a,b:=e.args[0],e.args[1]
+ if a.op!="var"{a,b=b,a}
+ if a.op!="var"||(b.op!="int"&&b.op!="bool"){return}
+ if e.s=="=="{yes[a.s]=scalarFact{b.op,b.n}}else{no[a.s]=scalarFact{b.op,b.n}}
+}
 func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
  if len(body)==0{return body}
  var result []stmt
@@ -61,6 +72,7 @@ func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
   case "if":
    s.e=scalarSubstitute(s.e,env,stats)
    yes,no:=copyFacts(env),copyFacts(env)
+   refineCondition(s.e,yes,no)
    s.yes=propagateBlock(s.yes,yes,stats)
    s.no=propagateBlock(s.no,no,stats)
    k,n,constant:=fold(s.e)
