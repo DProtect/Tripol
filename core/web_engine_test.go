@@ -8,6 +8,9 @@ import (
 func TestWebEngineR1(t *testing.T){
  for _,source:=range []string{
   "show 42",
+  "import tripol.collections\nitems=[1,2]\nvalues=collections.append(items,3)\nshow values",
+  "import tripol.arrays\nitems=[1,2,3]\nshow arrays.total(items)",
+  "import tripol.collections\na=[1,2]\nb=[3,4]\nshow collections.concat(a,b)",
   "import tripol.files\nfiles.write(\"demo.txt\",\"hello\")\nshow files.read(\"demo.txt\")",
   "import tripol.io\na=ints(2)\na[0]=255\nio.write(\"demo.bin\",a)\nshow io.read(\"demo.bin\")",
   "import tripol.atomic\na=ints(1)\nshow atomic.add(a,0,4),atomic.compare_exchange(a,0,4,9),atomic.load(a,0)",
