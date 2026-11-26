@@ -611,7 +611,14 @@ func (a *asm) finish() {
 		if !ok {
 			die("internal missing label %s", f.label)
 		}
-		binary.LittleEndian.PutUint32(a.b[f.at:], uint32(v-f.at-4))
+		if f.at < 0 || f.at > len(a.b)-4 {
+			die("internal relocation outside image: %s", f.label)
+		}
+		delta := int64(v) - int64(f.at) - 4
+		if delta < -2147483648 || delta > 2147483647 {
+			die("internal relocation out of rel32 range: %s", f.label)
+		}
+		binary.LittleEndian.PutUint32(a.b[f.at:], uint32(delta))
 	}
 }
 
@@ -1615,12 +1622,7 @@ func linkCode(a *asm)[]byte {
  target:=a.target
 	a.rt()
 	a.dialogTemplate()
-	// First-use order is deterministic and linear in the number of literals.
-	for _, s := range a.dataOrder {
-		a.label(a.data[s])
-		a.b = append(a.b, []byte(s)...)
-		a.emit(0)
-	}
+	appendLinkLiterals(a)
 	if target == "linux" {
 		return elf(a)
 	}
