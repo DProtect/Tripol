@@ -4,6 +4,8 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
 (async()=>{
  const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync(path.join(__dirname,'tripol-compiler.wasm')),go.importObject);go.run(instance);
  const cases=[
+ ['struct Player {name:string="Alex";score:int=0}\np=Player()\np.score=100\nshow f"{p.name}: {p.score}"','Alex: 100\n'],
+ ['p={"name":"Alex","health":100}\np["health"]-=20\nshow p["name"],p["health"],len(p)','Alex 80 2\n'],
  ['show "Hello, TRIPOL!"','Hello, TRIPOL!\n'],
  ['show 42','42\n'],
  ['show true and not false','true\n'],
