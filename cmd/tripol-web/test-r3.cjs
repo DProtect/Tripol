@@ -15,7 +15,7 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
  ['import tripol.audio\na=audio.square_wave(440,1)\nshow len(audio.wav_mono(a))','88\n'],
  ['import tripol.datetime\nshow datetime.leap(2024),datetime.leap(1900),datetime.days_in_month(2024,2)','true false 29\n'],
  ['import tripol.text\nshow text.size("é😀"),text.index_of("éabc","a"),text.part("é",0,2),text.to_int("-42")','6 2 é -42\n'],
- ['import tripol.json\nshow json.quote("é😀"),json.valid("{\"a\":1}")','"é😀" true\n'],
+ ["import tripol.json\nshow json.quote(\"é😀\"),json.valid(\"{\\\"a\\\":1}\")","\"é😀\" true\n"],
  ['import tripol.arrays\nvalues = arrays.make(4, 7)\nshow arrays.total(values)\ncopy = ints(4)\nassert arrays.copy_into(copy, values)\nshow copy','28\n[7, 7, 7, 7]\n'],
  ['import tripol.arrays\na=arrays.make(3,9)\nb=arrays.copy(a)\nb[0]=3\nshow arrays.contains(a,9),a[0],b[0]','true 9 3\n'],
  ['import tripol.collections\na=ints(2)\na[0]=5\na[1]=6\nshow collections.append(a,7)','[5, 6, 7]\n'],
