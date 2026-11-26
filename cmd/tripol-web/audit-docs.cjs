@@ -1,0 +1,40 @@
+'use strict';
+// Audit the actual public documentation, not handwritten substitute probes.
+const fs=require('node:fs'),cp=require('node:child_process'),path=require('node:path');
+const decode=s=>s.replace(/&(?:amp|lt|gt|quot|apos|#\d+|#x[\da-f]+);/gi,m=>{const e=m.slice(1,-1);if(e[0]==='#'){const n=e[1].toLowerCase()==='x'?parseInt(e.slice(2),16):Number(e.slice(1));return n<=0x10ffff?String.fromCodePoint(n):m}return({amp:'&',lt:'<',gt:'>',quot:'"',apos:"'"})[e]??m});
+const ref=process.argv[2]||'origin/gh-pages';
+const files=cp.execFileSync('git',['ls-tree','-r','--name-only',ref,'docs/libraries'],{encoding:'utf8'}).trim().split('\n').filter(p=>p.endsWith('.html'));
+const snippets=[];
+for(const file of files){
+ const html=cp.execFileSync('git',['show',ref+':'+file],{encoding:'utf8',maxBuffer:4*1024*1024});
+ const end=html.search(/<h2\b[^>]*>[^<]*(?:Function reference|Referencia de funciones)/i);
+ // Match explicit TRIPOL blocks, excluding function signatures and implementation source.
+ const main=html.split(/<section\s+class="function-card"/i)[0];
+ let n=0;
+ for(const m of main.matchAll(/<pre\b[^>]*>\s*<code\b[^>]*class=["'][^"']*\blanguage-tripol\b[^"']*["'][^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi)){
+  const source=decode(m[1]);if(source.trim())snippets.push({file,index:++n,source})
+ }
+}
+require('./wasm_exec.js');const host=require('./host-r3.js');
+(async()=>{
+ const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync(path.join(__dirname,'tripol-compiler.wasm')),go.importObject);go.run(instance);
+ const rows=[];
+ for(const {file,index,source} of snippets){
+  const row={file,index,source};
+  try{
+   const compiled=tripolCompileWeb(source);
+   if(!compiled.ok){rows.push({...row,status:'compiler-rejected',diagnostic:compiled.error});continue}
+   if(!WebAssembly.validate(compiled.wasm)){rows.push({...row,status:'invalid-wasm'});continue}
+   // Input and platform-specific examples need fixtures/permissions; only compile them.
+   if(/\binput(?:_int)?\s*\(|\bimport\s+tripol\.(?:discord|env|events|game|ui|https|network|http|thread|process|time|profiler)\b/.test(source)){
+    rows.push({...row,status:'compiled-only',reason:'Input, timing or platform-dependent example'});continue
+   }
+   try{const r=host.execute(compiled.wasm);rows.push({...row,status:'executed',output:r.output})}
+   catch(e){rows.push({...row,status:'runtime-error',diagnostic:e.message})}
+  }catch(e){rows.push({...row,status:'audit-error',diagnostic:e.message})}
+ }
+ const counts={};for(const r of rows)counts[r.status]=(counts[r.status]||0)+1;
+ const report={commit:process.env.GITHUB_SHA||'',pagesRef:ref,pages:files.length,total:rows.length,counts,rows};
+ fs.writeFileSync(path.join(__dirname,'docs-parity-report.json'),JSON.stringify(report,null,2));
+ console.log('DOCS AUDIT',JSON.stringify({pages:report.pages,total:report.total,counts}));process.exit(0)
+})().catch(e=>{console.error(e);process.exit(1)});
