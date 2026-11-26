@@ -4,6 +4,8 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 let lang='en';try{if(localStorage.getItem('tripol-language')==='es')lang='es'}catch{}
 const chosen=new URLSearchParams(location.search).get('lang');if(chosen==='en'||chosen==='es')lang=chosen;
 const root=document.body.dataset.docRoot||'./';
+// A freshly loaded script must also load its matching stylesheet.
+for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='live-r1'){u.searchParams.set('v','live-r1');link.href=u.href}}
 function localLinks(){for(const a of $$('a[href]')){const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||/^(https?:|mailto:)/i.test(raw)&&a.origin!==location.origin)continue;const u=new URL(raw,location.href);if(!u.pathname.endsWith('.html'))continue;u.searchParams.set('lang',lang);a.href=u.href;}}
 // Shared navigation and current release label on all reference pages.
 const side=document.querySelector('#doc-side');
@@ -104,7 +106,7 @@ function liveRun(p){
  worker.onmessage=({data})=>{if(liveJob!==job)return;liveStop(p,false);p.output.textContent=(data.output||'')+(data.ok?'':'\n'+translate('Error: ','Error: ')+String(data.error||'Unknown error'));if(data.ok){const time=Number(data.compileMs||0).toFixed(1)+' ms';liveStatus(p,'WASM R3 · compiled in '+time,'WASM R3 · compilado en '+time,'ok')}else liveStatus(p,'Compiler/runtime diagnostic · no fallback','Diagnóstico del compilador/runtime · sin sustitución','error')};
  worker.onerror=()=>{if(liveJob!==job)return;liveStop(p,false);liveStatus(p,'Web Engine unavailable','Web Engine no disponible','error');p.output.textContent=translate('The compiler worker could not start. Open in Playground or try again.','No se pudo iniciar el compilador. Abre en Playground o vuelve a intentar.')};
  job.timer=setTimeout(()=>{if(liveJob!==job)return;liveStop(p,false);liveStatus(p,'Execution time limit (15 s)','Límite de ejecución (15 s)','error')},15000);
- worker.postMessage({source,input:p.input.value,compileOnly:false})
+ try{worker.postMessage({source,input:p.input.value,compileOnly:false})}catch(e){liveStop(p,false);liveStatus(p,'Could not send source','No se pudo enviar el código','error');p.output.textContent=String(e.message||e)}
 }
 // Make an editable call template from a published function signature.
 // Required arguments have deliberately simple placeholders, not validated examples.
