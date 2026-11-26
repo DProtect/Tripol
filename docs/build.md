@@ -93,3 +93,18 @@ Structured CFG optimization uses independent function-body workers for units wit
 ### TIR LINK R1 and CFG R2
 
 The native linker reserves the literal tail in one capacity operation, preserving byte layout and first-use order. Relative relocations are checked for valid write offsets and signed 32-bit displacement before patching. `BenchmarkLinkLiterals` compares incremental growth with preallocation. Balanced and turbo additionally remove unreachable statement tails after direct return/break/continue, and use validated scalar equality/boolean conditions to refine branch-local facts. Validation still runs before any pruning, and checked return expressions remain intact. These are not a general SSA or PGO backend. No new speedup is claimed before measurement.
+
+### TIR VECTOR R1, SSA JOIN R1 and PGO R1
+
+Balanced/turbo automatically lower a validated zero-based loop containing only an integer constant fill of a mutable dynamic `ints` array to SSE2 two-int64 stores, with a scalar odd tail. Empty/negative ranges do nothing; oversized ranges retain the original bounds trap; protected scopes, nonconstant arithmetic, other element types and other loop shapes use the ordinary scalar emitter. This is not a general loop vectorizer or AVX2 arithmetic backend.
+
+SSA JOIN R1 eliminates the terminal scalar merge in a restricted two-arm assignment diamond immediately followed by return of that binding. Each arm returns its original checked expression at the original evaluation point. Calls, nonterminal joins, arbitrary loops, protected flow and general phi-node register allocation remain on the normal backend. No general multi-block SSA claim is made.
+
+PGO R1 records physical function entries during a separate checked, unoptimized training execution on the local x86-64 host, then sorts reachable native function bodies in descending observed frequency, keeping equal-frequency source order. It does not change semantics, inline hot calls, or profile individual branches. Tail-restart jumps are not counted. Training executes the source program with the current user's permissions, no stdin, discarded stdout, a 30-second timeout and up to 8 MiB of stderr observations; use only trusted noninteractive programs. Existing profile files are not overwritten. Profiles are matched to the exact compiler executable, expanded parsed project and target. Rebuild/retrain if any changes. Profile data is a layout hint, not trusted executable code. No speedup is guaranteed; compare against ordinary turbo.
+
+```sh
+tripol pgo-train examples/bench_compiler_revolution.tri -o profile.json
+tripol build examples/bench_compiler_revolution.tri --profile turbo --pgo profile.json -o optimized
+```
+
+The CI matrix checks ordinary debug, turbo and PGO output equality and cache byte-equivalence on native Windows/Linux. These are proposed automated acceptance gates until the corresponding CI runs pass. COMPILER REVOLUTION R1 is scoped to the implemented conservative optimization subsets; general vectorization, full CFG SSA, function-level incremental builds and richer PGO remain research work.
