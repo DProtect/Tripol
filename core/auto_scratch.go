@@ -5,6 +5,7 @@ import "strings"
 // Conservative region proof: scalar values, immutable strings and locally
 // owned integer arrays/lists. No calls to arbitrary user functions, reference
 // stores into outer bindings, control transfer, IO or opaque operations.
+// Conditional scopes are analyzed independently, including both branches.
 func (c *compiler) localLoopRegion(ss []stmt)bool {
  if len(c.scratchScopes)>0||len(ss)==0{return false}
  local:=map[string]string{}
@@ -65,8 +66,21 @@ func (c *compiler) localLoopRegion(ss []stmt)bool {
   }
   return ""
  }
- for _,s:=range ss{
+ var prove func([]stmt)bool
+ prove=func(body []stmt)bool{
+ for _,s:=range body{
   switch s.op{
+  case "if":
+   if exprType(s.e)!="bool"{return false}
+   // Existing bindings remain visible. New branch-local names do not
+   // become available in the sibling branch or after the join.
+   parent:=local
+   for _,branch:=range [][]stmt{s.yes,s.no}{
+    local=make(map[string]string,len(parent))
+    for name,typ:=range parent{local[name]=typ}
+    if !prove(branch){local=parent;return false}
+   }
+   local=parent
   case "decl","assign":
    t:=exprType(s.e);if t==""{return false}
    if old,ok:=get(s.name);ok{
@@ -88,7 +102,9 @@ func (c *compiler) localLoopRegion(ss []stmt)bool {
   default:return false
   }
  }
- return allocates
+ return true
+ }
+ return prove(ss)&&allocates
 }
 func (c *compiler) loopBody(ss []stmt){
  if c.localLoopRegion(ss){
