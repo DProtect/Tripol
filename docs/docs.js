@@ -71,6 +71,7 @@ function codeMode(code){
 }
 function highlightDocs(){
  for(const code of [...document.querySelectorAll('.docs-article code, .docs-article pre:not(:has(code))')]){
+  if(code.closest('.doc-live-panel'))continue;
   const raw=code.textContent,mode=codeMode(code);
   if(raw.length>100000||!raw||['text','output','plaintext'].includes(mode))continue;
   if(code.dataset.syntaxReady==='yes'&&code._tripolSource===raw&&code.querySelector('.doc-tok'))continue;
