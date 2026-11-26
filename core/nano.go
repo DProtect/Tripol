@@ -201,7 +201,7 @@ func (c *compiler) rangeLoop(s stmt) {
 	if _, ok := c.lookup(s.name); ok {
 		c.err("duplicate or shadowed variable " + s.name)
 	}
-	if c.arrayReduction(s) {
+	if c.vectorFill(s) || c.arrayReduction(s) {
 		return
 	}
 	acc, registerLoop := c.loopPlan(s)
