@@ -119,5 +119,23 @@
     "Números primos",
     "func prime(n:int)->bool {\n    if n < 2 {return false}\n    for i in range(2, n) {\n        if n % i == 0 {return false}\n    }\n    return true\n}\nfor n in range(2, 12) {\n    if prime(n) {show n}\n}",
     "2\n3\n5\n7\n11\n"
+  ],
+  [
+    "String interpolation",
+    "Interpolación",
+    "name = \"TRIPOL\"\nscore = 20\nshow f\"Hello {name}! Score: {score * 2}\"",
+    "Hello TRIPOL! Score: 40\n"
+  ],
+  [
+    "Array iteration",
+    "Recorrer arreglos",
+    "numbers = [10, 20, 30]\nfor n in numbers {\n    show n\n}",
+    "10\n20\n30\n"
+  ],
+  [
+    "Indexed iteration",
+    "Recorrido con índices",
+    "numbers = [7, 8, 9]\nfor i, value in numbers {\n    show f\"{i}: {value}\"\n}",
+    "0: 7\n1: 8\n2: 9\n"
   ]
 ];root.TripolExamples=examples;if(typeof module!=='undefined')module.exports=examples})(globalThis);
