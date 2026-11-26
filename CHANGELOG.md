@@ -35,6 +35,7 @@
 - COMPILER REVOLUTION: TIR PARALLEL R1 bounded independent CFG optimization with deterministic serial/parallel regression and benchmarks.
 - COMPILER REVOLUTION: TIR CACHE R1 opt-in content-addressed native build cache with compiler digest, expanded AST key, target/profile separation and corruption checks.
 - COMPILER REVOLUTION: TIR LINK R1 literal reservation and validated relative relocations; CFG R2 branch-local refinement and dead statement tails; signed immediate comparison fix.
+- COMPILER REVOLUTION: VECTOR R1 automatic SSE2 constant array fill, SSA JOIN R1 terminal scalar merge elimination, PGO R1 runtime training and deterministic hot function layout; Windows/Linux end-to-end acceptance gate.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)
