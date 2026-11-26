@@ -14,6 +14,10 @@ type compilationReport struct{
  Profile string `json:"profile"`
  LoadNS int64 `json:"load_ns"`
  ValidationNS int64 `json:"validation_ns"`
+ OptimizationNS int64 `json:"optimization_ns"`
+ CFGSubstitutions int `json:"cfg_substitutions"`
+ CFGJoins int `json:"cfg_joins"`
+ CFGConstantBranches int `json:"cfg_constant_branches"`
  ReachabilityNS int64 `json:"reachability_ns"`
  EmissionNS int64 `json:"emission_ns"`
  LinkNS int64 `json:"link_ns"`
@@ -35,6 +39,13 @@ func measuredCompilation(fs []fn,ss []stmt,target,profile string)([]byte,compila
   r.ValidationBufferBytes=cap(validation.b)
  }
  phase:=time.Now()
+ if profile=="balanced"||profile=="turbo"{
+  var stats cfgConstantStats
+  fs,ss,stats=optimizeCFG(fs,ss)
+  r.CFGSubstitutions=stats.Substitutions;r.CFGJoins=stats.Joins;r.CFGConstantBranches=stats.ConstantBranches
+ }
+ r.OptimizationNS=time.Since(phase).Nanoseconds()
+ phase=time.Now()
  var live map[string]bool
  if profile!="debug"{live=reachable(fs,ss)}
  for _,f:=range fs{if !f.record{r.Functions++;if profile=="debug"||live[f.name]{r.EmittedFunctions++}}}
@@ -76,7 +87,8 @@ func compileReportCLI(args []string){
  if jsonOutput{b,e:=json.MarshalIndent(r,"","  ");if e!=nil{die("%v",e)};fmt.Println(string(b));return}
  fmt.Printf("TRIPOL %s | %s | %s\n",version,target,profile)
  for _,p:=range []struct{name string;ns int64}{
- {"Load and parse",r.LoadNS},{"Validation",r.ValidationNS},{"Reachability",r.ReachabilityNS},{"Native emission",r.EmissionNS},{"Runtime and linking",r.LinkNS},{"Total",r.TotalNS},
+ {"Load and parse",r.LoadNS},{"Validation",r.ValidationNS},{"CFG optimization",r.OptimizationNS},{"Reachability",r.ReachabilityNS},{"Native emission",r.EmissionNS},{"Runtime and linking",r.LinkNS},{"Total",r.TotalNS},
  }{fmt.Printf("%-22s %10.3f ms\n",p.name,float64(p.ns)/1e6)}
+ fmt.Printf("CFG substitutions: %d; agreed joins: %d; constant branches: %d\n",r.CFGSubstitutions,r.CFGJoins,r.CFGConstantBranches)
  fmt.Printf("Functions selected: %d / %d\nValidation code buffer: %d bytes (capacity, not RSS)\nImage: %d bytes\nSHA256: %s\n",r.EmittedFunctions,r.Functions,r.ValidationBufferBytes,r.ImageBytes,r.SHA256)
 }

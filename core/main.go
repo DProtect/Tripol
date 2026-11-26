@@ -1565,6 +1565,7 @@ func compileParsed(fs []fn, ss []stmt, target, profile string) []byte {
 	// Validate every function before eliminating any unreachable code.
 	if profile != "debug" {
 		validateCode(fs, ss, target)
+        if profile=="balanced"||profile=="turbo"{fs,ss,_=optimizeCFG(fs,ss)}
 	}
     var live map[string]bool
     if profile!="debug"{live=reachable(fs,ss)}
