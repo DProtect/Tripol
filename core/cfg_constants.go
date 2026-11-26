@@ -104,6 +104,10 @@ func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
   }
   if result==nil{result=append([]stmt(nil),body...)}
   result[i]=s
+  // All statements have already been validated. A direct terminator
+  // makes the remaining statements in this lexical block unreachable.
+  // Do not move or discard the terminator's own checked expression.
+  if s.op=="return"||s.op=="break"||s.op=="continue"{return result[:i+1]}
  }
  return result
 }
