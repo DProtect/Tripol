@@ -1,4 +1,5 @@
 import "parser.tri"
+import "ast.tri"
 import "elf64.tri"
 import "pe64.tri"
 import tripol.buffer
@@ -30,72 +31,59 @@ func gen_trap(code:ints)->int {
 func gen_guard(code:ints)->int {
  ok=gen_jump(code,"0f81");gen_trap(code);gen_patch(code,ok,buffer.size(code));return 0
 }
-func gen_factor(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int)->int {
- assert depth<=64 and c[0]<len(tok),"Expected operand"
- i=c[0];s=boot_peek(src,tok,c);c[0]=c[0]+3
- if s=="(" {
-  gen_expr(src,tok,c,code,syms,funcs,depth+1)
-  assert boot_peek(src,tok,c)==")","Expected )";c[0]=c[0]+3;return 0
+// RAX holds RHS; left operand is on stack. Preserve checked signed semantics.
+func gen_binary(code:ints,kind:int)->int {
+ if kind==4 {gen_bytes(code,"594801c8");gen_guard(code);return 0}
+ if kind==5 {gen_bytes(code,"594829c14889c8");gen_guard(code);return 0}
+ if kind==6 {gen_bytes(code,"59480fafc1");gen_guard(code);return 0}
+ assert kind==7 or kind==8,"Invalid binary AST"
+ gen_bytes(code,"4889c1584885c9")
+ nonzero=gen_jump(code,"0f85");gen_trap(code);gen_patch(code,nonzero,buffer.size(code))
+ gen_bytes(code,"4883f9ff");normal=gen_jump(code,"0f85")
+ gen_bytes(code,"48ba00000000000000804839d0");nonmin=gen_jump(code,"0f85")
+ gen_trap(code);gen_patch(code,normal,buffer.size(code));gen_patch(code,nonmin,buffer.size(code))
+ gen_bytes(code,"489948f7f9")
+ if kind==8 {gen_bytes(code,"4889d0")}
+ return 0
+}
+// Separate AST traversal emits each expression once, in source order.
+func gen_ast_emit(src:string,tok:ints,tree:ints,id:int,code:ints,syms:ints,funcs:ints,depth:int)->int {
+ assert depth<=1024,"AST emission nesting limit"
+ kind=ast_field(tree,id,0);left=ast_field(tree,id,1);right=ast_field(tree,id,2)
+ if kind==1 {gen_bytes(code,"48b8");gen_imm(code,left,8);return 0}
+ if kind==2 {
+  name=slice(src,tok[left+1],tok[left+2])
+  assert dictionary.contains(syms,name),"Unknown variable"
+  gen_load(code,dictionary.get(syms,name));return 0
  }
- if s=="+" or s=="-" {
-  gen_factor(src,tok,c,code,syms,funcs,depth+1)
-  if s=="-" {gen_bytes(code,"48f7d8");gen_guard(code)}
-  return 0
+ if kind==3 {
+  gen_ast_emit(src,tok,tree,left,code,syms,funcs,depth+1)
+  gen_bytes(code,"48f7d8");gen_guard(code);return 0
  }
- if tok[i]==2 {
-  assert validate.integer(s),"Expected integer"
-  gen_bytes(code,"48b8");gen_imm(code,parse_int(s),8);return 0
- }
- assert tok[i]==1 and len(s)<=32,"Expected variable or function"
- if boot_peek(src,tok,c)=="(" {
-  assert dictionary.contains(funcs,s),"Unknown function"
-  signature=dictionary.get(funcs,s);arity=signature%16;target=15+signature/16*5
-  c[0]+=3;n=0
-  if boot_peek(src,tok,c)!=")" {
-   gen_expr(src,tok,c,code,syms,funcs,depth+1);gen_bytes(code,"50");n+=1
-   while boot_peek(src,tok,c)=="," {
-    c[0]+=3;assert n<8,"Argument limit";gen_expr(src,tok,c,code,syms,funcs,depth+1);gen_bytes(code,"50");n+=1
-   }
+ if kind==9 {
+  name=slice(src,tok[left+1],tok[left+2])
+  assert dictionary.contains(funcs,name),"Unknown function"
+  signature=dictionary.get(funcs,name);n=0;link=right
+  while link!=0 {
+   assert ast_field(tree,link,0)==10 and n<8,"Invalid argument chain"
+   gen_ast_emit(src,tok,tree,ast_field(tree,link,1),code,syms,funcs,depth+1)
+   gen_bytes(code,"50");n+=1;link=ast_field(tree,link,2)
   }
-  assert n==arity and boot_peek(src,tok,c)==")","Invalid arguments";c[0]+=3
-  at=gen_jump(code,"e8");gen_patch(code,at,target)
+  assert n==signature%16,"Invalid arguments"
+  at=gen_jump(code,"e8");gen_patch(code,at,15+signature/16*5)
   if n>0 {gen_bytes(code,"4883c4");gen_imm(code,n*8,1)}
   return 0
  }
- assert dictionary.contains(syms,s),"Unknown variable"
- // mov rax,[rbp+disp32], negative offset = 2^32 - slot*8.
- gen_bytes(code,"488b85");gen_imm(code,4294967296-abs(dictionary.get(syms,s))*8,4)
- return 0
-}
-func gen_term(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int)->int {
- gen_factor(src,tok,c,code,syms,funcs,depth)
- op=boot_peek(src,tok,c)
- while op=="*" or op=="/" or op=="%" {
-  c[0]=c[0]+3;gen_bytes(code,"50");gen_factor(src,tok,c,code,syms,funcs,depth)
-  if op=="*" {gen_bytes(code,"59480fafc1");gen_guard(code)}
-  else {
-   gen_bytes(code,"4889c1584885c9")
-   nonzero=gen_jump(code,"0f85");gen_trap(code);gen_patch(code,nonzero,buffer.size(code))
-   gen_bytes(code,"4883f9ff");normal=gen_jump(code,"0f85")
-   gen_bytes(code,"48ba00000000000000804839d0");nonmin=gen_jump(code,"0f85")
-   gen_trap(code);gen_patch(code,normal,buffer.size(code));gen_patch(code,nonmin,buffer.size(code))
-   gen_bytes(code,"489948f7f9")
-   if op=="%" {gen_bytes(code,"4889d0")}
-  }
-  op=boot_peek(src,tok,c)
- }
- return 0
+ assert kind>=4 and kind<=8,"Invalid expression AST"
+ gen_ast_emit(src,tok,tree,left,code,syms,funcs,depth+1)
+ gen_bytes(code,"50")
+ gen_ast_emit(src,tok,tree,right,code,syms,funcs,depth+1)
+ return gen_binary(code,kind)
 }
 func gen_expr(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int)->int {
- gen_term(src,tok,c,code,syms,funcs,depth)
- op=boot_peek(src,tok,c)
- while op=="+" or op=="-" {
-  c[0]=c[0]+3;gen_bytes(code,"50");gen_term(src,tok,c,code,syms,funcs,depth)
-  if op=="+" {gen_bytes(code,"594801c8")}
-  else {gen_bytes(code,"594829c14889c8")}
-  gen_guard(code);op=boot_peek(src,tok,c)
- }
- return 0
+ tree=ast_create(tok)
+ root=ast_expr(src,tok,c,tree,depth)
+ return gen_ast_emit(src,tok,tree,root,code,syms,funcs,0)
 }
 // Branch offsets are relative to the instruction immediately after rel32.
 func gen_patch(code:ints,at:int,target:int)->int {
@@ -235,8 +223,19 @@ func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,de
    back=gen_jump(code,"e9");gen_patch(code,back,start);gen_patch(code,skip,buffer.size(code))
    dictionary.remove(syms,counter);dictionary.remove(syms,hidden)
   } else {
-   name=gen_name(src,tok,c);gen_expect(src,tok,c,"=")
+   name=gen_name(src,tok,c);op=boot_peek(src,tok,c)
+   assert op=="=" or op=="+=" or op=="-=" or op=="*=" or op=="/=" or op=="%=","Expected assignment"
+   c[0]+=3
+   if op!="=" {
+    assert dictionary.contains(syms,name) and dictionary.get(syms,name)>0,"Compound assignment requires mutable variable"
+    gen_load(code,dictionary.get(syms,name));gen_bytes(code,"50")
+   }
    gen_expr(src,tok,c,code,syms,funcs,0)
+   if op=="+=" {gen_binary(code,4)}
+   if op=="-=" {gen_binary(code,5)}
+   if op=="*=" {gen_binary(code,6)}
+   if op=="/=" {gen_binary(code,7)}
+   if op=="%=" {gen_binary(code,8)}
    if not dictionary.contains(syms,name) {
     assert depth==0,"Declare variables before control flow"
     slot=dictionary.size(syms)+1;assert dictionary.set(syms,name,slot),"Variable limit"

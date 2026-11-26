@@ -76,6 +76,7 @@ func TestGenesisDirectFunctions(t *testing.T){
  {"func sum(n:int)->int {if n<=0 {return 0};return n+sum(n-1)}\nshow sum(10)","55\n"},
  {"func twice(x:int)->int {return x*2}\nfunc plus(a:int,b:int)->int {return a+b}\nshow plus(twice(3),twice(4))","14\n"},
  {"s=0;for i in range(2,6) {s=s+i};for j in range(4,2) {s=s+100};show s","14\n"},
+ {"func combine(a:int,b:int)->int {return a*10+b}\nx=3\nx+=combine(1+2,4)\nx*=2\nx-=4\nx/=2\nx%=10\nshow x\nshow combine(2,3+combine(1,2))\nshow -(2+3)*4\n","5\n35\n-20\n"},
  {"func first(n:int)->int {\n return second(n)+1\n}\nfunc second(n:int)->int {\n if n==0 {return 0}\n return first(n-1)\n}\nx=2\nif false and 1/0==0 {show 99} else if (x+1)>2 and not (x==0 or false) {show first(3)} else {show 88}\nif true or 1/0==0 {show 42}\nwhile x>0 and true {show x;x=x-1}\n","4\n42\n2\n1\n"},
  }{
   t.Run(tc.source,func(t *testing.T){

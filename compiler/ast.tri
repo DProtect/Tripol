@@ -1,0 +1,78 @@
+import "parser.tri"
+import tripol.validate
+// Integer-expression AST. Row 0 holds the node count. Each subsequent
+// node is [kind, left/payload, right/payload]. Node 0 is the null link.
+// 1 literal, 2 variable token offset, 3 negate, 4..8 checked arithmetic,
+// 9 call (name token offset, argument chain), 10 argument (value,next).
+func ast_create(tokens:ints)->ints {
+ return ints(1+3*min(1024,max(1,len(tokens)/3)))
+}
+func ast_node(tree:ints,kind:int,left:int,right:int)->int {
+ id=tree[0]+1;assert id<=(len(tree)-1)/3,"Expression AST limit"
+ pos=1+(id-1)*3
+ tree[pos]=kind;tree[pos+1]=left;tree[pos+2]=right;tree[0]=id
+ return id
+}
+func ast_field(tree:ints,id:int,field:int)->int {
+ assert id>0 and id<=tree[0] and field>=0 and field<3,"Invalid AST node"
+ return tree[1+(id-1)*3+field]
+}
+func ast_link(tree:ints,id:int,next:int)->int {
+ assert ast_field(tree,id,0)==10 and ast_field(tree,next,0)==10,"Invalid argument chain"
+ tree[1+(id-1)*3+2]=next;return 0
+}
+func ast_factor(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
+ assert depth<=64 and c[0]<len(tok),"Expected operand"
+ pos=c[0];word=boot_peek(src,tok,c);c[0]+=3
+ if word=="(" {
+  id=ast_expr(src,tok,c,tree,depth+1)
+  assert boot_peek(src,tok,c)==")","Expected )";c[0]+=3;return id
+ }
+ if word=="+" {return ast_factor(src,tok,c,tree,depth+1)}
+ if word=="-" {
+  id=ast_factor(src,tok,c,tree,depth+1)
+  return ast_node(tree,3,id,0)
+ }
+ if tok[pos]==2 {
+  assert validate.integer(word),"Expected integer"
+  return ast_node(tree,1,parse_int(word),0)
+ }
+ assert tok[pos]==1 and len(word)<=32,"Expected variable or function"
+ if boot_peek(src,tok,c)!="(" {return ast_node(tree,2,pos,0)}
+ c[0]+=3;head=0;tail=0;n=0
+ if boot_peek(src,tok,c)!=")" {
+  more=true
+  while more {
+   assert n<8,"Argument limit"
+   val=ast_expr(src,tok,c,tree,depth+1)
+   link=ast_node(tree,10,val,0)
+   if head==0 {head=link} else {ast_link(tree,tail,link)}
+   tail=link;n+=1
+   more=boot_peek(src,tok,c)==","
+   if more {c[0]+=3}
+  }
+ }
+ assert boot_peek(src,tok,c)==")","Expected )";c[0]+=3
+ return ast_node(tree,9,pos,head)
+}
+func ast_term(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
+ left=ast_factor(src,tok,c,tree,depth)
+ word=boot_peek(src,tok,c)
+ while word=="*" or word=="/" or word=="%" {
+  c[0]+=3;right=ast_factor(src,tok,c,tree,depth);kind=6
+  if word=="/" {kind=7}
+  if word=="%" {kind=8}
+  left=ast_node(tree,kind,left,right);word=boot_peek(src,tok,c)
+ }
+ return left
+}
+func ast_expr(src:string,tok:ints,c:ints,tree:ints,depth:int)->int {
+ left=ast_term(src,tok,c,tree,depth)
+ word=boot_peek(src,tok,c)
+ while word=="+" or word=="-" {
+  c[0]+=3;right=ast_term(src,tok,c,tree,depth);kind=4
+  if word=="-" {kind=5}
+  left=ast_node(tree,kind,left,right);word=boot_peek(src,tok,c)
+ }
+ return left
+}

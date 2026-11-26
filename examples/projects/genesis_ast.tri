@@ -1,0 +1,10 @@
+func combine(a:int,b:int)->int {return a*10+b}
+x=3
+x+=combine(1+2,4)
+x*=2
+x-=4
+x/=2
+x%=10
+show x
+show combine(2,3+combine(1,2))
+show -(2+3)*4
