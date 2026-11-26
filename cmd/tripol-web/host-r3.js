@@ -1,13 +1,13 @@
 (function(root){
 'use strict';
 // R3 ABI: string handles are interned per execution, with literal data carried
-// in the program's tripol.strings custom section. No external I/O.
+// in the program's tripol.strings custom section. Files are per-run virtual storage only.
 function execute(binary,options={}){
  const module=new WebAssembly.Module(binary), sections=WebAssembly.Module.customSections(module,'tripol.strings');
  if(sections.length!==1)throw Error('Missing or duplicate string table');
  const literals=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(sections[0]));
  if(!Array.isArray(literals)||literals.some(v=>typeof v!=='string'))throw Error('Invalid string table');
- const strings=[],ids=new Map(),encoder=new TextEncoder();let allocated=0,output='',steps=0,cells=0;const collections=[];const lines=String(options.input||'').split(/\r?\n/);let cursor=0;const bits=new DataView(new ArrayBuffer(8));
+ const strings=[],ids=new Map(),encoder=new TextEncoder();let allocated=0,output='',steps=0,cells=0;const collections=[];const lines=String(options.input||'').split(/\r?\n/);let cursor=0;const virtualFiles=new Map();let fileBytes=0,atomicExpected=null;const bits=new DataView(new ArrayBuffer(8));
  const limit=options.steps||100000,MIN=-(1n<<63n),MAX=(1n<<63n)-1n;
  function bytes(s){let out='';for(const b of encoder.encode(s))out+=String.fromCharCode(b);return out}
  function decoded(s){return new TextDecoder().decode(Uint8Array.from(s,c=>c.charCodeAt(0)))}
@@ -22,6 +22,10 @@ function execute(binary,options={}){
  function numeric(n,line){if(!Number.isFinite(n))fail(line,'Invalid floating point result');return i64(n)}
  function collection(id,line){if(id<0n||id>=BigInt(collections.length))fail(line,'Invalid collection handle');return collections[Number(id)]}
  function index(c,i,line){if(i<0n||i>=BigInt(c.items.length))fail(line,'Array index out of bounds');return Number(i)}
+ function filePath(v,line){const p=decoded(get(v));if(!p||p.length>256||p.startsWith('/')||p.includes('\\')||p.includes(':')||p.includes('\0')||p.split('/').some(x=>!x||x==='.'||x==='..'))fail(line,'Only relative virtual file paths are allowed');return p}
+ function storeFile(p,s,line){const old=virtualFiles.get(p)||'';if(s.length>65536||fileBytes-old.length+s.length>524288||(!virtualFiles.has(p)&&virtualFiles.size>=64))fail(line,'Virtual filesystem limit reached');fileBytes+=s.length-old.length;virtualFiles.set(p,s);return BigInt(s.length)}
+ function loadFile(p,line){if(!virtualFiles.has(p))fail(line,'Virtual file not found: '+p);return virtualFiles.get(p)}
+ function newArray(values,line){reserve(values.length,line);if(collections.length>=50000)fail(line,'Collection count limit');const id=BigInt(collections.length);collections.push({kind:4,capacity:values.length,items:values});return id}
  function reserve(n,line){if(n<0||cells+n>262144)fail(line,'Collection allocation limit reached');cells+=n}
  function scalar(v,k){if(k===2)return get(v);if(k===1)return String(v!==0n);if(k===3){let n=f64(v);if(!Number.isFinite(n))throw Error('Invalid floating point display');return n.toFixed(6)}return String(v)}
  function cmpText(a,b){const x=get(a),y=get(b);return x<y?-1:x>y?1:0}
@@ -32,6 +36,14 @@ function execute(binary,options={}){
    let v;if(op===0)v=a+b;else if(op===1)v=a-b;else if(op===2)v=a*b;else if(op===3||op===4){if(b===0n||a===MIN&&b===-1n)throw Error('Line '+line+': Invalid integer arithmetic');v=op===3?a/b:a%b}else throw Error('Unknown arithmetic operation');if(v<MIN||v>MAX)throw Error('Line '+line+': Integer overflow');return v},
   show(v,kind,last){emit(display(v,kind,0)+(last?'\n':' '))},
   value(op,a,b,c,line){
+   if(op===70)return BigInt(allocated+cells*8);
+   if(op>=71&&op<=75){const p=filePath(a,line);
+    if(op===71){const s=loadFile(p,line);if(s.length>65535||s.includes('\0'))fail(line,'Invalid text file');return intern(s)}
+    if(op===72||op===73){const s=get(b);if(s.includes('\0'))fail(line,'NUL is not supported by text files');const old=op===73?(virtualFiles.get(p)||''):'';storeFile(p,old+s,line);return BigInt(s.length)}
+    if(op===74){if(b<0n||b>65536n)fail(line,'Invalid read limit');const s=loadFile(p,line);if(BigInt(s.length)>b)fail(line,'File exceeds read limit');return newArray(Array.from(s,x=>BigInt(x.charCodeAt(0))),line)}
+    const data=collection(b,line).items;if(data.length>65536||data.some(v=>v<0n||v>255n))fail(line,'Invalid binary file');let content='';for(const v of data)content+=String.fromCharCode(Number(v));return storeFile(p,content,line)
+   }
+   if(op===81){if(a<0n||a>1000n)fail(line,'Web sleep limit: 1000 ms');if(a!==0n){if(typeof SharedArrayBuffer==='undefined'||typeof Atomics==='undefined')fail(line,'Blocking sleep requires an isolated worker');Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,Number(a))}return 0n}
    if(op===21)return intern(scalar(a,Number(b)));
    if(op===22||op===57){emit(decoded(get(a))+'\n');const text=bytes(lines[cursor++]??'');if(text.length>4096)fail(line,'Input limit reached');if(op===57){if(!/^[+-]?\d+$/.test(text))fail(line,'Invalid integer input');return checked(BigInt(text),line)}return intern(text)}
    if(op===50)return intern(String(a));
@@ -54,6 +66,11 @@ function execute(binary,options={}){
    if(op===10){if(a<0n||a>262144n||b<4n||b>8n)fail(line,'Collection allocation limit reached');const n=Number(a),kind=Number(b);reserve(n,line);if(collections.length>=50000)fail(line,'Collection count limit');const id=BigInt(collections.length);collections.push({kind,capacity:n,items:kind===4?Array(n).fill(0n):[]});return id}
    const list=collection(a,line),items=list.items;
    switch(op){
+    case 76:return items[index(list,b,line)];
+    case 77:{const i=index(list,b,line),old=items[i];items[i]=c;return old}
+    case 78:{const i=index(list,b,line),v=checked(items[i]+c,line);items[i]=v;return v}
+    case 79:{const i=index(list,b,line);atomicExpected={a,i,value:c};return 0n}
+    case 80:{const i=index(list,b,line),expected=atomicExpected;atomicExpected=null;if(!expected||expected.a!==a||expected.i!==i)fail(line,'Invalid compare_exchange state');if(items[i]!==expected.value)return 0n;items[i]=c;return 1n}
     case 43:{const other=collection(b,line).items;return items.length===other.length&&items.every((x,i)=>x===other[i])?1n:0n}
     case 44:items.fill(b);return BigInt(items.length);
     case 45:if(b<0n||c<0n||b+c>BigInt(items.length))fail(line,'Array fill range out of bounds');return (b<<32n)|c;
