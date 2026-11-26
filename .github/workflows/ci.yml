@@ -30,3 +30,27 @@ jobs:
           ./tripol.exe build examples/hello.tri --target windows -o hello.exe
           ./hello.exe
           ./tripol.exe build examples/origin_bot.tri --target windows -o origin-bot.exe
+      - name: COMPILER REVOLUTION end-to-end (Linux and Windows)
+        shell: bash
+        env:
+          TRIPOL_NO_UPDATE: '1'
+        run: |
+          set -euo pipefail
+          compiler=./tripol
+          ext=""
+          if [ "$RUNNER_OS" = Windows ]; then compiler=./tripol.exe; ext=.exe; fi
+          source=examples/bench_compiler_revolution.tri
+          "$compiler" build "$source" --profile debug -o "revolution-debug$ext"
+          "$compiler" build "$source" --profile turbo -o "revolution-turbo$ext"
+          "$compiler" build "$source" --profile turbo --cache -o "revolution-cache-a$ext"
+          "$compiler" build "$source" --profile turbo --cache -o "revolution-cache-b$ext"
+          cmp "revolution-turbo$ext" "revolution-cache-a$ext"
+          cmp "revolution-cache-a$ext" "revolution-cache-b$ext"
+          "$compiler" pgo-train "$source" -o revolution-profile.json
+          "$compiler" build "$source" --profile turbo --pgo revolution-profile.json -o "revolution-pgo$ext"
+          for variant in debug turbo pgo; do
+            "./revolution-$variant$ext" > "revolution-$variant.txt"
+          done
+          cmp revolution-debug.txt revolution-turbo.txt
+          cmp revolution-debug.txt revolution-pgo.txt
+          "$compiler" compile-report "$source" --profile turbo --json
