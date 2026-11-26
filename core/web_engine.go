@@ -107,6 +107,14 @@ func (e *webEmitter) expression(x *expr)string{
   }
  case "call":
   name:=strings.TrimPrefix(x.s,"@builtin:")
+  if name=="array_find"||name=="array_copy"||name=="array_copy_into"{
+   a,t:=e.save(x.args[0]);if webElem(t)!="int"{webReject("integer array required")};b:=e.constant(0);z:=e.constant(0)
+   switch name{
+   case "array_find":var bt string;b,bt=e.save(x.args[1]);if bt!="int"{webReject("integer search value required")};e.val(40,a,b,z);return "int"
+   case "array_copy":e.val(41,a,b,z);return "ints"
+   case "array_copy_into":var bt string;b,bt=e.save(x.args[1]);if webElem(bt)!="int"{webReject("integer source array required")};e.val(42,a,b,z);return "bool"
+   }
+  }
   if name=="len"||name=="@array_len"||name=="sum"{
    if len(x.args)!=1{webReject("wrong argument count")};v,t:=e.save(x.args[0]);zero:=e.constant(0)
    if name=="len"&&t=="string"{e.code.i32(6);e.code.inst(0x20,v);e.code.i64(0);e.code.i32(int64(e.line));e.code.inst(0x10,1);return "int"}
@@ -175,7 +183,7 @@ func (e *webEmitter) body()webCode{var b webCode;n:=e.locals-e.params;if n==0{b.
 func CompileWeb(source string)(out []byte,err error){
  defer func(){if v:=recover();v!=nil{out=nil;err=fmt.Errorf("%v",v)}}()
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
- imports,_,_:=parseUnit(source);for _,n:=range imports{if n!="@std:math"{webReject("only tripol.math is currently enabled by this target")}}
+ imports,_,_:=parseUnit(source);for _,n:=range imports{if n!="@std:math"&&n!="@std:arrays"&&n!="@std:collections"{webReject("library %s is not enabled in the browser target",n)}}
  fs,ss:=parse(source);validateCode(fs,ss,"linux")
  m:=&webModule{funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{}}
  m.signature([]byte{0x7f},nil) // tick(line)
