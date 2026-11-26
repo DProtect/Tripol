@@ -31,6 +31,7 @@
 - Compiler stage report with native image digest, byte-equivalence regression and CI allocation benchmarks.
 - COMPILER REVOLUTION: post-validation scalar constant propagation through conditional joins and CFG report counters.
 - COMPILER REVOLUTION: checked immediate arithmetic and register-free immediate-only SSA values.
+- COMPILER REVOLUTION: conservative loop-invariant scalar propagation and range-bound simplification without speculative traps.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)

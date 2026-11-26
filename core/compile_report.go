@@ -16,6 +16,7 @@ type compilationReport struct{
  ValidationNS int64 `json:"validation_ns"`
  OptimizationNS int64 `json:"optimization_ns"`
  CFGSubstitutions int `json:"cfg_substitutions"`
+ CFGLoopInvariants int `json:"cfg_loop_invariants"`
  CFGJoins int `json:"cfg_joins"`
  CFGConstantBranches int `json:"cfg_constant_branches"`
  ReachabilityNS int64 `json:"reachability_ns"`
@@ -42,7 +43,7 @@ func measuredCompilation(fs []fn,ss []stmt,target,profile string)([]byte,compila
  if profile=="balanced"||profile=="turbo"{
   var stats cfgConstantStats
   fs,ss,stats=optimizeCFG(fs,ss)
-  r.CFGSubstitutions=stats.Substitutions;r.CFGJoins=stats.Joins;r.CFGConstantBranches=stats.ConstantBranches
+  r.CFGSubstitutions=stats.Substitutions;r.CFGJoins=stats.Joins;r.CFGLoopInvariants=stats.LoopInvariants;r.CFGConstantBranches=stats.ConstantBranches
  }
  r.OptimizationNS=time.Since(phase).Nanoseconds()
  phase=time.Now()
@@ -89,6 +90,6 @@ func compileReportCLI(args []string){
  for _,p:=range []struct{name string;ns int64}{
  {"Load and parse",r.LoadNS},{"Validation",r.ValidationNS},{"CFG optimization",r.OptimizationNS},{"Reachability",r.ReachabilityNS},{"Native emission",r.EmissionNS},{"Runtime and linking",r.LinkNS},{"Total",r.TotalNS},
  }{fmt.Printf("%-22s %10.3f ms\n",p.name,float64(p.ns)/1e6)}
- fmt.Printf("CFG substitutions: %d; agreed joins: %d; constant branches: %d\n",r.CFGSubstitutions,r.CFGJoins,r.CFGConstantBranches)
+ fmt.Printf("CFG substitutions: %d; agreed joins: %d; constant branches: %d; loop invariants: %d\n",r.CFGSubstitutions,r.CFGJoins,r.CFGConstantBranches,r.CFGLoopInvariants)
  fmt.Printf("Functions selected: %d / %d\nValidation code buffer: %d bytes (capacity, not RSS)\nImage: %d bytes\nSHA256: %s\n",r.EmittedFunctions,r.Functions,r.ValidationBufferBytes,r.ImageBytes,r.SHA256)
 }

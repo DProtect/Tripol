@@ -3,11 +3,12 @@ package core
 // Forward scalar facts over structured, acyclic control flow. Only int/bool
 // values are tracked. Calls cannot mutate scalar caller slots; nevertheless
 // call arguments and aggregate access are left unchanged (some intrinsics
-// require a variable expression). Loops and protected scopes are barriers.
+// require a variable expression). Loops retain only invariant scalar facts;
+// protected scopes are barriers.
 // This runs only after full validation and never mutates the parsed AST.
 type scalarFact struct{kind string; value int64}
 type scalarFacts map[string]scalarFact
-type cfgConstantStats struct{ Substitutions,Joins,ConstantBranches int }
+type cfgConstantStats struct{ Substitutions,Joins,ConstantBranches,LoopInvariants int }
 
 func copyFacts(in scalarFacts)scalarFacts{
  out:=make(scalarFacts,len(in));for k,v:=range in{out[k]=v};return out
@@ -26,6 +27,20 @@ func scalarSubstitute(e *expr,env scalarFacts,stats *cfgConstantStats)*expr{
  }
  if args==nil{return e}
  result:=*e;result.args=args;return &result
+}
+// Recursively collect scalar assignments. A protected region or opaque
+// statement disables loop propagation, rather than assuming purity.
+func loopWrites(body []stmt,writes map[string]bool)bool{
+ for _,s:=range body{
+  switch s.op{
+  case "assign","decl":writes[s.name]=true
+  case "for":writes[s.name]=true
+  case "if","while","show","showmany","return","assert","expr","break","continue","indexassign","fieldassign":
+  default:return false
+  }
+  if !loopWrites(s.yes,writes)||!loopWrites(s.no,writes)||!loopWrites(s.final,writes){return false}
+ }
+ return true
 }
 func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
  if len(body)==0{return body}
@@ -52,9 +67,19 @@ func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
      if aok{env[name]=a}else{delete(env,name)}
     }else if aok&&bok&&a==b{env[name]=a;stats.Joins++}else{delete(env,name)}
    }
-  case "while","for","scratch","try":
-   // No speculation across a backedge, exception or arena lifetime.
-   // Keep the original body and existing loop optimization patterns.
+  case "while","for":
+   // Range bounds are evaluated once. While conditions are reevaluated;
+   // substitute only variables untouched anywhere in the loop.
+   if s.op=="for"{s.e=scalarSubstitute(s.e,env,stats);s.bound=scalarSubstitute(s.bound,env,stats)}
+   writes:=map[string]bool{}
+   if s.op=="for"{writes[s.name]=true}
+   if !loopWrites(s.yes,writes){clear(env);break}
+   for name:=range env{if writes[name]{delete(env,name)}else{stats.LoopInvariants++}}
+   if s.op=="while"{s.e=scalarSubstitute(s.e,env,stats)}
+   // The body starts with invariant facts, not values from the previous
+   // iteration. Body-local facts cannot escape the backedge.
+   s.yes=propagateBlock(s.yes,copyFacts(env),stats)
+  case "scratch","try":
    clear(env)
   case "show","return","assert","throw","expr":
    s.e=scalarSubstitute(s.e,env,stats)
