@@ -1,0 +1,85 @@
+name: TRIPOL Web Engine
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'core/**'
+      - 'stdlib/**'
+      - 'cmd/tripol-web/**'
+      - '.github/workflows/web-engine.yml'
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: tripol-web-engine
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go test ./core -run TestWebEngineR1 -count=1
+      - name: Build browser compiler
+        run: |
+          mkdir -p web-dist
+          GOOS=js GOARCH=wasm go build -trimpath -o web-dist/tripol-compiler.wasm ./cmd/tripol-web
+          cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" web-dist/wasm_exec.js
+      - name: Test real compiler and generated WebAssembly
+        run: |
+          node --experimental-global-webcrypto <<'JS'
+          const fs=require('node:fs'),assert=require('node:assert/strict');
+          require('./web-dist/wasm_exec.js');
+          (async()=>{
+            const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync('web-dist/tripol-compiler.wasm'),go.importObject);go.run(instance);
+            const cases=[
+              ['show 42','42\n'],
+              ['n=0\nfor i in range(1,6) {n+=i}\nshow n','15\n'],
+              ['func double(n:int)->int {return n*2}\nshow double(21)','42\n'],
+              ['show true and not false','true\n'],
+              ['import tripol.math\nshow math.square(7)','49\n'],
+              ['n=0\nwhile n<3 {n+=1}\nshow n','3\n'],
+              ['for i in range(5) {if i==2 {continue}; if i==4 {break}; show i}','0\n1\n3\n']
+            ];
+            function execute(source){
+              const r=tripolCompileWeb(source);assert.ok(r.ok,r.error);
+              let output='',steps=0;
+              const imports={tripol:{
+                tick(){if(++steps>100000)throw Error('limit')},
+                arithmetic(op,a,b){const v=[()=>a+b,()=>a-b,()=>a*b,()=>a/b,()=>a%b][op]();if(v<-(1n<<63n)||v>(1n<<63n)-1n)throw Error('overflow');return v},
+                show(v,k,last){output+=(k?String(v!==0n):String(v))+(last?'\n':' ')},
+                assertFail(){throw Error('assertion')}
+              }};
+              new WebAssembly.Instance(new WebAssembly.Module(r.wasm),imports).exports.run();return output
+            }
+            for(const [src,want] of cases)assert.equal(execute(src),want,src);
+            assert.throws(()=>execute('show 9223372036854775807 + 1'),/overflow/);
+            assert.equal(tripolCompileWeb('show missing').ok,false);
+            console.log('9 WASM checks passed');process.exit(0)
+          })().catch(e=>{console.error(e);process.exit(1)})
+          JS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tripol-web-engine
+          path: web-dist/
+      - name: Publish compiler assets to gh-pages
+        run: |
+          git fetch origin gh-pages
+          git worktree add --detach /tmp/tripol-pages origin/gh-pages
+          mkdir -p /tmp/tripol-pages/playground/engine-r1
+          cp web-dist/* /tmp/tripol-pages/playground/engine-r1/
+          cd /tmp/tripol-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add playground/engine-r1
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish verified TRIPOL Web Engine R1"
+            git push origin HEAD:gh-pages
+          fi
+      - name: Request Pages rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${{ github.repository }}/pages/builds" || echo "Pages rebuild must be requested manually if branch deployment is not triggered"
