@@ -24,7 +24,7 @@ func (c *compiler) branchFalse(e *expr, label string) {
 	if c.branchModulo(e, label) {
 		return
 	}
-	if a.opt && e.op == "bin" && e.args[1].op == "int" && e.args[1].n <= math.MaxInt32 {
+	if a.opt && e.op == "bin" && e.args[1].op == "int" && e.args[1].n >= math.MinInt32 && e.args[1].n <= math.MaxInt32 {
 		if cc, ok := compareCode[e.s]; ok {
 			c.require(c.expression(e.args[0]), "int")
 			a.cmpImm(e.args[1].n)
