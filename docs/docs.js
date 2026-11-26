@@ -108,19 +108,7 @@ function liveRun(p){
  job.timer=setTimeout(()=>{if(liveJob!==job)return;liveStop(p,false);liveStatus(p,'Execution time limit (15 s)','Límite de ejecución (15 s)','error')},15000);
  try{worker.postMessage({source,input:p.input.value,compileOnly:false})}catch(e){liveStop(p,false);liveStatus(p,'Could not send source','No se pudo enviar el código','error');p.output.textContent=String(e.message||e)}
 }
-// Make an editable call template from a published function signature.
-// Required arguments have deliberately simple placeholders, not validated examples.
-function liveSignature(signature){
- const m=signature.trim().match(/^func\s+([A-Za-z_]\w*)\.([A-Za-z_]\w*)\s*\(([\s\S]*)\)\s*(?:->\s*([A-Za-z_]\w*))?\s*$/);
- if(!m)return null;
- const params=[];let part='',quote='',depth=0,escaped=false;
- for(const c of m[3]){if(quote){part+=c;if(escaped)escaped=false;else if(c==='\\')escaped=true;else if(c===quote)quote='';continue}if(c==='"'||c==="'"){quote=c;part+=c;continue}if('([{'.includes(c))depth++;if(')]}'.includes(c))depth--;if(c===','&&depth===0){params.push(part.trim());part=''}else part+=c}if(part.trim())params.push(part.trim());
- const values=[],setup=[];
- for(const [i,p] of params.entries()){const a=p.match(/^([A-Za-z_]\w*)\s*(?::\s*([A-Za-z_]\w*))?\s*(?:=\s*([\s\S]+))?$/);if(!a)return null;let val=a[3];const typ=a[2]||'int';if(val===undefined){if(typ==='ints'){const n='arg'+(i+1);setup.push(n+' = ints(4)',n+'[0] = 1');val=n}else if(typ==='list'||typ==='string_list'||typ==='bool_list'||typ==='float_list'){val=typ+'()'}else val={int:'1',bool:'true',float:'1.0',string:'"example"'}[typ];if(val===undefined)return null}values.push(val)}
- const call=m[1]+'.'+m[2]+'('+values.join(', ')+')';
- return 'import tripol.'+m[1]+'\n\n// Adjust the example arguments before running.\n'+(setup.length?setup.join('\n')+'\n':'')+(m[4]==='void'?call:'show '+call)
-}
-function makeLivePanel(source,original,trigger,template=false){
+function makeLivePanel(source,original,trigger){
  const p={original,source};const panel=liveElement('section','doc-live-panel');p.panel=panel;panel.hidden=true;
  const toolbar=liveElement('div','doc-live-toolbar');const filename=liveElement('span','doc-live-file','example.tri');const actions=liveElement('div','doc-live-tools');toolbar.append(filename,actions);
  p.run=liveButton('▶ Run','▶ Ejecutar',()=>liveRun(p),'doc-live-run');
@@ -132,7 +120,7 @@ function makeLivePanel(source,original,trigger,template=false){
  p.stack=liveElement('div','doc-live-stack');p.highlight=liveElement('pre','doc-live-highlight');p.highlight.setAttribute('aria-hidden','true');p.editor=liveElement('textarea','doc-live-editor');p.editor.spellcheck=false;p.editor.autocapitalize='off';p.editor.setAttribute('autocorrect','off');p.editor.setAttribute('wrap','off');p.editor.maxLength=32768;p.editor.value=original;p.editor.setAttribute('aria-label',translate('Editable TRIPOL example','Ejemplo TRIPOL editable'));p.stack.append(p.highlight,p.editor);
  const inputBox=liveElement('details','doc-live-input');inputBox.append(liveLabel(liveElement('summary','doc-live-label'),'Optional input','Entrada opcional'));p.input=liveElement('textarea','doc-live-stdin');p.input.rows=2;p.input.maxLength=32768;inputBox.append(p.input);inputBox.open=/\binput(?:_int)?\s*\(/.test(original);
  const consoleBox=liveElement('div','doc-live-console');p.status=liveElement('div','doc-live-status');p.status.setAttribute('role','status');p.output=liveElement('pre','doc-live-output');p.output.setAttribute('aria-live','polite');consoleBox.append(p.status,p.output);
- const help=liveLabel(liveElement('p','doc-live-help'),template?'Generated call template: adjust arguments. Libraries may require native TRIPOL.':'Runs with the real Web Engine R3. Unsupported browser features report a compiler error.',template?'Plantilla de llamada: ajusta los argumentos. Algunas bibliotecas requieren TRIPOL nativo.':'Ejecuta con Web Engine R3 real. Las funciones no compatibles muestran el error del compilador.');
+ const help=liveLabel(liveElement('p','doc-live-help'),'Runs with the real Web Engine R3. Unsupported browser features report a compiler error.','Ejecuta con Web Engine R3 real. Las funciones no compatibles muestran el error del compilador.');
  panel.append(toolbar,p.stack,inputBox,consoleBox,help);source.after(panel);livePanels.push(p);
  p.editor.addEventListener('input',()=>{livePaint(p);if(/\binput(?:_int)?\s*\(/.test(p.editor.value))inputBox.open=true});
  p.editor.addEventListener('scroll',()=>liveScroll(p));
@@ -140,17 +128,15 @@ function makeLivePanel(source,original,trigger,template=false){
  liveStatus(p,'Ready · Ctrl + Enter','Listo · Ctrl + Enter');liveRefresh();
  return p
 }
-function installLive(source,host,original,template=false){
+function installLive(source,host,original){
  if(!original||original.length>32768)return;
- let p;const button=liveButton(template?'Try function':'Try it',template?'Probar función':'Probar',()=>{if(!p)p=makeLivePanel(source,original,button,template);if(!p.panel.hidden){liveStop(p);p.panel.hidden=true;source.hidden=false;button.setAttribute('aria-expanded','false');return}source.hidden=!template;p.panel.hidden=false;button.setAttribute('aria-expanded','true');livePaint(p);p.editor.focus()},'doc-copy doc-live-action');
+ let p;const button=liveButton('Try it','Probar',()=>{if(!p)p=makeLivePanel(source,original,button);if(!p.panel.hidden){liveStop(p);p.panel.hidden=true;source.hidden=false;button.setAttribute('aria-expanded','false');return}source.hidden=true;p.panel.hidden=false;button.setAttribute('aria-expanded','true');livePaint(p);p.editor.focus()},'doc-copy doc-live-action');
  button.setAttribute('aria-expanded','false');host.append(button)
 }
 function installAllLive(){
  for(const pre of $$('.docs-article pre')){
-  if(pre.classList.contains('signature')){
-   const template=liveSignature(pre.textContent);if(template){const bar=liveElement('div','doc-signature-actions');pre.after(bar);installLive(pre,bar,template,true)}
-   continue
-  }
+  // Function signatures and library implementation source are reference-only.
+  if(pre.classList.contains('signature')||pre.closest('.function-card'))continue;
   if(codeMode(pre.querySelector('code')||pre)!=='tripol')continue;
   const head=pre.closest('.code-shell')?.querySelector('.code-head');if(!head)continue;
   let actions=head.querySelector('.doc-code-actions');if(!actions){actions=liveElement('div','doc-code-actions');const copy=head.querySelector('.doc-copy');if(copy)actions.append(copy);head.append(actions)}
