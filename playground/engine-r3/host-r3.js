@@ -7,7 +7,7 @@ function execute(binary,options={}){
  if(sections.length!==1)throw Error('Missing or duplicate string table');
  const literals=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(sections[0]));
  if(!Array.isArray(literals)||literals.some(v=>typeof v!=='string'))throw Error('Invalid string table');
- const strings=[],ids=new Map(),encoder=new TextEncoder();let allocated=0,output='',steps=0,cells=0;const collections=[];const lines=String(options.input||'').split(/\r?\n/);let cursor=0;const virtualFiles=new Map();let fileBytes=0,atomicExpected=null;const bits=new DataView(new ArrayBuffer(8));
+ const strings=[],ids=new Map(),encoder=new TextEncoder();let allocated=0,output='',steps=0,cells=0;const collections=[];const lines=String(options.input||'').split(/\r?\n/);let cursor=0;const virtualFiles=new Map();let fileBytes=0,atomicExpected=null;let windowState=null,frames=[],frameBytes=0;const bits=new DataView(new ArrayBuffer(8));
  const limit=options.steps||100000,MIN=-(1n<<63n),MAX=(1n<<63n)-1n;
  function bytes(s){let out='';for(const b of encoder.encode(s))out+=String.fromCharCode(b);return out}
  function decoded(s){return new TextDecoder().decode(Uint8Array.from(s,c=>c.charCodeAt(0)))}
@@ -43,7 +43,29 @@ function execute(binary,options={}){
     if(op===74){if(b<0n||b>65536n)fail(line,'Invalid read limit');const s=loadFile(p,line);if(BigInt(s.length)>b)fail(line,'File exceeds read limit');return newArray(Array.from(s,x=>BigInt(x.charCodeAt(0))),line)}
     const data=collection(b,line).items;if(data.length>65536||data.some(v=>v<0n||v>255n))fail(line,'Invalid binary file');let content='';for(const v of data)content+=String.fromCharCode(Number(v));return storeFile(p,content,line)
    }
-   if(op===81){if(a<0n||a>1000n)fail(line,'Web sleep limit: 1000 ms');if(a!==0n){if(typeof SharedArrayBuffer==='undefined'||typeof Atomics==='undefined')fail(line,'Blocking sleep requires an isolated worker');Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,Number(a))}return 0n}
+   if(op===82){if(windowState)return 0n;const w=Number(b),h=Number(c);if(b<1n||c<1n||b>512n||c>512n||w*h>262144)fail(line,'Web graphics dimensions: 1–512 pixels');windowState={title:decoded(get(a)).slice(0,128),width:w,height:h,mode:null};return 1n}
+   if(op===83)return windowState?1n:0n;
+   if(op===85){const wasOpen=!!windowState;windowState=null;return wasOpen?1n:0n}
+   if(op===84||op===86){
+    if(!windowState)return 0n;
+    const w=windowState.width,h=windowState.height,mode=op===84?'rgb':'triangles';
+    if(windowState.mode&&windowState.mode!==mode)fail(line,'Do not mix graphics presenters');
+    const src=collection(a,line);if(src.kind!==4)fail(line,'Graphics requires an integer array');
+    let frame,size;
+    if(op===84){
+     if(b!==BigInt(w)||c!==BigInt(h)||src.items.length!==w*h)fail(line,'Invalid graphics framebuffer dimensions');
+     size=w*h*4;if(src.items.some(v=>v<0n||v>0xffffffn))fail(line,'Invalid RGB24 pixel');
+     const rgba=new Uint8Array(size);for(let i=0;i<src.items.length;i++){const v=Number(src.items[i]);rgba[i*4]=v>>>16;rgba[i*4+1]=(v>>>8)&255;rgba[i*4+2]=v&255;rgba[i*4+3]=255}
+     frame={kind:mode,width:w,height:h,rgba,title:windowState.title,delay:16};
+    }else{
+     if(b<0n||b>0xffffffn||src.items.length%9!==0||src.items.length>9000)fail(line,'Invalid triangle array or background');
+     for(let i=0;i<src.items.length;i++){const v=src.items[i];if(i%3===2?(v<0n||v>0xffffffn):(v< -1000n||v>1000n))fail(line,'Invalid triangle coordinate or RGB')}
+     const vertices=Int32Array.from(src.items,Number);size=vertices.byteLength;frame={kind:mode,width:w,height:h,vertices,background:Number(b),title:windowState.title,delay:16};
+    }
+    if(frames.length>=120||frameBytes+size>16*1024*1024)fail(line,'Graphics preview limit: 120 frames or 16 MiB');
+    frameBytes+=size;windowState.mode=mode;frames.push(frame);return 1n;
+   }
+   if(op===81){if(a<0n||a>1000n)fail(line,'Web sleep limit: 1000 ms');if(windowState){if(frames.length)frames[frames.length-1].delay=Math.max(16,Number(a));return 0n}if(a!==0n){if(typeof SharedArrayBuffer==='undefined'||typeof Atomics==='undefined')fail(line,'Blocking sleep requires an isolated worker');Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,Number(a))}return 0n}
    if(op===21)return intern(scalar(a,Number(b)));
    if(op===22||op===57){emit(decoded(get(a))+'\n');const text=bytes(lines[cursor++]??'');if(text.length>4096)fail(line,'Input limit reached');if(op===57){if(!/^[+-]?\d+$/.test(text))fail(line,'Invalid integer input');return checked(BigInt(text),line)}return intern(text)}
    if(op===50)return intern(String(a));
@@ -94,7 +116,7 @@ function execute(binary,options={}){
   },
   assertFail(line){throw Error('Line '+line+': Assertion failed')}
  }};
- try{new WebAssembly.Instance(module,imports).exports.run();return{output,steps,files:[...virtualFiles].map(([name,data])=>({name,bytes:Uint8Array.from(data,c=>c.charCodeAt(0))}))}}catch(e){e.output=output;throw e}
+ try{new WebAssembly.Instance(module,imports).exports.run();return{output,steps,frames,files:[...virtualFiles].map(([name,data])=>({name,bytes:Uint8Array.from(data,c=>c.charCodeAt(0))}))}}catch(e){e.output=output;e.frames=frames;throw e}
 }
 root.TripolWebHost={execute};if(typeof module!=='undefined')module.exports={execute};
 })(globalThis);

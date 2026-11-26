@@ -1,6 +1,6 @@
 {
-  "total": 45,
-  "passed": 45,
+  "total": 48,
+  "passed": 48,
   "failed": 0,
   "rows": [
     {
@@ -173,6 +173,18 @@
     },
     {
       "name": "binary value range",
+      "status": "pass"
+    },
+    {
+      "name": "graphics framebuffer",
+      "status": "pass"
+    },
+    {
+      "name": "graphics triangles",
+      "status": "pass"
+    },
+    {
+      "name": "live input explicitly unsupported",
       "status": "pass"
     },
     {

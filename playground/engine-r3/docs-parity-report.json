@@ -1,12 +1,12 @@
 {
-  "commit": "0cda3a15bd66ce843f527c73172a6a3662a9bba7",
+  "commit": "938c2682fe2645c7da79c3a4a4e013ffdb8c795d",
   "pagesRef": "origin/gh-pages",
   "pages": 52,
-  "total": 52,
+  "total": 60,
   "counts": {
-    "executed": 42,
-    "compiler-rejected": 6,
-    "compiled-only": 4
+    "executed": 50,
+    "compiler-rejected": 4,
+    "compiled-only": 6
   },
   "rows": [
     {
@@ -153,8 +153,8 @@
       "file": "docs/libraries/events.html",
       "index": 1,
       "source": "import tripol.events\n\nshow events.space()",
-      "status": "compiler-rejected",
-      "diagnostic": "Web Engine R3: library @std:events requires a browser adapter or native target"
+      "status": "compiled-only",
+      "reason": "Input, timing or platform-dependent example"
     },
     {
       "file": "docs/libraries/files.html",
@@ -167,8 +167,8 @@
       "file": "docs/libraries/game.html",
       "index": 1,
       "source": "import tripol.game\n\nshow game.wait(10)",
-      "status": "compiler-rejected",
-      "diagnostic": "Web Engine R3: library @std:game requires a browser adapter or native target"
+      "status": "compiled-only",
+      "reason": "Input, timing or platform-dependent example"
     },
     {
       "file": "docs/libraries/geometry.html",
@@ -208,6 +208,62 @@
     {
       "file": "docs/libraries/math.html",
       "index": 1,
+      "source": "show 7 + 3, 7 - 3, 7 * 3\nshow 7 / 3, 7 % 3",
+      "status": "executed",
+      "output": "10 4 21\n2 1\n"
+    },
+    {
+      "file": "docs/libraries/math.html",
+      "index": 2,
+      "source": "show -7 / 3, -7 % 3\nshow 7 / -3, 7 % -3\nshow -7 / -3, -7 % -3",
+      "status": "executed",
+      "output": "-2 -1\n-2 1\n2 -1\n"
+    },
+    {
+      "file": "docs/libraries/math.html",
+      "index": 3,
+      "source": "show 8 % 2 == 0\nshow 7 % 2 == 0",
+      "status": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "file": "docs/libraries/math.html",
+      "index": 4,
+      "source": "show 7.0 / 3.0\nshow float(7) / 3.0\nshow 2.5 * 4.0\nshow 10.5 + 2.3",
+      "status": "executed",
+      "output": "2.333333\n2.333333\n10.000000\n12.800000\n"
+    },
+    {
+      "file": "docs/libraries/math.html",
+      "index": 5,
+      "source": "show 2 + 3 * 4\nshow (2 + 3) * 4",
+      "status": "executed",
+      "output": "14\n20\n"
+    },
+    {
+      "file": "docs/libraries/math.html",
+      "index": 6,
+      "source": "show 7 == 7, 7 != 3\nshow 7 > 3, 7 < 3\nshow 7 >= 7, 3 <= 7\nshow 7 > 3 and 3 > 0\nshow true or false, not true",
+      "status": "executed",
+      "output": "true true\ntrue false\ntrue true\ntrue\ntrue false\n"
+    },
+    {
+      "file": "docs/libraries/math.html",
+      "index": 7,
+      "source": "score = 10\nscore += 5\nscore -= 2\nscore *= 3\nscore /= 2\nscore %= 4\nshow score",
+      "status": "executed",
+      "output": "3\n"
+    },
+    {
+      "file": "docs/libraries/math.html",
+      "index": 8,
+      "source": "a = 10\nb = 0\nif b != 0 {\n    show a / b\n} else {\n    show \"Cannot divide by zero\"\n}",
+      "status": "executed",
+      "output": "Cannot divide by zero\n"
+    },
+    {
+      "file": "docs/libraries/math.html",
+      "index": 9,
       "source": "import tripol.math\n\nshow math.power(2, 10)",
       "status": "executed",
       "output": "1024\n"
