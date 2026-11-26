@@ -1608,6 +1608,10 @@ func generateCodeMode(fs []fn, ss []stmt, target string, opt bool, live map[stri
 }
 func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool, turbo ...bool) []byte {
 	a := generateCode(fs, ss, target, opt, live, turbo...)
+ return linkCode(a)
+}
+func linkCode(a *asm)[]byte {
+ target:=a.target
 	a.rt()
 	a.dialogTemplate()
 	// First-use order is deterministic and linear in the number of literals.
@@ -1628,6 +1632,7 @@ func generate(fs []fn, ss []stmt, target string, opt bool, live map[string]bool,
 func cli() {
 	diagnosticOptions()
 	args := os.Args[1:]
+ if len(args)>0&&args[0]=="compile-report"{compileReportCLI(args[1:]);return}
  if len(args)>0&&args[0]=="shell"{shellCLI(args[1:]);return}
 	if len(args)>0&&args[0]=="test"{projectTestCLI(args[1:]);return}
 	if len(args)>0&&args[0]=="fmt"{formatCLI(args[1:]);return}
@@ -1646,7 +1651,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {
