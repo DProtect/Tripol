@@ -27,7 +27,14 @@ jobs:
         run: |
           mkdir -p web-dist
           GOOS=js GOARCH=wasm go build -trimpath -o web-dist/tripol-compiler.wasm ./cmd/tripol-web
-          cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" web-dist/wasm_exec.js
+          goroot="$(go env GOROOT)"
+          if [ -f "$goroot/lib/wasm/wasm_exec.js" ]; then
+            cp "$goroot/lib/wasm/wasm_exec.js" web-dist/wasm_exec.js
+          else
+            cp "$goroot/misc/wasm/wasm_exec.js" web-dist/wasm_exec.js
+          fi
+          test -s web-dist/wasm_exec.js
+          test -s web-dist/tripol-compiler.wasm
       - name: Test real compiler and generated WebAssembly
         run: |
           node --experimental-global-webcrypto <<'JS'
@@ -61,6 +68,9 @@ jobs:
             console.log('9 WASM checks passed');process.exit(0)
           })().catch(e=>{console.error(e);process.exit(1)})
           JS
+      - name: Mark verified engine
+        run: |
+          printf '{"verified":true,"abi":1,"commit":"%s"}\n' "$GITHUB_SHA" > web-dist/manifest.json
       - uses: actions/upload-artifact@v4
         with:
           name: tripol-web-engine
