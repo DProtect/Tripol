@@ -96,14 +96,23 @@ function livePlayground(source){if(source.length>32768){toast(translate('Source 
 function livePaint(p){const frag=document.createDocumentFragment();for(const t of docsTokens(p.editor.value)){if(t.k==='plain')frag.append(document.createTextNode(t.v));else{const el=liveElement('span','doc-tok doc-tok-'+t.k,t.v);frag.append(el)}}frag.append(document.createTextNode('\n'));p.highlight.replaceChildren(frag);p.stack.classList.add('painted');liveScroll(p)}
 function liveScroll(p){p.highlight.scrollTop=p.editor.scrollTop;p.highlight.scrollLeft=p.editor.scrollLeft}
 function liveStop(p,message=true){if(!liveJob||liveJob.panel!==p)return;const j=liveJob;liveJob=null;clearTimeout(j.timer);j.worker.terminate();p.run.disabled=false;p.stop.hidden=true;if(message)liveStatus(p,'Stopped','Detenido')}
-function liveRun(p){
+function liveFiles(p,files=[]){
+ p.files.replaceChildren();p.files.hidden=true;
+ for(const file of files.slice(0,64)){
+  if(typeof file.name!=='string'||!(file.bytes instanceof Uint8Array))continue;
+  const row=liveElement('div','doc-live-file-row');row.append(liveElement('span','',file.name+' · '+file.bytes.length+' B'));
+  row.append(liveButton('Download','Descargar',()=>{const u=URL.createObjectURL(new Blob([file.bytes],{type:file.name.endsWith('.wav')?'audio/wav':'application/octet-stream'}));const a=document.createElement('a');a.href=u;a.download=file.name.split('/').at(-1);a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}));p.files.append(row)
+ }
+ p.files.hidden=!p.files.children.length
+}
+function liveRun(p){liveFiles(p);
  if(liveJob)liveStop(liveJob.panel);
  const source=p.editor.value;
  if(new TextEncoder().encode(source).length>32768||new TextEncoder().encode(p.input.value).length>32768){liveStatus(p,'Input exceeds 32 KiB','La entrada supera 32 KiB','error');return}
  p.output.textContent='';p.run.disabled=true;p.stop.hidden=false;liveStatus(p,'Compiling with Web Engine R3…','Compilando con Web Engine R3…');
  let worker;try{worker=new Worker(new URL(root+'../playground/web-worker-r3.1.js',location.href))}catch(e){p.run.disabled=false;p.stop.hidden=true;liveStatus(p,'Compiler worker unavailable','Worker del compilador no disponible','error');p.output.textContent=String(e.message||e);return}
  const job={panel:p,worker,timer:null};liveJob=job;
- worker.onmessage=({data})=>{if(liveJob!==job)return;liveStop(p,false);p.output.textContent=(data.output||'')+(data.ok?'':'\n'+translate('Error: ','Error: ')+String(data.error||'Unknown error'));if(data.ok){const time=Number(data.compileMs||0).toFixed(1)+' ms'+(data.build?' · '+data.build.slice(0,7):'');liveStatus(p,'WASM R3 · compiled in '+time,'WASM R3 · compilado en '+time,'ok')}else liveStatus(p,'Compiler/runtime diagnostic · no fallback','Diagnóstico del compilador/runtime · sin sustitución','error')};
+ worker.onmessage=({data})=>{if(liveJob!==job)return;liveStop(p,false);p.output.textContent=(data.output||'')+(data.ok?'':'\n'+translate('Error: ','Error: ')+String(data.error||'Unknown error'));if(data.ok){if(Array.isArray(data.files))liveFiles(p,data.files);const time=Number(data.compileMs||0).toFixed(1)+' ms'+(data.build?' · '+data.build.slice(0,7):'');liveStatus(p,'WASM R3 · compiled in '+time,'WASM R3 · compilado en '+time,'ok')}else liveStatus(p,'Compiler/runtime diagnostic · no fallback','Diagnóstico del compilador/runtime · sin sustitución','error')};
  worker.onerror=()=>{if(liveJob!==job)return;liveStop(p,false);liveStatus(p,'Web Engine unavailable','Web Engine no disponible','error');p.output.textContent=translate('The compiler worker could not start. Open in Playground or try again.','No se pudo iniciar el compilador. Abre en Playground o vuelve a intentar.')};
  job.timer=setTimeout(()=>{if(liveJob!==job)return;liveStop(p,false);liveStatus(p,'Execution time limit (15 s)','Límite de ejecución (15 s)','error')},15000);
  try{worker.postMessage({source,input:p.input.value,compileOnly:false})}catch(e){liveStop(p,false);liveStatus(p,'Could not send source','No se pudo enviar el código','error');p.output.textContent=String(e.message||e)}
@@ -113,13 +122,13 @@ function makeLivePanel(source,original,trigger){
  const toolbar=liveElement('div','doc-live-toolbar');const filename=liveElement('span','doc-live-file','example.tri');const actions=liveElement('div','doc-live-tools');toolbar.append(filename,actions);
  p.run=liveButton('▶ Run','▶ Ejecutar',()=>liveRun(p),'doc-live-run');
  p.stop=liveButton('Stop','Detener',()=>liveStop(p));p.stop.hidden=true;
- const reset=liveButton('Reset','Restaurar',()=>{liveStop(p,false);p.editor.value=p.original;p.input.value='';p.output.textContent='';livePaint(p);liveStatus(p,'Ready','Listo')});
+ const reset=liveButton('Reset','Restaurar',()=>{liveStop(p,false);p.editor.value=p.original;p.input.value='';liveFiles(p);p.output.textContent='';livePaint(p);liveStatus(p,'Ready','Listo')});
  const open=liveButton('Playground ↗','Playground ↗',()=>livePlayground(p.editor.value));
  const close=liveButton('Close','Cerrar',()=>{liveStop(p);panel.hidden=true;source.hidden=false;trigger.setAttribute('aria-expanded','false');trigger.focus()});
  actions.append(p.run,p.stop,reset,open,close);
  p.stack=liveElement('div','doc-live-stack');p.highlight=liveElement('pre','doc-live-highlight');p.highlight.setAttribute('aria-hidden','true');p.editor=liveElement('textarea','doc-live-editor');p.editor.spellcheck=false;p.editor.autocapitalize='off';p.editor.setAttribute('autocorrect','off');p.editor.setAttribute('wrap','off');p.editor.maxLength=32768;p.editor.value=original;p.editor.setAttribute('aria-label',translate('Editable TRIPOL example','Ejemplo TRIPOL editable'));p.stack.append(p.highlight,p.editor);
  const inputBox=liveElement('details','doc-live-input');inputBox.append(liveLabel(liveElement('summary','doc-live-label'),'Optional input','Entrada opcional'));p.input=liveElement('textarea','doc-live-stdin');p.input.rows=2;p.input.maxLength=32768;inputBox.append(p.input);inputBox.open=/\binput(?:_int)?\s*\(/.test(original);
- const consoleBox=liveElement('div','doc-live-console');p.status=liveElement('div','doc-live-status');p.status.setAttribute('role','status');p.output=liveElement('pre','doc-live-output');p.output.setAttribute('aria-live','polite');consoleBox.append(p.status,p.output);
+ const consoleBox=liveElement('div','doc-live-console');p.status=liveElement('div','doc-live-status');p.status.setAttribute('role','status');p.output=liveElement('pre','doc-live-output');p.output.setAttribute('aria-live','polite');p.files=liveElement('div','doc-live-files');p.files.hidden=true;consoleBox.append(p.status,p.output,p.files);
  const help=liveLabel(liveElement('p','doc-live-help'),'Runs with the real Web Engine R3. Unsupported browser features report a compiler error.','Ejecuta con Web Engine R3 real. Las funciones no compatibles muestran el error del compilador.');
  panel.append(toolbar,p.stack,inputBox,consoleBox,help);source.after(panel);livePanels.push(p);
  p.editor.addEventListener('input',()=>{livePaint(p);if(/\binput(?:_int)?\s*\(/.test(p.editor.value))inputBox.open=true});
