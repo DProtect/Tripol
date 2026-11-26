@@ -6,7 +6,7 @@
 
 **Simple by design. Native by nature.**
 
-[Visit the website](https://tripollas.github.io/Tripol/) · [Documentation](https://tripollas.github.io/Tripol/docs/) · [Compiler source](https://github.com/Tripollas/Tripol/tree/main)
+[Visit the website](https://tripollas.github.io/Tripol/) · [Documentation](https://tripollas.github.io/Tripol/docs/) · [Playground](https://tripollas.github.io/Tripol/playground/) · [Compiler source](https://github.com/Tripollas/Tripol/tree/main)
 
 </div>
 
@@ -35,6 +35,12 @@ The compiler and standard library source code live in [`main`](https://github.co
 | Integrity | [SHA-256 checksums](https://github.com/Tripollas/Tripol/releases/download/v0.26.0/SHA256SUMS.txt) |
 
 OVERDRIVE is a pre-release. The previous v0.24 downloads remain archived in downloads/. The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
+
+## Playground R1
+
+[Open the interactive playground](https://tripollas.github.io/Tripol/playground/). It uses the official monochrome website styles and runs 20 editable examples or custom code in a local, bounded Web Worker. Includes console output, input, stop, reset, draft persistence, copy and `.tri` download. R1 interprets an educational subset, not the native compiler; imports, files, networking and graphics are unavailable. No server or external service is required.
+
+Run `node playground/test.cjs` to check 20 example outputs and eight error/limit cases. Serve the site over HTTP(S) to use the browser Worker.
 
 ## Local development
 
