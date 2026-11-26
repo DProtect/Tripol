@@ -94,7 +94,7 @@ function execute(binary,options={}){
   },
   assertFail(line){throw Error('Line '+line+': Assertion failed')}
  }};
- try{new WebAssembly.Instance(module,imports).exports.run();return{output,steps}}catch(e){e.output=output;throw e}
+ try{new WebAssembly.Instance(module,imports).exports.run();return{output,steps,files:[...virtualFiles].map(([name,data])=>({name,bytes:Uint8Array.from(data,c=>c.charCodeAt(0))}))}}catch(e){e.output=output;throw e}
 }
 root.TripolWebHost={execute};if(typeof module!=='undefined')module.exports={execute};
 })(globalThis);
