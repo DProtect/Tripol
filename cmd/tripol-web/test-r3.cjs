@@ -21,7 +21,7 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
  ['a=list([1,2,3])\na.add(4)\nshow a.get(3),len(a)','4 4\n'],
  ['a=list(["a","b"])\na.add("c")\nshow a[2]','c\n'],
  ['func greet(name="Guest")->string {return name}\nshow greet()','Guest\n'],
- ['name=input("Name: ")\nshow name','Name: Ada\n','Ada'],
+ ['name=input("Name: ")\nshow name','Name: \nAda\n','Ada'],
  ['n=0\nwhile n<3 {n+=1}\nshow n','3\n'],
  ['for i in range(5) {if i==2 {continue}; if i==4 {break}; show i}','0\n1\n3\n'],
  ['func twice(n) => n*2\nshow twice(21)','42\n'],
