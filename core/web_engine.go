@@ -1,9 +1,10 @@
 package core
 
-// WEB ENGINE R1: native frontend + an independent, bounded WebAssembly target.
+// WEB ENGINE R2: native frontend + an independent, bounded WebAssembly target.
 // Numeric overflow and console I/O are checked by the browser host ABI.
 import (
  "fmt"
+ "encoding/json"
 )
 
 type webCode []byte
@@ -18,10 +19,10 @@ func (b *webCode) section(id byte,p webCode){b.raw(id);b.u(uint32(len(p)));*b=ap
 type webLocal struct { index uint32; typ string }
 type webSig struct { args []byte; results []byte }
 type webFunction struct { f fn; index uint32; typ uint32 }
-type webModule struct { funcs map[string]webFunction; order []webFunction; types []webSig; bodies []webCode; current int }
+type webModule struct { funcs map[string]webFunction; order []webFunction; types []webSig; bodies []webCode; current int; strings []string; stringIDs map[string]int64 }
 type webEmitter struct { module *webModule; code webCode; scopes []map[string]webLocal; locals,params uint32; line int; labels []string; result string }
-func webReject(format string,args ...any){die("Web Engine R1: "+format,args...)}
-func webScalar(t string)bool{return t=="int"||t=="bool"}
+func webReject(format string,args ...any){die("Web Engine R2: "+format,args...)}
+func webScalar(t string)bool{return t=="int"||t=="bool"||t=="string"}
 func (m *webModule) signature(a,r []byte)uint32{m.types=append(m.types,webSig{a,r});return uint32(len(m.types)-1)}
 func (m *webModule) find(name string)webFunction{
  if v,ok:=m.funcs[name];ok{return v};webReject("unsupported function %s",name);return webFunction{}
@@ -29,7 +30,7 @@ func (m *webModule) find(name string)webFunction{
 func (m *webModule) declare(f fn)webFunction{
  if v,ok:=m.funcs[f.name];ok{return v}
  if f.record||!webScalar(f.ret){webReject("function %s requires a scalar return type",f.name)}
- args:=make([]byte,len(f.args));for i,a:=range f.args{if !webScalar(a.typ){webReject("parameter %s requires int or bool",a.name)};args[i]=0x7e}
+ args:=make([]byte,len(f.args));for i,a:=range f.args{if !webScalar(a.typ){webReject("parameter %s requires int, bool or string",a.name)};args[i]=0x7e}
  v:=webFunction{f:f,index:4+uint32(len(m.order)),typ:m.signature(args,[]byte{0x7e})};m.funcs[f.name]=v;m.order=append(m.order,v);return v
 }
 func (e *webEmitter) push(){e.scopes=append(e.scopes,map[string]webLocal{})}
@@ -38,24 +39,37 @@ func (e *webEmitter) get(n string)(webLocal,bool){for i:=len(e.scopes)-1;i>=0;i-
 func (e *webEmitter) local(n,t string)webLocal{v:=webLocal{e.locals,t};e.locals++;e.scopes[len(e.scopes)-1][n]=v;return v}
 func (e *webEmitter) tick(){e.code.i32(int64(e.line));e.code.inst(0x10,0)}
 func (e *webEmitter) checked(op int64,a,b *expr)string{e.code.i32(op);ta:=e.expression(a);tb:=e.expression(b);if ta!="int"||tb!="int"{webReject("integer arithmetic required at line %d",e.line)};e.code.i32(int64(e.line));e.code.inst(0x10,1);return "int"}
+func (m *webModule) stringID(s string)int64{
+ if id,ok:=m.stringIDs[s];ok{return id}
+ id:=int64(len(m.strings));m.strings=append(m.strings,s);m.stringIDs[s]=id;return id
+}
 func (e *webEmitter) expression(x *expr)string{
  if x==nil{webReject("missing expression")};switch x.op{
  case "int","bool":e.code.i64(x.n);return x.op
+ case "string":e.code.i64(e.module.stringID(x.s));return "string"
  case "var":v,ok:=e.get(x.s);if !ok{webReject("unknown variable %s",x.s)};e.code.inst(0x20,v.index);return v.typ
  case "un":
   if x.s=="-"{return e.checked(1,&expr{op:"int"},x.args[0])}
   if x.s=="!"{if e.expression(x.args[0])!="bool"{webReject("expected bool")};e.code.raw(0x50,0xad);return "bool"}
  case "bin":
   switch x.s{
-  case "+","-","*","/","%":return e.checked(map[string]int64{"+":0,"-":1,"*":2,"/":3,"%":4}[x.s],x.args[0],x.args[1])
+  case "+":
+   // Evaluate operands once, left to right; keep them in unnamed temporary locals.
+   a:=e.expression(x.args[0]);left:=e.locals;e.locals++;e.code.inst(0x21,left)
+   b:=e.expression(x.args[1]);right:=e.locals;e.locals++;e.code.inst(0x21,right)
+   if a!=b||(a!="int"&&a!="string"){webReject("unsupported addition at line %d",e.line)}
+   operation:=int64(0);if a=="string"{operation=5}
+   e.code.i32(operation);e.code.inst(0x20,left);e.code.inst(0x20,right);e.code.i32(int64(e.line));e.code.inst(0x10,1);return a
+  case "-","*","/","%":return e.checked(map[string]int64{"-":1,"*":2,"/":3,"%":4}[x.s],x.args[0],x.args[1])
   case "==","!=","<",">","<=",">=":
-   a:=e.expression(x.args[0]);b:=e.expression(x.args[1]);if a!=b{webReject("comparison type mismatch")};e.code.raw(map[string]byte{"==":0x51,"!=":0x52,"<":0x53,">":0x55,"<=":0x57,">=":0x59}[x.s],0xad);return "bool"
+   a:=e.expression(x.args[0]);b:=e.expression(x.args[1]);if a!=b{webReject("comparison type mismatch")};if a=="string"&&x.s!="=="&&x.s!="!="{webReject("string ordering not supported")};e.code.raw(map[string]byte{"==":0x51,"!=":0x52,"<":0x53,">":0x55,"<=":0x57,">=":0x59}[x.s],0xad);return "bool"
   case "&&","||":
    if e.expression(x.args[0])!="bool"{webReject("expected bool")};e.code.raw(0x50,0x04,0x7e)
    if x.s=="&&"{e.code.i64(0);e.code.raw(0x05);if e.expression(x.args[1])!="bool"{webReject("expected bool")}}else{if e.expression(x.args[1])!="bool"{webReject("expected bool")};e.code.raw(0x05);e.code.i64(1)}
    e.code.raw(0x0b);return "bool"
   }
  case "call":
+  if x.s=="len"&&len(x.args)==1{e.code.i32(6);if e.expression(x.args[0])!="string"{webReject("len currently supports strings only")};e.code.i64(0);e.code.i32(int64(e.line));e.code.inst(0x10,1);return "int"}
   f:=e.module.find(x.s);if len(x.args)>len(f.f.args){webReject("wrong argument count")};for i,a:=range f.f.args{var arg *expr;if i<len(x.args){arg=x.args[i]}else if i<len(f.f.defaults){arg=f.f.defaults[i]};if arg==nil||e.expression(arg)!=a.typ{webReject("invalid argument for %s",x.s)}}
   e.code.inst(0x10,f.index);return f.f.ret
  }
@@ -68,7 +82,7 @@ func (e *webEmitter) block(ss []stmt,nested bool){if nested{e.push();defer e.pop
  case "decl","assign":
   t:=e.expression(s.e);v,ok:=e.get(s.name);if s.op=="decl"||!ok{v=e.local(s.name,t)};if v.typ!=t{webReject("assignment type mismatch")};e.code.inst(0x21,v.index)
  case "show","showmany":
-  args:=[]*expr{s.e};if s.op=="showmany"{args=s.e.args};for i,a:=range args{t:=e.expression(a);kind:=int64(0);if t=="bool"{kind=1};e.code.i32(kind);last:=int64(0);if i==len(args)-1{last=1};e.code.i32(last);e.code.inst(0x10,2)}
+  args:=[]*expr{s.e};if s.op=="showmany"{args=s.e.args};for i,a:=range args{t:=e.expression(a);kind:=int64(0);if t=="bool"{kind=1}else if t=="string"{kind=2};e.code.i32(kind);last:=int64(0);if i==len(args)-1{last=1};e.code.i32(last);e.code.inst(0x10,2)}
  case "expr":e.expression(s.e);e.code.raw(0x1a)
  case "return":if e.result==""||e.expression(s.e)!=e.result{webReject("invalid return")};e.code.raw(0x0f)
  case "assert":if e.expression(s.e)!="bool"{webReject("expected bool")};e.code.raw(0x50);e.begin(0x04,"if");e.code.i32(int64(s.line));e.code.inst(0x10,3);e.end()
@@ -86,14 +100,14 @@ func (e *webEmitter) block(ss []stmt,nested bool){if nested{e.push();defer e.pop
 func (e *webEmitter) body()webCode{var b webCode;n:=e.locals-e.params;if n==0{b.u(0)}else{b.u(1);b.u(n);b.raw(0x7e)};b=append(b,e.code...);b.raw(0x0b);return b}
 
 // CompileWeb validates the program with the production frontend, then emits
-// a standard WASM module. R1 accepts int/bool, functions, control flow and
+// a standard WASM module. R2 accepts int/bool/string, functions, control flow and
 // selected pure integer stdlib functions. Unsupported constructs are rejected.
 func CompileWeb(source string)(out []byte,err error){
  defer func(){if v:=recover();v!=nil{out=nil;err=fmt.Errorf("%v",v)}}()
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
  imports,_,_:=parseUnit(source);for _,n:=range imports{if n!="@std:math"{webReject("only tripol.math is supported by this target")}}
  fs,ss:=parse(source);validateCode(fs,ss,"linux")
- m:=&webModule{funcs:map[string]webFunction{}}
+ m:=&webModule{funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{}}
  m.signature([]byte{0x7f},nil) // tick(line)
  m.signature([]byte{0x7f,0x7e,0x7e,0x7f},[]byte{0x7e}) // checked arithmetic
  m.signature([]byte{0x7e,0x7f,0x7f},nil) // show
@@ -113,5 +127,6 @@ func CompileWeb(source string)(out []byte,err error){
  var funcs webCode;funcs.u(uint32(len(m.order)+1));for _,f:=range m.order{funcs.u(f.typ)};funcs.u(mainType);module.section(3,funcs)
  var exports webCode;exports.u(1);exports.name("run");exports.raw(0);exports.u(mainIndex);module.section(7,exports)
  var code webCode;code.u(uint32(len(m.bodies)));for _,b:=range m.bodies{code.u(uint32(len(b)));code.raw(b...)};module.section(10,code)
+ var literals webCode;literals.name("tripol.strings");encoded,encodeErr:=json.Marshal(m.strings);if encodeErr!=nil{return nil,encodeErr};literals.raw(encoded...);module.section(0,literals)
  return []byte(module),nil
 }
