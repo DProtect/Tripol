@@ -1,0 +1,609 @@
+{
+  "total": 100,
+  "counts": {
+    "match": 97,
+    "mismatch": 3
+  },
+  "rows": [
+    {
+      "name": "Hello world",
+      "status": "match",
+      "native": "Hello, TRIPOL!\n",
+      "wasm": "Hello, TRIPOL!\n"
+    },
+    {
+      "name": "Variables",
+      "status": "match",
+      "native": "TRIPOL 27\n",
+      "wasm": "TRIPOL 27\n"
+    },
+    {
+      "name": "Arithmetic",
+      "status": "match",
+      "native": "14\n20\n-2 -1\n",
+      "wasm": "14\n20\n-2 -1\n"
+    },
+    {
+      "name": "Constants",
+      "status": "match",
+      "native": "50 100\n",
+      "wasm": "50 100\n"
+    },
+    {
+      "name": "Booleans",
+      "status": "match",
+      "native": "true\nfalse\ntrue\n",
+      "wasm": "true\nfalse\ntrue\n"
+    },
+    {
+      "name": "Conditionals",
+      "status": "match",
+      "native": "Passed\n",
+      "wasm": "Passed\n"
+    },
+    {
+      "name": "Range loop",
+      "status": "match",
+      "native": "1\n2\n3\n4\n5\n",
+      "wasm": "1\n2\n3\n4\n5\n"
+    },
+    {
+      "name": "While loop",
+      "status": "match",
+      "native": "3\n2\n1\nGo!\n",
+      "wasm": "3\n2\n1\nGo!\n"
+    },
+    {
+      "name": "Repeat",
+      "status": "match",
+      "native": "10\n",
+      "wasm": "10\n"
+    },
+    {
+      "name": "Functions",
+      "status": "match",
+      "native": "42\n",
+      "wasm": "42\n"
+    },
+    {
+      "name": "Short function",
+      "status": "match",
+      "native": "81\n",
+      "wasm": "81\n"
+    },
+    {
+      "name": "Factorial",
+      "status": "match",
+      "native": "720\n",
+      "wasm": "720\n"
+    },
+    {
+      "name": "Fibonacci",
+      "status": "match",
+      "native": "55\n",
+      "wasm": "55\n"
+    },
+    {
+      "name": "Arrays",
+      "status": "match",
+      "native": "20\n3 60\n",
+      "wasm": "20\n3 60\n"
+    },
+    {
+      "name": "Dynamic arrays",
+      "status": "match",
+      "native": "[0, 1, 4, 9, 16]\n",
+      "wasm": "[0, 1, 4, 9, 16]\n"
+    },
+    {
+      "name": "Array updates",
+      "status": "match",
+      "native": "12\n",
+      "wasm": "12\n"
+    },
+    {
+      "name": "Loop control",
+      "status": "match",
+      "native": "0\n1\n3\n4\n",
+      "wasm": "0\n1\n3\n4\n"
+    },
+    {
+      "name": "Console input",
+      "status": "mismatch",
+      "native": "Your name: \nHello Ada\n",
+      "wasm": "Your name: Hello Ada\n"
+    },
+    {
+      "name": "Assertions",
+      "status": "match",
+      "native": "Test passed\n",
+      "wasm": "Test passed\n"
+    },
+    {
+      "name": "Prime checker",
+      "status": "match",
+      "native": "2\n3\n5\n7\n11\n",
+      "wasm": "2\n3\n5\n7\n11\n"
+    },
+    {
+      "name": "String interpolation",
+      "status": "match",
+      "native": "Hello TRIPOL! Score: 40\n",
+      "wasm": "Hello TRIPOL! Score: 40\n"
+    },
+    {
+      "name": "Array iteration",
+      "status": "match",
+      "native": "10\n20\n30\n",
+      "wasm": "10\n20\n30\n"
+    },
+    {
+      "name": "Indexed iteration",
+      "status": "match",
+      "native": "0: 7\n1: 8\n2: 9\n",
+      "wasm": "0: 7\n1: 8\n2: 9\n"
+    },
+    {
+      "name": "Even or odd",
+      "status": "match",
+      "native": "false\n",
+      "wasm": "false\n"
+    },
+    {
+      "name": "Absolute value",
+      "status": "match",
+      "native": "42\n",
+      "wasm": "42\n"
+    },
+    {
+      "name": "Maximum of three",
+      "status": "match",
+      "native": "20\n",
+      "wasm": "20\n"
+    },
+    {
+      "name": "Minimum of three",
+      "status": "match",
+      "native": "-11\n",
+      "wasm": "-11\n"
+    },
+    {
+      "name": "Triangle area",
+      "status": "match",
+      "native": "42\n",
+      "wasm": "42\n"
+    },
+    {
+      "name": "Rectangle area",
+      "status": "match",
+      "native": "40\n26\n",
+      "wasm": "40\n26\n"
+    },
+    {
+      "name": "Integer power",
+      "status": "match",
+      "native": "81\n",
+      "wasm": "81\n"
+    },
+    {
+      "name": "Greatest common divisor",
+      "status": "match",
+      "native": "6\n",
+      "wasm": "6\n"
+    },
+    {
+      "name": "Least common multiple",
+      "status": "match",
+      "native": "36\n",
+      "wasm": "36\n"
+    },
+    {
+      "name": "Arithmetic progression",
+      "status": "match",
+      "native": "3\n7\n11\n15\n19\n",
+      "wasm": "3\n7\n11\n15\n19\n"
+    },
+    {
+      "name": "Geometric progression",
+      "status": "match",
+      "native": "2\n6\n18\n54\n162\n",
+      "wasm": "2\n6\n18\n54\n162\n"
+    },
+    {
+      "name": "Integer square root",
+      "status": "match",
+      "native": "8\n",
+      "wasm": "8\n"
+    },
+    {
+      "name": "Digit sum",
+      "status": "match",
+      "native": "15\n",
+      "wasm": "15\n"
+    },
+    {
+      "name": "Binary digit count",
+      "status": "match",
+      "native": "6\n",
+      "wasm": "6\n"
+    },
+    {
+      "name": "Pythagorean triple",
+      "status": "match",
+      "native": "true\n",
+      "wasm": "true\n"
+    },
+    {
+      "name": "Sum from 1 to N",
+      "status": "match",
+      "native": "55\n",
+      "wasm": "55\n"
+    },
+    {
+      "name": "Sum of squares",
+      "status": "match",
+      "native": "55\n",
+      "wasm": "55\n"
+    },
+    {
+      "name": "Count divisors",
+      "status": "match",
+      "native": "8\n",
+      "wasm": "8\n"
+    },
+    {
+      "name": "Perfect number",
+      "status": "match",
+      "native": "true\n",
+      "wasm": "true\n"
+    },
+    {
+      "name": "Reverse digits",
+      "status": "match",
+      "native": "4321\n",
+      "wasm": "4321\n"
+    },
+    {
+      "name": "Numeric palindrome",
+      "status": "match",
+      "native": "true\n",
+      "wasm": "true\n"
+    },
+    {
+      "name": "Collatz sequence",
+      "status": "match",
+      "native": "6\n3\n10\n5\n16\n8\n4\n2\n1\n",
+      "wasm": "6\n3\n10\n5\n16\n8\n4\n2\n1\n"
+    },
+    {
+      "name": "Linear search",
+      "status": "match",
+      "native": "2\n",
+      "wasm": "2\n"
+    },
+    {
+      "name": "Binary search",
+      "status": "match",
+      "native": "3\n",
+      "wasm": "3\n"
+    },
+    {
+      "name": "Bubble sort",
+      "status": "match",
+      "native": "[1, 2, 4, 5]\n",
+      "wasm": "[1, 2, 4, 5]\n"
+    },
+    {
+      "name": "Selection sort",
+      "status": "match",
+      "native": "[1, 2, 7, 9]\n",
+      "wasm": "[1, 2, 7, 9]\n"
+    },
+    {
+      "name": "Insertion sort",
+      "status": "match",
+      "native": "[1, 2, 3, 4]\n",
+      "wasm": "[1, 2, 3, 4]\n"
+    },
+    {
+      "name": "Prefix sums",
+      "status": "match",
+      "native": "[3, 4, 8, 10]\n",
+      "wasm": "[3, 4, 8, 10]\n"
+    },
+    {
+      "name": "Maximum subarray",
+      "status": "match",
+      "native": "6\n",
+      "wasm": "6\n"
+    },
+    {
+      "name": "Run length count",
+      "status": "match",
+      "native": "3\n",
+      "wasm": "3\n"
+    },
+    {
+      "name": "Array sum",
+      "status": "match",
+      "native": "24\n",
+      "wasm": "24\n"
+    },
+    {
+      "name": "Integer average",
+      "status": "match",
+      "native": "9\n",
+      "wasm": "9\n"
+    },
+    {
+      "name": "Find largest item",
+      "status": "match",
+      "native": "8\n",
+      "wasm": "8\n"
+    },
+    {
+      "name": "Find smallest item",
+      "status": "match",
+      "native": "-8\n",
+      "wasm": "-8\n"
+    },
+    {
+      "name": "Count occurrences",
+      "status": "match",
+      "native": "3\n",
+      "wasm": "3\n"
+    },
+    {
+      "name": "Reverse array",
+      "status": "match",
+      "native": "[4, 3, 2, 1]\n",
+      "wasm": "[4, 3, 2, 1]\n"
+    },
+    {
+      "name": "Array copy",
+      "status": "match",
+      "native": "[3, 5, 7]\n",
+      "wasm": "[3, 5, 7]\n"
+    },
+    {
+      "name": "Dot product",
+      "status": "match",
+      "native": "32\n",
+      "wasm": "32\n"
+    },
+    {
+      "name": "Elementwise addition",
+      "status": "match",
+      "native": "[5, 7, 9]\n",
+      "wasm": "[5, 7, 9]\n"
+    },
+    {
+      "name": "Scale vector",
+      "status": "match",
+      "native": "[6, 12, 18]\n",
+      "wasm": "[6, 12, 18]\n"
+    },
+    {
+      "name": "Histogram",
+      "status": "match",
+      "native": "[1, 2, 3]\n",
+      "wasm": "[1, 2, 3]\n"
+    },
+    {
+      "name": "Matrix indexing",
+      "status": "match",
+      "native": "6\n15\n",
+      "wasm": "6\n15\n"
+    },
+    {
+      "name": "Diagonal sum",
+      "status": "match",
+      "native": "15\n",
+      "wasm": "15\n"
+    },
+    {
+      "name": "Array rotation",
+      "status": "match",
+      "native": "[2, 3, 4, 1]\n",
+      "wasm": "[2, 3, 4, 1]\n"
+    },
+    {
+      "name": "Count positive values",
+      "status": "match",
+      "native": "2\n",
+      "wasm": "2\n"
+    },
+    {
+      "name": "Join strings",
+      "status": "match",
+      "native": "Hello TRIPOL\n",
+      "wasm": "Hello TRIPOL\n"
+    },
+    {
+      "name": "String length",
+      "status": "match",
+      "native": "6\n",
+      "wasm": "6\n"
+    },
+    {
+      "name": "Text equality",
+      "status": "match",
+      "native": "true\ntrue\n",
+      "wasm": "true\ntrue\n"
+    },
+    {
+      "name": "Escaped quotes",
+      "status": "match",
+      "native": "Hello \"world\"\n",
+      "wasm": "Hello \"world\"\n"
+    },
+    {
+      "name": "Escaped braces",
+      "status": "match",
+      "native": "{score} = 42\n",
+      "wasm": "{score} = 42\n"
+    },
+    {
+      "name": "Text banner",
+      "status": "match",
+      "native": "********\nTRIPOL\n********\n",
+      "wasm": "********\nTRIPOL\n********\n"
+    },
+    {
+      "name": "Numbered labels",
+      "status": "match",
+      "native": "Item 1\nItem 2\nItem 3\n",
+      "wasm": "Item 1\nItem 2\nItem 3\n"
+    },
+    {
+      "name": "Greeting function",
+      "status": "match",
+      "native": "Hello Ada\n",
+      "wasm": "Hello Ada\n"
+    },
+    {
+      "name": "Two inputs",
+      "status": "mismatch",
+      "native": "Name: \nCity: \nAda from Bogota\n",
+      "wasm": "Name: City: Ada from Bogota\n"
+    },
+    {
+      "name": "Boolean interpolation",
+      "status": "match",
+      "native": "Active: true\n",
+      "wasm": "Active: true\n"
+    },
+    {
+      "name": "Temperature conversion",
+      "status": "match",
+      "native": "68\n",
+      "wasm": "68\n"
+    },
+    {
+      "name": "Function composition",
+      "status": "match",
+      "native": "12\n",
+      "wasm": "12\n"
+    },
+    {
+      "name": "Boolean function",
+      "status": "match",
+      "native": "true\n",
+      "wasm": "true\n"
+    },
+    {
+      "name": "Recursive countdown",
+      "status": "match",
+      "native": "8\n",
+      "wasm": "8\n"
+    },
+    {
+      "name": "Recursive power",
+      "status": "match",
+      "native": "1024\n",
+      "wasm": "1024\n"
+    },
+    {
+      "name": "Return branches",
+      "status": "match",
+      "native": "-1 0 1\n",
+      "wasm": "-1 0 1\n"
+    },
+    {
+      "name": "Local variables",
+      "status": "match",
+      "native": "42\n",
+      "wasm": "42\n"
+    },
+    {
+      "name": "Forward function call",
+      "status": "match",
+      "native": "21\n",
+      "wasm": "21\n"
+    },
+    {
+      "name": "Nested calls",
+      "status": "match",
+      "native": "10\n",
+      "wasm": "10\n"
+    },
+    {
+      "name": "Function with array",
+      "status": "match",
+      "native": "6\n",
+      "wasm": "6\n"
+    },
+    {
+      "name": "Shopping receipt",
+      "status": "match",
+      "native": "Subtotal: 7000\nTotal: 6300\n",
+      "wasm": "Subtotal: 7000\nTotal: 6300\n"
+    },
+    {
+      "name": "Grade report",
+      "status": "match",
+      "native": "Average: 80\nPassed\n",
+      "wasm": "Average: 80\nPassed\n"
+    },
+    {
+      "name": "Game score",
+      "status": "match",
+      "native": "Final score: 80\n",
+      "wasm": "Final score: 80\n"
+    },
+    {
+      "name": "Health simulation",
+      "status": "match",
+      "native": "Health: 45\n",
+      "wasm": "Health: 45\n"
+    },
+    {
+      "name": "Simple inventory",
+      "status": "match",
+      "native": "[8, 8, 8]\n",
+      "wasm": "[8, 8, 8]\n"
+    },
+    {
+      "name": "Savings calculator",
+      "status": "match",
+      "native": "Savings: 60000\n",
+      "wasm": "Savings: 60000\n"
+    },
+    {
+      "name": "Unit converter",
+      "status": "match",
+      "native": "7 km = 7000 m\n",
+      "wasm": "7 km = 7000 m\n"
+    },
+    {
+      "name": "Trip cost",
+      "status": "match",
+      "native": "32000\n",
+      "wasm": "32000\n"
+    },
+    {
+      "name": "ASCII rectangle",
+      "status": "match",
+      "native": "#####\n#####\n#####\n",
+      "wasm": "#####\n#####\n#####\n"
+    },
+    {
+      "name": "ASCII staircase",
+      "status": "match",
+      "native": "*\n**\n***\n****\n",
+      "wasm": "*\n**\n***\n****\n"
+    },
+    {
+      "name": "Multiplication table",
+      "status": "match",
+      "native": "7 x 1 = 7\n7 x 2 = 14\n7 x 3 = 21\n7 x 4 = 28\n7 x 5 = 35\n",
+      "wasm": "7 x 1 = 7\n7 x 2 = 14\n7 x 3 = 21\n7 x 4 = 28\n7 x 5 = 35\n"
+    },
+    {
+      "name": "Simple chatbot",
+      "status": "mismatch",
+      "native": "You: \nBot: Hello!\n",
+      "wasm": "You: Bot: Hello!\n"
+    }
+  ]
+}
