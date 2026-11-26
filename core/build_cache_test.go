@@ -39,3 +39,19 @@ func TestBuildCacheIntegrity(t *testing.T) {
 	if err = os.WriteFile(p,data,0600); err != nil { t.Fatal(err) }
 	if readBuildCache(p,"linux") != nil { t.Fatal("corrupt cache accepted") }
 }
+
+func TestBuildCacheNativeImages(t *testing.T) {
+	f, s := parse("func double(x:int)->int {return x*2};show double(21)")
+	for _, target := range []string{"linux", "windows"} {
+		for _, profile := range []string{"nano", "balanced", "turbo"} {
+			t.Run(target+"/"+profile, func(t *testing.T) {
+				image := compileParsed(f,s,target,profile)
+				p := filepath.Join(t.TempDir(),"image.bin")
+				writeBuildCache(p,image)
+				got := readBuildCache(p,target)
+				if !bytes.Equal(got,image) { t.Fatal("cached native image differs") }
+				if !bytes.Equal(got,compileParsed(f,s,target,profile)) { t.Fatal("non-deterministic native image") }
+			})
+		}
+	}
+}
