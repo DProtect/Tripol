@@ -147,3 +147,13 @@
 .docs-page .side-lib-level:first-child{border-top:0;margin-top:0;padding-top:4px}
 .docs-page .docs-article .catalog-lib-level{grid-column:1/-1;margin:20px 0 0;padding:10px 0 2px;border-top:1px solid #292929;font-size:17px;color:#eee;letter-spacing:-.01em}
 .docs-page .docs-article .catalog-lib-level:first-child{border-top:0;margin-top:0}
+
+/* Learn TRIPOL R4: guided lessons */
+.docs-page .learn-nav small{color:#777;font:10px ui-monospace,monospace}
+.docs-page .docs-article .learn-step{font-size:11px;letter-spacing:.13em;color:#999;margin:0 0 10px;font-weight:650}
+.docs-page .learn-grid .reference-card strong{display:block;margin-top:5px;font-size:16px}
+.docs-page .docs-article .learn-platform,.docs-page .docs-article .learn-file{font-size:12px;color:#999;margin:12px 0 0}
+.docs-page .learn-pager{display:flex;align-items:stretch;justify-content:space-between;gap:12px;margin:36px 0 0;padding-top:18px;border-top:1px solid #333}
+.docs-page .docs-article .learn-pager a{flex:1;max-width:50%;display:flex;align-items:center;padding:12px 14px;border:1px solid #333;border-radius:9px;text-decoration:none;background:#121212;font-size:13px}
+.docs-page .learn-pager a:last-child{justify-content:flex-end;text-align:right}.docs-page .learn-pager a:hover{border-color:#888;background:#1b1b1b}
+.docs-page .docs-article .learn-related{font-size:13px;margin-top:12px}

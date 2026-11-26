@@ -5,7 +5,7 @@ let lang='en';try{if(localStorage.getItem('tripol-language')==='es')lang='es'}ca
 const chosen=new URLSearchParams(location.search).get('lang');if(chosen==='en'||chosen==='es')lang=chosen;
 const root=document.body.dataset.docRoot||'./';
 // A freshly loaded script must also load its matching stylesheet.
-for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='learning-r3.3'){u.searchParams.set('v','learning-r3.3');link.href=u.href}}
+for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='learning-r4'){u.searchParams.set('v','learning-r4');link.href=u.href}}
 function localLinks(){for(const a of $$('a[href]')){const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||/^(https?:|mailto:)/i.test(raw)&&a.origin!==location.origin)continue;const u=new URL(raw,location.href);if(!u.pathname.endsWith('.html'))continue;u.searchParams.set('lang',lang);a.href=u.href;}}
 // Shared navigation and current release label on all reference pages.
 const side=document.querySelector('#doc-side');
@@ -53,6 +53,17 @@ function refreshLevelHeadings(container){
 }
 
 libraryLearningOrder();
+const LEARN_LESSONS=[{"file":"learn-hello.html","en":"Hello world","es":"Hola mundo","num":1},{"file":"learn-variables.html","en":"Variables","es":"Variables","num":2},{"file":"learn-types.html","en":"Data types","es":"Tipos de datos","num":3},{"file":"learn-operators.html","en":"Operators","es":"Operadores","num":4},{"file":"learn-conditions.html","en":"Conditionals","es":"Condicionales","num":5},{"file":"learn-loops.html","en":"Loops","es":"Bucles","num":6},{"file":"learn-functions.html","en":"Functions","es":"Funciones","num":7},{"file":"learn-arrays.html","en":"Arrays","es":"Arreglos","num":8},{"file":"learn-lists.html","en":"Lists","es":"Listas","num":9},{"file":"learn-strings.html","en":"Strings","es":"Strings","num":10},{"file":"learn-structs.html","en":"Structures","es":"Estructuras","num":11},{"file":"learn-exceptions.html","en":"Error handling","es":"Manejo de errores","num":12},{"file":"learn-memory.html","en":"Memory","es":"Memoria","num":13},{"file":"learn-modules.html","en":"Modules","es":"Módulos","num":14}];
+function installLearningNavigation(){
+ if(side.querySelector('.learn-nav'))return;
+ const heading=document.createElement('h2');heading.className='learn-nav-title';const label=document.createElement('span');label.dataset.es='Aprende TRIPOL';label.textContent='Learn TRIPOL';heading.append(label);
+ const nav=document.createElement('nav');nav.className='learn-nav';nav.setAttribute('aria-label','Learning guide');
+ const add=(file,en,es,num)=>{const a=document.createElement('a');a.href=root+file;const label=document.createElement('span');label.textContent=en;label.dataset.es=es;a.append(label);if(num){const small=document.createElement('small');small.textContent=String(num).padStart(2,'0');a.append(small)}nav.append(a)};
+ add('learn.html','Learning path','Ruta de aprendizaje');for(const l of LEARN_LESSONS)add(l.file,l.en,l.es,l.num);
+ guide.after(heading,nav);
+}
+installLearningNavigation();
+
 for(const a of side.querySelectorAll('nav a')){a.removeAttribute('aria-current');if(new URL(a.href,location.href).pathname===location.pathname)a.setAttribute('aria-current','page');}
 const translate=(en,es)=>lang==='es'?es:en;
 let labels=[], placeholders=[];
@@ -182,7 +193,7 @@ function installLive(source,host,original){
 function installAllLive(){
  for(const pre of $$('.docs-article pre')){
   // Function signatures and library implementation source are reference-only.
-  if(pre.classList.contains('signature')||pre.closest('.function-card'))continue;
+  if(pre.classList.contains('signature')||pre.closest('.function-card')||pre.hasAttribute('data-native-only'))continue;
   if(document.querySelector('.doc-lib-guide[data-web-status="compiler-rejected"]'))continue;
   if(codeMode(pre.querySelector('code')||pre)!=='tripol')continue;
   const head=pre.closest('.code-shell')?.querySelector('.code-head');if(!head)continue;
