@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 386,
-  "methods": 13,
+  "functions": 392,
+  "methods": 31,
   "summary": {
-    "native compiled": 399,
-    "web executed": 337,
-    "web native-only": 62
+    "native compiled": 423,
+    "web executed": 359,
+    "web native-only": 64
   },
   "rows": [
     {
@@ -1421,7 +1421,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2556\n"
+      "output": "2844\n"
     },
     {
       "name": "time.elapsed",
@@ -1444,7 +1444,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2582562740\n"
+      "output": "2872758788\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -1940,6 +1940,41 @@
       "output": "{\"embeds\":[{\"title\":\"Bienvenido\"}],\"allowed_mentions\":{\"parse\":[]}}\n"
     },
     {
+      "name": "discord.ignore_message",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.event_id",
+      "native": "compiled",
+      "web": "executed",
+      "output": "123\n"
+    },
+    {
+      "name": "discord.dispatch_message",
+      "native": "compiled",
+      "web": "executed",
+      "output": "¡Hola, 456!\n"
+    },
+    {
+      "name": "discord.run_handler",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.media_url",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.components",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"flags\":32768,\"components\":[{\"type\":10,\"content\":\"Hola\"}],\"allowed_mentions\":{\"parse\":[]}}\n"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2174,7 +2209,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n35841\n"
+      "output": "4950\n35025\n"
     },
     {
       "name": "simd.equal",
@@ -2339,6 +2374,113 @@
     },
     {
       "name": "discord.Embed.send",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Message.matches",
+      "native": "compiled",
+      "web": "executed",
+      "output": "¡Hola, 456!\n"
+    },
+    {
+      "name": "discord.Message.reply",
+      "native": "compiled",
+      "web": "executed",
+      "output": "¡Hola, 456!\n"
+    },
+    {
+      "name": "discord.Bot.on_message",
+      "native": "compiled",
+      "web": "executed",
+      "output": "¡Hola, 456!\n"
+    },
+    {
+      "name": "discord.Bot.preview_event",
+      "native": "compiled",
+      "web": "executed",
+      "output": "¡Hola, 456!\n"
+    },
+    {
+      "name": "discord.Embed.url",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.image",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.thumbnail",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.append_entry",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.entries_json",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[{\"type\":10,\"content\":\"Hola\"}]\n"
+    },
+    {
+      "name": "discord.Components.text",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.separator",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.link",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.button",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.section",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.gallery",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.container",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"flags\":32768,\"components\":[{\"type\":10,\"content\":\"Hola\"}],\"allowed_mentions\":{\"parse\":[]}}\n"
+    },
+    {
+      "name": "discord.Components.send",
       "native": "compiled",
       "web": "native-only"
     }
