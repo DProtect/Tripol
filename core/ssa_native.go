@@ -84,7 +84,7 @@ func (c *compiler) emitNativeSSA(f fn)bool{
    // Even a dead checked result is evaluated; error order is unchanged.
    load(v.args[0]);op:=map[string]string{"add.checked.i64":"+","sub.checked.i64":"-","mul.checked.i64":"*"}[v.op]
    rhs:=p.values[v.args[1]]
-   if rhs.op=="const.i64"&&a.ssaArithmeticImmediate(op,rhs.literal){save(i);continue}
+   if rhs.op=="const.i64"&&a.checkedArithmeticImmediate(op,rhs.literal){save(i);continue}
    right:=plan.locations[v.args[1]]
    if right.spill!=0{a.integerMemoryOp(op,right.spill)}else{a.regArith(op,0,right.reg)}
    save(i)

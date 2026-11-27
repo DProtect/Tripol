@@ -820,7 +820,7 @@ func (c *compiler) expression(e *expr) string {
 		a.label(end)
 		return "bool"
 	}
-	if a.opt && t == "int" && e.args[1].op == "int" && e.args[1].n <= 2147483647 {
+	if a.opt && t == "int" && e.args[1].op == "int" && fitsSignedImmediate32(e.args[1].n) {
 		n := e.args[1].n
 		if (op == "/" || op == "%") && c.positiveIndex(e.args[0]) && a.nonnegativePowerOfTwo(n, op == "%") {
 			return "int"
@@ -831,32 +831,12 @@ func (c *compiler) expression(e *expr) string {
 		if (n == 0 && (op == "+" || op == "-")) || (n == 1 && op == "*") {
 			return "int"
 		}
-		switch op {
-		case "+", "-", "*":
-			if op == "*" {
-				if n <= 127 {
-					a.emit(0x48, 0x6b, 0xc0, byte(n))
-				} else {
-					a.emit(0x48, 0x69, 0xc0)
-					a.u32(int(n))
-				}
-			} else {
-				code := byte(0xc0)
-				if op == "-" {
-					code = 0xe8
-				}
-				if n <= 127 {
-					a.emit(0x48, 0x83, code, byte(n))
-				} else {
-					a.emit(0x48, 0x81, code)
-					a.u32(int(n))
-				}
-			}
-			a.j(0x80, "err")
+		if a.checkedArithmeticImmediate(op, n) {
 			return "int"
-		case "==", "!=", "<", ">", "<=", ">=":
+		}
+		if cc, ok := compareCode[op]; ok {
 			a.cmpImm(n)
-			a.emit(0x0f, compareCode[op], 0xc0, 0x0f, 0xb6, 0xc0)
+			a.emit(0x0f, cc, 0xc0, 0x0f, 0xb6, 0xc0)
 			return "bool"
 		}
 	}

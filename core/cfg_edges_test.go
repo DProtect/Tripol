@@ -25,3 +25,33 @@ func TestCFGWideSignedComparisonImmediate(t *testing.T){
   }
  }
 }
+
+func TestCFGSignedImmediateProfiles(t *testing.T) {
+	source := `func signed(x:int)->int {
+  short=-128
+  medium=-129
+  min32=-2147483648
+  wide=-4294967296
+  show x+short,x+medium,x-medium,x*medium
+  show x+min32,x+wide,x-wide,x*wide,x==wide,x>wide
+  return x
+ }
+ func checked(x:int)->int {
+  k=-129
+  show 7
+  return x+k
+ }
+ signed(2)
+ signed(0)
+ try {show checked(-9223372036854775807)} catch code {show code}
+ `
+	const want = "-126 -127 131 -258\n-2147483646 -4294967294 4294967298 -8589934592 false true\n-128 -129 129 0\n-2147483648 -4294967296 4294967296 0 false true\n7\n10\n"
+	for _, profile := range []string{"debug", "nano", "balanced", "turbo"} {
+		t.Run(profile, func(t *testing.T) {
+			got, failed := hyperRun(t, source, profile)
+			if failed || got != want {
+				t.Fatalf("got %q (failed=%v), want %q", got, failed, want)
+			}
+		})
+	}
+}
