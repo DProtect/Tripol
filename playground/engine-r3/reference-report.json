@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 392,
-  "methods": 31,
+  "functions": 411,
+  "methods": 75,
   "summary": {
-    "native compiled": 423,
-    "web executed": 359,
-    "web native-only": 64
+    "native compiled": 486,
+    "web executed": 418,
+    "web native-only": 68
   },
   "rows": [
     {
@@ -1064,6 +1064,12 @@
       "output": "true\nfalse\n"
     },
     {
+      "name": "json.unquote",
+      "native": "compiled",
+      "web": "executed",
+      "output": "café 😀\n"
+    },
+    {
       "name": "matrix.size",
       "native": "compiled",
       "web": "executed",
@@ -1421,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2614\n"
+      "output": "2443\n"
     },
     {
       "name": "time.elapsed",
@@ -1444,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2641169460\n"
+      "output": "2469822310\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -1975,6 +1981,111 @@
       "output": "{\"flags\":32768,\"components\":[{\"type\":10,\"content\":\"Hola\"}],\"allowed_mentions\":{\"parse\":[]}}\n"
     },
     {
+      "name": "discord.run_session",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.ignore_interaction",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.empty_interactions",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "discord.interaction_selector",
+      "native": "compiled",
+      "web": "executed",
+      "output": "s\"hola\"\n"
+    },
+    {
+      "name": "discord.interaction_matches",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.dispatch_interaction",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":4,\"data\":{\"content\":\"Hola, Ana\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "name": "discord.deliver_interaction",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.slash_name",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.slash_is_current",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.sync_slash_commands",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.modal_field_value",
+      "native": "compiled",
+      "web": "executed",
+      "output": "\"Hola\"\n"
+    },
+    {
+      "name": "discord.modal",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.select",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.timestamp_valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.embeds",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.slash_options",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[]\n"
+    },
+    {
+      "name": "discord.slash_option_signature",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.button_row",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2209,7 +2320,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n26509\n"
+      "output": "4950\n43666\n"
     },
     {
       "name": "simd.equal",
@@ -2481,6 +2592,269 @@
     },
     {
       "name": "discord.Components.send",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Components.append_text",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.select",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Components.row",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.bind_interaction",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.slash",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":4,\"data\":{\"content\":\"Hola, Ana\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "name": "discord.Bot.slash_with_options",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":4,\"data\":{\"content\":\"Hola, Ana\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "name": "discord.Bot.on_button",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.on_select",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.on_modal",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.preview_interaction",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":4,\"data\":{\"content\":\"Hola, Ana\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "name": "discord.Interaction.reply",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":4,\"data\":{\"content\":\"Hola, Ana\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "name": "discord.Interaction.defer",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":5,\"data\":{\"flags\":64}}\n"
+    },
+    {
+      "name": "discord.Interaction.ack",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":6}\n"
+    },
+    {
+      "name": "discord.Interaction.reply_components",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.update_components",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.option",
+      "native": "compiled",
+      "web": "executed",
+      "output": "\"Ana\"\n"
+    },
+    {
+      "name": "discord.Interaction.option_text",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Ana\n"
+    },
+    {
+      "name": "discord.Interaction.values",
+      "native": "compiled",
+      "web": "executed",
+      "output": "42 43\n"
+    },
+    {
+      "name": "discord.Interaction.field",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Hola\n"
+    },
+    {
+      "name": "discord.Interaction.field_data",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[\"42\"]\n"
+    },
+    {
+      "name": "discord.Interaction.open_modal",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.reply_embeds",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Modal.add_label",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Modal.text",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Modal.payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Modal.select",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Modal.help_text",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Modal.file",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Select.placeholder",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Select.option",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Select.default_id",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Select.channels",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Select.payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Buttons.button",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Buttons.link",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.SlashOptions.add",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.SlashOptions.payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.text_size",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4\n"
+    },
+    {
+      "name": "discord.Embed.entry",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.author",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.timestamp",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embeds.add",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embeds.payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embeds.send",
       "native": "compiled",
       "web": "native-only"
     }
