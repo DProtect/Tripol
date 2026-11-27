@@ -36,6 +36,10 @@
 - COMPILER REVOLUTION: TIR CACHE R1 opt-in content-addressed native build cache with compiler digest, expanded AST key, target/profile separation and corruption checks.
 - COMPILER REVOLUTION: TIR LINK R1 literal reservation and validated relative relocations; CFG R2 branch-local refinement and dead statement tails; signed immediate comparison fix.
 - COMPILER REVOLUTION: VECTOR R1 automatic SSE2 constant array fill, SSA JOIN R1 terminal scalar merge elimination, PGO R1 runtime training and deterministic hot function layout; Windows/Linux end-to-end acceptance gate.
+- Native code generation preserves signed immediate ranges and checked overflow after CFG substitution. CFG joins retain known scalar values from the branches that reach the following statement.
+- MEMORY R2 reserves stack space for automatic temporary cleanup in `while` bodies, including bodies without local declarations.
+- GENESIS direct ELF and PE drivers require a new output path, protecting existing files including the source.
+- The benchmark workflow validates the CFG under the race detector and records compiler allocations for one, two and four workers.
 - Versioned follow-up to published v0.27.0; old release assets are preserved.
 
 # v0.27 QUANTUM X (development)
