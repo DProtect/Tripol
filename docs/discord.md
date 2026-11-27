@@ -72,9 +72,9 @@ bot.slash_with_options("hello", "Saluda", &hello, options, "123")
 show bot.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":2,\"data\":{\"type\":1,\"name\":\"hello\",\"guild_id\":\"123\",\"options\":[{\"type\":3,\"name\":\"name\",\"value\":\"Ana\"}]}}}")
 ```
 
-Use `bot.slash(name, description, &handler, guild_id="")` for a command without options. An empty guild ID registers globally. A guild ID limits registration to one server. The same name can have a different callback in each registered scope. At startup the bot reads its application ID, compares remote commands with the local definitions and creates or updates the changed ones. Registration leaves unrelated commands in place. This version supports ASCII lowercase command names and flat string, integer, boolean, user, channel, role, mentionable, number and attachment options.
+Use `bot.slash(name, description, &handler, guild_id="")` for a command without options. An empty guild ID registers globally. A guild ID limits registration to one server. The same name can have a different callback in each registered scope. At startup the bot reads its application ID, compares remote commands with the local definitions and creates or updates the changed ones. Registration leaves unrelated commands in place. This version supports ASCII lowercase command names and string, integer, boolean, user, channel, role, mentionable, number and attachment options.
 
-Usa `bot.slash(nombre, descripción, &manejador, guild_id="")` para un comando sin opciones. Un ID de servidor vacío hace el registro global. Con un ID, el registro se limita a ese servidor. Un mismo nombre puede tener un callback diferente en cada ámbito. Al iniciar, el bot consulta su aplicación, compara los comandos y crea o actualiza los que cambiaron. El registro conserva los demás comandos. Se admiten nombres ASCII en minúsculas y opciones planas de texto, entero, booleano, usuario, canal, rol, mencionable, número y adjunto.
+Usa `bot.slash(nombre, descripción, &manejador, guild_id="")` para un comando sin opciones. Un ID de servidor vacío hace el registro global. Con un ID, el registro se limita a ese servidor. Un mismo nombre puede tener un callback diferente en cada ámbito. Al iniciar, el bot consulta su aplicación, compara los comandos y crea o actualiza los que cambiaron. El registro conserva los demás comandos. Se admiten nombres ASCII en minúsculas y opciones de texto, entero, booleano, usuario, canal, rol, mencionable, número y adjunto.
 
 Register component and modal callbacks with `bot.on_button(id, &handler)`, `bot.on_select(id, &handler)` and `bot.on_modal(id, &handler)`. The handler can return an initial response such as `ctx.reply(text, true)`, `ctx.defer(true)`, `ctx.ack()`, `ctx.reply_components(layout)`, `ctx.update_components(layout)`, `ctx.reply_embeds(batch)` or `ctx.open_modal(form)`. Discord requires an initial response within three seconds.
 
@@ -108,6 +108,42 @@ Los callbacks nativos conectados pueden usar `ctx.respond(payload)` para enviar 
 Use `tripol new Feedback --template discord-slash` for a runnable example. Set `DISCORD_TOKEN`, optionally set `DISCORD_GUILD_ID`, and install the bot application with the `applications.commands` scope on a private test server.
 
 Usa `tripol new Feedback --template discord-slash` para generar un ejemplo ejecutable. Configura `DISCORD_TOKEN`, opcionalmente `DISCORD_GUILD_ID`, e instala la aplicación con el alcance `applications.commands` en un servidor privado.
+
+### Subcommands, choices and autocomplete / Subcomandos, elecciones y autocompletado
+
+```tripol
+import tripol.discord
+
+func search(ctx:discord.Interaction)->string {
+    return ctx.reply("Busca " + ctx.option_text("query"), true)
+}
+
+func suggest(ctx:discord.Interaction)->string {
+    choices = discord.command_choices()
+    if ctx.focused()=="query" and ctx.option_text("query")=="ca" {
+        choices.add("Café", "cafe")
+    }
+    return ctx.autocomplete(choices)
+}
+
+arguments = discord.slash_options()
+arguments.add("query", "Qué buscar", "string", true, true)
+limits = discord.command_choices()
+limits.integer("Diez", 10)
+arguments.choose("limit", "Resultados máximos", limits)
+commands = discord.slash_options()
+commands.subcommand("find", "Busca una bebida", arguments)
+root = discord.slash_options()
+root.group("drinks", "Bebidas", commands)
+bot = discord.bot()
+bot.slash_with_options("order", "Haz tu pedido", &search, root)
+bot.on_autocomplete("order", &suggest)
+bot.start()
+```
+
+The example registers `/order drinks find`. `subcommand(name, description, options)` creates a branch and `group(name, description, subcommands)` collects one or more subcommands. Each command or subcommand accepts up to 25 options at its level. Keep required arguments first. The callback reads `ctx.command_group()` and `ctx.subcommand()` when it needs to select a branch. Pass `true` as the fifth argument of `options.add` to enable autocomplete. Use `ctx.focused()` to find the active option and `ctx.option(name)` to read a raw numeric value. Return `ctx.autocomplete(choices)` even when the list is empty. `options.choose` defines a fixed choice list. The builder supports up to 25 text or integer choices, including integer suggestions for number options. Fractional choice values are pending.
+
+El ejemplo registra `/order drinks find`. `subcommand(nombre, descripción, opciones)` crea un subcomando y `group(nombre, descripción, subcomandos)` agrupa uno o más. Cada comando o subcomando admite hasta 25 opciones por nivel. Coloca primero los argumentos obligatorios. El callback lee `ctx.command_group()` y `ctx.subcommand()` para identificar la rama elegida. Pasa `true` como quinto argumento de `options.add` para activar el autocompletado. Usa `ctx.focused()` para identificar la opción activa y `ctx.option(nombre)` para leer un valor numérico en JSON. Devuelve `ctx.autocomplete(elecciones)` aunque la lista esté vacía. `options.choose` define una lista de elecciones fijas. El constructor admite hasta 25 elecciones de texto o enteras, con sugerencias enteras para opciones de tipo número. Quedan pendientes los valores fraccionarios.
 
 ## Components V2
 

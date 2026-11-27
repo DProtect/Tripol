@@ -10,6 +10,27 @@ const slashEvent = `{"op":0,"t":"INTERACTION_CREATE","s":4,"d":{"id":"710","appl
 const buttonEvent = `{"op":0,"t":"INTERACTION_CREATE","s":5,"d":{"id":"711","application_id":"890","type":3,"token":"button-fixture","message":{"id":"99"},"data":{"component_type":2,"custom_id":"caf\u00e9"}}}`
 const selectEvent = `{"op":0,"t":"INTERACTION_CREATE","s":6,"d":{"id":"712","application_id":"890","type":3,"token":"select-fixture","message":{"id":"99"},"data":{"component_type":6,"custom_id":"roles","values":["101","102"]}}}`
 const modalEvent = `{"op":0,"t":"INTERACTION_CREATE","s":7,"d":{"id":"713","application_id":"890","type":5,"token":"modal-fixture","data":{"custom_id":"ticket","components":[{"type":18,"component":{"type":4,"custom_id":"topic","value":"Revisi\u00f3n"}}]}}}`
+const autocompleteEvent = `{"op":0,"t":"INTERACTION_CREATE","s":8,"d":{"id":"714","application_id":"890","type":4,"token":"autocomplete-fixture","guild_id":"321","data":{"type":1,"name":"inspect","guild_id":"321","options":[{"type":2,"name":"stock","options":[{"type":1,"name":"find","options":[{"name":"query","type":3,"value":"ca","focused":true}]}]}]}}}`
+
+const commandTree = `
+func inspect(c:discord.Interaction)->string {return c.command_group()+"/"+c.subcommand()+"/"+c.option_text("query")}
+func suggest(c:discord.Interaction)->string {
+ choices=discord.command_choices()
+ if c.command_group()=="stock" and c.subcommand()=="find" and c.option_text(c.focused())=="ca" {choices.add("Café", "cafe")}
+ return c.autocomplete(choices)
+}
+arguments=discord.slash_options()
+arguments.add("query","Qué buscar","string",true,true)
+limits=discord.command_choices()
+limits.integer("Década",10)
+arguments.choose("limit","Límite",limits)
+subcommands=discord.slash_options()
+subcommands.subcommand("find","Busca",arguments)
+root=discord.slash_options()
+root.group("stock","Inventario",subcommands)
+b.slash_with_options("inspect","Inspecciona",&inspect,root,"321")
+b.on_autocomplete("inspect",&suggest,"321")
+`
 
 const interactionBot = `import tripol.discord
 func greet(c:discord.Interaction)->string {
@@ -237,5 +258,38 @@ ctx=discord.Interaction(2,"hola","1","2","","","","{}",false`
 		if _, err := CompileWeb(src); err == nil || !strings.Contains(err.Error(), "private field discord.Interaction") {
 			t.Fatalf("unexpected diagnostic: %v", err)
 		}
+	}
+}
+
+func TestDiscordSlashTreesAndAutocomplete(t *testing.T) {
+	preview, _ := json.Marshal(autocompleteEvent)
+	command, _ := json.Marshal(strings.Replace(autocompleteEvent, `"type":4,"token"`, `"type":2,"token"`, 1))
+	outside, _ := json.Marshal(strings.Replace(autocompleteEvent, `"name":"inspect","guild_id":"321"`, `"name":"inspect","guild_id":"123"`, 1))
+	portable := "import tripol.discord\nb=discord.bot()" + commandTree + `
+show b.preview_interaction(` + string(command) + `)
+show b.preview_interaction(` + string(preview) + `)
+show b.preview_interaction(` + string(outside) + `)==""
+`
+	src := portable + `
+try {root.add("wrong","Cannot mix options")} catch code {show code}
+try {subcommands.group("wrong","Only ordinary subcommands",root)} catch code {show code}
+try {arguments.add("flag","Cannot complete booleans","boolean",false,true)} catch code {show code}
+try {subcommands.subcommand("find","Duplicate",arguments)} catch code {show code}
+choices=discord.command_choices()
+choices.integer("Answer",42)
+show choices.payload()
+try {choices.add("Mixed types","bad")} catch code {show code}
+numbers=discord.command_choices()
+try {numbers.integer("Outside safe range",9007199254740993)} catch code {show code}
+`
+	runCase(t, src, "stock/find/ca\n{\"type\":8,\"data\":{\"choices\":[{\"name\":\"Café\",\"value\":\"cafe\"}]}}\ntrue\n12\n12\n12\n12\n[{\"name\":\"Answer\",\"value\":42}]\n12\n12\n", false)
+	if _, err := CompileWeb(portable); err != nil {
+		t.Fatal(err)
+	}
+	const bypass = `import tripol.discord
+options=discord.slash_options()
+options.__append("raw","Raw",1,"")`
+	if _, err := CompileWeb(bypass); err == nil || !strings.Contains(err.Error(), "private method discord.SlashOptions") {
+		t.Fatalf("unexpected diagnostic: %v", err)
 	}
 }

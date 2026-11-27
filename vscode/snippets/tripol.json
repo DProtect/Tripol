@@ -83,6 +83,18 @@
       "bot.start()"
     ]
   },
+  "Discord autocomplete callback": {
+    "prefix": "discord-autocomplete",
+    "body": [
+      "func ${1:suggest}(ctx:discord.Interaction)->string {",
+      "    choices=discord.command_choices()",
+      "    if ctx.focused()==\"${2:query}\" {",
+      "        choices.add(\"${3:Café}\",\"${4:cafe}\")",
+      "    }",
+      "    return ctx.autocomplete(choices)",
+      "}"
+    ]
+  },
   "Discord deferred reply": {
     "prefix": "discord-defer",
     "body": [

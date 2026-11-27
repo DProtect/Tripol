@@ -141,7 +141,7 @@ func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
  assert c.followup("Más",true)=="999"
  return c.reply("Should not acknowledge twice")
 }`, 1)
-	if err := os.WriteFile(path, compileProfile(source+"b.start()", "linux", "turbo"), 0700); err != nil {
+	if err := os.WriteFile(path, compileProfile(source+commandTree+"b.start()", "linux", "turbo"), 0700); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("DISCORD_TOKEN", "fixture-token")
@@ -164,14 +164,14 @@ func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
 func interactionFixture(input io.Reader, output io.Writer) error {
 	deferred := strings.ReplaceAll(strings.ReplaceAll(slashEvent, `"name":"hola"`, `"name":"wait"`), `"id":"710"`, `"id":"715"`)
 	expired := strings.Replace(deferred, `"id":"715"`, `"id":"716"`, 1)
-	first := `[{"type":1,"name":"hola","description":"La descripci\u00f3n","id":"919","options":[{"required":true,"type":3,"description":"La opci\u00f3n","name":"text"}]},{"type":1,"name":"unmanaged","description":"Leave it alone","id":"920"}]`
+	first := `[{"type":1,"name":"hola","description":"La descripci\u00f3n","id":"919","options":[{"required":true,"type":3,"description":"La opci\u00f3n","name":"text"}]},{"type":1,"name":"unmanaged","description":"Leave it alone","id":"920"},{"type":1,"name":"inspect","description":"Inspecciona","id":"921","options":[{"type":2,"name":"stock","description":"Inventario","options":[{"type":1,"name":"find","description":"Busca","options":[{"type":3,"name":"query","description":"Qu\u00e9 buscar","autocomplete":true,"required":true},{"choices":[{"value":10,"name":"D\u00e9cada"}],"type":4,"name":"limit","description":"L\u00edmite"}]}]}]}]`
 	steps := []struct {
 		op                          uint32
 		path, auth, contains, reply string
 	}{
 		{discordtransport.OpREST, "/api/v10/oauth2/applications/@me", "fixture-token", "", `{"id":"890"}`},
 		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", "", first},
-		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", `"name":"wait"`, `{"id":"921"}`},
+		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", `"name":"wait"`, `{"id":"922"}`},
 		{discordtransport.OpStart, "", "", `"intents":1`, "1"},
 		{discordtransport.OpPoll, "", "", "", `{"op":0,"t":"READY","s":3,"d":{}}`},
 		{discordtransport.OpPoll, "", "", "", slashEvent},
@@ -184,6 +184,8 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 		{discordtransport.OpInteraction, "/api/v10/interactions/713/modal-fixture/callback", "", `"content":"Revisión"`, ""},
 		{discordtransport.OpPoll, "", "", "", selectEvent},
 		{discordtransport.OpInteraction, "/api/v10/interactions/712/select-fixture/callback", "", `"content":"101 102"`, "{}"},
+		{discordtransport.OpPoll, "", "", "", autocompleteEvent},
+		{discordtransport.OpInteraction, "/api/v10/interactions/714/autocomplete-fixture/callback", "", `"type":8,"data":{"choices":[{"name":"Café","value":"cafe"}]}`, "{}"},
 		{discordtransport.OpPoll, "", "", "", deferred},
 		{discordtransport.OpInteraction, "/api/v10/interactions/715/interaction-fixture/callback", "", `"type":5,"data":{"flags":64}`, "{}"},
 		{discordtransport.OpInteractionEdit, "/api/v10/webhooks/890/interaction-fixture/messages/@original", "", `"content":"Listo"`, `{"id":"998"}`},

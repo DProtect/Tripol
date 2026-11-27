@@ -209,6 +209,8 @@
     "media_url": "func discord.media_url(value:string)->bool",
     "components": "func discord.components()->Components",
     "interaction_message": "func discord.interaction_message(content:string,ephemeral=false)->string",
+    "interaction_option": "func discord.interaction_option(data:string,name:string,focused=false)->string",
+    "first_command_option": "func discord.first_command_option(data:string)->string",
     "ignore_interaction": "func discord.ignore_interaction(context:Interaction)->string",
     "empty_interactions": "func discord.empty_interactions()->list[func(Interaction)->string]",
     "interaction_selector": "func discord.interaction_selector(event:string)->string",
@@ -225,7 +227,9 @@
     "timestamp_valid": "func discord.timestamp_valid(value:string)->bool",
     "embeds": "func discord.embeds()->Embeds",
     "slash_options": "func discord.slash_options()->SlashOptions",
-    "slash_option_signature": "func discord.slash_option_signature(options:string)->string",
+    "command_choices": "func discord.command_choices()->CommandChoices",
+    "slash_choice_signature": "func discord.slash_choice_signature(choices:string)->string",
+    "slash_option_signature": "func discord.slash_option_signature(options:string,depth=0)->string",
     "button_row": "func discord.button_row()->Buttons"
   },
   "discord.Message": {
@@ -247,6 +251,7 @@
     "on_button": "Bot.on_button(id:string,handler:func(Interaction)->string)->bool",
     "on_select": "Bot.on_select(id:string,handler:func(Interaction)->string)->bool",
     "on_modal": "Bot.on_modal(id:string,handler:func(Interaction)->string)->bool",
+    "on_autocomplete": "Bot.on_autocomplete(name:string,handler:func(Interaction)->string,guild_id=\"\")->bool",
     "preview_interaction": "Bot.preview_interaction(event:string)->string"
   },
   "discord.Embed": {
@@ -288,11 +293,15 @@
     "reply_components": "Interaction.reply_components(layout:Components,ephemeral=false)->string",
     "update_components": "Interaction.update_components(layout:Components)->string",
     "option": "Interaction.option(name:string)->string",
+    "command_group": "Interaction.command_group()->string",
+    "subcommand": "Interaction.subcommand()->string",
+    "focused": "Interaction.focused()->string",
     "option_text": "Interaction.option_text(name:string)->string",
     "values": "Interaction.values()->string_list",
     "field": "Interaction.field(id:string)->string",
     "open_modal": "Interaction.open_modal(form:Modal)->string",
     "reply_embeds": "Interaction.reply_embeds(batch:Embeds,ephemeral=false)->string",
+    "autocomplete": "Interaction.autocomplete(choices:CommandChoices)->string",
     "field_data": "Interaction.field_data(id:string)->string",
     "checked": "Interaction.checked(id:string)->bool",
     "respond": "Interaction.respond(body:string)->bool",
@@ -325,8 +334,16 @@
     "send": "Embeds.send(channel_id:string)->bool"
   },
   "discord.SlashOptions": {
-    "add": "SlashOptions.add(name:string,description:string,kind=\"string\",required=false)->bool",
+    "add": "SlashOptions.add(name:string,description:string,kind=\"string\",required=false,autocomplete=false)->bool",
+    "subcommand": "SlashOptions.subcommand(name:string,description:string,options:SlashOptions)->bool",
+    "group": "SlashOptions.group(name:string,description:string,subcommands:SlashOptions)->bool",
+    "choose": "SlashOptions.choose(name:string,description:string,choices:CommandChoices,required=false)->bool",
     "payload": "SlashOptions.payload()->string"
+  },
+  "discord.CommandChoices": {
+    "add": "CommandChoices.add(label:string,value:string)->bool",
+    "integer": "CommandChoices.integer(label:string,value:int)->bool",
+    "payload": "CommandChoices.payload()->string"
   },
   "discord.Buttons": {
     "button": "Buttons.button(label:string,id:string,style=1,disabled=false)->bool",

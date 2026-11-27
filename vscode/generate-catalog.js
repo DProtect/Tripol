@@ -7,6 +7,7 @@ for(const file of fs.readdirSync(root).filter(n=>n.endsWith(".tri")).sort()){
  for(const match of source.matchAll(/^\s*func\s+(\w+(?:\.\w+)?)\s*(\([^\n]*?\)\s*(?:->\s*(?:list\[[^\n\]]+\]|\w+))?)\s*\{/gm)){
   const [receiver,method]=match[1].split(".");
   if(method){
+   if(method.startsWith("__"))continue;
    const type=module+"."+receiver;
    (catalog[type]??={})[method]=receiver+"."+method+match[2].replace(/^\(\s*\w+\s*:\s*\w+\s*,?\s*/,"(");
   }else{

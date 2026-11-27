@@ -917,8 +917,8 @@ func Interaction.update_components(self:Interaction,layout:Components)->string {
  return "{\"type\":7,\"data\":"+body+"}"
 }
 
-func Interaction.option(self:Interaction,name:string)->string {
- options=json.get_raw_large(self.data_json,"options")
+func interaction_option(data:string,name:string,focused=false)->string {
+ options=json.get_raw_large(data,"options")
  // Read values from the protocol without lossy conversion of numbers or IDs.
  while len(options)>2 and byte_at(options,0)==91 {
   n=len(options)
@@ -928,8 +928,10 @@ func Interaction.option(self:Interaction,name:string)->string {
    end=json.value(options,at,n,0)
    if end<0 {return ""}
    item=slice(options,at,end)
-   if json.string_equals(json.get_raw_large(item,"name"),name) {
-    return json.get_raw_large(item,"value")
+   if focused {
+    if json.get_raw_large(item,"focused")=="true" {return item}
+   } else if json.string_equals(json.get_raw_large(item,"name"),name) {
+    return item
    }
    nested=json.get_raw_large(item,"options")
    if len(nested)>2 {next=nested}
@@ -940,6 +942,38 @@ func Interaction.option(self:Interaction,name:string)->string {
   options=next
  }
  return ""
+}
+
+func Interaction.option(self:Interaction,name:string)->string {
+ return json.get_raw_large(interaction_option(self.data_json,name),"value")
+}
+
+func first_command_option(data:string)->string {
+ options=json.get_raw_large(data,"options")
+ n=len(options)
+ if n<3 or byte_at(options,0)!=91 {return ""}
+ start=json.ws(options,1,n)
+ if start>=n or byte_at(options,start)!=123 {return ""}
+ end=json.value(options,start,n,0)
+ if end<0 {return ""}
+ return slice(options,start,end)
+}
+
+func Interaction.command_group(self:Interaction)->string {
+ item=first_command_option(self.data_json)
+ if json.get_raw_large(item,"type")!="2" {return ""}
+ return json.unquote(json.get_raw_large(item,"name"))
+}
+
+func Interaction.subcommand(self:Interaction)->string {
+ item=first_command_option(self.data_json)
+ if json.get_raw_large(item,"type")=="2" {item=first_command_option(item)}
+ if json.get_raw_large(item,"type")!="1" {return ""}
+ return json.unquote(json.get_raw_large(item,"name"))
+}
+
+func Interaction.focused(self:Interaction)->string {
+ return json.unquote(json.get_raw_large(interaction_option(self.data_json,"",true),"name"))
 }
 
 func ignore_interaction(context:Interaction)->string {return ""}
@@ -961,6 +995,10 @@ func interaction_selector(event:string)->string {
   scope=event_id(json.get_raw_large(data,"guild_id"))
   return "s"+json.get_raw_large(data,"name")+"/"+scope
  }
+ if kind=="4" {
+  scope=event_id(json.get_raw_large(data,"guild_id"))
+  return "a"+json.get_raw_large(data,"name")+"/"+scope
+ }
  if kind=="3" {
   component=json.get_raw_large(data,"component_type")
   id=json.get_raw_large(data,"custom_id")
@@ -975,7 +1013,7 @@ func interaction_matches(key:string,selector:string)->bool {
  if len(key)<2 or len(selector)<3 or byte_at(key,0)!=byte_at(selector,0) {return false}
  key_end=len(key)
  selector_end=len(selector)
- if byte_at(key,0)==115 {
+ if byte_at(key,0)==115 or byte_at(key,0)==97 {
   key_scope=""
   selector_scope=""
   key_slash=find_bytes(key,"/")
@@ -1000,7 +1038,7 @@ func interaction_context(payload:string,key:string)->Interaction {
  author=json.get_raw_large(payload,"user")
  if len(author)==0 {author=json.get_raw_large(json.get_raw_large(payload,"member"),"user")}
  end=len(key)
- if byte_at(key,0)==115 {
+ if byte_at(key,0)==115 or byte_at(key,0)==97 {
   scope=find_bytes(key,"/")
   if scope>=0 {end=scope}
  }
@@ -1017,6 +1055,10 @@ func interaction_context(payload:string,key:string)->Interaction {
 func dispatch_interaction(event:string,key:string,handler:func(Interaction)->string)->string {
  if not interaction_matches(key,interaction_selector(event)) {return ""}
  return handler(interaction_context(json.get_raw_large(event,"d"),key))
+}
+
+func Interaction.__invoke(self:Interaction,handler:func(Interaction)->string)->string {
+ return handler(self)
 }
 
 func deliver_interaction(event:string,key:string,handler:func(Interaction)->string)->bool {
@@ -1050,7 +1092,7 @@ func slash_name(name:string)->bool {
 }
 
 func Bot.bind_interaction(self:Bot,key:string,handler:func(Interaction)->string,definition="",guild_id="")->bool {
- if len(key)>1 and byte_at(key,0)==115 and find_bytes(key,"/")<0 {key+="/"+guild_id}
+ if len(key)>1 and (byte_at(key,0)==115 or byte_at(key,0)==97) and find_bytes(key,"/")<0 {key+="/"+guild_id}
  keys=self.interaction_keys
  handlers=self.interaction_handlers
  specs=self.slash_definitions
@@ -1100,6 +1142,12 @@ func Bot.on_modal(self:Bot,id:string,handler:func(Interaction)->string)->bool {
  return self.bind_interaction("m"+id,handler)
 }
 
+func Bot.on_autocomplete(self:Bot,name:string,handler:func(Interaction)->string,guild_id="")->bool {
+ assert slash_name(name),"Invalid Discord slash command name"
+ assert guild_id=="" or event_id(json.quote(guild_id))==guild_id,"Invalid Discord command guild ID"
+ return self.bind_interaction("a"+name,handler,"",guild_id)
+}
+
 func Bot.preview_interaction(self:Bot,event:string)->string {
  selector=interaction_selector(event)
  if len(selector)==0 {return ""}
@@ -1108,7 +1156,7 @@ func Bot.preview_interaction(self:Bot,event:string)->string {
  for i in range(keys.size()) {
   key=keys[i]
   if interaction_matches(key,selector) {
-   return dispatch_interaction(event,key,handlers[i])
+   return interaction_context(json.get_raw_large(event,"d"),key).__invoke(handlers[i])
   }
  }
  return ""
@@ -1498,15 +1546,28 @@ struct SlashOptions {
  entries:string_list
  names:string_list
  optional:bool
+ // 0 empty, 1 arguments, 2 subcommands, 3 subcommands and groups.
+ __shape:int=0
 }
 
 func slash_options()->SlashOptions {
  return SlashOptions(string_list(),string_list(),false)
 }
 
-func SlashOptions.add(self:SlashOptions,name:string,description:string,kind="string",required=false)->bool {
+func SlashOptions.__append(self:SlashOptions,name:string,description:string,option_type:int,extra:string)->bool {
  assert slash_name(name),"Invalid Discord slash option name"
  assert utf8.valid(description) and utf8.count(description)>=1 and utf8.count(description)<=100,"Discord option descriptions require 1 to 100 characters"
+ entries=self.entries
+ names=self.names
+ assert entries.size()<25,"Discord slash commands allow up to 25 options"
+ assert not names.contains(name),"Duplicate Discord slash option"
+ entries.add("{\"name\":"+json.quote(name)+",\"description\":"+json.quote(description)+",\"type\":"+text(option_type)+extra+"}")
+ names.add(name)
+ return true
+}
+
+func SlashOptions.add(self:SlashOptions,name:string,description:string,kind="string",required=false,autocomplete=false)->bool {
+ assert self.__shape<=1,"Discord commands cannot mix ordinary options with subcommands"
  assert not required or not self.optional,"Required Discord options must precede optional options"
  option_type=0
  if kind=="string" {option_type=3}
@@ -1519,12 +1580,38 @@ func SlashOptions.add(self:SlashOptions,name:string,description:string,kind="str
  else if kind=="number" {option_type=10}
  else if kind=="attachment" {option_type=11}
  assert option_type>0,"Unsupported Discord slash option type"
- entries=self.entries
- names=self.names
- assert entries.size()<25,"Discord slash commands allow up to 25 options"
- assert not names.contains(name),"Duplicate Discord slash option"
- entries.add("{\"name\":"+json.quote(name)+",\"description\":"+json.quote(description)+",\"type\":"+text(option_type)+",\"required\":"+json.boolean(required)+"}")
- names.add(name)
+ extra=",\"required\":"+json.boolean(required)
+ if autocomplete {
+  assert option_type==3 or option_type==4 or option_type==10,"Discord autocomplete requires a string, integer or number option"
+  extra+=",\"autocomplete\":true"
+ }
+ self.__append(name,description,option_type,extra)
+ self.__shape=1
+ if not required {self.optional=true}
+ return true
+}
+
+func SlashOptions.subcommand(self:SlashOptions,name:string,description:string,options:SlashOptions)->bool {
+ assert self.__shape!=1 and options.__shape<=1,"A Discord subcommand can contain ordinary options only"
+ self.__append(name,description,1,",\"options\":"+options.payload())
+ if self.__shape==0 {self.__shape=2}
+ return true
+}
+
+func SlashOptions.group(self:SlashOptions,name:string,description:string,subcommands:SlashOptions)->bool {
+ assert self.__shape!=1 and subcommands.__shape==2,"A Discord subcommand group must contain one or more subcommands only"
+ self.__append(name,description,2,",\"options\":"+subcommands.payload())
+ self.__shape=3
+ return true
+}
+
+func SlashOptions.choose(self:SlashOptions,name:string,description:string,choices:CommandChoices,required=false)->bool {
+ assert self.__shape<=1,"Discord commands cannot mix ordinary options with subcommands"
+ assert not required or not self.optional,"Required Discord options must precede optional options"
+ assert choices.__kind!=0,"Discord command choices cannot be empty"
+ extra=",\"required\":"+json.boolean(required)+",\"choices\":"+choices.payload()
+ self.__append(name,description,choices.__kind,extra)
+ self.__shape=1
  if not required {self.optional=true}
  return true
 }
@@ -1539,10 +1626,84 @@ func SlashOptions.payload(self:SlashOptions)->string {
  return body+"]"
 }
 
+struct CommandChoices {
+ __entries:string_list
+ __kind:int
+}
+
+func command_choices()->CommandChoices {
+ return CommandChoices(string_list(),0)
+}
+
+func CommandChoices.__append(self:CommandChoices,label:string,value:string,kind:int)->bool {
+ assert utf8.valid(label) and utf8.count(label)>=1 and utf8.count(label)<=100,"Discord choice names require 1 to 100 characters"
+ assert self.__kind==0 or self.__kind==kind,"Discord choices must have a consistent type"
+ choices=self.__entries
+ assert choices.size()<25,"Discord accepts up to 25 command choices"
+ choices.add("{\"name\":"+json.quote(label)+",\"value\":"+value+"}")
+ self.__kind=kind
+ return true
+}
+
+func CommandChoices.add(self:CommandChoices,label:string,value:string)->bool {
+ assert utf8.valid(value) and utf8.count(value)<=100,"Discord string choice values accept up to 100 characters"
+ return self.__append(label,json.quote(value),3)
+}
+
+func CommandChoices.integer(self:CommandChoices,label:string,value:int)->bool {
+ assert value>=-9007199254740991 and value<=9007199254740991,"Discord integer choice is outside its safe range"
+ return self.__append(label,text(value),4)
+}
+
+func CommandChoices.payload(self:CommandChoices)->string {
+ body="["
+ entries=self.__entries
+ for i in range(entries.size()) {
+  if i>0 {body+=","}
+  body+=entries[i]
+ }
+ return body+"]"
+}
+
+func Interaction.autocomplete(self:Interaction,choices:CommandChoices)->string {
+ assert self.kind==4,"Discord autocomplete requires an autocomplete interaction"
+ option=interaction_option(self.data_json,"",true)
+ kind=json.get_raw_large(option,"type")
+ assert choices.__kind==0 or (kind=="3" and choices.__kind==3) or ((kind=="4" or kind=="10") and choices.__kind==4),"Discord choices must match the focused option type"
+ return "{\"type\":8,\"data\":{\"choices\":"+choices.payload()+"}}"
+}
+
+func slash_choice_signature(choices:string)->string {
+ if len(choices)==0 {return ""}
+ n=len(choices)
+ if n<2 or byte_at(choices,0)!=91 {return "!"}
+ at=json.ws(choices,1,n)
+ result=""
+ while at<n and byte_at(choices,at)==123 {
+  end=json.value(choices,at,n,0)
+  if end<0 {return "!"}
+  entry=slice(choices,at,end)
+  label=json.get_raw_large(entry,"name")
+  value=json.get_raw_large(entry,"value")
+  if len(label)<2 or len(value)==0 {return "!"}
+  if byte_at(value,0)==34 {value=json.quote(json.unquote(value))}
+  else if errors.is_int(value) {value=text(parse_int(value))}
+  result+=json.quote(json.unquote(label))+":"+value+";"
+  at=json.ws(choices,end,n)
+  if at>=n {return "!"}
+  if byte_at(choices,at)==93 {return result}
+  if byte_at(choices,at)!=44 {return "!"}
+  at=json.ws(choices,at+1,n)
+ }
+ if at<n and byte_at(choices,at)==93 {return result}
+ return "!"
+}
+
 // Normalize the supported fields for comparison with Discord's representation.
 // Extra server-side option shapes are changed only on a locally registered name.
-func slash_option_signature(options:string)->string {
+func slash_option_signature(options:string,depth=0)->string {
  if options=="" {return ""}
+ if depth>2 {return "!"}
  n=len(options)
  if n<2 or byte_at(options,0)!=91 {return "!"}
  at=json.ws(options,1,n)
@@ -1551,10 +1712,14 @@ func slash_option_signature(options:string)->string {
   end=json.value(options,at,n,0)
   if end<0 {return "!"}
   entry=slice(options,at,end)
-  if json.get_raw_large(entry,"autocomplete")=="true" or len(json.get_raw_large(entry,"choices"))>2 or len(json.get_raw_large(entry,"options"))>2 {return "!"}
   if len(json.get_raw_large(entry,"min_value"))>0 or len(json.get_raw_large(entry,"max_value"))>0 or len(json.get_raw_large(entry,"min_length"))>0 or len(json.get_raw_large(entry,"max_length"))>0 or len(json.get_raw_large(entry,"channel_types"))>2 {return "!"}
+  children=json.get_raw_large(entry,"options")
+  nested=""
+  if len(children)>2 {nested=slash_option_signature(children,depth+1)}
+  choices=slash_choice_signature(json.get_raw_large(entry,"choices"))
+  if nested=="!" or choices=="!" {return "!"}
   result+=json.get_raw_large(entry,"type")+":"+json.quote(json.unquote(json.get_raw_large(entry,"name")))+":"+json.quote(json.unquote(json.get_raw_large(entry,"description")))
-  result+=":"+json.boolean(json.get_raw_large(entry,"required")=="true")+";"
+  result+=":"+json.boolean(json.get_raw_large(entry,"required")=="true")+":"+json.boolean(json.get_raw_large(entry,"autocomplete")=="true")+"["+nested+"]["+choices+"];"
   at=json.ws(options,end,n)
   if at>=n {return "!"}
   if byte_at(options,at)==93 {return result}
@@ -1671,7 +1836,8 @@ func Interaction.checked(self:Interaction,id:string)->bool {
 // Explicitly send the initial response before doing more work in the handler.
 func Interaction.respond(self:Interaction,body:string)->bool {
  if self.__interaction_token=="" or self.id=="" or self.__response_state!=0 {return false}
- if json.get_raw_large(body,"type")=="" {return false}
+ kind=json.get_raw_large(body,"type")
+ if kind=="" or (self.kind==4 and kind!="8") or (self.kind!=4 and kind=="8") {return false}
  path="/api/v10/interactions/"+self.id+"/"+self.__interaction_token+"/callback"
  self.__response_state=1
  ok=false

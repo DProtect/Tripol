@@ -43,6 +43,9 @@ func (c *compiler) emitMethodCall(receiver, member string, explicit []*expr) str
 	if !ok || !c.isRecord(receiver) {
 		c.err("unknown method " + receiver + "." + member)
 	}
+	if strings.HasPrefix(member, "__") && isStandardFunction(receiver) && c.source != f.source {
+		c.err("private method " + receiver + "." + member)
+	}
 	placeholder := make([]*expr, len(explicit)+1)
 	copy(placeholder[1:], explicit)
 	args := c.callArguments(f, &expr{s: receiver + "." + member, args: placeholder})
