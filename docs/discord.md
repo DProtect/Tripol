@@ -31,6 +31,12 @@ This development build compiles the Windows Gateway and REST paths and tests off
 
 Esta compilación de desarrollo genera las rutas Gateway y REST para Windows y prueba el comportamiento sin conexión en Linux y WebAssembly. La validación contra Discord requiere un servidor privado autorizado. Cada proceso ejecuta una sesión Gateway a la vez. Quedan pendientes la reconexión automática, los comandos slash y Components V2.
 
+## Callback foundation / Base para callbacks
+
+The 0.28 compiler supports typed references to named functions with `&name`. Discord handler registration is pending. See the [language reference](language.md).
+
+El compilador 0.28 admite referencias tipadas a funciones con nombre mediante `&nombre`. El registro de manejadores de Discord está pendiente. Consulta la [referencia del lenguaje](language.md).
+
 ## API
 
 | Method / Método | Behavior / Comportamiento |

@@ -173,6 +173,8 @@ func reachable(fs []fn, ss []stmt) map[string]bool {
 					walkFunction(method)
 				}
 			}
+		} else if e.op == "function-ref" {
+			walkFunction(e.s)
 		} else if e.op == "method" {
 			for _, method := range methods[e.s] {
 				walkFunction(method)

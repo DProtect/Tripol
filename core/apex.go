@@ -12,7 +12,7 @@ type recurrence struct {
 }
 
 func (c *compiler) recurrence(f fn) (r recurrence, ok bool) {
-	if !c.a.hyper || c.a.trace || c.a.guard || f.record || f.ret != "int" || len(f.args) != 1 || f.args[0].typ != "int" || len(f.body) != 2 {
+	if !c.a.hyper || c.a.trace || c.a.guard || c.callbackTargets[f.name] || f.record || f.ret != "int" || len(f.args) != 1 || f.args[0].typ != "int" || len(f.body) != 2 {
 		return r, false
 	}
 	p := f.args[0].name

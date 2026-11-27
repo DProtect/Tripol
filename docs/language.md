@@ -1,5 +1,25 @@
 # Language reference — QUANTUM X 0.27.1
 
+## DISCORD NEW 0.28 development
+
+A named function can be stored as a typed callback. `&format_name` takes a reference to the function. Declare the corresponding parameter or field as `func(string)->string` and call a local callback as a regular function.
+
+```tripol
+func format_name(name:string)->string {
+    return "Hola, " + name
+}
+
+func welcome(render:func(string)->string,name:string)->string {
+    return render(name)
+}
+
+show welcome(&format_name, "Ada")
+```
+
+Callback signatures must match the argument and result types. Pass all arguments when invoking a callback, including arguments whose defaults apply to direct calls. References work in native builds and WebAssembly. The current implementation takes references to named functions with ordinary parameter and result types.
+
+## QUANTUM X 0.27.1 reference
+
 Source files are `.tri`. Imports must precede declarations and statements; use `import tripol.math`, `import vault.name`, or a quoted project-local `.tri` path. `//` and `#` start comments; newline or semicolon separates statements. Blocks use braces. Strings use JSON-style quoting and escape sequences (no embedded NUL). Identifiers are ASCII; text is byte-oriented. `let` declares mutable bindings, `const` immutable bindings; bare assignment creates or updates a mutable local. No shadowing. Types: signed checked int64 (`int`), `bool`, IEEE binary64 (`float`), immutable `string`, runtime-length `ints`, named `struct`. Integer and float operations require matching types. `float(n)` converts integers; `show` prints floats with six decimals. Struct fields support scalar, string and `ints` types, not nested records. Struct and dynamic array assignments alias references, and const is not deep immutability.
 
 Functions use `func name(a:int,b:int)->int {return a+b}`; omitted types default to int. Functions have no globals or closures. `if/else if/else`, `while`, `for i in range(start,end)`, `for n in array`, `repeat`, `break`, `continue` are supported. `and/or/not` short circuit; `+=` etc. modify bindings. Fixed arrays of up to 400 integers use stack space; runtime-sized `ints(n)` has 0..4194304 elements and cannot grow directly; `tripol.buffer` implements an explicit growable integer backing array. The 401 stack-slot limit includes temporary locals and exception records. Recursion can exhaust native stack. `assert condition,"message"` checks runtime conditions.

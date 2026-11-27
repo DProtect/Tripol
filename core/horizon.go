@@ -5,6 +5,14 @@ import "fmt"
 // Horizon records are typed references to arena-resident sequences of 8-byte slots.
 func (c *compiler) isRecord(t string) bool { f, ok := c.fs[t]; return ok && f.record }
 func (c *compiler) validType(t string) bool {
+	if args, result, ok := callbackParts(t); ok {
+		for _, arg := range args {
+			if !c.validType(arg) {
+				return false
+			}
+		}
+		return c.validType(result)
+	}
 	switch t {
 	case "int", "float", "bool", "string", "ints", "list", "string_list", "bool_list", "float_list":
 		return true

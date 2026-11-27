@@ -10,8 +10,8 @@ import (
 	"testing"
 )
 
-// Frozen v0.15 scanner is a test-only grammar oracle.
-var oldLexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(\+=|-=|\*=|/=|%=|==|!=|<=|>=|&&|\|\||->|=>|[+*/%<>=!(){}\[\],.:;\-]))`)
+// Test-only grammar oracle from v0.15, extended with the callback reference token.
+var oldLexRE = regexp.MustCompile(`^(?:([ \t\r]+)|(//[^\n]*|#[^\n]*)|(\n)|("(?:[^"\\\n]|\\.)*")|([0-9]+(?:\.[0-9]+)?)|([A-Za-z_][A-Za-z_0-9]*)|(\+=|-=|\*=|/=|%=|==|!=|<=|>=|&&|\|\||->|=>|[+*/%<>=!&(){}\[\],.:;\-]))`)
 
 func oldLex(s string) []token {
 	var ts []token
@@ -53,7 +53,7 @@ func captureLex(f func(string) []token, s string) (tokens []token, err string) {
 func TestCoreLexerParity(t *testing.T) {
 	r := rand.New(rand.NewSource(1616))
 	alphabet := []byte("aZ_109.\t\r\n /#\"\\+-*%!=&|><:;()[]{},\x00\xffé你好")
-	cases := []string{"", "// hi\nshow f\"Hola {x}\"", `"escaped \" and \\ and é"`, "\"a\\é\"", "1.2.3 1. 99 => -> /= // end", "\"a\\\n\"", "\"\xff\"", "show\r\n3"}
+	cases := []string{"", "// hi\nshow f\"Hola {x}\"", `"escaped \" and \\ and é"`, "\"a\\é\"", "1.2.3 1. 99 => -> /= // end", "\"a\\\n\"", "\"\xff\"", "show\r\n3", "cb=&math.square\nshow cb(7) && true"}
 	for i := 0; i < 20000; i++ {
 		b := make([]byte, r.Intn(100))
 		for j := range b {

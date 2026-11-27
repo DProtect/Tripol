@@ -82,7 +82,7 @@ func lex(s string) []token {
 				}
 			}
 			if k == "" {
-				if strings.IndexByte("+*/%<>=!(){}[],.:;-", b) >= 0 {
+				if strings.IndexByte("+*/%<>=!&(){}[],.:;-", b) >= 0 {
 					k = "op"
 				} else {
 					lexError(b, line, col)

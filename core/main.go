@@ -97,12 +97,34 @@ func (p *parser) name() string {
 	return p.take().s
 }
 func (p *parser) typ() string {
+	if !p.eat("func") {
+		return p.typeName()
+	}
+	p.need("(")
+	var args []string
+	if !p.eat(")") {
+		for {
+			args = append(args, p.typeName())
+			if p.eat(")") {
+				break
+			}
+			p.need(",")
+		}
+	}
+	p.need("->")
+	return callbackType(args, p.typeName())
+}
+func (p *parser) typeName() string {
 	switch p.t().s {
 	case "int", "bool", "string", "float", "ints", "list", "string_list", "bool_list", "float_list":
 		return p.take().s
 	}
 	if p.t().k == "id" {
-		return p.name()
+		name := p.name()
+		if p.eat(".") {
+			name += "." + p.name()
+		}
+		return name
 	}
 	p.err("expected type")
 	return ""
@@ -319,6 +341,12 @@ func (p *parser) expression(min int) *expr {
 				}
 				p.need(",")
 			}
+		}
+	case t.s == "&":
+		e.op = "function-ref"
+		e.s = p.name()
+		if p.eat(".") {
+			e.s += "." + p.name()
 		}
 	case t.s == "(":
 		e = p.expression(1)
@@ -657,6 +685,7 @@ type compiler struct {
 	protected     []int
 	scratchScopes []int
 	tirCache      map[string]tirFunction
+	callbackTargets map[string]bool
 }
 
 func (c *compiler) err(s string) {
@@ -701,6 +730,8 @@ func (c *compiler) expression(e *expr) string {
 		return "string"
 	case "format":
 		return c.formatExpression(e)
+	case "function-ref":
+		return c.functionReference(e.s)
 	case "var":
 		v, ok := c.lookup(e.s)
 		if !ok {
@@ -755,6 +786,11 @@ func (c *compiler) expression(e *expr) string {
 			}
 			if t, handled := c.builtin(e); handled {
 				return t
+			}
+			if v, found := c.lookup(e.s); found {
+				if t, handled := c.callCallback(e.s, v, e.args); handled {
+					return t
+				}
 			}
 		}
 		if !ok {
@@ -1598,6 +1634,9 @@ func generateCodePGO(fs []fn, ss []stmt, target string, opt bool, live map[strin
 	}
 	a := &asm{labels: map[string]int{}, data: map[string]string{}, target: target, opt: opt, trace: diagnosticTrace, profileTraining: training, turbo: len(turbo) > 0 && turbo[0], hyper: len(turbo) > 1 && turbo[1]}
 	c := compiler{a: a, fs: map[string]fn{}, tirCache: map[string]tirFunction{}}
+	if a.hyper {
+		c.callbackTargets = callbackTargets(fs, ss)
+	}
 	for _, f := range fs {
 		if _, ok := c.fs[f.name]; ok {
 			die("duplicate function %s", f.name)

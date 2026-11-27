@@ -4,6 +4,16 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
 (async()=>{
  const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync(path.join(__dirname,'tripol-compiler.wasm')),go.importObject);go.run(instance);
  const cases=[
+ [`struct Context {username:string}
+struct Handler {reply:func(Context)->string}
+func greet(ctx:Context)->string {return "Hola, "+ctx.username}
+func alternate(ctx:Context)->string {return "Bienvenido, "+ctx.username}
+func dispatch(h:Handler,ctx:Context)->string {reply=h.reply;return reply(ctx)}
+ctx=Context("Ada")
+h=Handler(&greet)
+show dispatch(h,ctx)
+h.reply=&alternate
+show dispatch(h,ctx)`, 'Hola, Ada\nBienvenido, Ada\n'],
  [`struct Counter {value:int=0}
 func Counter.add(self:Counter,step=1)->int {self.value+=step;return self.value}
 c=Counter()

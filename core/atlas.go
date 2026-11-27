@@ -64,6 +64,17 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 		}
 	}
 	qualifyType := func(typ string) string {
+		if args, ret, ok := callbackParts(typ); ok {
+			for i, arg := range args {
+				if qualified, found := records[arg]; found {
+					args[i] = qualified
+				}
+			}
+			if qualified, found := records[ret]; found {
+				ret = qualified
+			}
+			return callbackType(args, ret)
+		}
 		if qualified, ok := records[typ]; ok {
 			return qualified
 		}
@@ -87,6 +98,11 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 				e.s = qualified
 			} else {
 				e.s = "@builtin:" + e.s
+			}
+		}
+		if e.op == "function-ref" {
+			if qualified, ok := names[e.s]; ok {
+				e.s = qualified
 			}
 		}
 		for _, a := range e.args {

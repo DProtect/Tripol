@@ -1,5 +1,6 @@
 # v0.28.0 DISCORD NEW (development)
 
+- SIMPLE R2 adds typed references to named functions, including structure fields, parameters and return values. Callback dispatch uses the checked native ABI or an internal WebAssembly function table.
 - SIMPLE R2 adds typed methods on structures, with an explicit receiver, optional arguments and calls on computed receivers. Native profiles and WebAssembly share the parser and type validation.
 - `discord.bot()` creates independent command and presence settings. `bot.preview()` runs offline. On Windows, `bot.start()` reads `DISCORD_TOKEN` and uses the existing Gateway transport. Only bots with prefix commands request Message Content Intent.
 - `discord.embed()` builds embeds with a title, description, footer, RGB color and fields. `embed.payload()` builds JSON offline with mentions disabled. `embed.send()` uses native Windows REST.

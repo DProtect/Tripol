@@ -20,12 +20,12 @@ func (b *webCode) section(id byte,p webCode){b.raw(id);b.u(uint32(len(p)));*b=ap
 type webLocal struct { index uint32; typ string }
 type webSig struct { args []byte; results []byte }
 type webFunction struct { f fn; index uint32; typ uint32 }
-type webModule struct { definitions map[string]fn; funcs map[string]webFunction; order []webFunction; types []webSig; bodies []webCode; current int; strings []string; stringIDs map[string]int64; records map[string]fn; dictionaries map[string][]param }
+type webModule struct { definitions map[string]fn; funcs map[string]webFunction; order []webFunction; types []webSig; bodies []webCode; current int; strings []string; stringIDs map[string]int64; records map[string]fn; dictionaries map[string][]param; callbackSlots map[uint32]uint32; callbackElements []uint32; indirectTypes map[int]uint32 }
 type webEmitter struct { module *webModule; code webCode; scopes []map[string]webLocal; locals,params uint32; line int; labels []string; result string }
 func webReject(format string,args ...any){die("Web Engine R3: "+format,args...)}
 func webScalar(t string)bool{return t=="int"||t=="bool"||t=="string"||t=="float"||t=="ints"||isList(t)}
 func (m *webModule) signature(a,r []byte)uint32{m.types=append(m.types,webSig{a,r});return uint32(len(m.types)-1)}
-func (m *webModule) supported(t string)bool{if webScalar(t){return true};_,ok:=m.records[t];return ok}
+func (m *webModule) supported(t string)bool{if webScalar(t)||strings.HasPrefix(t,callbackPrefix){return true};_,ok:=m.records[t];return ok}
 func (m *webModule) fields(t string)[]param{if f,ok:=m.records[t];ok{return f.args};return m.dictionaries[t]}
 func (m *webModule) field(t,n string)(int64,string){for i,f:=range m.fields(t){if f.name==n{return int64(i),f.typ}};webReject("unknown field %s on %s",n,t);return 0,""}
 func (m *webModule) declare(f fn)webFunction{
@@ -66,6 +66,13 @@ func (e *webEmitter) expression(x *expr)string{
  if x==nil{webReject("missing expression")};switch x.op{
  case "int","bool","float":e.code.i64(x.n);return x.op
  case "string":e.code.i64(e.module.stringID(x.s));return "string"
+ case "function-ref":
+  f, ok := e.module.definitions[x.s]
+  typ := functionCallbackType(f)
+  if !ok || typ == "" { webReject("unknown callback target %s", x.s) }
+  callee := e.module.declare(f)
+  e.code.i64(int64(e.module.callbackSlot(callee.index)))
+  return typ
  case "array":return e.arrayLiteral(x,false,"")
  case "dictionary":
   fields:=[]param{};values:=[]uint32{};for i:=0;i<len(x.args);i+=2{if x.args[i].op!="string"{webReject("literal dictionary key required")};v,t:=e.save(x.args[i+1]);fields=append(fields,param{x.args[i].s,t});values=append(values,v)}
@@ -207,6 +214,11 @@ func (e *webEmitter) expression(x *expr)string{
   if f, ok := e.module.definitions[x.s]; ok {
    return e.call(f, x.args, 0)
   }
+  if v, ok := e.get(x.s); ok {
+   if params, result, ok := callbackParts(v.typ); ok {
+    return e.callCallback(v.index, params, result, x.args)
+   }
+  }
   if receiver, member, ok := strings.Cut(x.s, "."); ok {
    if v, exists := e.get(receiver); exists {
     return e.method(v.index, v.typ, member, x.args)
@@ -226,6 +238,45 @@ func (e *webEmitter) method(receiver uint32, typ, member string, args []*expr) s
 	}
 	e.code.inst(0x20, receiver)
 	return e.call(f, args, 1)
+}
+
+func (m *webModule) callbackSlot(function uint32) uint32 {
+	if slot, ok := m.callbackSlots[function]; ok {
+		return slot
+	}
+	slot := uint32(len(m.callbackElements))
+	m.callbackSlots[function] = slot
+	m.callbackElements = append(m.callbackElements, function)
+	return slot
+}
+
+func (m *webModule) indirectType(arity int) uint32 {
+	if sig, ok := m.indirectTypes[arity]; ok {
+		return sig
+	}
+	args := make([]byte, arity)
+	for i := range args {
+		args[i] = 0x7e
+	}
+	sig := m.signature(args, []byte{0x7e})
+	m.indirectTypes[arity] = sig
+	return sig
+}
+
+func (e *webEmitter) callCallback(receiver uint32, params []string, result string, args []*expr) string {
+	if len(args) != len(params) {
+		webReject("wrong callback argument count")
+	}
+	for i, arg := range args {
+		if e.expression(arg) != params[i] {
+			webReject("invalid callback argument %d", i+1)
+		}
+	}
+	e.code.inst(0x20, receiver)
+	e.code.raw(0xa7) // i32.wrap_i64, the WebAssembly table index
+	e.code.inst(0x11, e.module.indirectType(len(params)))
+	e.code.u(0)
+	return result
 }
 
 func (e *webEmitter) call(f fn, args []*expr, implicit int) string {
@@ -296,7 +347,7 @@ func CompileWeb(source string)(out []byte,err error){
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
  imports,fs,ss:=parseUnit(source);for _,n:=range imports{switch n{case "@std:discord","@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:process","@std:thread","@std:game","@std:events":default:webReject("library %s requires a browser adapter or native target",n)}}
  fs = withStandardImports(imports, fs);validateCode(fs,ss,"linux")
- m:=&webModule{definitions:map[string]fn{},funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{}}
+ m:=&webModule{definitions:map[string]fn{},funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{},callbackSlots:map[uint32]uint32{},indirectTypes:map[int]uint32{}}
  m.signature([]byte{0x7f},nil) // tick(line)
  m.signature([]byte{0x7f,0x7e,0x7e,0x7f},[]byte{0x7e}) // checked arithmetic
  m.signature([]byte{0x7e,0x7f,0x7f},nil) // show
@@ -327,7 +378,24 @@ func CompileWeb(source string)(out []byte,err error){
  var ts webCode;ts.u(uint32(len(m.types)));for _,s:=range m.types{ts.raw(0x60);ts.u(uint32(len(s.args)));ts.raw(s.args...);ts.u(uint32(len(s.results)));ts.raw(s.results...)};module.section(1,ts)
  var im webCode;im.u(5);for i,n:=range []string{"tick","arithmetic","show","assertFail","value"}{im.name("tripol");im.name(n);im.raw(0);im.u(uint32(i))};module.section(2,im)
  var funcs webCode;funcs.u(uint32(len(m.order)+1));for _,f:=range m.order{funcs.u(f.typ)};funcs.u(mainType);module.section(3,funcs)
+ if len(m.callbackElements) != 0 {
+  var table webCode
+  table.u(1)
+  table.raw(0x70, 0) // funcref, minimum-only limits
+  table.u(uint32(len(m.callbackElements)))
+  module.section(4, table)
+ }
  var exports webCode;exports.u(1);exports.name("run");exports.raw(0);exports.u(mainIndex);module.section(7,exports)
+ if len(m.callbackElements) != 0 {
+  var elements webCode
+  elements.u(1)
+  elements.u(0) // active segment for table zero
+  elements.i32(0)
+  elements.raw(0x0b)
+  elements.u(uint32(len(m.callbackElements)))
+  for _, function := range m.callbackElements { elements.u(function) }
+  module.section(9, elements)
+ }
  var code webCode;code.u(uint32(len(m.bodies)));for _,b:=range m.bodies{code.u(uint32(len(b)));code.raw(b...)};module.section(10,code)
  var literals webCode;literals.name("tripol.strings");encoded,encodeErr:=json.Marshal(m.strings);if encodeErr!=nil{return nil,encodeErr};literals.raw(encoded...);module.section(0,literals)
  return []byte(module),nil

@@ -20,6 +20,10 @@ func splitMethodName(name string) (receiver, member string, ok bool) {
 
 func (a *asm) stackCall(name string, args int) {
 	a.call("fn:" + name)
+	a.dropStack(args)
+}
+
+func (a *asm) dropStack(args int) {
 	size := args * 8
 	if size == 0 {
 		return

@@ -157,7 +157,7 @@ func (c *compiler) loopPlan(s stmt) ([]variable, bool) {
 
 // Private register ABI R8..R11 for pure checked int64 leaf expressions only.
 func (c *compiler) nativeTIR(f fn) (tirFunction, bool) {
-	if !c.a.hyper || c.a.trace || len(f.args) == 0 {
+	if !c.a.hyper || c.a.trace || len(f.args) == 0 || c.callbackTargets[f.name] {
 		return tirFunction{}, false
 	}
 	ir, ok := c.tirCache[f.name]
