@@ -1,0 +1,49 @@
+name: Publish QUANTUM X v0.27.1
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-v0.27.1.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: release-v0.27.1
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE_SHA: a0985d5d7d6bedf0ab0452bed5fc0530ead502fb
+      RUN_ID: '45920316166'
+    steps:
+      - name: Verify successful CI and exact source
+        shell: bash
+        run: |
+          set -euo pipefail
+          for run in "$RUN_ID" 45920316076 45920316142 45920316085; do
+            gh api "repos/$GH_REPO/actions/runs/$run" --jq '[.head_sha,.conclusion]|@tsv' | grep -Fx "$(printf '%s\tsuccess' "$SOURCE_SHA")"
+          done
+      - name: Fetch verified build artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh run download "$RUN_ID" -n windows -D dist
+          gh run download "$RUN_ID" -n linux-and-editor -D dist
+          cd dist
+          sha256sum TRIPOL-v0.27-Windows-x64.exe TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.1.vsix > SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+      - name: Publish experimental release without replacing existing assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view v0.27.1 --json tagName >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to overwrite.'
+            exit 1
+          fi
+          cd dist
+          gh release create v0.27.1 --target "$SOURCE_SHA" --prerelease --title 'TRIPOL v0.27.1 — QUANTUM X' --notes 'Experimental preview. Compiler CI, public ecosystem, benchmarks and web engine passed for the release commit. Windows installer is unsigned; verify SHA256SUMS.txt. Physical Ryzen 5 3400G and Radeon Vega 11 / WebGPU validation remains pending. Includes Windows x64, Linux x64 and the VS Code 0.27.1 VSIX.' TRIPOL-v0.27-Windows-x64.exe TRIPOL-v0.27-Setup-x64.exe TRIPOL-v0.27-Installer.zip TRIPOL-v0.27-Linux-x64.tar.gz tripol-language-0.27.1.vsix SHA256SUMS.txt
