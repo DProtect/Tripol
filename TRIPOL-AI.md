@@ -10692,3 +10692,645 @@ choice = ui.choose("Save", "Save changes?")
 show choice
 ```
 
+
+---
+
+# Additional official guides
+
+---
+
+## Source: docs/genesis.md
+
+# GENESIS R3 — QUANTUM X
+
+The production Go compiler builds a native stage written in TRIPOL. GENESIS emits Linux x86-64 ELF and experimental Windows PE32+ console executables. It now supports integer functions (up to 8 int parameters), local integer variables, recursion, forward and mutual calls, if/else-if/else, while, for/range, checked + - * / %, and repeated show. A function must end in a return; an earlier return in a branch is permitted. Global variable capture, a complete type system are not supported. Boolean conditions have short-circuit operators. Up to 32 function declarations, 32 slots per frame, 4096 source bytes, 16 statement nesting levels. Declarations must precede control flow in each frame. Loop counters are immutable and scoped.
+
+## Direct binary output
+
+```sh
+tripol build compiler/direct.tri --target linux -o genesis-stage
+printf 'examples/projects/genesis_functions.tri\ngenesis-demo\n' | ./genesis-stage
+chmod +x genesis-demo
+./genesis-demo
+```
+
+On Windows build the stage with `--target windows -o genesis-stage.exe` then run it and enter the source and output paths on separate lines. The stage prints bytes written and produces an ELF for Linux x86-64. Choose a new output path. Both the direct driver and the hex transport (`compiler/file.tri` with `tripol genesis`) reject existing destinations, including paths that resolve to the source file.
+
+Expected output of genesis_functions.tri: 0, 5, 10, ..., 45, each on its own line. Full self-compilation and additional language features remain future work.
+
+## Windows PE R1
+
+```cmd
+tripol build compiler/windows.tri --target windows -o genesis-win.exe
+genesis-win.exe
+```
+Enter `examples/projects/genesis_functions.tri` and a new output path such as `genesis-demo.exe` on separate lines. Run `genesis-demo.exe`. Expected ten lines from 0 to 45 in steps of 5. The compiler emits PE32+ directly, with RX code and a RW import table for GetStdHandle, WriteFile and ExitProcess. Linux can host this stage as well. The generated programs use kernel32 and a fixed image base. General Windows APIs and full self-hosting remain future work.
+
+### GENESIS R3 additional control flow
+
+The declaration pass now builds the function signature table before emitting code. Calls target stable native jump stubs patched to actual function bodies, enabling forward calls and mutual recursion. Conditions support integer comparisons, boolean literals, `not`, `and`, `or` (also !, &&, ||), short-circuit evaluation and boolean grouping; `else if` chains are supported. Booleans are now first-class scalar values in local variables, parameters and function returns; `show` remains integer-only in this stage. Integer and boolean expressions now pass through a separate bounded AST; statements still lower directly from tokens, functions cannot access main's local slots, and self-compilation is not yet possible. See examples/projects/genesis_control.tri.
+
+### Loop control
+
+`break` exits the nearest `while` or `for` loop. `continue` rechecks a `while` condition or advances a `for` counter. Both are available inside nested conditionals. GENESIS rejects loop control outside a loop.
+
+## Integer expression AST
+
+`compiler/ast.tri` represents literals, variable references, unary negation, checked arithmetic, calls and linked argument nodes in a bounded integer array (1024 nodes per expression). Parsing is separate from native code emission. The backend preserves left-to-right argument evaluation, precedence and checked overflow/division. Existing mutable integer variables support `+=`, `-=`, `*=`, `/=`, `%=`; range counters remain immutable. `examples/projects/genesis_ast.tri` exercises the AST on both native targets. This is not yet a full program AST or a self-hosting compiler.
+
+### Typed scalar expressions
+
+GENESIS now infers int/bool local types and checks assignment, function parameters/returns, arithmetic, comparisons and conditions during compilation. Boolean equality and short-circuit operators use the same AST as arithmetic, including grouped expressions. Boolean values can be returned or passed to functions, but cannot be printed directly yet; use an integer-returning function or branch. Integer range counters remain immutable. `examples/projects/genesis_types.tri` demonstrates the two scalar types. Strings, arrays, records and full program AST remain pending.
+
+---
+
+## Source: docs/update.md
+
+# TRIPOL UPDATE R2 — first stage
+
+Interactive commands can print a notice on stderr when a newer numbered release is available. Checks are cached for 24 hours (including failed offline attempts), with a 700 ms HTTP deadline on a cache miss. Redirected output, CI, benchmarks, machine-oriented commands and --version are unaffected. Set TRIPOL_NO_UPDATE=1 to disable automatic checks. Explicit commands still work.
+
+- `tripol update --check`: refresh the official GitHub release list and report status.
+- `tripol update`: download the platform-specific official distribution into a private cache directory, validate its exact published size and GitHub SHA-256 digest, then print installation instructions.
+- No installation, execution or source-code changes occur automatically. Windows setup remains unsigned. Numbered public pre-releases are eligible because TRIPOL is a public preview; drafts and unrecognized version tags are excluded.
+
+No tokens are required. Release checks contact api.github.com and explicit downloads contact GitHub release assets. No source files are sent. The cache holds public release metadata. SHA-256 detects changes to the downloaded asset relative to GitHub's release metadata; it does not replace code signing.
+
+New in QUANTUM X: interactive transfer progress, `tripol update --download-only` (verified download without installation instructions), and `tripol update --history` (local verified download receipts, not installed-version history). Default `tripol update` still prints manual installation instructions. Automated installation, backup and rollback are not yet implemented. Receipts contain public asset name/digest and local path; they remain on the user's machine.
+
+## UPDATE R2 transaction (0.27.1)
+
+`tripol update --install` downloads the official compiler (raw Windows asset or Linux archive), verifies SHA-256, asks for confirmation and replaces only the managed per-user compiler. Interactive default update offers installation when a supported asset is available; `--download-only` never installs. Windows copies the current compiler to a temporary worker and waits for the parent to exit before replacement. The worker reports the result in its printed local log. Linux extracts only the known regular `tripol` member; other paths, special files and oversized archives are rejected. The candidate and installed binary are probed using --version. An exclusive lock prevents simultaneous replacement. The previous executable and its digest are retained in a .tripol-rollback-* directory next to the installation; `tripol update --rollback` confirms before restoring the newest intact backup. If a verification step fails the original is restored when possible; if restoration is blocked, the error identifies the preserved original. Close other TRIPOL processes. Portable/system/symlink installs remain manual. No admin rights or PATH changes are requested. Unsigned Windows binaries remain experimental; digests are from official release metadata, not independent code signing. The 0.27.0 updater requires manual installation of 0.27.1, and the worker is used for subsequent releases.
+
+---
+
+## Source: docs/ecosystem-release.md
+
+# Public ecosystem release / Publicación
+
+Repository: https://github.com/Tripollas/Tripol
+
+## Release
+
+After the ecosystem PR is reviewed and merged, open Actions → Public ecosystem → Run workflow on `main`. The workflow scans reachable Git history, tests builds on Linux and Windows, builds the unsigned Windows setup, Linux compiler archive and VSIX, and creates a **draft pre-release** with SHA-256 checksums. Review the actual logs, artifacts and unsigned installer before publishing the draft. Never replace existing release assets silently. If the workflow is not available, follow [build.md](build.md).
+
+## VS Code Marketplace
+
+The repository includes an extension package. Install its VSIX locally for testing. To publish publicly, create/verify a Visual Studio Marketplace publisher and set `vscode/package.json` publisher to that owned ID; use `vsce publish` from a trusted machine with a scoped token stored outside source. Do not expose tokens in CI or logs.
+
+## Community
+
+An administrator must enable Discussions in repository Settings → General → Features → Discussions. Suggested categories: Announcements, Q&A, Ideas, Show and tell. Use the existing code of conduct and security policy. The API connector cannot change this setting.
+
+## Security
+
+The workflow scans Git history of all fetched refs with Gitleaks in redacted mode; it does not scan every external artifact, release, Actions log, unreachable commit or binary. Review those separately. Enable GitHub secret scanning and push protection if available in Settings. Rotate any exposed credentials immediately, even after deleting them from a file. Never publish a real secret in a ticket or discussion. Keep private vulnerability reporting enabled where available.
+
+---
+
+## Source: docs/public-release.md
+
+# Public preview release gate
+
+- [ ] Synchronize the complete ORIGIN snapshot and verify the remote tree matches it.
+- [ ] Review all branches, tags, history, releases, artifacts and logs for secrets, personal information and material not authorized for publication; revoke any leaked credentials. A current-tree scan is not a history audit.
+- [ ] Confirm all public files are authorized for Apache-2.0 distribution; keep private research outside this repository.
+- [ ] Verify Windows and Linux CI, then run live Discord and graphics smoke tests on an isolated test server; no credentials in CI logs.
+- [ ] Publish verified installer/portable/source archives with SHA-256 checksums as a pre-release, not v1.0. Installer is unsigned.
+- [ ] Enable branch protection, required CI, private vulnerability reporting and community discussions where available.
+- [ ] Change visibility in Settings only after approval of these checks. Public Git history may be copied permanently.
+
+The current repository is a private staging area until the maintainer completes these steps. No claim of a public release or full audit is made by this checklist.
+
+---
+
+## Source: docs/open-core.md
+
+# Open ecosystem and licensing
+
+The buildable compiler, runtime, official libraries, examples, tests and documentation in this repository are distributed under Apache-2.0 unless a file explicitly states another compatible license. Anyone may use, modify and redistribute them under the license, including commercial use. Preserve required notices. The project remains free to download and build.
+
+Future private research may live in a separate TRIPOL Labs repository under independent terms. No such repository or proprietary dependency is required by the public compiler. Code already distributed under Apache-2.0 remains available under that license; private research is not represented as open source. A source-available or closed component must be labeled separately. Changes to this policy must not remove rights previously granted.
+
+---
+
+## Source: docs/website.md
+
+# Website / GitHub Pages
+
+The public website is maintained exclusively on the [gh-pages branch](https://github.com/Tripollas/Tripol/tree/gh-pages), not in main. Its public URL is https://tripollas.github.io/Tripol/.
+
+## Local preview
+
+Clone the website branch into a separate directory:
+
+```sh
+git clone --branch gh-pages --single-branch https://github.com/Tripollas/Tripol.git tripol-website
+cd tripol-website
+python -m http.server 8000
+```
+
+Open http://localhost:8000. The branch includes static files, documentation and versioned downloads. The installation scripts verify pinned SHA-256 hashes; Windows setup is unsigned.
+
+## Deployment
+
+In Settings > Pages, use Deploy from a branch > gh-pages > /(root). Keep changes to the website on gh-pages and compiler changes on main. Before publishing a new version, regenerate verified downloads and checksums, update installer hashes and links, and test both platforms. Never commit secrets. GitHub Releases and website downloads must be verified independently; no automatic synchronization is implied.
+
+---
+
+# Guided web lessons / Lecciones guiadas
+
+---
+
+## Lesson 1 — docs/learn-hello.html
+
+LESSON 01 OF 14 (ES: LECCIÓN 01 DE 14)
+
+### Hello world (ES: Hola mundo)
+Write and run your first TRIPOL program. (ES: Escribe y ejecuta tu primer programa en TRIPOL.)
+
+#### Your first program (ES: Tu primer programa)
+The show instruction writes values to the console. Text is written between double quotes. No imports or main function are needed for a simple program. (ES: La instrucción show escribe valores en la consola. El texto se escribe entre comillas dobles. No necesitas importar bibliotecas ni declarar una función main para un programa sencillo.)
+
+```tripol
+show "Hello, TRIPOL!"
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Hello, TRIPOL!
+```
+
+#### Several values and comments (ES: Varios valores y comentarios)
+Use commas to show several values separated by spaces. A new show instruction starts a new output line. Comments begin with // or # and are ignored. (ES: Utiliza comas para mostrar varios valores separados por espacios. Una nueva instrucción show comienza otra línea. Los comentarios empiezan con // o # y se ignoran.)
+
+```tripol
+// My first program
+show "TRIPOL", 42
+# Another line
+show "Ready"
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+TRIPOL 42
+Ready
+```
+
+#### Run a file locally (ES: Ejecutar un archivo localmente)
+Save your program as main.tri. With TRIPOL installed, open a terminal in the folder and run these commands. The browser examples can be opened with Try it instead. (ES: Guarda el programa como main.tri. Con TRIPOL instalado, abre una terminal en esa carpeta y ejecuta estos comandos. Para los ejemplos del navegador, utiliza Probar.)
+Native TRIPOL · local execution (ES: TRIPOL nativo · ejecución local)
+
+```cmd
+tripol run main.tri
+tripol build main.tri
+```
+
+Important (ES: Importante)The build command produces a native executable; it does not require Python or Go for users of the distribution. (ES: El comando build genera un ejecutable nativo; los usuarios de la distribución no necesitan Python ni Go.)
+
+Installation and quick start (ES: Instalación e inicio rápido)
+
+---
+
+## Lesson 2 — docs/learn-variables.html
+
+LESSON 02 OF 14 (ES: LECCIÓN 02 DE 14)
+
+### Variables (ES: Variables)
+Store values, update them and define constants. (ES: Guarda valores, modifícalos y define constantes.)
+
+#### Create a variable (ES: Crear una variable)
+A bare assignment creates a mutable local if it does not exist, or updates it if it does. TRIPOL infers the type from the assigned value. let explicitly declares a mutable binding. (ES: Una asignación directa crea una variable local mutable si no existe, o la actualiza si ya existe. TRIPOL deduce el tipo del valor asignado. let declara explícitamente una variable mutable.)
+
+```tripol
+score = 10
+let bonus = 5
+score = score + bonus
+show score
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+15
+```
+
+#### Update a value (ES: Modificar un valor)
+Use = to replace a value and compound assignments such as += or -= to update it. A variable cannot change its type after declaration. (ES: Usa = para reemplazar un valor y asignaciones compuestas como += o -= para actualizarlo. Una variable no puede cambiar de tipo después de declararse.)
+
+```tripol
+health = 100
+health -= 20
+health += 5
+show health
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+85
+```
+
+#### Constants and scope (ES: Constantes y ámbito)
+const prevents reassignment of its binding. Names are ASCII identifiers; avoid shadowing. A constant reference is not a guarantee that all shared data are immutable. (ES: const impide reasignar el nombre declarado. Los nombres son identificadores ASCII; no se admite ocultar una variable con otra del mismo nombre. Una referencia constante no garantiza que todos los datos compartidos sean inmutables.)
+
+```tripol
+const max_health = 100
+health = 75
+show health, max_health
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+75 100
+```
+
+Important (ES: Importante)Do not assign to max_health after its declaration. (ES: No asignes un nuevo valor a max_health después de declararla.)
+
+---
+
+## Lesson 3 — docs/learn-types.html
+
+LESSON 03 OF 14 (ES: LECCIÓN 03 DE 14)
+
+### Data types (ES: Tipos de datos)
+Learn int, float, bool and string. (ES: Aprende int, float, bool y string.)
+
+#### Four scalar types (ES: Cuatro tipos escalares)
+int is a checked signed 64-bit integer; float is an IEEE binary64 decimal approximation; bool is true or false; string is immutable UTF-8 byte-oriented text. (ES: int es un entero de 64 bits con signo y comprobaciones; float es un número de coma flotante IEEE binary64; bool es true o false; string es texto inmutable orientado a bytes UTF-8.)
+
+```tripol
+age = 16
+price = 2.5
+active = true
+name = "TRIPOL"
+show age, price, active, name
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+16 2.500000 true TRIPOL
+```
+
+#### Explicit conversion (ES: Conversión explícita)
+Integer and float arithmetic require matching types. Use float(n) to convert an integer, text(n) to format an integer, and parse_int(s) for valid integer text. (ES: La aritmética de int y float exige tipos iguales. Usa float(n) para convertir un entero, text(n) para convertirlo en texto y parse_int(s) para interpretar texto entero válido.)
+
+```tripol
+show float(9) / 2.0
+show "Score: " + text(42)
+show parse_int("42") + 1
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+4.500000
+Score: 42
+43
+```
+
+Important (ES: Importante)For untrusted integer text use errors.int_or or errors.is_int; invalid parse_int input may fail. (ES: Para texto entero no comprobado utiliza errors.int_or o errors.is_int; parse_int puede fallar con datos inválidos.)
+
+Safe integer conversion (ES: Conversión segura de enteros)
+
+#### Other data types (ES: Otros tipos de datos)
+TRIPOL also supports fixed integer arrays, runtime-sized ints, typed growable lists and named structures. Learn these in the following lessons. (ES: TRIPOL también admite arreglos enteros fijos, ints de tamaño determinado en ejecución, listas dinámicas tipadas y estructuras con nombre. Aprende estos tipos en las siguientes lecciones.)
+
+```tripol
+numbers = [10, 20, 30]
+show numbers[0]
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+10
+```
+
+---
+
+## Lesson 4 — docs/learn-operators.html
+
+LESSON 04 OF 14 (ES: LECCIÓN 04 DE 14)
+
+### Operators (ES: Operadores)
+Arithmetic, comparisons, logic and precedence. (ES: Aritmética, comparaciones, lógica y prioridad.)
+
+#### Arithmetic (ES: Aritmética)
+Use + for addition, - for subtraction or negation, * for multiplication, / for division, and % for integer remainder. These operators need no library import. (ES: Utiliza + para sumar, - para restar o negar, * para multiplicar, / para dividir y % para el residuo entero. No necesitan importar una biblioteca.)
+
+```tripol
+show 7 + 3, 7 - 3, 7 * 3
+show 7 / 3, 7 % 3
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+10 4 21
+2 1
+```
+
+#### Signed division and remainder (ES: División y residuo con negativos)
+Integer division truncates toward zero. The remainder follows the sign of the dividend (or is zero). Use floats for decimal division. (ES: La división entera trunca hacia cero. El residuo tiene el signo del dividendo (o es cero). Usa float para una división decimal.)
+
+```tripol
+show -7 / 3, -7 % 3
+show 7 / -3, 7 % -3
+show -7 / -3, -7 % -3
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+-2 -1
+-2 1
+2 -1
+```
+
+```tripol
+show 7.0 / 3.0
+show float(7) / 3.0
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+2.333333
+2.333333
+```
+
+Important (ES: Importante)Division or remainder by zero and signed integer overflow are checked errors. (ES: La división o residuo entre cero y el desbordamiento de enteros con signo son errores comprobados.)
+
+#### Comparison and logic (ES: Comparaciones y lógica)
+Compare using ==, !=, <, >, <= and >=. Combine boolean expressions with and, or, and not; and/or short-circuit. (ES: Compara con ==, !=, <, >, <= y >=. Combina expresiones booleanas con and, or y not; and/or usan cortocircuito.)
+
+```tripol
+show 7 == 7, 7 != 3
+show 7 > 3, 7 < 3
+show 7 >= 7, 3 <= 7
+show true and false, true or false, not true
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+true true
+true false
+true true
+false true false
+```
+
+#### Precedence and updates (ES: Prioridad y asignaciones)
+Multiplication, division and remainder take precedence over addition and subtraction. Parentheses override the order. +=, -=, *=, /= and %= modify an existing mutable integer variable. (ES: Multiplicación, división y residuo tienen prioridad sobre suma y resta. Los paréntesis cambian el orden. +=, -=, *=, /= y %= modifican una variable entera mutable.)
+
+```tripol
+show 2 + 3 * 4
+show (2 + 3) * 4
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+14
+20
+```
+
+```tripol
+n = 10
+n += 5
+n -= 2
+n *= 3
+n /= 2
+n %= 4
+show n
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+3
+```
+
+Important (ES: Importante)For powers, roots and percentages see the math library. (ES: Para potencias, raíces y porcentajes consulta la biblioteca math.)
+
+Complete math reference (ES: Referencia completa de matemáticas)
+
+---
+
+## Lesson 5 — docs/learn-conditions.html
+
+LESSON 05 OF 14 (ES: LECCIÓN 05 DE 14)
+
+### Conditionals (ES: Condicionales)
+Choose what your program does with if, else if and else. (ES: Decide qué hace tu programa con if, else if y else.)
+
+#### if (ES: if)
+An if block executes only when its boolean condition is true. Use braces for the block. (ES: Un bloque if se ejecuta únicamente cuando su condición booleana es true. Usa llaves para delimitarlo.)
+
+```tripol
+score = 80
+if score >= 60 {
+    show "Passed"
+}
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Passed
+```
+
+#### else and else if (ES: else y else if)
+else runs when the earlier condition is false. else if checks another condition; the first matching branch wins. (ES: else se ejecuta si la condición anterior es falsa. else if comprueba otra condición; se ejecuta la primera rama que coincide.)
+
+```tripol
+score = 75
+if score >= 90 {
+    show "Excellent"
+} else if score >= 60 {
+    show "Passed"
+} else {
+    show "Try again"
+}
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Passed
+```
+
+#### Combine conditions (ES: Combinar condiciones)
+Use and when both conditions must be true, or when at least one must be true, and not to reverse a boolean. (ES: Usa and cuando ambas condiciones deben ser verdaderas, or cuando al menos una debe ser verdadera y not para invertir un booleano.)
+
+```tripol
+age = 16
+allowed = true
+if age >= 13 and allowed {
+    show "Welcome"
+} else {
+    show "Unavailable"
+}
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Welcome
+```
+
+---
+
+## Lesson 6 — docs/learn-loops.html
+
+LESSON 06 OF 14 (ES: LECCIÓN 06 DE 14)
+
+### Loops (ES: Bucles)
+Repeat work with for, while and repeat. (ES: Repite tareas con for, while y repeat.)
+
+#### for and range (ES: for y range)
+range(end) starts at zero; range(start,end) starts at start. The end is excluded. for also iterates collection values. (ES: range(end) comienza en cero; range(start,end) comienza en start. El límite final se excluye. for también recorre valores de colecciones.)
+
+```tripol
+for i in range(1, 4) {
+    show i
+}
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+1
+2
+3
+```
+
+```tripol
+numbers = [10, 20, 30]
+for i, value in numbers {
+    show i, value
+}
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+0 10
+1 20
+2 30
+```
+
+#### while (ES: while)
+while repeats while its boolean condition is true. Update the condition's variables so a finite loop can finish. (ES: while repite mientras la condición booleana sea verdadera. Actualiza las variables de la condición para que un bucle finito pueda terminar.)
+
+```tripol
+n = 0
+while n < 3 {
+    n += 1
+}
+show n
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+3
+```
+
+#### repeat (ES: repeat)
+repeat executes its body a specified number of times. (ES: repeat ejecuta su bloque una cantidad determinada de veces.)
+
+```tripol
+total = 0
+repeat 3 {
+    total += 2
+}
+show total
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+6
+```
+
+#### break and continue (ES: break y continue)
+break exits the current loop; continue skips the rest of the current iteration. (ES: break termina el bucle actual; continue salta el resto de la iteración actual.)
+
+```tripol
+for i in range(5) {
+    if i == 2 {continue}
+    if i == 4 {break}
+    show i
+}
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+0
+1
+3
+```
+
+---
+
+## Lesson 7 — docs/learn-functions.html
+
+LESSON 07 OF 14 (ES: LECCIÓN 07 DE 14)
+
+### Functions (ES: Funciones)
+Create reusable code with parameters, returns and defaults. (ES: Crea código reutilizable con parámetros, retornos y valores predeterminados.)
+
+#### Define and call a function (ES: Definir y llamar una función)
+func declares a named function. Parameters receive arguments, -> specifies a return type, and return sends a value back. Declare functions before the program statements in these examples. (ES: func declara una función con nombre. Los parámetros reciben argumentos, -> indica el tipo de retorno y return devuelve un valor. En estos ejemplos declara las funciones antes de las instrucciones del programa.)
+
+```tripol
+func add(a:int, b:int)->int {
+    return a + b
+}
+show add(4, 5)
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+9
+```
+
+#### Optional parameters (ES: Parámetros opcionales)
+Trailing scalar parameters may have constant default values. Required parameters come first; omit optional arguments to use their defaults. Calls are positional. (ES: Los parámetros escalares finales pueden tener valores predeterminados constantes. Los obligatorios van primero; omite los opcionales para usar sus valores predeterminados. Las llamadas son posicionales.)
+
+```tripol
+func greet(name="Guest")->string {
+    return "Hello " + name
+}
+show greet()
+show greet("Ada")
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Hello Guest
+Hello Ada
+```
+
+#### Short functions and inference (ES: Funciones cortas e inferencia)
+Use => for a single returning expression. Current TRIPOL can infer simple scalar signatures, but explicit annotations are useful for a stable contract. Functions have no globals or closures. (ES: Usa => para una única expresión de retorno. TRIPOL puede inferir firmas escalares sencillas, pero los tipos explícitos son útiles para definir un contrato estable. Las funciones no tienen globales ni cierres.)
+
+```tripol
+func twice(n:int)->int => n * 2
+show twice(21)
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+42
+```
