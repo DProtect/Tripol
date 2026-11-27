@@ -60,9 +60,10 @@ func refineCondition(e *expr,yes,no scalarFacts){
  if a.op!="var"||(b.op!="int"&&b.op!="bool"){return}
  if e.s=="=="{yes[a.s]=scalarFact{b.op,b.n}}else{no[a.s]=scalarFact{b.op,b.n}}
 }
-func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
- if len(body)==0{return body}
+func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)([]stmt,bool){
+ if len(body)==0{return body,true}
  var result []stmt
+ fallsThrough:=true
  for i,original:=range body{
   s:=original
   switch s.op{
@@ -73,18 +74,31 @@ func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
    s.e=scalarSubstitute(s.e,env,stats)
    yes,no:=copyFacts(env),copyFacts(env)
    refineCondition(s.e,yes,no)
-   s.yes=propagateBlock(s.yes,yes,stats)
-   s.no=propagateBlock(s.no,no,stats)
+   var yesFalls,noFalls bool
+   s.yes,yesFalls=propagateBlock(s.yes,yes,stats)
+   s.no,noFalls=propagateBlock(s.no,no,stats)
    k,n,constant:=fold(s.e)
-   if constant&&k=="bool"{stats.ConstantBranches++}
+   if constant&&k=="bool"{
+    stats.ConstantBranches++
+    yesFalls=yesFalls&&n!=0
+    noFalls=noFalls&&n==0
+   }
+   fallsThrough=fallsThrough&&(yesFalls||noFalls)
    // Only incoming known bindings can cross the join. Branch-local
-   // declarations cannot escape their lexical scope.
+   // declarations cannot escape. A terminating edge supplies no values.
    for name:=range env{
     a,aok:=yes[name];b,bok:=no[name]
-    if constant&&k=="bool"{
-     if n==0{a,aok=b,bok}
-     if aok{env[name]=a}else{delete(env,name)}
-    }else if aok&&bok&&a==b{env[name]=a;stats.Joins++}else{delete(env,name)}
+    switch {
+    case yesFalls&&aok&&!noFalls:
+     env[name]=a
+    case noFalls&&bok&&!yesFalls:
+     env[name]=b
+    case yesFalls&&noFalls&&aok&&bok&&a==b:
+     env[name]=a
+     stats.Joins++
+    default:
+     delete(env,name)
+    }
    }
   case "while","for":
    // Range bounds are evaluated once. While conditions are reevaluated;
@@ -97,7 +111,7 @@ func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
    if s.op=="while"{s.e=scalarSubstitute(s.e,env,stats)}
    // The body starts with invariant facts, not values from the previous
    // iteration. Body-local facts cannot escape the backedge.
-   s.yes=propagateBlock(s.yes,copyFacts(env),stats)
+   s.yes,_=propagateBlock(s.yes,copyFacts(env),stats)
   case "scratch","try":
    clear(env)
   case "show","return","assert","throw","expr":
@@ -119,9 +133,9 @@ func propagateBlock(body []stmt,env scalarFacts,stats *cfgConstantStats)[]stmt{
   // All statements have already been validated. A direct terminator
   // makes the remaining statements in this lexical block unreachable.
   // Do not move or discard the terminator's own checked expression.
-  if s.op=="return"||s.op=="break"||s.op=="continue"{return result[:i+1]}
+  if s.op=="return"||s.op=="break"||s.op=="continue"{return result[:i+1],false}
  }
- return result
+ return result,fallsThrough
 }
 // Bounded worker pool: independently optimize function bodies. Workers do
 // not emit code, modify the input AST, share mutable facts or publish output.
@@ -147,7 +161,7 @@ func optimizeCFGWorkers(fs []fn,ss []stmt,workers int)([]fn,[]stmt,cfgConstantSt
  local:=make([]cfgConstantStats,len(fs))
  work:=func(i int){
   f:=fs[i]
-  if !f.record{out[i].body=propagateBlock(eliminateReturnPhi(f.body),scalarFacts{},&local[i])}
+  if !f.record{out[i].body,_=propagateBlock(eliminateReturnPhi(f.body),scalarFacts{},&local[i])}
  }
  if workers<=1{
   for i:=range fs{work(i)}
@@ -167,5 +181,6 @@ func optimizeCFGWorkers(fs []fn,ss []stmt,workers int)([]fn,[]stmt,cfgConstantSt
   stats.ConstantBranches+=r.ConstantBranches
   stats.LoopInvariants+=r.LoopInvariants
  }
- return out,propagateBlock(ss,scalarFacts{},&stats),stats
+ main,_:=propagateBlock(ss,scalarFacts{},&stats)
+ return out,main,stats
 }
