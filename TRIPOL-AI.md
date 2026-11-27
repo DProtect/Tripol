@@ -43,6 +43,18 @@ counter = Counter()
 show counter.add(), counter.add(4)
 ```
 
+Use `&function_name` to pass a named callback. Its type has the form `func(ArgumentType)->ResultType`. Call a callback through a local binding and pass all arguments. This syntax is part of the compiler foundation for future Discord handlers.
+
+Usa `&nombre_de_funcion` para pasar un callback con nombre. Su tipo tiene la forma `func(TipoEntrada)->TipoResultado`. Puedes llamar al callback desde una variable local pasando todos los argumentos. Esta sintaxis forma parte de la base del compilador para futuros manejadores de Discord.
+
+```tripol
+func greet(name:string)->string {return "Hola, " + name}
+func apply(handler:func(string)->string,name:string)->string {
+    return handler(name)
+}
+show apply(&greet, "Ada")
+```
+
 ## Cómo usar este archivo / How to use this file
 
 Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».
