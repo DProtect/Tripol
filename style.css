@@ -83,3 +83,16 @@ footer{padding:24px 0}
 @media(max-width:850px){.navlinks{top:64px;background:#101010;backdrop-filter:none;padding:20px;gap:8px}.navlinks a{width:100%}.hero .hero-inner{grid-template-columns:1fr;gap:32px;min-height:0;padding:48px 0}.hero h1#hero-title{font-size:clamp(36px,7vw,56px);max-width:16ch}.hero-art img{width:min(100%,320px)}.hero-art figcaption{max-width:480px}.showcase{grid-template-columns:1fr;padding:24px}.section{padding:56px 0}.stats div{padding:20px}.stats div:nth-child(2){border-right:0}.stats div:nth-child(n+3){border-bottom:0}}
 @media(max-width:650px){body:not(.docs-page):not(.pg-body) .wrap{width:calc(100% - 32px)}.hero .hero-inner{padding:40px 0 24px;gap:24px}.hero h1#hero-title{font-size:40px;margin-bottom:16px}.hero .hero-tagline{font-size:16px}.hero .actions{margin:24px 0 16px;gap:8px}.hero .actions .button{padding:10px 12px;font-size:13px}.hero-art img{width:min(100%,260px)}.hero-art figcaption{font-size:11px;gap:8px}.hero-art figcaption span:last-child{text-align:right}.section{padding:48px 0}.showcase{padding:16px}.cards article{padding:20px}.stats div{padding:16px}.stats strong{font-size:26px}.navend{gap:8px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.button,.module,.doc-link{transition:none}}
+
+/* Centered brand introduction */
+body:not(.docs-page):not(.pg-body) .hero{background:#000;text-align:center}
+.hero .hero-inner{display:flex;flex-direction:column;justify-content:center;align-items:center;gap:0;min-height:calc(100svh - 64px);padding:32px 0 48px}
+.hero .hero-release{justify-content:center;margin:0 0 8px}
+.hero-mark{position:relative;width:min(620px,82vw);height:clamp(210px,33vw,430px);overflow:hidden;flex-shrink:0}
+.hero-mark img{position:absolute;width:100%;height:auto;top:50%;left:50%;transform:translate(-50%,-50%);display:block;user-select:none}
+.hero h1#hero-title.hero-name{font-size:clamp(36px,5vw,68px);font-weight:600;letter-spacing:.22em;text-indent:.22em;line-height:1.1;margin:0 0 12px;max-width:none}
+.hero .hero-tagline{max-width:36rem;text-align:center;margin:0}
+.hero .actions{justify-content:center;margin:24px 0 12px}
+.hero .hero-doc{margin:12px 0 0}
+@media(max-width:850px){.hero .hero-inner{min-height:calc(100svh - 64px);padding:32px 0 40px}.hero-mark{height:clamp(225px,42vw,380px)}}
+@media(max-width:650px){.hero .hero-inner{padding:32px 0 40px}.hero-mark{width:min(90vw,480px);height:clamp(205px,63vw,340px)}.hero h1#hero-title.hero-name{font-size:38px}.hero .hero-tagline{font-size:16px}.hero .actions{margin:24px 0 12px}}
