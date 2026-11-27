@@ -1,5 +1,18 @@
 # DISCORD REVOLUTION — TRIPOL 0.28 development
 
+## SIMPLE R2 bots / Bots con SIMPLE R2
+
+Use `bot.slash("info", "Informacion del bot", info)` to infer the signature of `func info(ctx)`. End the callback with `ctx.reply(value)` to return the payload. The accepted values are strings, a single embed, an embed batch and Components V2. Only a returned payload or an explicit `ctx.respond(payload)` sends the initial response. An earlier expression whose result is discarded builds a payload without sending it.
+
+Usa `bot.slash("info", "Informacion del bot", info)` para inferir la firma de `func info(ctx)`. Termina el callback con `ctx.reply(valor)` para devolver el payload. Puedes pasar texto, un embed, un lote de embeds o un panel de Components V2. El envío inicial ocurre al devolver el payload o llamar explícitamente a `ctx.respond(payload)`. Una expresión anterior cuyo resultado se descarta solo construye el payload.
+
+- [Bot con un embed / Embed bot](../examples/discord_simple_embeds.tri)
+- [Bot con panel y botón inline / Components V2 bot](../examples/discord_simple_components.tri)
+
+`discord.container("#FFFFFF")` wraps the layout in an accented container. Use button styles `"primary"`, `"secondary"`, `"success"` and `"danger"` or their numeric equivalents. `panel.premium(sku_id)` adds a purchase button for an application SKU. Discord handles the purchase. Use the typed button callback for ordinary buttons.
+
+`discord.container("#FFFFFF")` envuelve el panel en un contenedor con color. Usa los estilos `"primary"`, `"secondary"`, `"success"` y `"danger"` o sus equivalentes numéricos. `panel.premium(sku_id)` añade un botón de compra de un SKU de la aplicación. Discord gestiona la compra. Los botones comunes admiten los callbacks tipados.
+
 ## Run an offline example / Prueba un ejemplo sin conexión
 
 ```tripol
@@ -128,6 +141,10 @@ Los callbacks nativos conectados pueden usar `ctx.respond(payload)` para enviar 
 `ctx.option(name)` returns raw JSON, `ctx.option_text(name)` decodes a JSON string, `ctx.values()` returns selected values and `ctx.field(id)` reads a submitted text input. `ctx.field_data(id)` returns the JSON array for select and file-upload inputs. The original interaction data is available as `ctx.data_json`, including resolved attachment metadata.
 
 `ctx.option(nombre)` devuelve JSON, `ctx.option_text(nombre)` decodifica una cadena, `ctx.values()` devuelve los valores seleccionados y `ctx.field(id)` lee un texto enviado. `ctx.field_data(id)` devuelve el arreglo JSON de los selectores y campos de archivos. `ctx.data_json` contiene los datos originales de la interacción y los metadatos resueltos de adjuntos.
+
+After `id = ctx.followup(text)`, use `ctx.edit_followup(id, text)` or `ctx.delete_followup(id)`. Use `ctx.edit_followup_payload(id, layout.payload())` to update an existing Components V2 follow-up. These methods return false on a failed request and require a successful initial response in the same handler.
+
+Después de `id = ctx.followup(texto)`, usa `ctx.edit_followup(id, texto)` o `ctx.delete_followup(id)`. Usa `ctx.edit_followup_payload(id, layout.payload())` para actualizar un seguimiento existente de Components V2. Estos métodos devuelven false si falla la solicitud y requieren una respuesta inicial confirmada dentro del mismo callback.
 
 Use `tripol new Feedback --template discord-slash` for a runnable example. Set `DISCORD_TOKEN`, optionally set `DISCORD_GUILD_ID`, and install the bot application with the `applications.commands` scope on a private test server.
 

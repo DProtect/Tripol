@@ -1898,7 +1898,7 @@ method: .short 71,69,84,0
  sub rsp,2048
  test byte ptr [rsp],0
  mov [rsp+72],rax # path
- mov [rsp+64],rcx # token address, 0 for anonymous POST, 1 for anonymous PATCH
+ mov [rsp+64],rcx # token address, 0 for anonymous POST, 1 for anonymous PATCH/DELETE
  mov [rsp+160],rdx # body
  mov [rsp+176],r8 # method: 0 legacy, 1 GET, 2 POST, 3 PUT, 4 PATCH, 5 DELETE
  mov qword ptr [rsp+168],0 # body length
@@ -2025,10 +2025,14 @@ method: .short 71,69,84,0
  je .dpatch
  cmp eax,5
  je .ddelete
+ cmp qword ptr [rsp+64],1
+ jne .dregular
+ cmp qword ptr [rsp+168],0
+ je .ddelete
+ jmp .dpatch
+.dregular:
  cmp qword ptr [rsp+168],0
  je .dverb
- cmp qword ptr [rsp+64],1
- je .dpatch
 .dpost:
  lea rdx,[rip+discord_post]
  jmp .dverb

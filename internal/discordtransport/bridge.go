@@ -61,7 +61,7 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 				return errors.New("invalid Discord bridge command")
 			}
 		case OpInteraction, OpInteractionEdit:
-			if lengths[0] == 0 || lengths[0] > 1024 || lengths[1] != 0 || lengths[2] == 0 {
+			if lengths[0] == 0 || lengths[0] > 1024 || lengths[1] != 0 || (op == OpInteraction && lengths[2] == 0) {
 				return errors.New("invalid Discord bridge callback")
 			}
 		case OpREST, OpRESTGet, OpRESTPost, OpRESTPut, OpRESTPatch, OpRESTDelete:
@@ -108,7 +108,9 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 			}
 			reply = []byte("1")
 		case OpInteraction, OpInteractionEdit:
-			if op == OpInteractionEdit {
+			if op == OpInteractionEdit && len(args[2]) == 0 {
+				reply, err = client.DeleteInteractionFollowup(ctx, string(args[0]))
+			} else if op == OpInteractionEdit {
 				reply, err = client.EditInteraction(ctx, string(args[0]), args[2])
 			} else {
 				reply, err = client.Interaction(ctx, string(args[0]), args[2])

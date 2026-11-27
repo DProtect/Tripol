@@ -1,5 +1,7 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
+- SIMPLE R2 infers monomorphic function signatures from calls and typed callbacks across modules, supports automatic function references and anonymous callbacks with scalar literal captures, lowers terminal expressions to returns, and resolves method overloads before code generation. Discord replies accept embeds and Components V2, and panel builders support named button styles and premium SKUs. Interaction follow-ups support edits and deletion.
+
 - `discord.guild(id).member(id)` adds native member lookup, kicks, bans, unbans, nicknames, timeouts, role assignment and direct messages through recoverable authenticated REST. The `discord-welcome` template filters member joins by server and keeps processing events after delivery failures.
 - `discord.events()` registers ordered, typed Gateway callbacks and lets applications opt into gateway intents by name. The same callbacks can be checked offline with `registry.preview` or connected alongside existing commands with `bot.start_with_events`.
 - Slash schemas support subcommands, groups and fixed string or integer choices. Autocomplete dispatches a typed callback for the registered command scope, including nested options, and returns Discord's type-8 response.

@@ -139,3 +139,22 @@ A function with a single return expression and no explicit return annotation can
 Integer, boolean and string lists support `contains(value)`, `remove(value)` (first match, returns bool) and `sort()` (in-place, stable, returns size; maximum 4096 items). Strings sort lexicographically by UTF-8 bytes, not locale collation. Float lists retain indexed access, add/remove_at and iteration; value-search and sorting are not included for floats in R1.
 
 Compatibility note: a single-return function with no explicit `->int` can now infer a non-integer return type. Write `->int` if an integer return contract is required, including for exported Vault functions. Explicit mismatches remain compile errors even in unused functions.
+
+
+## SIMPLE R2
+
+TRIPOL infers a single signature for each function across a project. Calls and typed callback parameters supply context. For example, `apply(twice)` gives `twice` the signature required by `apply`. A function name is a function reference when a local variable does not shadow it. `&twice` remains valid.
+
+```tripol
+func apply(action:func(int)->int) { action(21) }
+func twice(x) { x*2 }
+
+show apply(twice)
+show apply(func(x) { x+1 })
+```
+
+An inferred function returns the value of its last expression when it reaches the end. Final `if/else` branches can each yield a value. Explicit `return` remains available. An anonymous function can capture a scalar literal declared with `const`. The compiler copies that value into the function. Mutable captures, runtime values and aggregate captures require explicit arguments. Method overloads use distinct parameter types. The compiler selects one signature from the provided arguments and available defaults. Conflicting evidence requires a type annotation or separate functions.
+
+TRIPOL infiere una firma por función en todo el proyecto. Las llamadas y los parámetros de callback tipados aportan contexto. En el ejemplo, `apply(twice)` aporta a `twice` la firma requerida por `apply`. El nombre de una función actúa como referencia si ninguna variable local lo oculta. `&twice` sigue siendo válido.
+
+Las funciones con retorno inferido devuelven el valor de la última expresión al llegar al final. Las ramas terminales de un `if/else` pueden aportar un valor cada una. También puedes escribir `return`. Una función anónima puede capturar un literal escalar declarado con `const`. El compilador copia ese valor a la función. Pasa como argumentos explícitos las variables mutables, los valores de ejecución y las estructuras. Las sobrecargas de un método se distinguen por los tipos de sus parámetros. El compilador elige una firma a partir de los argumentos y los valores predeterminados. Si hay conflicto, anota el tipo o escribe funciones separadas.

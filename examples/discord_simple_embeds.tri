@@ -1,0 +1,15 @@
+import tripol.discord
+
+bot = discord.bot()
+
+func info(ctx) {
+    embed = discord.embed()
+    embed.title("TRIPOL")
+    embed.description("Mi lenguaje de programacion")
+    embed.color("#FFFFFF")
+    embed.field("Version", "0.28")
+    ctx.reply(embed)
+}
+
+bot.slash("info", "Informacion del bot", info)
+bot.start()

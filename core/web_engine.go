@@ -355,10 +355,23 @@ func (e *webEmitter) body()webCode{var b webCode;n:=e.locals-e.params;if n==0{b.
 // a standard WASM module. R3 adds floats, arrays, lists, formatting, input and
 // selected pure integer stdlib functions. Unsupported constructs are rejected.
 func CompileWeb(source string)(out []byte,err error){
- defer func(){if v:=recover();v!=nil{out=nil;err=fmt.Errorf("%v",v)}}()
+ defer func(){
+  if v:=recover();v!=nil {
+   out=nil
+   d:=normalizeDiagnostic(v)
+   message:=d.Message
+   if d.Suggestion!="" { message+=" Did you mean "+d.Suggestion+"?" }
+   if d.Line>0 {
+    location:=fmt.Sprintf("Line %d",d.Line)
+    if d.Column>0{location+=fmt.Sprintf(":%d",d.Column)}
+    message=location+": "+message
+   }
+   err=fmt.Errorf("%s: %s",d.Code,message)
+  }
+ }()
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
  imports,fs,ss:=parseUnit(source);for _,n:=range imports{switch n{case "@std:discord","@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:process","@std:thread","@std:game","@std:events":default:webReject("library %s requires a browser adapter or native target",n)}}
- fs = withStandardImports(imports, fs);validateCode(fs,ss,"linux")
+ fs = withStandardImports(imports, fs);resolveSimpleProgram(fs,ss);validateCode(fs,ss,"linux")
  m:=&webModule{definitions:map[string]fn{},funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{},callbackSlots:map[uint32]uint32{},indirectTypes:map[int]uint32{}}
  m.signature([]byte{0x7f},nil) // tick(line)
  m.signature([]byte{0x7f,0x7e,0x7e,0x7f},[]byte{0x7e}) // checked arithmetic

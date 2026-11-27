@@ -5,6 +5,9 @@ Estado de desarrollo frente al prompt maestro. «Completo» indica una capacidad
 | Área | Funcionalidad | Estado | Evidencia |
 | --- | --- | --- | --- |
 | Lenguaje | Métodos de estructuras, inferencia básica, valores predeterminados y callbacks tipados con `&nombre` | Completo | [Pruebas de métodos](../core/methods_test.go), [pruebas de callbacks](../core/callbacks_test.go) |
+| SIMPLE R2 | Inferencia monomórfica entre módulos, referencias automáticas y retornos por expresión final | Completo en los casos verificados | [Pruebas nativas y web](../core/simple_r2_test.go), [documentación bilingüe](language.md) |
+| SIMPLE R2 | Funciones anónimas con captura de literales escalares `const`, resolución estática de sobrecargas y diagnósticos de ambigüedad con ubicación | Completo en los casos verificados | [Pruebas positivas y negativas](../core/simple_r2_test.go) |
+| SIMPLE R2 | Capturas de valores de ejecución o agregados, e inferencia polimórfica | Pendiente | [Reglas de captura e inferencia](language.md) |
 | Lenguaje | Contexto básico de mensaje y errores recuperables de validación | Completo | [Pruebas de contexto y validación](../core/discord_components_test.go) |
 | Lenguaje | Listas de callbacks tipados y lectura de elementos desde regiones scratch | Completo para las proyecciones verificadas | [Pruebas de listas y vida útil](../core/discord_interaction_test.go) |
 | Lenguaje | Estructuras anidadas generales, colecciones de objetos y concurrencia general de callbacks | Pendiente | [Referencia del lenguaje](language.md) |
@@ -27,7 +30,8 @@ Estado de desarrollo frente al prompt maestro. «Completo» indica una capacidad
 | Slash | Elecciones fraccionarias, context menus, permisos, cooldowns y nombres localizados | Pendiente | [Guía de Discord](discord.md) |
 | Interacciones | Callbacks tipados de comandos, botones, selectores y formularios, respuestas privadas, diferidas, apertura de formularios y actualización inicial V2 | Experimental | [Pruebas nativas y WebAssembly](../core/discord_interaction_test.go), [pruebas HTTPS sin token de bot](../internal/discordtransport/transport_test.go) |
 | Interacciones | Confirmación explícita, edición de la respuesta original y seguimiento de texto público o privado | Experimental | [POST y PATCH de extremo a extremo en Linux](../core/discord_bridge_linux_test.go), [métodos y autenticación HTTPS](../internal/discordtransport/transport_test.go), [WinHTTP](../native/liberty.S) |
-| Interacciones | Edición y borrado de mensajes de seguimiento y control concurrente del plazo de respuesta | Pendiente | [Guía de Discord](discord.md) |
+| Interacciones | Edición y borrado de seguimientos, incluido PATCH de payloads V2 | Experimental | [Fixture Linux](../core/discord_bridge_linux_test.go), [PATCH y DELETE sobre TLS](../internal/discordtransport/transport_test.go) |
+| Interacciones | Control concurrente del plazo de respuesta | Pendiente | [Guía de Discord](discord.md) |
 | Eventos | Registro de dispatches del Gateway con contexto tipado, vista previa, miembros y roles verificados en ELF, eventos oficiales según intents y permisos | Experimental | [Callbacks e intents](../core/discord_events_test.go), [dispatch nativo](../core/discord_bridge_linux_test.go), [eventos oficiales](https://docs.discord.com/developers/events/gateway-events) |
 | Eventos | Observación de desconexiones, reconexiones y errores del transporte, y contextos específicos por entidad | Pendiente | [Eventos oficiales](https://docs.discord.com/developers/events/gateway-events) |
 | Embeds | Título, descripción, color, pie e icono, autor, timestamp, campos, enlace, imagen, miniatura y lotes de hasta 10 | Completo para serialización dentro de los límites oficiales de texto | [Pruebas de embeds](../core/methods_test.go), [pruebas de medios](../core/discord_components_test.go) |
@@ -37,7 +41,8 @@ Estado de desarrollo frente al prompt maestro. «Completo» indica una capacidad
 | Components V2 | Envío nativo de Components V2 | Experimental | [Constructor y envío REST](../stdlib/discord.tri), [guía bilingüe](discord.md) |
 | Components V2 | Formularios con Label, Text Input, Text Display, selectores, File Upload de entrada, Radio Group, Checkbox Group y Checkbox | Experimental | [Pruebas de constructores y callbacks](../core/discord_interaction_test.go), [referencia oficial](https://docs.discord.com/developers/components/reference) |
 | Components V2 | Edición de la respuesta original con un layout V2 | Experimental | [API de edición](discord.md), [pruebas de transporte](../internal/discordtransport/transport_test.go) |
-| Components V2 | Adjuntos multipart, componentes File, filtros opcionales de File Upload y botones premium | Pendiente | [Referencia oficial](https://docs.discord.com/developers/components/reference) |
+| Components V2 | Contenedor por color HEX, estilos de botón por nombre y botones premium con SKU | Completo para serialización | [Pruebas](../core/simple_r2_test.go), [referencia oficial](https://docs.discord.com/developers/components/reference) |
+| Components V2 | Adjuntos multipart, componentes File y filtros opcionales de File Upload | Pendiente | [Referencia oficial](https://docs.discord.com/developers/components/reference) |
 | Servidores | Consulta de miembros, expulsión, baneo y revocación, apodos, aislamiento, asignación y retirada de roles y mensajes directos | Experimental | [Rutas, payloads y recuperación en ELF](../core/discord_bridge_linux_test.go), [guía bilingüe](discord.md) |
 | Servidores | Consulta de permisos, gestión de roles, moderación de canales, categorías, webhooks, invitaciones, hilos y foros | Pendiente | [Guía de Discord](discord.md) |
 | Servidores | Administración de mensajes, archivos, reacciones y registros de auditoría | Pendiente | [Guía de Discord](discord.md) |
@@ -57,3 +62,13 @@ Estado de desarrollo frente al prompt maestro. «Completo» indica una capacidad
 | Validación | Regresiones y artefactos Linux, Windows y VSIX | Evidencia por commit | [Workflows](https://github.com/Tripollas/Tripol/actions), [empaquetado](../.github/workflows/public-ecosystem.yml) |
 | Validación | Prueba contra Discord con aplicación y servidor autorizados, pruebas prolongadas y demostración conjunta de bienvenida y administración | Pendiente | [Guía de Discord](discord.md) |
 | Release | Release experimental final | Pendiente | [Public ecosystem](../.github/workflows/public-ecosystem.yml) |
+
+## Medición local de SIMPLE R2
+
+31 ejecuciones por compilador y caso con Linux x86-64, perfil `turbo` y `GOMAXPROCS=2`. La compilación parte de `2556c86`. Los tiempos de arranque incluyen el proceso. Los tres casos produjeron la misma salida. [Script reproducible](../benchmarks/simple_r2.py)
+
+| Programa | Compilación mediana antes → después | Arranque mediano antes → después | ELF antes → después |
+| --- | ---: | ---: | ---: |
+| `bench_compiler_revolution.tri` | 3.764 → 4.001 ms | 0.387 → 0.348 ms | 1.422 → 1.422 B, idéntico |
+| `academy/simple-r1.tri` | 2.917 → 2.828 ms | 0.439 → 0.468 ms | 2.294 → 2.294 B, idéntico |
+| `discord_new.tri` | 18.202 → 19.225 ms | 0.313 → 0.320 ms | 30.267 → 30.702 B |

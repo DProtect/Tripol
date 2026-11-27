@@ -74,12 +74,12 @@
     "body": [
       "import tripol.discord",
       "",
-      "func respond(ctx:discord.Interaction)->string {",
-      "    return ctx.reply(\"${1:Hola}\", true)",
+      "func respond(ctx) {",
+      "    ctx.reply(\"${1:Hola}\", true)",
       "}",
       "",
       "bot=discord.bot()",
-      "bot.slash(\"${2:hola}\", \"${3:Saluda}\", &respond)",
+      "bot.slash(\"${2:hola}\", \"${3:Saluda}\", respond)",
       "bot.start()"
     ]
   },

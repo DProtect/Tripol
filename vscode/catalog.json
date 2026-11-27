@@ -211,8 +211,10 @@
     "gateway_event_name": "func discord.gateway_event_name(name:string)->string",
     "deliver_gateway_event": "func discord.deliver_gateway_event(event:string,name:string,handler:func(GatewayEvent)->bool)->bool",
     "embed": "func discord.embed()->Embed",
+    "rgb_color": "func discord.rgb_color(value:string)->int",
     "media_url": "func discord.media_url(value:string)->bool",
     "components": "func discord.components()->Components",
+    "container": "func discord.container(color=\"#FFFFFF\")->Components",
     "interaction_message": "func discord.interaction_message(content:string,ephemeral=false)->string",
     "interaction_option": "func discord.interaction_option(data:string,name:string,focused=false)->string",
     "first_command_option": "func discord.first_command_option(data:string)->string",
@@ -236,6 +238,7 @@
     "slash_choice_signature": "func discord.slash_choice_signature(choices:string)->string",
     "slash_option_signature": "func discord.slash_option_signature(options:string,depth=0)->string",
     "button_row": "func discord.button_row()->Buttons",
+    "button_style": "func discord.button_style(name:string)->int",
     "guild": "func discord.guild(id:string)->Guild",
     "post_message": "func discord.post_message(channel_id:string,content:string)->string"
   },
@@ -294,7 +297,8 @@
     "text": "Components.text(content:string)->bool",
     "separator": "Components.separator(spacing=1,divider=true)->bool",
     "link": "Components.link(label:string,url:string)->bool",
-    "button": "Components.button(label:string,custom_id:string,style=1)->bool",
+    "premium": "Components.premium(sku_id:string)->bool",
+    "button": "Components.button(label:string,custom_id:string,style=1)->bool\nComponents.button(label:string,custom_id:string,style:string)->bool",
     "section": "Components.section(content:string,thumbnail_url:string,description=\"\")->bool",
     "gallery": "Components.gallery(urls:string_list)->bool",
     "container": "Components.container(children:Components,accent=-1,spoiler=false)->bool",
@@ -304,7 +308,7 @@
     "row": "Components.row(buttons:Buttons)->bool"
   },
   "discord.Interaction": {
-    "reply": "Interaction.reply(content:string,ephemeral=false)->string",
+    "reply": "Interaction.reply(content:string,ephemeral=false)->string\nInteraction.reply(embed:Embed,ephemeral=false)->string\nInteraction.reply(batch:Embeds,ephemeral=false)->string\nInteraction.reply(layout:Components,ephemeral=false)->string",
     "defer": "Interaction.defer(ephemeral=false)->string",
     "ack": "Interaction.ack()->string",
     "reply_components": "Interaction.reply_components(layout:Components,ephemeral=false)->string",
@@ -324,7 +328,10 @@
     "respond": "Interaction.respond(body:string)->bool",
     "edit_response": "Interaction.edit_response(body:string)->bool",
     "edit_reply": "Interaction.edit_reply(content:string)->bool",
-    "followup": "Interaction.followup(content:string,ephemeral=false)->string"
+    "followup": "Interaction.followup(content:string,ephemeral=false)->string",
+    "edit_followup_payload": "Interaction.edit_followup_payload(message_id:string,body:string)->bool",
+    "edit_followup": "Interaction.edit_followup(message_id:string,content:string)->bool",
+    "delete_followup": "Interaction.delete_followup(message_id:string)->bool"
   },
   "discord.Modal": {
     "add_label": "Modal.add_label(id:string,label:string,component:string,description=\"\")->bool",
@@ -363,8 +370,9 @@
     "payload": "CommandChoices.payload()->string"
   },
   "discord.Buttons": {
-    "button": "Buttons.button(label:string,id:string,style=1,disabled=false)->bool",
-    "link": "Buttons.link(label:string,url:string,disabled=false)->bool"
+    "button": "Buttons.button(label:string,id:string,style=1,disabled=false)->bool\nButtons.button(label:string,id:string,style:string,disabled=false)->bool",
+    "link": "Buttons.link(label:string,url:string,disabled=false)->bool",
+    "premium": "Buttons.premium(sku_id:string)->bool"
   },
   "discord.Guild": {
     "member": "Guild.member(id:string)->Member"

@@ -138,7 +138,11 @@ func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
  if not c.respond(c.defer(true)) {return c.reply("Should not retry")}
  assert not c.respond(c.defer(true))
  assert c.edit_reply("Listo")
- assert c.followup("Más",true)=="999"
+ followup=c.followup("Más",true)
+ assert followup=="999"
+ assert c.edit_followup(followup,"Actualizado")
+ assert not c.delete_followup("../999")
+ assert c.delete_followup(followup)
  return c.reply("Should not acknowledge twice")
 }`, 1)
 	if err := os.WriteFile(path, compileProfile(source+commandTree+eventRegistry+"b.start_with_events(registry)", "linux", "turbo"), 0700); err != nil {
@@ -191,6 +195,8 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 		{discordtransport.OpInteraction, "/api/v10/interactions/715/interaction-fixture/callback", "", `"type":5,"data":{"flags":64}`, "{}"},
 		{discordtransport.OpInteractionEdit, "/api/v10/webhooks/890/interaction-fixture/messages/@original", "", `"content":"Listo"`, `{"id":"998"}`},
 		{discordtransport.OpInteraction, "/api/v10/webhooks/890/interaction-fixture", "", `"content":"Más","flags":64`, `{"id":"999"}`},
+		{discordtransport.OpInteractionEdit, "/api/v10/webhooks/890/interaction-fixture/messages/999", "", `"content":"Actualizado"`, `{"id":"999"}`},
+		{discordtransport.OpInteractionEdit, "/api/v10/webhooks/890/interaction-fixture/messages/999", "", "", `{}`},
 		{discordtransport.OpPoll, "", "", "", expired},
 		{discordtransport.OpInteraction, "/api/v10/interactions/716/interaction-fixture/callback", "", `"type":5`, ""},
 		{discordtransport.OpPoll, "", "", "", memberJoined},
@@ -343,5 +349,47 @@ func TestLinuxDiscordWelcomeTemplateFiltersJoinsAndRecovers(t *testing.T) {
 	}
 	if err := <-fixture; err != nil || strings.Count(output.String(), "No se pudo enviar el mensaje de bienvenida.") != 1 {
 		t.Fatalf("fixture %v, output %q", err, output.String())
+	}
+}
+
+func TestLinuxSimpleDiscordBotReceivesGatewayInteractions(t *testing.T) {
+	if runtime.GOARCH != "amd64" {
+		t.Skip("requires native x86-64")
+	}
+	source, err := os.ReadFile(filepath.Join("examples", "discord_simple_components.tri"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "simple-bot")
+	if err := os.WriteFile(path, compileProfile(string(source), "linux", "turbo"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DISCORD_TOKEN", "fixture-token")
+	steps := []bridgeStep{
+		{discordtransport.OpREST, "/api/v10/oauth2/applications/@me", "fixture-token", "", `{"id":"890"}`},
+		{discordtransport.OpREST, "/api/v10/applications/890/commands", "fixture-token", "", `[]`},
+		{discordtransport.OpREST, "/api/v10/applications/890/commands", "fixture-token", `"name":"info"`, `{"id":"922"}`},
+		{discordtransport.OpStart, "", "", `"intents":1,`, "1"},
+		{discordtransport.OpPoll, "", "", "", `{"op":0,"t":"READY","s":1,"d":{}}`},
+		{discordtransport.OpPoll, "", "", "", `{"op":0,"t":"INTERACTION_CREATE","s":2,"d":{"type":2,"id":"710","application_id":"890","token":"simple-fixture","data":{"type":1,"name":"info"}}}`},
+		{discordtransport.OpInteraction, "/api/v10/interactions/710/simple-fixture/callback", "", `"type":17,"accent_color":16777215`, `{}`},
+		{discordtransport.OpPoll, "", "", "", `{"op":0,"t":"INTERACTION_CREATE","s":3,"d":{"type":3,"id":"711","application_id":"890","token":"simple-fixture","data":{"component_type":2,"custom_id":"accept"}}}`},
+		{discordtransport.OpInteraction, "/api/v10/interactions/711/simple-fixture/callback", "", `"content":"Gracias!","flags":64`, `{}`},
+		{discordtransport.OpPoll, "", "", "", "!"},
+		{discordtransport.OpClose, "", "", "", "1"},
+	}
+	cmd := exec.Command(path)
+	var output bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &output, &output
+	fixture := make(chan error, 1)
+	if err := runDiscordPipes(cmd, func(_ context.Context, in, out *os.File) error {
+		err := serveBridgeFixture(in, out, steps)
+		fixture <- err
+		return err
+	}, nil); err != nil {
+		t.Fatalf("bot: %v (%s)", err, output.String())
+	}
+	if err := <-fixture; err != nil {
+		t.Fatal(err)
 	}
 }

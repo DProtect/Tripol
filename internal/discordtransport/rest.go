@@ -88,12 +88,18 @@ func (c *Client) EditInteraction(ctx context.Context, path string, body []byte) 
 	return c.interaction(ctx, http.MethodPatch, path, body)
 }
 
+func (c *Client) DeleteInteractionFollowup(ctx context.Context, path string) ([]byte, error) {
+	return c.interaction(ctx, http.MethodDelete, path, nil)
+}
+
 func (c *Client) interaction(ctx context.Context, method, path string, body []byte) ([]byte, error) {
 	parts := strings.Split(path, "/")
 	if len(parts) < 6 || parts[0] != "" || parts[1] != "api" || parts[2] != "v10" ||
-		!snowflake(parts[4]) || !validToken(parts[5]) || parts[5] == "." || parts[5] == ".." ||
-		len(body) == 0 || !json.Valid(body) {
+		!snowflake(parts[4]) || !validToken(parts[5]) || parts[5] == "." || parts[5] == ".." {
 		return nil, errors.New("invalid Discord interaction request")
+	}
+	if method != http.MethodDelete && (len(body) == 0 || !json.Valid(body)) {
+		return nil, errors.New("invalid Discord interaction request body")
 	}
 	switch parts[3] {
 	case "interactions":
@@ -104,8 +110,11 @@ func (c *Client) interaction(ctx context.Context, method, path string, body []by
 		defer cancel()
 		ctx = initial
 	case "webhooks":
-		valid := method == http.MethodPost && len(parts) == 6 ||
-			method == http.MethodPatch && len(parts) == 8 && parts[6] == "messages" && parts[7] == "@original"
+		valid := method == http.MethodPost && len(parts) == 6
+		if len(parts) == 8 && parts[6] == "messages" {
+			valid = method == http.MethodPatch && (snowflake(parts[7]) || parts[7] == "@original") ||
+				method == http.MethodDelete && snowflake(parts[7])
+		}
 		if !valid {
 			return nil, errors.New("invalid Discord interaction webhook route")
 		}

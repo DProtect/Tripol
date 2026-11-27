@@ -1,0 +1,21 @@
+import tripol.discord
+
+bot = discord.bot()
+
+func info(ctx) {
+    panel = discord.container("#FFFFFF")
+    panel.text("# TRIPOL")
+    panel.text("Mi lenguaje de programacion")
+    panel.separator()
+    panel.button("Aceptar", "accept", "primary")
+    panel.link("GitHub", "https://github.com/Tripollas/Tripol")
+    ctx.reply(panel)
+}
+
+bot.slash("info", "Informacion del bot", info)
+
+bot.on_button("accept", func(ctx) {
+    ctx.reply("Gracias!", true)
+})
+
+bot.start()

@@ -97,6 +97,12 @@ Use `server=discord.guild(guild_id)` and `member=server.member(user_id)` for nat
 
 Usa `server=discord.guild(guild_id)` y `member=server.member(user_id)` para la moderación nativa de miembros. Llama a `member.read()`, `kick()`, `ban()`, `unban()`, `nickname(texto)`, `timeout(iso_8601)` o `role(role_id, false)`. Un apodo vacío lo elimina y `member.timeout()` retira el aislamiento. `member.dm(texto)` devuelve el ID del mensaje. `tripol new Bienvenida --template discord-welcome` crea un bot de bienvenida a un canal con configuración explícita de servidor e intent.
 
+### SIMPLE R2
+
+Use `func info(ctx) { ctx.reply("Hola") }` with `bot.slash("info", "Informacion", info)`. TRIPOL infers the callback signature and returns the final expression. `&info` and explicit types remain valid. Inline callbacks use `func(ctx) { ctx.reply("Gracias", true) }` and can capture constants declared with scalar literals. `ctx.reply` dispatches statically on strings, embeds, embed batches and Components V2. Use `discord.container("#FFFFFF")` and `panel.button("Aceptar", "accept", "primary")` for an accented panel. Use `ctx.edit_followup(id, text)` and `ctx.delete_followup(id)` within an acknowledged native callback.
+
+Usa `func info(ctx) { ctx.reply("Hola") }` con `bot.slash("info", "Informacion", info)`. TRIPOL infiere la firma del callback y devuelve la expresión final. `&info` y los tipos explícitos siguen siendo válidos. Escribe callbacks inline con `func(ctx) { ctx.reply("Gracias", true) }`; pueden capturar constantes declaradas con literales escalares. `ctx.reply` elige la implementación de texto, embed, lote de embeds o Components V2 durante la compilación. Usa `discord.container("#FFFFFF")` y `panel.button("Aceptar", "accept", "primary")` para un panel con color. Usa `ctx.edit_followup(id, texto)` y `ctx.delete_followup(id)` dentro de un callback nativo confirmado.
+
 ## Cómo usar este archivo / How to use this file
 
 Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».

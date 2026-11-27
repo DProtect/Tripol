@@ -1,6 +1,7 @@
 package core
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -26,6 +27,7 @@ type expr struct {
 	op, s string
 	n     int64
 	args  []*expr
+	line, col int
 }
 type stmt struct {
 	op, name, typ  string
@@ -39,18 +41,22 @@ type param struct{ name, typ string }
 type fn struct {
  implicit []bool
  inferRet bool
+ anonymous bool
 	name, ret string
 	args      []param
 	defaults  []*expr
 	body      []stmt
 	record    bool
 	source    string
-	line      int
+	line, col int
 }
 type parser struct {
 	ts    []token
 	i     int
 	depth int
+	source string
+	anonymous []fn
+	lambdaPrefix string
 }
 
 func (p *parser) t() token { return p.ts[p.i] }
@@ -316,7 +322,7 @@ func (p *parser) expression(min int) *expr {
 	}
 	defer func() { p.depth-- }()
 	t := p.take()
-	e := &expr{s: t.s}
+	e := &expr{s: t.s, line: t.line, col: t.col}
 	switch {
 	case t.s == "-" || t.s == "!" || t.s == "not":
 		if t.s == "not" {
@@ -349,6 +355,16 @@ func (p *parser) expression(min int) *expr {
 				p.need(",")
 			}
 		}
+	case t.s == "func" && p.t().s == "(":
+		if p.lambdaPrefix == "" {
+			p.lambdaPrefix = fmt.Sprintf("@lambda:%x:", sha256.Sum256([]byte(p.source)))
+		}
+		index := len(p.anonymous)
+		p.anonymous = append(p.anonymous, fn{})
+		name := p.lambdaPrefix + strconv.Itoa(index+1)
+		body := p.functionBody(fn{name: name, line: t.line, col: t.col, anonymous: true}, "")
+		p.anonymous[index] = body
+		e.op, e.s = "function-ref", name
 	case t.s == "&":
 		e.op = "function-ref"
 		e.s = p.name()
@@ -407,12 +423,13 @@ func (p *parser) expression(min int) *expr {
 		p.need("]")
 	}
 	for p.eat(".") {
+		memberToken := p.t()
 		member := p.name()
 		if p.eat("(") {
 			if e.op == "var" {
-				e = &expr{op: "call", s: e.s + "." + member}
+				e = &expr{op: "call", s: e.s + "." + member, line: memberToken.line, col: memberToken.col}
 			} else {
-				e = &expr{op: "method", s: member, args: []*expr{e}}
+				e = &expr{op: "method", s: member, args: []*expr{e}, line: memberToken.line, col: memberToken.col}
 			}
 			if !p.eat(")") {
 				for {
@@ -424,7 +441,7 @@ func (p *parser) expression(min int) *expr {
 				}
 			}
 		} else {
-			e = &expr{op: "field", s: member, args: []*expr{e}}
+			e = &expr{op: "field", s: member, args: []*expr{e}, line: t.line, col: t.col}
 		}
 	}
 	for prec[p.t().s] >= min {
@@ -436,12 +453,58 @@ func (p *parser) expression(min int) *expr {
 		if op == "or" {
 			op = "||"
 		}
-		e = &expr{op: "bin", s: op, args: []*expr{e, p.expression(priority + 1)}}
+		e = &expr{op: "bin", s: op, args: []*expr{e, p.expression(priority + 1)}, line: t.line, col: t.col}
 	}
 	return e
 }
+func (p *parser) functionBody(f fn, receiver string) fn {
+	f.ret, f.inferRet = "int", true
+	p.need("(")
+	if !p.eat(")") {
+		for {
+			a := param{p.name(), "int"}
+			typed := p.eat(":")
+			if typed {
+				a.typ = p.typ()
+			}
+			var def *expr
+			if p.eat("=") {
+				def = p.defaultValue()
+				if !typed {
+					a.typ = def.op
+				}
+				if a.typ != def.op {
+					p.err("default parameter type mismatch")
+				}
+			} else if len(f.defaults) > 0 && f.defaults[len(f.defaults)-1] != nil {
+				p.err("required parameter after optional parameter")
+			}
+			f.defaults = append(f.defaults, def)
+                    f.implicit=append(f.implicit,!typed&&def==nil)
+			f.args = append(f.args, a)
+			if p.eat(")") {
+				break
+			}
+			p.need(",")
+		}
+	}
+	if p.eat("->") {
+                f.inferRet=false
+		f.ret = p.typ()
+	}
+	if receiver != "" && (len(f.args) == 0 || f.args[0].typ != receiver || f.implicit[0]) {
+		p.err("method requires an explicitly typed " + receiver + " receiver as its first parameter")
+	}
+	if p.eat("=>") {
+		f.body = []stmt{{op: "return", line: p.t().line, e: p.expression(1)}}
+		if !f.anonymous { p.end() }
+	} else {
+		f.body = p.block()
+	}
+	return f
+}
 func parseUnit(s string) ([]string, []fn, []stmt) {
-	p := parser{ts: lex(strings.TrimPrefix(s, "\ufeff"))}
+	p := parser{ts: lex(strings.TrimPrefix(s, "\ufeff")), source: s}
 	var fs []fn
 	var ss []stmt
 	var imports []string
@@ -489,67 +552,31 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 				}
 			}
 			fs = append(fs, f)
-		} else if p.eat("func") {
-			f := fn{line: p.t().line, name: p.name(), ret: "int", inferRet:true}
+		} else if p.t().s == "func" && p.ts[p.i+1].s != "(" {
+			p.take()
+			name := p.take()
+			f := fn{line: name.line, col: name.col, name: name.s}
+			if name.k != "id" {
+				p.err("expected function name")
+			}
 			receiver := ""
 			if p.eat(".") {
 				receiver = f.name
 				f.name = methodName(receiver, p.name())
 			}
-			p.need("(")
-			if !p.eat(")") {
-				for {
-					a := param{p.name(), "int"}
-					typed := p.eat(":")
-					if typed {
-						a.typ = p.typ()
-					}
-					var def *expr
-					if p.eat("=") {
-						def = p.defaultValue()
-						if !typed {
-							a.typ = def.op
-						}
-						if a.typ != def.op {
-							p.err("default parameter type mismatch")
-						}
-					} else if len(f.defaults) > 0 && f.defaults[len(f.defaults)-1] != nil {
-						p.err("required parameter after optional parameter")
-					}
-					f.defaults = append(f.defaults, def)
-                    f.implicit=append(f.implicit,!typed&&def==nil)
-					f.args = append(f.args, a)
-					if p.eat(")") {
-						break
-					}
-					p.need(",")
-				}
-			}
-			if p.eat("->") {
-                f.inferRet=false
-				f.ret = p.typ()
-			}
-			if receiver != "" && (len(f.args) == 0 || f.args[0].typ != receiver || f.implicit[0]) {
-				p.err("method requires an explicitly typed " + receiver + " receiver as its first parameter")
-			}
-			if p.eat("=>") {
-				f.body = []stmt{{op: "return", line: p.t().line, e: p.expression(1)}}
-				p.end()
-			} else {
-				f.body = p.block()
-			}
-			fs = append(fs, f)
+			fs = append(fs, p.functionBody(f, receiver))
 		} else {
 			ss = append(ss, p.statement())
 		}
 		p.skip()
 	}
-	inferSimpleFunctions(fs,ss)
- return imports, fs, ss
+	return imports, append(fs, p.anonymous...), ss
 }
 func parse(s string) ([]fn, []stmt) {
 	imports, fs, ss := parseUnit(s)
-	return withStandardImports(imports, fs), ss
+	fs = withStandardImports(imports, fs)
+	resolveSimpleProgram(fs, ss)
+	return fs, ss
 }
 
 func withStandardImports(imports []string, fs []fn) []fn {
@@ -682,7 +709,7 @@ type compiler struct {
 	a             *asm
 	fs            map[string]fn
 	scopes        []map[string]variable
-	slots, line   int
+	slots, line, column int
 	source        string
 	peak          int
 	ret           string
@@ -696,7 +723,7 @@ type compiler struct {
 }
 
 func (c *compiler) err(s string) {
-	d := diagnose("compiler", s, c.source, c.line, 0)
+	d := diagnose("compiler", s, c.source, c.line, c.column)
 	d.Suggestion = c.suggest(s)
 	panic(d)
 }
@@ -720,6 +747,7 @@ func (c *compiler) require(a, b string) {
 	}
 }
 func (c *compiler) expression(e *expr) string {
+	if e.line == c.line && e.col > 0 { c.column = e.col }
 	a := c.a
 	if a.loopInvariant[e] {
 		a.regMove(0, 15)
@@ -995,7 +1023,7 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			i++
 			continue
 		}
-		c.line = s.line
+		c.line, c.column = s.line, 0
 		if s.source != "" {
 			c.source = s.source
 		}
@@ -1217,7 +1245,7 @@ func (c *compiler) function(f fn, main bool) {
 	c.peak = 0
 	c.current = f
 	c.source = f.source
-	c.line = f.line
+	c.line, c.column = f.line, f.col
 	c.loops = nil
 	c.protected = nil
 	c.scratchScopes = nil

@@ -15,7 +15,7 @@ func TestVisionDiagnostics(t *testing.T) {
 	for _, x := range []struct {
 		src, code string
 		line, col int
-	}{{"show 1\nshow @", "TP1001", 2, 6}, {"show (1", "TP1002", 1, 8}, {"show missing", "TP1003", 1, 0}, {"let x:int=\"abc\"", "TP1004", 1, 0}} {
+	}{{"show 1\nshow @", "TP1001", 2, 6}, {"show (1", "TP1002", 1, 8}, {"show missing", "TP1003", 1, 6}, {"let x:int=\"abc\"", "TP1004", 1, 11}} {
 		t.Run(x.code, func(t *testing.T) {
 			defer func() {
 				d, ok := recover().(diagnostic)

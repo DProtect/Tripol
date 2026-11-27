@@ -28,6 +28,19 @@ func (c *compiler) suggest(msg string) string {
 			candidates[n] = true
 		}
 	}
+	if strings.HasPrefix(msg, "unknown method ") {
+		qualified := strings.TrimPrefix(msg, "unknown method ")
+		if at := strings.LastIndexByte(qualified, '.'); at >= 0 {
+			receiver := qualified[:at]
+			target = qualified[at+1:]
+			for name := range c.fs {
+				if owner, method, ok := splitMethodName(name); ok && owner == receiver {
+					base, _, _ := strings.Cut(method, "$")
+					candidates[base] = true
+				}
+			}
+		}
+	}
 	if len(target) < 3 || len(target) > 128 {
 		return ""
 	}

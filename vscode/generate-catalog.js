@@ -9,7 +9,9 @@ for(const file of fs.readdirSync(root).filter(n=>n.endsWith(".tri")).sort()){
   if(method){
    if(method.startsWith("__"))continue;
    const type=module+"."+receiver;
-   (catalog[type]??={})[method]=receiver+"."+method+match[2].replace(/^\(\s*\w+\s*:\s*\w+\s*,?\s*/,"(");
+   const entries=catalog[type]??={};
+   const signature=receiver+"."+method+match[2].replace(/^\(\s*\w+\s*:\s*\w+\s*,?\s*/,"(");
+   entries[method]=entries[method]?entries[method]+"\n"+signature:signature;
   }else{
    catalog[module][receiver]="func "+module+"."+receiver+match[2];
   }

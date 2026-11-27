@@ -53,7 +53,7 @@ func diagnose(phase, msg, file string, line, col int) diagnostic {
 		d.Hint = "Report this compiler failure with a minimal source example."
 	default:
 		switch {
-		case strings.Contains(msg, "unknown variable"), strings.Contains(msg, "unknown function"), strings.Contains(msg, "unknown field"):
+		case strings.Contains(msg, "unknown variable"), strings.Contains(msg, "unknown function"), strings.Contains(msg, "unknown field"), strings.Contains(msg, "unknown method"):
 			d.Code = "TP1003"
 			d.Hint = "Check spelling, declaration order and imports."
 		case strings.Contains(msg, "expected") && strings.Contains(msg, "got"), strings.Contains(msg, "unknown type"), strings.Contains(msg, "argument count"), strings.Contains(msg, "parameter type"):
@@ -144,6 +144,14 @@ func printDiagnostic(d diagnostic) {
 			d.Hint = "Usa una variable mutable o no modifiques la constante."
 		case "TP1008":
 			d.Hint = "Comprueba que todos los caminos devuelvan un valor."
+		case "TP1010":
+			d.Hint = "Anota el tipo o usa un solo tipo para cada parametro."
+		case "TP1011":
+			d.Hint = "Compara los tipos de los argumentos con las firmas disponibles del metodo."
+		case "TP1012":
+			d.Hint = "Captura un literal escalar const o pasa el valor como argumento."
+		case "TP1013":
+			d.Hint = "El callback debe tener la cantidad de parametros indicada en la firma esperada."
 		case "TP2001":
 			d.Hint = "Comprueba la division por cero y el desbordamiento entero."
 		case "TP2002":
@@ -268,6 +276,10 @@ func runtimeDiagnostic(status int) diagnostic {
 func explainDiagnostic(code string) {
 	codes := map[string]string{
 		"TP1000": "Compiler rejected the source or command.", "TP1001": "Unexpected source character or invalid quoted text.", "TP1002": "Invalid syntax or missing delimiter.", "TP1003": "Unknown variable, function or field.", "TP1004": "Type or argument mismatch.", "TP1005": "Import, module or package failure.", "TP1006": "File path or permission failure.", "TP1007": "Attempt to modify a constant.", "TP1008": "Invalid or missing return.", "TP2000": "Unhandled program failure.", "TP2001": "Invalid integer arithmetic (native exit 10).", "TP2002": "Index out of bounds (native exit 11).", "TP2003": "Assertion failure (native exit 12).", "TP2004": "Input, text or memory failure (native exit 13).", "TP2005": "File operation failure (native exit 14).", "TP2006": "Network operation failure (native exit 15).", "TP2007": "Float outside printable range (native exit 16).", "TP2008": "Graphical operation unavailable or failed (native exit 17).", "TP2009": "Unhandled explicit exception (native exit 100–255).", "TP9000": "Unexpected internal compiler failure."}
+	codes["TP1010"] = "An inferred type is missing or conflicting."
+	codes["TP1011"] = "A method overload is invalid, ambiguous or has no match."
+	codes["TP1012"] = "An anonymous callback tried to capture a value without a safe constant lifetime."
+	codes["TP1013"] = "A callback does not have the required parameter count."
 	if s, ok := codes[strings.ToUpper(code)]; ok {
 		fmt.Printf("%s: %s\n", strings.ToUpper(code), s)
 		return

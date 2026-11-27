@@ -17,10 +17,11 @@ type moduleCache struct {
 // The cache stores the parsed unit before resolving imports or qualifying
 // function names. Source locations are attached using the current path.
 type cachedExpr struct {
-	Op   string
-	Text string `json:",omitempty"`
-	Int  int64  `json:",omitempty"`
-	Args []*cachedExpr
+	Op           string
+	Text         string `json:",omitempty"`
+	Int          int64  `json:",omitempty"`
+	Line, Column int    `json:",omitempty"`
+	Args         []*cachedExpr
 }
 
 type cachedStmt struct {
@@ -42,7 +43,8 @@ type cachedFunction struct {
 	Implicit     []bool
 	InferReturn  bool `json:",omitempty"`
 	Record       bool `json:",omitempty"`
-	Line         int
+	Anonymous    bool `json:",omitempty"`
+	Line, Column int
 }
 
 type cachedModule struct {
@@ -67,14 +69,14 @@ func storeExpr(x *expr) *cachedExpr {
 	if x == nil {
 		return nil
 	}
-	return &cachedExpr{Op: x.op, Text: x.s, Int: x.n, Args: convertSlice(x.args, storeExpr)}
+	return &cachedExpr{Op: x.op, Text: x.s, Int: x.n, Line: x.line, Column: x.col, Args: convertSlice(x.args, storeExpr)}
 }
 
 func restoreExpr(x *cachedExpr) *expr {
 	if x == nil {
 		return nil
 	}
-	return &expr{op: x.Op, s: x.Text, n: x.Int, args: convertSlice(x.Args, restoreExpr)}
+	return &expr{op: x.Op, s: x.Text, n: x.Int, line: x.Line, col: x.Column, args: convertSlice(x.Args, restoreExpr)}
 }
 
 func storeStmt(s stmt) cachedStmt {
@@ -97,7 +99,7 @@ func storeFunction(f fn) cachedFunction {
 	return cachedFunction{
 		Name: f.name, Return: f.ret, Args: convertSlice(f.args, func(a param) cachedParam { return cachedParam{a.name, a.typ} }),
 		Defaults: convertSlice(f.defaults, storeExpr), Body: convertSlice(f.body, storeStmt),
-		Implicit: f.implicit, InferReturn: f.inferRet, Record: f.record, Line: f.line,
+		Implicit: f.implicit, InferReturn: f.inferRet, Record: f.record, Anonymous: f.anonymous, Line: f.line, Column: f.col,
 	}
 }
 
@@ -105,14 +107,14 @@ func restoreFunction(f cachedFunction) fn {
 	return fn{
 		name: f.Name, ret: f.Return, args: convertSlice(f.Args, func(a cachedParam) param { return param{a.Name, a.Type} }),
 		defaults: convertSlice(f.Defaults, restoreExpr), body: convertSlice(f.Body, restoreStmt),
-		implicit: f.Implicit, inferRet: f.InferReturn, record: f.Record, line: f.Line,
+		implicit: f.Implicit, inferRet: f.InferReturn, record: f.Record, anonymous: f.Anonymous, line: f.Line, col: f.Column,
 	}
 }
 
 func (c *moduleCache) entry(name string, source []byte) (string, [32]byte) {
 	pathDigest := sha256.Sum256([]byte(name))
 	h := sha256.New()
-	h.Write([]byte("TRIPOL-PARSED-MODULE-R1\x00"))
+	h.Write([]byte("TRIPOL-PARSED-MODULE-R2\x00"))
 	h.Write(c.compiler[:])
 	h.Write(source)
 	var key [32]byte

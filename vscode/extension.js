@@ -74,7 +74,7 @@ function activate(context) {
   cp.execFile(exe,args,{cwd:path.dirname(doc.uri.fsPath),timeout:30000,maxBuffer:1024*1024,windowsHide:true,env:{...process.env,TRIPOL_NO_UPDATE:"1"}},(err,stdout,stderr)=>{
    output.appendLine("TRIPOL "+mode+" "+doc.uri.fsPath);output.append(stdout||"");output.append(stderr||"");
    if(mode==="check"){
-    const list=[];if(err){let found=false;for(const line of (stderr||"").split(/\r?\n/)){try{const d=JSON.parse(line);if(d.message){const i=Math.min(doc.lineCount-1,Math.max(0,(d.line||1)-1));const col=Math.min(doc.lineAt(i).text.length,Math.max(0,(d.column||1)-1));const item=new vscode.Diagnostic(new vscode.Range(i,col,i,Math.min(doc.lineAt(i).text.length,col+1)),d.message,vscode.DiagnosticSeverity.Error);item.code=d.code;list.push(item);found=true;}}catch{}}
+    const list=[];if(err){let found=false;for(const line of (stderr||"").split(/\r?\n/)){try{const d=JSON.parse(line);if(d.message){const i=Math.min(doc.lineCount-1,Math.max(0,(d.line||1)-1));const col=Math.min(doc.lineAt(i).text.length,Math.max(0,(d.column||1)-1));const item=new vscode.Diagnostic(new vscode.Range(i,col,i,Math.min(doc.lineAt(i).text.length,col+1)),[d.message,d.hint,d.suggestion&&"Did you mean "+d.suggestion+"?"].filter(Boolean).join("\n"),vscode.DiagnosticSeverity.Error);item.code=d.code;list.push(item);found=true;}}catch{}}
     if(!found)list.push(new vscode.Diagnostic(new vscode.Range(0,0,0,1),err.message,vscode.DiagnosticSeverity.Error));}
     diagnostics.set(doc.uri,list);
    }else{output.show(true);if(err)vscode.window.showErrorMessage("TRIPOL "+mode+" failed; see output.");}

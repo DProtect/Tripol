@@ -65,8 +65,8 @@ async function main() {
       assert.equal(module.status, 0, error(module));
       const names = [...module.stdout.matchAll(/^func\s+(\w+)\s*\(/gm)].map(m => m[1]).sort();
       assert.equal(JSON.stringify(lib.functions.map(f => f.name).sort()), JSON.stringify(names), lib.name);
-      const methodNames = [...module.stdout.matchAll(/^func\s+(\w+)\.(\w+)\s*\(/gm)]
-        .filter(m => !m[2].startsWith('__')).map(m => m[1] + '.' + m[2]).sort();
+      const methodNames = [...new Set([...module.stdout.matchAll(/^func\s+(\w+)\.(\w+)\s*\(/gm)]
+        .filter(m => !m[2].startsWith('__')).map(m => m[1] + '.' + m[2]))].sort();
       const documentedMethods = Array.from(lib.methods || [], f => f.receiver + '.' + f.name).sort();
       assert.deepEqual(documentedMethods, methodNames, lib.name);
       for (const f of [...lib.functions, ...(lib.methods || [])]) {

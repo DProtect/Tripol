@@ -202,21 +202,21 @@ if channel == "" {show message.payload()} else {assert message.send(channel)}
 		"discord-slash": `import tripol.discord
 import tripol.env
 
-func open_feedback(ctx:discord.Interaction)->string {
+func open_feedback(ctx) {
     form=discord.modal("feedback_form","Cuéntanos")
     form.text("feedback","Sugerencia",2,true,4)
-    return ctx.open_modal(form)
+    ctx.open_modal(form)
 }
 
-func receive_feedback(ctx:discord.Interaction)->string {
+func receive_feedback(ctx) {
     if ctx.field("feedback")=="" {return ctx.reply("No se recibió la sugerencia.",true)}
-    return ctx.reply("Gracias por tu sugerencia.",true)
+    ctx.reply("Gracias por tu sugerencia.",true)
 }
 
 bot=discord.bot()
 guild=env.get("DISCORD_GUILD_ID")
-bot.slash("feedback","Comparte una sugerencia",&open_feedback,guild)
-bot.on_modal("feedback_form",&receive_feedback)
+bot.slash("feedback","Comparte una sugerencia",open_feedback,guild)
+bot.on_modal("feedback_form",receive_feedback)
 bot.start()
 `,
 		"discord-welcome": `import tripol.discord

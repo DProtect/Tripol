@@ -343,7 +343,7 @@ func TestInteractionWebhookEditAndFollowup(t *testing.T) {
 			t.Error("webhook sent bot Authorization")
 		}
 		body, err := io.ReadAll(r.Body)
-		if err != nil || string(body) != `{"content":"ready","allowed_mentions":{"parse":[]}}` {
+		if err != nil || (call != 4 && string(body) != `{"content":"ready","allowed_mentions":{"parse":[]}}`) || (call == 4 && len(body) != 0) {
 			t.Error("webhook body differs")
 		}
 		switch call {
@@ -355,6 +355,16 @@ func TestInteractionWebhookEditAndFollowup(t *testing.T) {
 			if r.Method != http.MethodPost || r.URL.Path != "/api/v10/webhooks/42/fixture-short-lived" {
 				t.Error("invalid follow-up route")
 			}
+		case 3:
+			if r.Method != http.MethodPatch || r.URL.Path != "/api/v10/webhooks/42/fixture-short-lived/messages/123" {
+				t.Error("invalid follow-up edit")
+			}
+		case 4:
+			if r.Method != http.MethodDelete || r.URL.Path != "/api/v10/webhooks/42/fixture-short-lived/messages/123" {
+				t.Error("invalid follow-up delete")
+			}
+			w.WriteHeader(http.StatusNoContent)
+			return
 		default:
 			t.Error("unexpected webhook request")
 		}
@@ -365,7 +375,7 @@ func TestInteractionWebhookEditAndFollowup(t *testing.T) {
 	defer client.Close()
 	body := []byte(`{"content":"ready","allowed_mentions":{"parse":[]}}`)
 	webhook := "/api/v10/webhooks/42/fixture-short-lived"
-	for _, route := range []string{webhook, webhook + "/messages/123", webhook + "/messages/@original?wait=true", "/api/v10/interactions/42/fixture-short-lived/callback"} {
+	for _, route := range []string{webhook, webhook + "/messages/../123", webhook + "/messages/@original?wait=true", "/api/v10/interactions/42/fixture-short-lived/callback"} {
 		if _, err := client.EditInteraction(ctx, route, body); err == nil {
 			t.Fatalf("accepted invalid edit route %s", route)
 		}
@@ -376,7 +386,16 @@ func TestInteractionWebhookEditAndFollowup(t *testing.T) {
 	if result, err := client.Interaction(ctx, webhook, body); err != nil || string(result) != `{"id":"123"}` {
 		t.Fatalf("follow-up: %s %v", result, err)
 	}
-	if requests.Load() != 2 {
+	if result, err := client.EditInteraction(ctx, webhook+"/messages/123", body); err != nil || string(result) != `{"id":"123"}` {
+		t.Fatalf("edit follow-up: %s %v", result, err)
+	}
+	if result, err := client.DeleteInteractionFollowup(ctx, webhook+"/messages/123"); err != nil || string(result) != "{}" {
+		t.Fatalf("delete follow-up: %s %v", result, err)
+	}
+	if _, err := client.DeleteInteractionFollowup(ctx, webhook+"/messages/@original"); err == nil {
+		t.Fatal("accepted an original message on the follow-up delete route")
+	}
+	if requests.Load() != 4 {
 		t.Fatal(requests.Load())
 	}
 }
