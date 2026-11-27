@@ -3,7 +3,7 @@
 <p><code>discord.run()</code> now uses a persistent TLS WebSocket to <code>gateway.discord.gg/?v=10&amp;encoding=json</code>, not REST polling. The native WinHTTP upgrade, send and receive calls are compiled directly into the executable. A native receiver thread reads one complete UTF-8 message (including fragments) into bounded private storage. The main thread waits locally, wakes on message arrival and schedules Gateway heartbeats; no 2.5-second network polling. Sending messages still uses Discord HTTPS REST POST. No Python, Node.js or external Discord SDK is required by the generated executable.</p>
 <h2 id="create-a-bot">Create a bot</h2>
 <p>Create a bot at https://discord.com/developers/applications, enable Message Content Intent for prefix commands, install it on a small private test server and give it View Channel and Send Messages permissions. Read Message History is needed for the explicit REST fallback. A channel ID is optional: only select one if you want to restrict replies or send a greeting before any command. Use a bot token, not a user token.</p>
-<pre><code class="language-tripol">import tripol.discord
+<pre data-native-only><code class="language-tripol">import tripol.discord
 
 discord.login_env()
 discord.activity("Programming in TRIPOL")
