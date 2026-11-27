@@ -56,6 +56,38 @@ Use `bot.start()` for the Gateway. Fixed text commands have precedence over the 
 
 Usa `bot.start()` para conectarte al Gateway. Los comandos de texto fijos tienen prioridad. Devuelve un texto vacío para omitir la respuesta. El contexto expone `author_id`, `channel_id`, `content_json` y `event_json`. Se omiten los mensajes de bots y webhooks.
 
+## Slash commands and interactions / Comandos slash e interacciones
+
+```tripol
+import tripol.discord
+
+func hello(ctx:discord.Interaction)->string {
+    return ctx.reply("Hola, " + ctx.option_text("name"), true)
+}
+
+options=discord.slash_options()
+options.add("name", "Tu nombre", "string", true)
+bot=discord.bot()
+bot.slash_with_options("hello", "Saluda", &hello, options, "123")
+show bot.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":2,\"data\":{\"type\":1,\"name\":\"hello\",\"options\":[{\"type\":3,\"name\":\"name\",\"value\":\"Ana\"}]}}}")
+```
+
+Use `bot.slash(name, description, &handler, guild_id="")` for a command without options. An empty guild ID registers globally. A guild ID limits registration to a test server. At startup the bot reads its application ID, compares remote commands with the local definitions and creates or updates the changed ones. Registration leaves unrelated commands in place. This version supports ASCII lowercase command names and flat string, integer, boolean, user, channel, role, mentionable, number and attachment options.
+
+Usa `bot.slash(nombre, descripción, &manejador, guild_id="")` para un comando sin opciones. Un ID de servidor vacío hace el registro global. Con un ID, el registro se limita al servidor de pruebas. Al iniciar, el bot consulta su aplicación, compara los comandos y crea o actualiza los que cambiaron. El registro conserva los demás comandos. Se admiten nombres ASCII en minúsculas y opciones planas de texto, entero, booleano, usuario, canal, rol, mencionable, número y adjunto.
+
+Register component and modal callbacks with `bot.on_button(id, &handler)`, `bot.on_select(id, &handler)` and `bot.on_modal(id, &handler)`. The handler returns an initial response such as `ctx.reply(text, true)`, `ctx.defer(true)`, `ctx.ack()`, `ctx.reply_components(layout)`, `ctx.update_components(layout)`, `ctx.reply_embeds(batch)` or `ctx.open_modal(form)`. Discord requires an initial response within three seconds. Edit and follow-up endpoints after a deferred response are pending.
+
+Registra callbacks con `bot.on_button(id, &manejador)`, `bot.on_select(id, &manejador)` y `bot.on_modal(id, &manejador)`. El manejador devuelve la respuesta inicial. `ctx.reply(texto, true)` responde en privado, `ctx.defer(true)` difiere la respuesta privada, y `ctx.ack()` confirma una interacción sobre un mensaje. Los métodos de componentes, embeds y formularios devuelven sus respectivos payloads. Discord exige una respuesta inicial en tres segundos. Quedan pendientes la edición y los mensajes de seguimiento posteriores.
+
+`ctx.option(name)` returns raw JSON, `ctx.option_text(name)` decodes a JSON string, `ctx.values()` returns selected values and `ctx.field(id)` reads a submitted text input. `ctx.field_data(id)` returns the JSON array for select and file-upload inputs. The original interaction data is available as `ctx.data_json`, including resolved attachment metadata.
+
+`ctx.option(nombre)` devuelve JSON, `ctx.option_text(nombre)` decodifica una cadena, `ctx.values()` devuelve los valores seleccionados y `ctx.field(id)` lee un texto enviado. `ctx.field_data(id)` devuelve el arreglo JSON de los selectores y campos de archivos. `ctx.data_json` contiene los datos originales de la interacción y los metadatos resueltos de adjuntos.
+
+Use `tripol new Feedback --template discord-slash` for a runnable example. Set `DISCORD_TOKEN`, optionally set `DISCORD_GUILD_ID`, and install the bot application with the `applications.commands` scope on a private test server.
+
+Usa `tripol new Feedback --template discord-slash` para generar un ejemplo ejecutable. Configura `DISCORD_TOKEN`, opcionalmente `DISCORD_GUILD_ID`, e instala la aplicación con el alcance `applications.commands` en un servidor privado.
+
 ## Components V2
 
 ```tripol
@@ -70,9 +102,9 @@ message.container(panel, 41215)
 show message.payload()
 ```
 
-The payload includes flag 32768 and disables mentions. The builder also has `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` and `gallery(urls)`. It validates the 40-component limit, duplicate button IDs, container nesting and field lengths. The current byte limits are 512 per text display and 16,384 per payload. Use `message.send(channel_id)` on Windows or Linux. Button interactions, select menus, modals and file uploads are pending.
+The payload includes flag 32768 and disables mentions. The builder also has `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` and `gallery(urls)`. It validates the 40-component limit, duplicate button IDs, container nesting and field lengths. Text Display content can total 4,000 characters across the message. The encoded body must fit in the TRIPOL string capacity of 65,535 bytes. Use `message.send(channel_id)` on Windows or Linux. Use `discord.button_row()` to group up to five buttons. `discord.select(id, kind)` supports string, user, role, mentionable and channel menus. `discord.modal(id, title)` supports text inputs, selects, help text and file-upload inputs. Multipart file sending, radio groups and checkbox components are pending.
 
-El JSON incluye la bandera 32768 y desactiva las menciones. El constructor también ofrece `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` y `gallery(urls)`. Valida el límite de 40 componentes, los IDs de botones duplicados, el anidamiento y las longitudes de los campos. Los límites actuales son 512 bytes por texto y 16.384 bytes por mensaje codificado. Usa `message.send(channel_id)` en Windows o Linux. Quedan pendientes las interacciones de botones, los selectores, los formularios y los archivos adjuntos.
+El JSON incluye la bandera 32768 y desactiva las menciones. El constructor también ofrece `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` y `gallery(urls)`. Valida el límite de 40 componentes, los IDs de botones duplicados, el anidamiento y las longitudes de los campos. El contenido de Text Display admite 4.000 caracteres por mensaje. El JSON debe caber en la capacidad de cadena de TRIPOL de 65.535 bytes. Usa `message.send(channel_id)` en Windows o Linux. Usa `discord.button_row()` para agrupar hasta cinco botones. `discord.select(id, tipo)` admite texto, usuario, rol, mencionable y canal. `discord.modal(id, título)` admite texto, selectores, ayuda y campos de archivos. Quedan pendientes el envío multipart, radio groups y casillas.
 
 ## Discord Studio
 
@@ -105,9 +137,9 @@ En Linux x86-64, Studio ejecuta el bot y toma muestras de RSS, ticks de CPU, con
 | `embed.payload()` | Build JSON including disabled mentions / Genera el JSON con las menciones desactivadas |
 | `embed.send(channel_id)` | Send the embed over Discord REST from Windows or Linux / Envía el embed por Discord REST desde Windows o Linux |
 
-Text commands accept names of 1–96 bytes and replies of 1–512 bytes, both UTF-8. An embed requires text or media and accepts up to 6,000 text bytes, with a 256-byte title or field label and a 512-byte description, footer or field value. The encoded JSON limit is 16,384 bytes. The optional `intents` parameter on legacy `discord.run()` accepts `33281` (default for guild prefix commands) or `1` (GUILDS only).
+Text commands accept names of 1–96 bytes and replies of 1–512 bytes, both UTF-8. Use `embed.author(name, url="", icon_url="")` and `embed.timestamp(rfc3339)` for authors and timestamps. `discord.embeds()` groups up to 10 embeds with 6,000 characters of combined text. Individual limits are 256 for title, author and field name, 4,096 for description, 2,048 for footer, and 1,024 for field value. The optional `intents` parameter on legacy `discord.run()` accepts `33281` (default for guild prefix commands) or `1` (GUILDS only).
 
-Los comandos aceptan nombres de 1–96 bytes y respuestas de 1–512 bytes, ambos en UTF-8. El embed requiere texto o imágenes y acepta hasta 6.000 bytes de texto. El título y la etiqueta de un campo aceptan hasta 256 bytes, y la descripción, el pie y el valor de un campo hasta 512 bytes. El JSON codificado admite hasta 16.384 bytes. El parámetro opcional `intents` de `discord.run()` acepta `33281` (predeterminado para comandos de texto) o `1` (solo GUILDS).
+Los comandos aceptan nombres de 1–96 bytes y respuestas de 1–512 bytes, ambos en UTF-8. Usa `embed.author(nombre, url="", icon_url="")` y `embed.timestamp(rfc3339)` para autor y fecha. `discord.embeds()` agrupa hasta 10 embeds con 6.000 caracteres de texto combinado. Los límites son 256 para título, autor y nombre de campo, 4.096 para descripción, 2.048 para pie y 1.024 para valor de campo. El parámetro opcional `intents` de `discord.run()` acepta `33281` (predeterminado para comandos de texto) o `1` (solo GUILDS).
 
 ## Discord R5 — Windows WinHTTP backend
 

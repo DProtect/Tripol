@@ -199,6 +199,26 @@ message.container(panel, 5793266)
 channel = env.get("DISCORD_CHANNEL_ID")
 if channel == "" {show message.payload()} else {assert message.send(channel)}
 `,
+		"discord-slash": `import tripol.discord
+import tripol.env
+
+func open_feedback(ctx:discord.Interaction)->string {
+    form=discord.modal("feedback_form","Cuéntanos")
+    form.text("feedback","Sugerencia",2,true,4)
+    return ctx.open_modal(form)
+}
+
+func receive_feedback(ctx:discord.Interaction)->string {
+    if ctx.field("feedback")=="" {return ctx.reply("No se recibió la sugerencia.",true)}
+    return ctx.reply("Gracias por tu sugerencia.",true)
+}
+
+bot=discord.bot()
+guild=env.get("DISCORD_GUILD_ID")
+bot.slash("feedback","Comparte una sugerencia",&open_feedback,guild)
+bot.on_modal("feedback_form",&receive_feedback)
+bot.start()
+`,
 		"ecosystem": `import tripol.sort
 import tripol.time
 import tripol.system
@@ -232,7 +252,7 @@ show "Saved:", read_text("profile.txt")
 	}
 	source, ok := templates[template]
 	if !ok {
-		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem, game, discord, discord-embeds or discord-components", template)
+		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem, game, discord, discord-embeds, discord-components or discord-slash", template)
 	}
 	if err := os.Mkdir(dir, 0755); err != nil {
 		die("cannot create project: %v", err)
@@ -244,6 +264,14 @@ show "Saved:", read_text("profile.txt")
 		guide := "# TRIPOL Discord\n\n" +
 			"Run with `tripol run` on Windows or Linux x86-64. For sending, set DISCORD_CHANNEL_ID and DISCORD_TOKEN in the process environment. The bot needs View Channel and Send Messages. Embeds also need Embed Links. An unset channel ID opens the local JSON preview.\n\n" +
 			"Ejecuta `tripol run` en Windows o Linux x86-64. Para enviar, configura DISCORD_CHANNEL_ID y DISCORD_TOKEN en el entorno del proceso. El bot necesita permisos para ver el canal y enviar mensajes. Los embeds también requieren insertar enlaces. Con el ID de canal vacío se muestra el JSON local.\n"
+		if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte(guide), 0644); err != nil {
+			die("%v", err)
+		}
+	}
+	if template == "discord-slash" {
+		guide := "# Discord slash bot\n\n" +
+			"Use an authorized bot application with the applications.commands scope. Set DISCORD_TOKEN and DISCORD_GUILD_ID for a test server, then run `tripol run`. Invoke `/feedback` to open the form and receive a private acknowledgment. An empty guild ID registers the command globally.\n\n" +
+			"Usa una aplicación de bot autorizada con el alcance applications.commands. Configura DISCORD_TOKEN y DISCORD_GUILD_ID para un servidor de pruebas y ejecuta `tripol run`. Usa `/feedback` para abrir el formulario y recibir confirmación privada. Si el ID de servidor está vacío, el registro es global.\n"
 		if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte(guide), 0644); err != nil {
 			die("%v", err)
 		}

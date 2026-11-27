@@ -63,7 +63,11 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 			records[f.name] = name + "." + f.name
 		}
 	}
-	qualifyType := func(typ string) string {
+	var qualifyType func(string) string
+	qualifyType = func(typ string) string {
+		if element := callbackListElement(typ); element != "" {
+			return listType(qualifyType(element))
+		}
 		if args, ret, ok := callbackParts(typ); ok {
 			for i, arg := range args {
 				if qualified, found := records[arg]; found {

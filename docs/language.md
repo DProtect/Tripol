@@ -18,6 +18,8 @@ show welcome(&format_name, "Ada")
 
 Callback signatures must match the argument and result types. Pass all arguments when invoking a callback, including arguments whose defaults apply to direct calls. References work in native builds and WebAssembly. The current implementation takes references to named functions with ordinary parameter and result types.
 
+Use `list([&callback_a, &callback_b])` to create a list with a single callback signature. Annotate fields and parameters with `list[func(string)->string]` when they store or receive such a list. A scratch block can call `get`, `size` and `capacity` on a surrounding list. These operations expose immutable values and measurements. Mutations of surrounding lists remain outside scratch blocks.
+
 ## QUANTUM X 0.27.1 reference
 
 Source files are `.tri`. Imports must precede declarations and statements; use `import tripol.math`, `import vault.name`, or a quoted project-local `.tri` path. `//` and `#` start comments; newline or semicolon separates statements. Blocks use braces. Strings use JSON-style quoting and escape sequences (no embedded NUL). Identifiers are ASCII; text is byte-oriented. `let` declares mutable bindings, `const` immutable bindings; bare assignment creates or updates a mutable local. No shadowing. Types: signed checked int64 (`int`), `bool`, IEEE binary64 (`float`), immutable `string`, runtime-length `ints`, named `struct`. Integer and float operations require matching types. `float(n)` converts integers; `show` prints floats with six decimals. Struct fields support scalar, string and `ints` types, not nested records. Struct and dynamic array assignments alias references, and const is not deep immutability.

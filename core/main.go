@@ -97,6 +97,13 @@ func (p *parser) name() string {
 	return p.take().s
 }
 func (p *parser) typ() string {
+	if p.eat("list") {
+		if !p.eat("[") { return "list" }
+		if p.t().s != "func" { p.err("expected callback type in list") }
+		element := p.typ()
+		p.need("]")
+		return listType(element)
+	}
 	if !p.eat("func") {
 		return p.typeName()
 	}
@@ -694,9 +701,12 @@ func (c *compiler) err(s string) {
 	panic(d)
 }
 func (c *compiler) lookup(n string) (variable, bool) {
+	return c.lookupBinding(n, false)
+}
+func (c *compiler) lookupBinding(n string, readList bool) (variable, bool) {
 	for i := len(c.scopes) - 1; i >= 0; i-- {
 		if v, ok := c.scopes[i][n]; ok {
-			if len(c.scratchScopes) > 0 && i < c.scratchScopes[len(c.scratchScopes)-1] && v.typ != "int" && v.typ != "bool" && v.typ != "float" && v.typ != "string" && !strings.HasPrefix(v.typ, callbackPrefix) {
+			if len(c.scratchScopes) > 0 && i < c.scratchScopes[len(c.scratchScopes)-1] && v.typ != "int" && v.typ != "bool" && v.typ != "float" && v.typ != "string" && !strings.HasPrefix(v.typ, callbackPrefix) && !(readList && isList(v.typ)) {
 				c.err("scratch cannot access outer aggregate " + n)
 			}
 			return v, true
@@ -1732,7 +1742,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL " + version + " — " + releaseName + "\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord|discord-embeds|discord-components]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol discord-run FILE (Linux)\ntripol discord studio FILE.tri [--metrics FILE.jsonl] (Linux)\ntripol pgo-train FILE.tri -o PROFILE.json\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache|--pgo PROFILE.json]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL " + version + " — " + releaseName + "\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord|discord-embeds|discord-components|discord-slash]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol discord-run FILE (Linux)\ntripol discord studio FILE.tri [--metrics FILE.jsonl] (Linux)\ntripol pgo-train FILE.tri -o PROFILE.json\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache|--pgo PROFILE.json]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {
@@ -1813,7 +1823,7 @@ func cli() {
 		if len(args) == 4 && args[2] == "--template" {
 			template = args[3]
 		} else if len(args) != 2 {
-			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord|discord-embeds|discord-components]")
+			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord|discord-embeds|discord-components|discord-slash]")
 		}
 		newProjectTemplate(src, template)
 		return

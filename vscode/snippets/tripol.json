@@ -68,5 +68,27 @@
       "message.separator()",
       "show message.payload()"
     ]
+  },
+  "Discord slash callback": {
+    "prefix": "discord-slash",
+    "body": [
+      "import tripol.discord",
+      "",
+      "func respond(ctx:discord.Interaction)->string {",
+      "    return ctx.reply(\"${1:Hola}\", true)",
+      "}",
+      "",
+      "bot=discord.bot()",
+      "bot.slash(\"${2:hola}\", \"${3:Saluda}\", &respond)",
+      "bot.start()"
+    ]
+  },
+  "Discord modal": {
+    "prefix": "discord-modal",
+    "body": [
+      "form=discord.modal(\"${1:feedback}\", \"${2:Comentarios}\")",
+      "form.text(\"${3:topic}\", \"${4:Tema}\")",
+      "return ctx.open_modal(form)"
+    ]
   }
 }

@@ -203,10 +203,28 @@
     "dispatch_message": "func discord.dispatch_message(event:string,handler:func(Message)->string)->string",
     "run": "func discord.run(intents=33281)->int",
     "run_handler": "func discord.run_handler(handler:func(Message)->string,intents=33281)->int",
+    "run_session": "func discord.run_session(handler:func(Message)->string,intents:int,keys:string_list,handlers:list[func(Interaction)->string])->int",
     "bot": "func discord.bot()->Bot",
     "embed": "func discord.embed()->Embed",
     "media_url": "func discord.media_url(value:string)->bool",
-    "components": "func discord.components()->Components"
+    "components": "func discord.components()->Components",
+    "ignore_interaction": "func discord.ignore_interaction(context:Interaction)->string",
+    "empty_interactions": "func discord.empty_interactions()->list[func(Interaction)->string]",
+    "interaction_selector": "func discord.interaction_selector(event:string)->string",
+    "interaction_matches": "func discord.interaction_matches(key:string,selector:string)->bool",
+    "dispatch_interaction": "func discord.dispatch_interaction(event:string,key:string,handler:func(Interaction)->string)->string",
+    "deliver_interaction": "func discord.deliver_interaction(event:string,key:string,handler:func(Interaction)->string)->bool",
+    "slash_name": "func discord.slash_name(name:string)->bool",
+    "slash_is_current": "func discord.slash_is_current(remote:string,definition:string)->bool",
+    "sync_slash_commands": "func discord.sync_slash_commands(specs:string_list,guilds:string_list)->bool",
+    "modal_field_value": "func discord.modal_field_value(node:string,id:string,property:string,depth:int)->string",
+    "modal": "func discord.modal(id:string,title:string)->Modal",
+    "select": "func discord.select(id:string,kind=\"string\",minimum=1,maximum=1)->Select",
+    "timestamp_valid": "func discord.timestamp_valid(value:string)->bool",
+    "embeds": "func discord.embeds()->Embeds",
+    "slash_options": "func discord.slash_options()->SlashOptions",
+    "slash_option_signature": "func discord.slash_option_signature(options:string)->string",
+    "button_row": "func discord.button_row()->Buttons"
   },
   "discord.Message": {
     "matches": "Message.matches(content:string)->bool",
@@ -220,23 +238,35 @@
     "preview": "Bot.preview(content:string)->string",
     "on_message": "Bot.on_message(handler:func(Message)->string)->bool",
     "preview_event": "Bot.preview_event(event:string)->string",
-    "start": "Bot.start()->int"
+    "start": "Bot.start()->int",
+    "bind_interaction": "Bot.bind_interaction(key:string,handler:func(Interaction)->string,definition=\"\",guild_id=\"\")->bool",
+    "slash": "Bot.slash(name:string,description:string,handler:func(Interaction)->string,guild_id=\"\")->bool",
+    "slash_with_options": "Bot.slash_with_options(name:string,description:string,handler:func(Interaction)->string,options:SlashOptions,guild_id=\"\")->bool",
+    "on_button": "Bot.on_button(id:string,handler:func(Interaction)->string)->bool",
+    "on_select": "Bot.on_select(id:string,handler:func(Interaction)->string)->bool",
+    "on_modal": "Bot.on_modal(id:string,handler:func(Interaction)->string)->bool",
+    "preview_interaction": "Bot.preview_interaction(event:string)->string"
   },
   "discord.Embed": {
     "title": "Embed.title(value:string)->bool",
     "description": "Embed.description(value:string)->bool",
-    "footer": "Embed.footer(value:string)->bool",
+    "footer": "Embed.footer(value:string,icon_url=\"\")->bool",
     "color": "Embed.color(value:string)->bool",
     "url": "Embed.url(value:string)->bool",
     "image": "Embed.image(value:string)->bool",
     "thumbnail": "Embed.thumbnail(value:string)->bool",
     "field": "Embed.field(label:string,value:string,inline=false)->bool",
+    "text_size": "Embed.text_size()->int",
+    "entry": "Embed.entry()->string",
     "payload": "Embed.payload()->string",
-    "send": "Embed.send(channel_id:string)->bool"
+    "send": "Embed.send(channel_id:string)->bool",
+    "author": "Embed.author(name:string,url=\"\",icon_url=\"\")->bool",
+    "timestamp": "Embed.timestamp(value:string)->bool"
   },
   "discord.Components": {
     "append_entry": "Components.append_entry(entry:string,weight:int)->bool",
     "entries_json": "Components.entries_json()->string",
+    "append_text": "Components.append_text(entry:string,weight:int,characters:int)->bool",
     "text": "Components.text(content:string)->bool",
     "separator": "Components.separator(spacing=1,divider=true)->bool",
     "link": "Components.link(label:string,url:string)->bool",
@@ -245,7 +275,51 @@
     "gallery": "Components.gallery(urls:string_list)->bool",
     "container": "Components.container(children:Components,accent=-1,spoiler=false)->bool",
     "payload": "Components.payload()->string",
-    "send": "Components.send(channel_id:string)->bool"
+    "send": "Components.send(channel_id:string)->bool",
+    "select": "Components.select(menu:Select)->bool",
+    "row": "Components.row(buttons:Buttons)->bool"
+  },
+  "discord.Interaction": {
+    "reply": "Interaction.reply(content:string,ephemeral=false)->string",
+    "defer": "Interaction.defer(ephemeral=false)->string",
+    "ack": "Interaction.ack()->string",
+    "reply_components": "Interaction.reply_components(layout:Components,ephemeral=false)->string",
+    "update_components": "Interaction.update_components(layout:Components)->string",
+    "option": "Interaction.option(name:string)->string",
+    "option_text": "Interaction.option_text(name:string)->string",
+    "values": "Interaction.values()->string_list",
+    "field": "Interaction.field(id:string)->string",
+    "open_modal": "Interaction.open_modal(form:Modal)->string",
+    "reply_embeds": "Interaction.reply_embeds(batch:Embeds,ephemeral=false)->string",
+    "field_data": "Interaction.field_data(id:string)->string"
+  },
+  "discord.Modal": {
+    "add_label": "Modal.add_label(id:string,label:string,component:string)->bool",
+    "text": "Modal.text(id:string,label:string,style=1,required=true,min_length=0,max_length=4000)->bool",
+    "payload": "Modal.payload()->string",
+    "select": "Modal.select(label:string,menu:Select,required=true)->bool",
+    "help_text": "Modal.help_text(content:string)->bool",
+    "file": "Modal.file(id:string,label:string,minimum=1,maximum=1,required=true)->bool"
+  },
+  "discord.Select": {
+    "placeholder": "Select.placeholder(value:string)->bool",
+    "option": "Select.option(label:string,value:string,description=\"\",selected=false)->bool",
+    "default_id": "Select.default_id(id:string,kind:string)->bool",
+    "channels": "Select.channels(kinds:ints)->bool",
+    "payload": "Select.payload()->string"
+  },
+  "discord.Embeds": {
+    "add": "Embeds.add(embed:Embed)->bool",
+    "payload": "Embeds.payload()->string",
+    "send": "Embeds.send(channel_id:string)->bool"
+  },
+  "discord.SlashOptions": {
+    "add": "SlashOptions.add(name:string,description:string,kind=\"string\",required=false)->bool",
+    "payload": "SlashOptions.payload()->string"
+  },
+  "discord.Buttons": {
+    "button": "Buttons.button(label:string,id:string,style=1,disabled=false)->bool",
+    "link": "Buttons.link(label:string,url:string,disabled=false)->bool"
   },
   "encoding": {
     "hex_digit": "func encoding.hex_digit(n:int) -> string",
@@ -344,6 +418,7 @@
     "digit": "func json.digit(b:int)->bool",
     "quoted": "func json.quoted(s:string,i:int,n:int)->int",
     "string_equals": "func json.string_equals(raw:string,value:string)->bool",
+    "unquote": "func json.unquote(raw:string)->string",
     "literal": "func json.literal(s:string,i:int,n:int,w:string)->int",
     "number": "func json.number(s:string,i:int,n:int)->int",
     "value": "func json.value(s:string,i:int,n:int,depth:int)->int",

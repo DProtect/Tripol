@@ -229,3 +229,45 @@ func TestDiscordGatewayTrustAndIdentifyQuota(t *testing.T) {
 		t.Fatalf("done=%t error=%v", done, err)
 	}
 }
+
+func TestInteractionCallbackDoesNotExposeCredentials(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	var calls atomic.Int32
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		call := calls.Add(1)
+		if req.Method != "POST" || req.Header.Get("Authorization") != "" || req.URL.Path != "/api/v10/interactions/123/short-lived-fixture/callback" {
+			t.Error("invalid interaction callback request")
+		}
+		body, _ := io.ReadAll(req.Body)
+		if string(body) != `{"type":4,"data":{"content":"Hola"}}` {
+			t.Error("callback body differs")
+		}
+		if call > 1 {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, `{"message":"short-lived-fixture"}`)
+		} else {
+			w.WriteHeader(http.StatusNoContent)
+		}
+	}))
+	defer server.Close()
+	client := newClient(server.Client(), server.URL)
+	defer client.Close()
+	path := "/api/v10/interactions/123/short-lived-fixture/callback"
+	body := []byte(`{"type":4,"data":{"content":"Hola"}}`)
+	got, err := client.Interaction(ctx, path, body)
+	if err != nil || string(got) != "{}" {
+		t.Fatalf("callback: %q %v", got, err)
+	}
+	if _, err := client.Interaction(ctx, path, body); err == nil || strings.Contains(err.Error(), "short-lived-fixture") || calls.Load() != 2 {
+		t.Fatalf("expired callback: %v (%d requests)", err, calls.Load())
+	}
+	for _, invalid := range []string{"/api/v10/channels/123/messages", "/api/v10/interactions/../../callback", "/api/v10/interactions/123/short-lived-fixture/callback?other=1"} {
+		if _, err := client.Interaction(ctx, invalid, body); err == nil {
+			t.Fatalf("accepted %s", invalid)
+		}
+	}
+	if calls.Load() != 2 {
+		t.Fatal(calls.Load())
+	}
+}

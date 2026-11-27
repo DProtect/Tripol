@@ -76,7 +76,35 @@ func (e HTTPError) Error() string { return fmt.Sprintf("Discord HTTP status %d",
 
 // Request sends a bounded authenticated API request. A POST is retried only
 // after an explicit 429 rejection, never after an ambiguous I/O error.
-func (c *Client) Request(ctx context.Context, method, path, token string, body []byte) (payload []byte, err error) {
+func (c *Client) Request(ctx context.Context, method, path, token string, body []byte) ([]byte, error) {
+	return c.request(ctx, method, path, token, body, false)
+}
+
+func (c *Client) Interaction(ctx context.Context, path string, body []byte) ([]byte, error) {
+	parts := strings.Split(path, "/")
+	if len(parts) != 7 || parts[0] != "" || parts[1] != "api" || parts[2] != "v10" ||
+		parts[3] != "interactions" || parts[6] != "callback" || !snowflake(parts[4]) ||
+		(!validToken(parts[5]) || parts[5] == "." || parts[5] == "..") || len(body) == 0 || !json.Valid(body) {
+		return nil, errors.New("invalid Discord interaction callback")
+	}
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	return c.request(ctx, http.MethodPost, path, "", body, true)
+}
+
+func snowflake(id string) bool {
+	if len(id) == 0 || len(id) > 20 {
+		return false
+	}
+	for _, b := range id {
+		if b < '0' || b > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func (c *Client) request(ctx context.Context, method, path, token string, body []byte, interaction bool) (payload []byte, err error) {
 	defer func() {
 		if err != nil {
 			c.metrics.restErrors.Add(1)
@@ -84,7 +112,7 @@ func (c *Client) Request(ctx context.Context, method, path, token string, body [
 	}()
 	target, err := url.ParseRequestURI(path)
 	if err != nil || target.IsAbs() || target.Host != "" || !strings.HasPrefix(path, "/api/v10/") ||
-		strings.ContainsAny(path, "\\#") || len(path) > 1024 || !validToken(token) || len(body) > maxMessage {
+		strings.ContainsAny(path, "\\#") || len(path) > 1024 || (!interaction && !validToken(token)) || len(body) > maxMessage {
 		return nil, errors.New("invalid Discord API request")
 	}
 	switch method {
@@ -101,7 +129,9 @@ func (c *Client) Request(ctx context.Context, method, path, token string, body [
 		if err != nil {
 			return nil, errors.New("invalid Discord API request")
 		}
-		req.Header.Set("Authorization", "Bot "+token)
+		if !interaction {
+			req.Header.Set("Authorization", "Bot "+token)
+		}
 		req.Header.Set("User-Agent", userAgent)
 		if len(body) != 0 {
 			req.Header.Set("Content-Type", "application/json")

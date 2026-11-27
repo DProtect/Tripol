@@ -1,5 +1,9 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
+- Slash commands synchronize global or guild definitions, keep unrelated commands, and support typed standard options. Named callbacks handle commands, buttons, selects and modal submissions. Acknowledgments, private replies, deferred responses, modal opening, and V2 message updates use the Discord interaction callback endpoint.
+- Components V2 adds multi-button rows, all five select menu types and character-based Text Display accounting. Modals support labels, text inputs, selects, file-upload inputs and help text. Traditional embeds support authors, icons, timestamps and batches of up to ten embeds.
+- The JSON runtime quotes strings with one native arena allocation and decodes escaped Unicode on native and WebAssembly targets. Typed callback lists support read-only access from scratch regions.
+- The new `discord-slash` template opens a feedback modal and acknowledges submissions privately. Tests cover compiled launcher traffic, TLS callback authentication boundaries and WebAssembly previews.
 - Linux x86-64 builds with Discord networking package the emitted ELF and native launcher. The launcher uses validated TLS, WebSocket Resume and bounded reconnects, reusable HTTPS connections and retry handling for explicit HTTP 429 responses.
 - Discord Studio provides process and transport metrics on Linux x86-64, with JSON Lines export. The snapshot includes CPU ticks, RSS, heartbeat acknowledgement latency, reconnects, event queue depth, and REST counters.
 - `Bot.on_message(&handler)` dispatches a typed message callback with author and channel IDs. `Bot.preview_event` exercises the same parser and callback offline.

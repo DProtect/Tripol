@@ -1747,6 +1747,141 @@ method: .short 71,69,84,0
 1: .ascii "TRIPOL runtime error: game window requires Windows or graphics operation failed\n"
 2:
 
+# Encode a JSON string with one arena allocation and the same UTF-8 bytes.
+.section .text.json_quote,"ax"
+ push rbp
+ mov rbp,rsp
+ sub rsp,16
+ mov [rbp-8],rax
+ mov rsi,rax
+ mov eax,3
+.jq_measure:
+ mov dl,[rsi]
+ test dl,dl
+ jz .jq_allocate
+ inc rsi
+ inc eax
+ cmp dl,32
+ jb .jq_control
+ cmp dl,34
+ je .jq_extra
+ cmp dl,92
+ jne .jq_bound
+.jq_extra:
+ inc eax
+ jmp .jq_bound
+.jq_control:
+ add eax,5
+.jq_bound:
+ cmp eax,65536
+ ja text_error
+ jmp .jq_measure
+.jq_allocate:
+ call alloc
+ mov [rbp-16],rax
+ mov rdi,rax
+ mov rsi,[rbp-8]
+ lea r8,[rip+.jq_digits]
+ mov byte ptr [rdi],34
+ inc rdi
+.jq_pass:
+ movzx edx,byte ptr [rsi]
+ test dl,dl
+ jz .jq_finish
+ inc rsi
+ cmp dl,32
+ jb .jq_escape_control
+ cmp dl,34
+ je .jq_escape
+ cmp dl,92
+ jne .jq_copy
+.jq_escape:
+ mov byte ptr [rdi],92
+ inc rdi
+.jq_copy:
+ mov [rdi],dl
+ inc rdi
+ jmp .jq_pass
+.jq_escape_control:
+ mov dword ptr [rdi],0x3030755c
+ mov eax,edx
+ shr eax,4
+ and edx,15
+ mov al,[r8+rax]
+ mov dl,[r8+rdx]
+ mov [rdi+4],al
+ mov [rdi+5],dl
+ add rdi,6
+ jmp .jq_pass
+.jq_finish:
+ mov word ptr [rdi],34
+ mov rax,[rbp-16]
+ leave
+ ret
+.jq_digits: .ascii "0123456789abcdef"
+
+# Encode one non-NUL Unicode scalar. Use a four-byte local staging buffer.
+.section .text.utf8_char,"ax"
+ cmp rax,0
+ jle text_error
+ cmp rax,0x10ffff
+ ja text_error
+ cmp eax,0xd800
+ jb .uc_checked
+ cmp eax,0xdfff
+ jbe text_error
+.uc_checked:
+ push rbp
+ mov rbp,rsp
+ sub rsp,16
+ mov r8d,1
+ cmp eax,0x80
+ jb .uc_first
+ inc r8d
+ cmp eax,0x800
+ jb .uc_two
+ inc r8d
+ cmp eax,0x10000
+ jb .uc_three
+ inc r8d
+ mov r9d,240
+ jmp .uc_tail
+.uc_two:
+ mov r9d,192
+ jmp .uc_tail
+.uc_three:
+ mov r9d,224
+.uc_tail:
+ mov ecx,r8d
+ dec ecx
+.uc_cont:
+ mov edx,eax
+ and edx,63
+ or edx,128
+ mov [rbp+rcx-8],dl
+ shr eax,6
+ dec ecx
+ jnz .uc_cont
+ or eax,r9d
+.uc_first:
+ mov [rbp-8],al
+ mov byte ptr [rbp+r8-8],0
+ inc r8d
+ mov [rbp-16],r8
+ mov eax,r8d
+ call alloc
+ mov rdi,rax
+ mov rcx,[rbp-16]
+ lea rsi,[rbp-8]
+ cld
+ rep movsb
+ leave
+ ret
+
+.section .text.discord_callback_windows,"ax"
+ xor ecx,ecx
+ jmp discord_request
+
 .section .text.discord_request_windows,"ax"
  push rbp
  mov rbp,rsp
@@ -1781,8 +1916,10 @@ method: .short 71,69,84,0
  jbe 3b
  jmp 9f
 4: # Build wide Authorization header; no CR/LF in token.
- lea rsi,[rip+discord_header]
  lea rdi,[rsp+2400]
+ cmp qword ptr [rsp+64],0
+ je .dcontent_type
+ lea rsi,[rip+discord_header]
  mov ecx,19
  rep movsw
  mov rsi,[rsp+64]
@@ -1820,11 +1957,15 @@ method: .short 71,69,84,0
 .dheader_end:
  lea rdi,[rdi+rcx*2]
  lea rsi,[rip+discord_header_end]
- mov ecx,35
+ mov ecx,2
+ rep movsw
+.dcontent_type:
+ lea rsi,[rip+discord_content_type]
+ mov ecx,33
  rep movsw
  mov rax,[rsp+160]
  call strlen
- cmp rax,16384
+ cmp rax,65535
  ja 9f
  mov [rsp+168],rax
  mov eax,65536
@@ -1842,9 +1983,13 @@ method: .short 71,69,84,0
  mov [rsp+80],rax
  mov rcx,rax
  mov edx,5000
- mov r8d,5000
- mov r9d,5000
- mov qword ptr [rsp+32],5000
+ cmp qword ptr [rsp+64],0
+ jne .dtimeouts
+ mov edx,2000
+.dtimeouts:
+ mov r8d,edx
+ mov r9d,edx
+ mov [rsp+32],rdx
  call qword ptr [rip+iat37]
  test eax,eax
  jz 9f
@@ -1959,7 +2104,13 @@ method: .short 71,69,84,0
  jz 13f
  call qword ptr [rip+iat36]
 13: cmp qword ptr [rsp+120],0
- je discord_error
+ jne .dresult
+ cmp qword ptr [rsp+64],0
+ jne discord_error
+ lea rax,[rip+.dempty]
+ leave
+ ret
+.dresult:
  # Reclaim unused response buffer suffix.
  mov edx,65535
  sub rdx,[rsp+112]
@@ -1967,17 +2118,32 @@ method: .short 71,69,84,0
  sub [r8],rdx
  add [r8+8],rdx
  mov rax,[rsp+104]
+ cmp qword ptr [rsp+64],0
+ jne .dreturn
+ cmp qword ptr [rsp+112],0
+ jne .dreturn
+ lea rax,[rip+.daccepted]
+.dreturn:
  leave
  ret
+.dempty: .byte 0
+.daccepted: .asciz "{}"
  .balign 2
 
 discord_header: .short 65,117,116,104,111,114,105,122,97,116,105,111,110,58,32,66,111,116,32
-discord_header_end: .short 13,10,67,111,110,116,101,110,116,45,84,121,112,101,58,32,97,112,112,108,105,99,97,116,105,111,110,47,106,115,111,110,13,10,0
+discord_header_end: .short 13,10
+discord_content_type: .short 67,111,110,116,101,110,116,45,84,121,112,101,58,32,97,112,112,108,105,99,97,116,105,111,110,47,106,115,111,110,13,10,0
 discord_host: .short 100,105,115,99,111,114,100,46,99,111,109,0
 discord_agent: .short 84,82,73,80,79,76,0
 discord_get: .short 71,69,84,0
 discord_post: .short 80,79,83,84,0
 
+.section .text.discord_callback_linux,"ax"
+ mov r8,rax
+ xor r9d,r9d
+ mov r10,rdx
+ mov eax,5
+ jmp discord_pipe
 .section .text.discord_request_linux,"ax"
  mov r8,rax
  mov r9,rcx

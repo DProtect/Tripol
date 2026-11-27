@@ -44,7 +44,7 @@ func (m *webModule) stringID(s string)int64{
  if id,ok:=m.stringIDs[s];ok{return id}
  id:=int64(len(m.strings));m.strings=append(m.strings,s);m.stringIDs[s]=id;return id
 }
-func webKind(t string)int64{switch t{case "int":return 0;case "bool":return 1;case "string":return 2;case "float":return 3};if t=="ints"||strings.HasPrefix(t,"array:"){return 4};if isList(t){return 5+webKind(listElement(t))};webReject("unsupported value type %s",t);return 0}
+func webKind(t string)int64{switch t{case "int":return 0;case "bool":return 1;case "string":return 2;case "float":return 3};if t=="ints"||strings.HasPrefix(t,"array:"){return 4};if callbackListElement(t)!=""{return 5};if isList(t){return 5+webKind(listElement(t))};webReject("unsupported value type %s",t);return 0}
 func webElem(t string)string{if t=="ints"||strings.HasPrefix(t,"array:"){return "int"};return listElement(t)}
 func (e *webEmitter) temp()uint32{v:=e.locals;e.locals++;return v}
 func (e *webEmitter) save(x *expr)(uint32,string){t:=e.expression(x);v:=e.temp();e.code.inst(0x21,v);return v,t}
@@ -52,7 +52,7 @@ func (e *webEmitter) val(op int64,a,b,c uint32){e.code.i32(op);e.code.inst(0x20,
 func (e *webEmitter) constant(n int64)uint32{v:=e.temp();e.code.i64(n);e.code.inst(0x21,v);return v}
 func (e *webEmitter) arrayLiteral(x *expr,list bool,requested string)string{
  zero:=e.constant(0);size:=e.constant(int64(len(x.args)));kind:=int64(4);typ:="array:"+fmt.Sprint(len(x.args))
- if list{typ=requested;if len(x.args)>0&&requested=="list"{v,t:=e.save(x.args[0]);typ=listType(t);if typ==""{webReject("list requires scalar")};kind=webKind(typ);k:=e.constant(kind);e.val(10,size,k,zero);handle:=e.temp();e.code.inst(0x21,handle);e.val(14,handle,v,zero);e.code.raw(0x1a);for _,item:=range x.args[1:]{v,t:=e.save(item);if t!=listElement(typ){webReject("mixed list")};e.val(14,handle,v,zero);e.code.raw(0x1a)};e.code.inst(0x20,handle);return typ};kind=webKind(typ)}
+ if list{typ=requested;if len(x.args)>0&&requested=="list"{v,t:=e.save(x.args[0]);typ=listType(t);if typ==""{webReject("list requires scalar elements or matching callbacks")};kind=webKind(typ);k:=e.constant(kind);e.val(10,size,k,zero);handle:=e.temp();e.code.inst(0x21,handle);e.val(14,handle,v,zero);e.code.raw(0x1a);for _,item:=range x.args[1:]{v,t:=e.save(item);if t!=listElement(typ){webReject("mixed list")};e.val(14,handle,v,zero);e.code.raw(0x1a)};e.code.inst(0x20,handle);return typ};kind=webKind(typ)}
  k:=e.constant(kind);e.val(10,size,k,zero);handle:=e.temp();e.code.inst(0x21,handle)
  for i,item:=range x.args{v,t:=e.save(item);elem:=webElem(typ);if t!=elem{webReject("invalid collection element")};if list{e.val(14,handle,v,zero)}else{idx:=e.constant(int64(i));e.val(12,handle,idx,v)};e.code.raw(0x1a)}
  e.code.inst(0x20,handle);return typ
@@ -142,7 +142,7 @@ func (e *webEmitter) expression(x *expr)string{
    }[name];if len(x.args)!=len(spec.args){webReject("invalid graphics arguments for %s",name)}
    z:=e.constant(0);v:=[3]uint32{z,z,z};for i,a:=range x.args{tmp,t:=e.save(a);if t!=spec.args[i]&&!(spec.args[i]=="ints"&&webElem(t)=="int"){webReject("invalid graphics argument for %s",name)};v[i]=tmp};e.val(spec.op,v[0],v[1],v[2]);return "bool"
   }
-  if name=="discord_request"||name=="gw_open"||strings.HasPrefix(name,"gw_host_")||name=="env_get"{
+  if name=="discord_request"||name=="discord_callback"||name=="gw_open"||strings.HasPrefix(name,"gw_host_")||name=="env_get"{
    webReject("%s requires a native target",name)
   }
   if name=="thread_sum"{webReject("native worker threads require a browser concurrency adapter")}
@@ -158,6 +158,18 @@ func (e *webEmitter) expression(x *expr)string{
    }
    if name == "input_int" { e.val(57, prompt, silent, e.constant(0)); return "int" }
    e.val(22, prompt, silent, e.constant(0)); return "string"
+  }
+  if name=="utf8_char" {
+   if len(x.args)!=1 {webReject("utf8_char expects one int")}
+   v,t:=e.save(x.args[0])
+   if t!="int" {webReject("utf8_char expects an int")}
+   z:=e.constant(0);e.val(88,v,z,z);return "string"
+  }
+  if name=="json_quote" {
+   if len(x.args)!=1 {webReject("json_quote expects one string")}
+   v,t:=e.save(x.args[0])
+   if t!="string" {webReject("json_quote expects a string")}
+   z:=e.constant(0);e.val(87,v,z,z);return "string"
   }
   if name=="text"||name=="parse_int"||name=="byte_at"||name=="slice"||name=="has_prefix"||name=="has_suffix"||name=="find_bytes"{
    spec:=map[string]struct{op int64;args []string;ret string}{

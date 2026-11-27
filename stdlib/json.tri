@@ -1,18 +1,6 @@
-import tripol.encoding
 import tripol.utf8
 // Small JSON writer; input strings must be valid UTF-8. No general parser yet.
-func quote(s:string) -> string {
-    assert len(s)<=512, "JSON string limit 512 bytes"
-    result="\""
-    for i in range(len(s)) {
-        b=byte_at(s,i)
-        if b==34 {result+="\\\""}
-        else if b==92 {result+="\\\\"}
-        else if b<32 {result+="\\u00"+encoding.hex_byte(b)}
-        else {result+=slice(s,i,i+1)}
-    }
-    return result+"\""
-}
+func quote(s:string) -> string {return json_quote(s)}
 func integer(n:int) -> string {return text(n)}
 func boolean(b:bool) -> string {if b {return "true"}; return "false"}
 func pair(key:string,value:string) -> string {return "{"+quote(key)+":"+quote(value)+"}"}
@@ -110,6 +98,59 @@ func string_equals(raw:string,value:string)->bool {
   pos+=1
  }
  return pos==size
+}
+// Decode a single JSON string. NUL is outside TRIPOL's string model.
+func unquote(raw:string)->string {
+ n=len(raw)
+ if n<2 or quoted(raw,0,n)!=n {return ""}
+ last=n-1
+ at=1
+ start=1
+ result=""
+ while at<last {
+  if byte_at(raw,at)!=92 {at+=1;continue}
+  if at>start {result+=slice(raw,start,at)}
+  at+=1
+  b=byte_at(raw,at)
+  at+=1
+  if b==117 {
+   scalar=0
+   high=0
+   while true {
+    scalar=0
+    for i in range(4) {
+     h=byte_at(raw,at+i)
+     digit=0
+     if h<=57 {digit=h-48} else if h<=70 {digit=h-55} else {digit=h-87}
+     scalar=scalar*16+digit
+    }
+    at+=4
+    if high>0 {
+     if scalar<56320 or scalar>57343 {return ""}
+     scalar=65536+(high-55296)*1024+scalar-56320
+     break
+    }
+    if scalar<55296 or scalar>56319 {
+     if scalar==0 or (scalar>=56320 and scalar<=57343) {return ""}
+     break
+    }
+    if at+6>last or byte_at(raw,at)!=92 or byte_at(raw,at+1)!=117 {return ""}
+    high=scalar
+    at+=2
+   }
+   result+=utf8_char(scalar)
+  } else {
+   if b==98 {b=8}
+   else if b==102 {b=12}
+   else if b==110 {b=10}
+   else if b==114 {b=13}
+   else if b==116 {b=9}
+   result+=utf8_char(b)
+  }
+  start=at
+ }
+ if start<last {result+=slice(raw,start,last)}
+ return result
 }
 func literal(s:string,i:int,n:int,w:string)->int {
  k=len(w);if i+k>n {return -1}

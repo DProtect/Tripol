@@ -1,7 +1,8 @@
 package core
 
 // Explicit temporary arena region. Outer scalar updates are safe, but references
-// cannot escape: outer aggregates are inaccessible and outer text is read-only.
+// cannot escape: outer text is read-only, and outer lists expose only read access
+// to sizes and individual immutable values.
 func (c *compiler) outerScratchBinding(name string) bool {
 	boundary := c.scratchScopes[len(c.scratchScopes)-1]
 	for i := len(c.scopes) - 1; i >= 0; i-- {

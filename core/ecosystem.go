@@ -1,5 +1,7 @@
 package core
 
+import "strings"
+
 // byte_at returns a UTF-8 byte without allocating a substring. Bounds are checked.
 func (c *compiler) byteAt(e *expr) string {
 	if len(e.args) != 2 {
@@ -27,7 +29,10 @@ func (c *compiler) showValue(e *expr, newline bool) {
 	}
 	if isDictionary(t){c.showDictionary(t,newline);return}
     elem:="int"
-    if isList(t) { elem=listElement(t);a.emit(0x48,0x8b,0x40,0x08); t = "ints" }
+    if strings.HasPrefix(t,callbackPrefix) || callbackListElement(t)!="" {
+		c.err("callback references cannot be printed")
+	}
+	if isList(t) { elem=listElement(t);a.emit(0x48,0x8b,0x40,0x08); t = "ints" }
 	if t != "ints" {
 		if c.isRecord(t) {
 			c.err("show requires scalar, string or integer array")

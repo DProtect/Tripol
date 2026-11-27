@@ -57,9 +57,9 @@ show apply(&greet, "Ada")
 
 ### Components V2 and Linux transport / Components V2 y transporte Linux
 
-`discord.components()` creates a message builder. Use `text`, `separator`, `link`, `button`, `section`, `gallery` and `container` before calling `payload()`. `send(channel_id)` uses the native REST path. Callbacks for buttons, select menus and forms remain pending.
+`discord.components()` creates a message builder. Use `text`, `separator`, `link`, `button`, `section`, `gallery` and `container` before calling `payload()`. `send(channel_id)` uses the native REST path. Register button, select and modal callbacks on the bot.
 
-`discord.components()` crea un constructor de mensajes. Usa `text`, `separator`, `link`, `button`, `section`, `gallery` y `container` antes de llamar a `payload()`. `send(channel_id)` usa el transporte REST nativo. Quedan pendientes los callbacks para botones, selectores y formularios.
+`discord.components()` crea un constructor de mensajes. Usa `text`, `separator`, `link`, `button`, `section`, `gallery` y `container` antes de llamar a `payload()`. `send(channel_id)` usa el transporte REST nativo. Registra los callbacks de botones, selectores y formularios en el bot.
 
 `tripol build` on Linux x86-64 packages Discord network programs with the TRIPOL launcher. Linux uses bounded reconnect, Resume and reusable TLS connections. Windows uses WinHTTP. See the [development validation matrix](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
 
@@ -68,6 +68,14 @@ show apply(&greet, "Ada")
 On Linux x86-64, run `tripol discord studio main.tri --metrics studio.jsonl` for diagnostic samples. The file must be new. Studio writes process usage and Discord transport counters as JSON Lines.
 
 En Linux x86-64, ejecuta `tripol discord studio main.tri --metrics studio.jsonl` para obtener muestras de diagnóstico. El archivo debe ser nuevo. Studio guarda métricas del proceso y del transporte de Discord en JSON Lines.
+
+### Slash commands and interactions / Comandos slash e interacciones
+
+Use `bot.slash(name, description, &handler, guild_id="")` or `bot.slash_with_options(name, description, &handler, options, guild_id="")`. Handlers use `func(discord.Interaction)->string` and return a response built by the context. Use `ctx.reply(content, true)` for a private reply, `ctx.defer(true)` to acknowledge a delayed private response and `ctx.open_modal(form)` to open a `discord.modal(id,title)`. Invoke `bot.preview_interaction(event_json)` to test a callback offline. Button, select and modal handlers register with `on_button`, `on_select` and `on_modal`.
+
+Usa `bot.slash(nombre, descripción, &manejador, guild_id="")` o `bot.slash_with_options(nombre, descripción, &manejador, opciones, guild_id="")`. La firma es `func(discord.Interaction)->string`. Devuelve una respuesta creada por el contexto. Usa `ctx.reply(texto, true)` para responder en privado, `ctx.defer(true)` para diferir la respuesta y `ctx.open_modal(formulario)` para abrir un formulario. `bot.preview_interaction(event_json)` ejecuta el callback sin conexión. Registra botones, selectores y formularios con `on_button`, `on_select` y `on_modal`.
+
+`discord.slash_options()`, `discord.select(id, kind)`, `discord.button_row()`, `discord.modal(id,title)` and `discord.embeds()` provide typed builders. Text Display has a 4,000-character aggregate limit. Traditional embeds support author, timestamp and batches of up to 10, with 6,000 combined text characters. A `discord-slash` project template demonstrates a complete feedback form flow on Windows and Linux backends.
 
 ## Cómo usar este archivo / How to use this file
 

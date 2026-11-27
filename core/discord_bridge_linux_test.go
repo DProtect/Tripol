@@ -126,3 +126,92 @@ func botFixture(_ context.Context, input io.Reader, output io.Writer) error {
 	}
 	return nil
 }
+
+func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
+	if runtime.GOARCH != "amd64" {
+		t.Skip("requires native x86-64")
+	}
+	path := filepath.Join(t.TempDir(), "bot")
+	if err := os.WriteFile(path, compileProfile(interactionBot+"b.start()", "linux", "turbo"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DISCORD_TOKEN", "fixture-token")
+	cmd := exec.Command(path)
+	var output bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &output, &output
+	fixture := make(chan error, 1)
+	if err := runDiscordPipes(cmd, func(_ context.Context, requests, replies *os.File) error {
+		err := interactionFixture(requests, replies)
+		fixture <- err
+		return err
+	}, nil); err != nil {
+		t.Fatalf("bot failed: %v\n%s\n%v", err, output.String(), <-fixture)
+	}
+	if err := <-fixture; err != nil {
+		t.Fatal(err)
+	}
+}
+
+func interactionFixture(input io.Reader, output io.Writer) error {
+	first := `[{"type":1,"name":"hola","description":"La descripci\u00f3n","id":"919","options":[{"required":true,"type":3,"description":"La opci\u00f3n","name":"text"}]},{"type":1,"name":"unmanaged","description":"Leave it alone","id":"920"}]`
+	steps := []struct {
+		op                          uint32
+		path, auth, contains, reply string
+	}{
+		{discordtransport.OpREST, "/api/v10/oauth2/applications/@me", "fixture-token", "", `{"id":"890"}`},
+		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", "", first},
+		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", `"name":"wait"`, `{"id":"921"}`},
+		{discordtransport.OpStart, "", "", `"intents":1`, "1"},
+		{discordtransport.OpPoll, "", "", "", `{"op":0,"t":"READY","s":3,"d":{}}`},
+		{discordtransport.OpPoll, "", "", "", slashEvent},
+		{discordtransport.OpInteraction, "/api/v10/interactions/710/interaction-fixture/callback", "", `"content":"567 café 😀","flags":64`, "{}"},
+		{discordtransport.OpPoll, "", "", "", buttonEvent},
+		{discordtransport.OpInteraction, "/api/v10/interactions/711/button-fixture/callback", "", `"type":9`, "{}"},
+		{discordtransport.OpPoll, "", "", "", modalEvent},
+		// An empty reply models a rejected or expired interaction. The bot must
+		// continue polling the same Gateway and avoid replaying the callback.
+		{discordtransport.OpInteraction, "/api/v10/interactions/713/modal-fixture/callback", "", `"content":"Revisión"`, ""},
+		{discordtransport.OpPoll, "", "", "", selectEvent},
+		{discordtransport.OpInteraction, "/api/v10/interactions/712/select-fixture/callback", "", `"content":"101 102"`, "{}"},
+		{discordtransport.OpPoll, "", "", "", "!"},
+		{discordtransport.OpClose, "", "", "", "1"},
+	}
+	for index, step := range steps {
+		var hdr [16]byte
+		if _, err := io.ReadFull(input, hdr[:]); err != nil {
+			return err
+		}
+		if op := binary.LittleEndian.Uint32(hdr[:4]); op != step.op {
+			return fmt.Errorf("step %d: want operation %d, got %d", index, step.op, op)
+		}
+		var args [3]string
+		for i := range args {
+			n := binary.LittleEndian.Uint32(hdr[4+i*4:])
+			if n > 65535 {
+				return fmt.Errorf("invalid argument length")
+			}
+			b := make([]byte, n)
+			if _, err := io.ReadFull(input, b); err != nil {
+				return err
+			}
+			args[i] = string(b)
+		}
+		if step.op == discordtransport.OpStart {
+			if !strings.Contains(args[0], step.contains) {
+				return fmt.Errorf("incorrect Identify in step %d", index)
+			}
+		} else if args[0] != step.path || args[1] != step.auth || !strings.Contains(args[2], step.contains) ||
+			(step.contains == "" && args[2] != "") {
+			return fmt.Errorf("invalid operation arguments in step %d", index)
+		}
+		var size [4]byte
+		binary.LittleEndian.PutUint32(size[:], uint32(len(step.reply)))
+		if _, err := output.Write(size[:]); err != nil {
+			return err
+		}
+		if _, err := io.WriteString(output, step.reply); err != nil {
+			return err
+		}
+	}
+	return nil
+}

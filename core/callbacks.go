@@ -24,11 +24,11 @@ func functionCallbackType(f fn) string {
 	args := make([]string, len(f.args))
 	for i, param := range f.args {
 		args[i] = param.typ
-		if strings.HasPrefix(param.typ, callbackPrefix) {
+		if strings.HasPrefix(param.typ, callbackPrefix) || callbackListElement(param.typ) != "" {
 			return ""
 		}
 	}
-	if f.record || strings.HasPrefix(f.ret, callbackPrefix) {
+	if f.record || strings.HasPrefix(f.ret, callbackPrefix) || callbackListElement(f.ret) != "" {
 		return ""
 	}
 	return callbackType(args, f.ret)
