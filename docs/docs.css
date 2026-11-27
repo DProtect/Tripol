@@ -165,3 +165,18 @@
 .tripol-preview-stage{display:grid;place-items:center;min-height:90px;background:#080808;border:1px solid #292929;border-radius:8px;overflow:hidden}
 .tripol-preview-stage canvas{display:block;max-width:100%;width:auto;height:auto;min-width:min(100%,240px);max-height:380px;object-fit:contain;image-rendering:pixelated}
 .docs-page .docs-article .tripol-preview-status{margin:8px 0 0;font:11px system-ui;color:#999;overflow-wrap:anywhere}
+
+/* TRIPOL AI reference notification */
+.doc-ai-reference{position:fixed;right:22px;bottom:22px;z-index:45;width:min(320px,calc(100vw - 32px));font-family:Inter,system-ui,sans-serif;color:#f4f4f4}
+.doc-ai-reference [hidden]{display:none!important}
+.doc-ai-panel{background:#121212;border:1px solid #444;border-radius:14px;box-shadow:0 12px 42px #0009;padding:16px}
+.doc-ai-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.doc-ai-kicker{font-size:10px;letter-spacing:.12em;color:#a5a5a5;font-weight:700}
+.doc-ai-close,.doc-ai-toggle{font:inherit;font-size:12px;cursor:pointer;background:#191919;border:1px solid #444;color:#eee;border-radius:8px;padding:6px 10px}
+.doc-ai-toggle{float:right;padding:10px 14px;box-shadow:0 6px 24px #0008}
+.doc-ai-title{display:block;font-size:17px;line-height:1.3;letter-spacing:-.02em}
+.doc-ai-description{font-size:13px;line-height:1.55;color:#bbb;margin:8px 0 14px}
+.doc-ai-download{display:block;background:#f4f4f4;color:#111!important;font-weight:650;text-decoration:none;text-align:center;padding:10px 12px;border-radius:8px;font-size:13px}
+.doc-ai-download:hover{background:#d9d9d9}.doc-ai-reference :focus-visible{outline:2px solid #fff;outline-offset:3px}
+.doc-ai-meta{display:block;font-size:11px;color:#999;margin-top:9px}
+@media(max-width:700px){.doc-ai-reference{right:12px;bottom:12px;width:min(320px,calc(100vw - 24px))}}

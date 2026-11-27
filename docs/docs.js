@@ -5,7 +5,7 @@ let lang='en';try{if(localStorage.getItem('tripol-language')==='es')lang='es'}ca
 const chosen=new URLSearchParams(location.search).get('lang');if(chosen==='en'||chosen==='es')lang=chosen;
 const root=document.body.dataset.docRoot||'./';
 // A freshly loaded script must also load its matching stylesheet.
-for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='graphics-r1'){u.searchParams.set('v','graphics-r1');link.href=u.href}}
+for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='ai-reference-r1'){u.searchParams.set('v','ai-reference-r1');link.href=u.href}}
 function localLinks(){for(const a of $$('a[href]')){const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||/^(https?:|mailto:)/i.test(raw)&&a.origin!==location.origin)continue;const u=new URL(raw,location.href);if(!u.pathname.endsWith('.html'))continue;u.searchParams.set('lang',lang);a.href=u.href;}}
 // Shared navigation and current release label on all reference pages.
 const side=document.querySelector('#doc-side');
@@ -278,6 +278,34 @@ if(dialog&&input){
  input.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){e.preventDefault();$('#search-results a')?.focus()}else if(e.key==='Enter'){e.preventDefault();$('#search-results a')?.click()}});
  document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openSearch()}if(e.key==='Escape'&&side.classList.contains('open')){side.classList.remove('open');$('#doc-menu').setAttribute('aria-expanded','false')}});
 }
+
+
+/* AI reference download: shared across documentation and library pages. */
+function installAIReference(){
+ const key='tripol-ai-reference-dismissed-v0271';
+ const notice=document.createElement('aside');notice.className='doc-ai-reference';
+ const panel=document.createElement('div');panel.className='doc-ai-panel';
+ const makeLabel=(tag,cls,en,es)=>{const el=document.createElement(tag);el.className=cls;el.textContent=en;el.dataset.es=es;return el};
+ const toggle=makeLabel('button','doc-ai-toggle','AI reference','Referencia para IA');toggle.type='button';toggle.setAttribute('aria-controls','doc-ai-panel');
+ panel.id='doc-ai-panel';
+ const top=document.createElement('div');top.className='doc-ai-head';
+ const kicker=makeLabel('span','doc-ai-kicker','TRIPOL / AI READY','TRIPOL / LISTO PARA IA');
+ const close=makeLabel('button','doc-ai-close','Close','Cerrar');close.type='button';top.append(kicker,close);
+ const title=makeLabel('strong','doc-ai-title','New to TRIPOL?','¿No sabes nada de TRIPOL?');
+ const description=makeLabel('p','doc-ai-description','Don’t want to read all the docs? Download this file and send it to your favorite AI. Ask it to explain TRIPOL or help you write code.','¿No quieres leer toda la documentación? Descarga este archivo y envíaselo a tu IA de confianza. Pídele que te explique TRIPOL o te ayude a programar.');
+ const download=makeLabel('a','doc-ai-download','Download AI reference ↓','Descargar archivo para IA ↓');
+ download.href=new URL(root+'../TRIPOL-AI.md',location.href).href;download.download='TRIPOL-AI.md';
+ const meta=makeLabel('small','doc-ai-meta','Markdown · 64 modules · 383 functions','Markdown · 64 módulos · 383 funciones');
+ panel.append(top,title,description,download,meta);notice.append(toggle,panel);
+ let dismissed=false;try{dismissed=sessionStorage.getItem(key)==='1'}catch{}
+ const setOpen=(open,remember=false)=>{panel.hidden=!open;toggle.hidden=open;toggle.setAttribute('aria-expanded',String(open));if(remember)try{sessionStorage.setItem(key,open?'0':'1')}catch{}};
+ setOpen(!dismissed&&!window.matchMedia('(max-width: 700px)').matches);
+ close.addEventListener('click',()=>{setOpen(false,true);toggle.focus()});
+ toggle.addEventListener('click',()=>{setOpen(true,true);close.focus()});
+ panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();setOpen(false,true);toggle.focus()}});
+ document.body.append(notice);
+}
+installAIReference();
 
 installAllLive();registerLabels();apply();$('#doc-lang').addEventListener('click',()=>{lang=lang==='en'?'es':'en';apply()});
 $('#doc-menu').addEventListener('click',()=>{$('#doc-menu').setAttribute('aria-expanded',String(side.classList.toggle('open')))});

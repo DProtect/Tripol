@@ -67,3 +67,8 @@ Report issues through the [official repository](https://github.com/Tripollas/Tri
 ## Source architecture
 
 The production Go compiler is now in [`core/`](https://github.com/Tripollas/Tripol/tree/main/core); GENESIS is in `compiler/`. CLI integration tests and historical logs are in `tests/`. The root Go entry point remains compatible.
+
+
+## AI-ready reference / Referencia para IA
+
+[Download TRIPOL-AI.md](TRIPOL-AI.md) — complete v0.27.1 reference with 64 modules, 383 functions, 18 guides and 14 lessons. Attach it to an AI assistant to ask questions or write TRIPOL code.
