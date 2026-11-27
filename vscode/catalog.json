@@ -291,15 +291,20 @@
     "field": "Interaction.field(id:string)->string",
     "open_modal": "Interaction.open_modal(form:Modal)->string",
     "reply_embeds": "Interaction.reply_embeds(batch:Embeds,ephemeral=false)->string",
-    "field_data": "Interaction.field_data(id:string)->string"
+    "field_data": "Interaction.field_data(id:string)->string",
+    "checked": "Interaction.checked(id:string)->bool"
   },
   "discord.Modal": {
-    "add_label": "Modal.add_label(id:string,label:string,component:string)->bool",
-    "text": "Modal.text(id:string,label:string,style=1,required=true,min_length=0,max_length=4000)->bool",
+    "add_label": "Modal.add_label(id:string,label:string,component:string,description=\"\")->bool",
+    "text": "Modal.text(id:string,label:string,style=1,required=true,min_length=0,max_length=4000,placeholder=\"\",value=\"\")->bool",
     "payload": "Modal.payload()->string",
     "select": "Modal.select(label:string,menu:Select,required=true)->bool",
     "help_text": "Modal.help_text(content:string)->bool",
-    "file": "Modal.file(id:string,label:string,minimum=1,maximum=1,required=true)->bool"
+    "file": "Modal.file(id:string,label:string,minimum=1,maximum=1,required=true)->bool",
+    "choice_group": "Modal.choice_group(label:string,menu:Select,radio:bool,required:bool,description=\"\")->bool",
+    "radio": "Modal.radio(label:string,menu:Select,required=true,description=\"\")->bool",
+    "checkbox_group": "Modal.checkbox_group(label:string,menu:Select,required=true,description=\"\")->bool",
+    "checkbox": "Modal.checkbox(id:string,label:string,checked=false,description=\"\")->bool"
   },
   "discord.Select": {
     "placeholder": "Select.placeholder(value:string)->bool",

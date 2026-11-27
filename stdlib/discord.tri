@@ -1190,24 +1190,31 @@ func modal(id:string,title:string)->Modal {
  return Modal(id,title,string_list(),string_list(),0)
 }
 
-func Modal.add_label(self:Modal,id:string,label:string,component:string)->bool {
+func Modal.add_label(self:Modal,id:string,label:string,component:string,description="")->bool {
  assert utf8.valid(id) and utf8.count(id)>=1 and utf8.count(id)<=100,"Discord modal field IDs require 1 to 100 characters"
  assert utf8.valid(label) and utf8.count(label)>=1 and utf8.count(label)<=45,"Discord modal labels require 1 to 45 characters"
  entries=self.entries
  ids=self.ids
  assert entries.size()<5,"Discord modals accept up to five top-level components"
  assert not ids.contains(id),"Duplicate Discord modal field ID"
- entries.add("{\"type\":18,\"label\":"+json.quote(label)+",\"component\":"+component+"}")
+ assert utf8.valid(description) and utf8.count(description)<=100,"Discord label descriptions allow up to 100 characters"
+ body="{\"type\":18,\"label\":"+json.quote(label)
+ if len(description)>0 {body+=",\"description\":"+json.quote(description)}
+ entries.add(body+",\"component\":"+component+"}")
  ids.add(id)
  return true
 }
 
-func Modal.text(self:Modal,id:string,label:string,style=1,required=true,min_length=0,max_length=4000)->bool {
+func Modal.text(self:Modal,id:string,label:string,style=1,required=true,min_length=0,max_length=4000,placeholder="",value="")->bool {
  assert style==1 or style==2,"Discord text input style must be 1 or 2"
  assert min_length>=0 and min_length<=max_length and max_length>=1 and max_length<=4000,"Invalid Discord text input length limits"
  component="{\"type\":4,\"custom_id\":"+json.quote(id)+",\"style\":"+text(style)+",\"required\":"+json.boolean(required)
- component+=",\"min_length\":"+text(min_length)+",\"max_length\":"+text(max_length)+"}"
- return self.add_label(id,label,component)
+ assert utf8.valid(placeholder) and utf8.count(placeholder)<=100,"Discord text input placeholders allow up to 100 characters"
+ assert utf8.valid(value) and utf8.count(value)<=max_length,"Discord text input value exceeds max_length"
+ component+=",\"min_length\":"+text(min_length)+",\"max_length\":"+text(max_length)
+ if placeholder!="" {component+=",\"placeholder\":"+json.quote(placeholder)}
+ if value!="" {component+=",\"value\":"+json.quote(value)}
+ return self.add_label(id,label,component+"}")
 }
 
 func Modal.payload(self:Modal)->string {
@@ -1337,6 +1344,7 @@ func Components.select(self:Components,menu:Select)->bool {
 }
 
 func Modal.select(self:Modal,label:string,menu:Select,required=true)->bool {
+ assert not required or menu.minimum>=1,"Required Discord selects must allow at least one selection"
  body=menu.payload()
  body=slice(body,0,len(body)-1)+",\"required\":"+json.boolean(required)+"}"
  return self.add_label(menu.custom_id,label,body)
@@ -1519,7 +1527,7 @@ func Interaction.field_data(self:Interaction,id:string)->string {
 }
 
 func Modal.file(self:Modal,id:string,label:string,minimum=1,maximum=1,required=true)->bool {
- assert minimum>=0 and minimum<=maximum and maximum>=1 and maximum<=10,"Invalid Discord File Upload value bounds"
+ assert minimum>=0 and minimum<=maximum and maximum>=1 and maximum<=10 and (not required or minimum>=1),"Invalid Discord File Upload value bounds"
  body="{\"type\":19,\"custom_id\":"+json.quote(id)+",\"min_values\":"+text(minimum)+",\"max_values\":"+text(maximum)+",\"required\":"+json.boolean(required)+"}"
  return self.add_label(id,label,body)
 }
@@ -1573,4 +1581,46 @@ func Components.row(self:Components,buttons:Buttons)->bool {
  self.append_entry(body+"]}",entries.size()+1)
  for i in range(child_ids.size()) {ids.add(child_ids[i])}
  return true
+}
+
+// Radio Group and Checkbox Group reuse the standard label/value/description
+// options of a String Select.
+func Modal.choice_group(self:Modal,label:string,menu:Select,radio:bool,required:bool,description="")->bool {
+ assert menu.kind==3,"Modal choice groups require manually supplied options"
+ items=menu.choices
+ count=items.size()
+ assert count>=1 and count<=10,"Discord modal choice groups accept up to ten options"
+ if radio {assert count>=2,"Discord Radio Group requires at least two options"}
+ if not radio {assert menu.maximum<=count and (not required or menu.minimum>=1),"Invalid Discord Checkbox Group value bounds"}
+ selected=0
+ code=22
+ if radio {code=21}
+ body="{\"type\":"+text(code)+",\"custom_id\":"+json.quote(menu.custom_id)+",\"required\":"+json.boolean(required)
+ if not radio {body+=",\"min_values\":"+text(menu.minimum)+",\"max_values\":"+text(menu.maximum)}
+ body+=",\"options\":["
+ for i in range(count) {
+  if i>0 {body+=","}
+  if json.get_raw_large(items[i],"default")=="true" {selected+=1}
+  body+=items[i]
+ }
+ if radio {assert selected<=1,"Discord Radio Group accepts a single default"}
+ else {assert selected<=menu.maximum,"Discord Checkbox Group default options exceed max_values"}
+ return self.add_label(menu.custom_id,label,body+"]}",description)
+}
+
+func Modal.radio(self:Modal,label:string,menu:Select,required=true,description="")->bool {
+ return self.choice_group(label,menu,true,required,description)
+}
+
+func Modal.checkbox_group(self:Modal,label:string,menu:Select,required=true,description="")->bool {
+ return self.choice_group(label,menu,false,required,description)
+}
+
+func Modal.checkbox(self:Modal,id:string,label:string,checked=false,description="")->bool {
+ body="{\"type\":23,\"custom_id\":"+json.quote(id)+",\"default\":"+json.boolean(checked)+"}"
+ return self.add_label(id,label,body,description)
+}
+
+func Interaction.checked(self:Interaction,id:string)->bool {
+ return modal_field_value(self.data_json,id,"value",0)=="true"
 }

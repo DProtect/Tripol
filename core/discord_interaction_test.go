@@ -179,3 +179,33 @@ show json.unquote("\"\\ud800\"")=="" and json.unquote("\"\\ud83d\\u0041\"")=="" 
 	literal, _ := json.Marshal(strings.Repeat("á😀\"\\\n", 400))
 	runCase(t, strings.Replace(src, "REPLACE", string(literal), 1), "true\ntrue\ntrue\n", false)
 }
+
+func TestDiscordModalChoiceGroups(t *testing.T) {
+	src := `import tripol.discord
+colors=discord.select("colors")
+colors.option("Rojo","red","",true)
+colors.option("Azul","blue")
+days=discord.select("days","string",0,2)
+days.option("Lunes","mo")
+days.option("Martes","tu")
+form=discord.modal("feedback","Comentarios")
+form.radio("Color",colors,true,"Un color")
+form.checkbox_group("Días",days,false)
+form.checkbox("agree","Acepto",true)
+show form.payload()
+ctx=discord.Interaction(5,"feedback","","","","","","{\"components\":[{\"type\":18,\"component\":{\"type\":21,\"custom_id\":\"colors\",\"value\":\"blue\"}},{\"type\":18,\"component\":{\"type\":22,\"custom_id\":\"days\",\"values\":[\"mo\",\"tu\"]}},{\"type\":18,\"component\":{\"type\":23,\"custom_id\":\"agree\",\"value\":true}}]}",false)
+show ctx.field("colors"),ctx.field_data("days"),ctx.checked("agree"),ctx.checked("missing")`
+	out, failed := hyperRun(t, src, "nano")
+	if failed {
+		t.Fatal(out)
+	}
+	payload, suffix, _ := strings.Cut(out, "\n")
+	if !json.Valid([]byte(payload)) || !strings.Contains(payload, `"type":21,"custom_id":"colors"`) ||
+		!strings.Contains(payload, `"type":22,"custom_id":"days"`) || !strings.Contains(payload, `"type":23,"custom_id":"agree","default":true`) ||
+		suffix != "blue [\"mo\",\"tu\"] true false\n" {
+		t.Fatal(out)
+	}
+	if _, err := CompileWeb(src); err != nil {
+		t.Fatal(err)
+	}
+}

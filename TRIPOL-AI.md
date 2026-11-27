@@ -77,6 +77,10 @@ Usa `bot.slash(nombre, descripción, &manejador, guild_id="")` o `bot.slash_with
 
 `discord.slash_options()`, `discord.select(id, kind)`, `discord.button_row()`, `discord.modal(id,title)` and `discord.embeds()` provide typed builders. Text Display has a 4,000-character aggregate limit. Traditional embeds support author, timestamp and batches of up to 10, with 6,000 combined text characters. A `discord-slash` project template demonstrates a complete feedback form flow on Windows and Linux backends.
 
+Modal fields also support `form.radio(label, menu)`, `form.checkbox_group(label, menu)` and `form.checkbox(id, label)`. Use `ctx.field`, `ctx.field_data` and `ctx.checked` to read their submitted values.
+
+Los formularios también admiten `form.radio(etiqueta, selector)`, `form.checkbox_group(etiqueta, selector)` y `form.checkbox(id, etiqueta)`. Lee las respuestas con `ctx.field`, `ctx.field_data` y `ctx.checked`.
+
 ## Cómo usar este archivo / How to use this file
 
 Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».
