@@ -5,6 +5,24 @@ const types=new Set('int bool float string ints list string_list bool_list float
 const builtins=new Set('input input_int len sum range ints abs min max sqrt float text parse_int slice'.split(' '));
 const reserved=new Set([...keywords,...types,...builtins,'true','false']);
 function tokenize(src){const pattern=/(\/\/[^\n]*|#[^\n]*|f?"(?:\\.|[^"\\\n])*"?|\b\d+(?:\.\d+)?\b|[A-Za-z_][A-Za-z_0-9]*|==|!=|<=|>=|=>|->|\+=|-=|\*=|\/=|%=|&&|\|\||[+\-*/%=<>!]|[{}()[\],.:;]|\s+|.)/gu;let out=[];for(const m of src.matchAll(pattern)){const v=m[0];let kind='plain';if(v.startsWith('//')||v.startsWith('#'))kind='comment';else if(v.startsWith('"')||v.startsWith('f"'))kind='string';else if(/^\d/.test(v))kind='number';else if(v==='true'||v==='false')kind='literal';else if(keywords.has(v))kind='keyword';else if(types.has(v))kind='type';else if(builtins.has(v)||/^[A-Za-z_]/.test(v)&&/^\s*\(/.test(src.slice(m.index+v.length)))kind='function';else if(/^[A-Za-z_]/.test(v)&&/^\s*\./.test(src.slice(m.index+v.length)))kind='namespace';else if(/^[+\-*/%=<>!&|]/.test(v))kind='operator';else if(/^[{}()[\],.:;]$/.test(v))kind='punct';out.push({v,kind})}return out}
+function recordOwner(libs,source,name){
+ const annotated=[...source.matchAll(/\b([A-Za-z_]\w*)\s*:\s*(\w+)\.(\w+)\b/g)].reverse().find(m=>m[1]===name);
+ if(annotated){
+  const lib=libs.find(l=>l.name===annotated[2]);
+  if(lib?.methods?.some(m=>m.receiver===annotated[3]))return {lib,type:annotated[3]};
+ }
+ const assigned=[...source.matchAll(/^\s*(?:let\s+)?([A-Za-z_]\w*)\s*=\s*(\w+)\.(\w+)\s*\(/gm)].reverse();
+ for(const binding of assigned){
+  if(binding[1]!==name)continue;
+  const [, ,receiver,member]=binding;
+  const module=libs.find(l=>l.name===receiver);
+  const owner=module?{lib:module}:recordOwner(libs,source.slice(0,binding.index),receiver);
+  if(!owner)continue;
+  const signatures=owner.type?(owner.lib.methods||[]).filter(m=>m.receiver===owner.type):owner.lib.functions;
+  const type=signatures.find(f=>f.name===member)?.signature?.match(/->\s*(\w+)$/)?.[1];
+  if(type)return {lib:owner.lib,type};
+ }
+}
 function suggestions(src,pos){
  const before=src.slice(0,pos),line=before.split('\n').at(-1),libs=root.TripolLibraries||[];
  const gatewayArgument=line.match(/^\s*([A-Za-z_]\w*)\.(on|intent)\(\s*"(\w*)$/);
@@ -19,17 +37,8 @@ function suggestions(src,pos){
   const lib=libs.find(l=>l.name===name);
   let functions=lib?.functions||[];
   if(!lib){
-   const annotated=[...before.matchAll(/\b([A-Za-z_]\w*)\s*:\s*(\w+)\.(\w+)\b/g)].reverse().find(m=>m[1]===name);
-   if(annotated){
-    const owner=libs.find(l=>l.name===annotated[2]);
-    functions=(owner?.methods||[]).filter(m=>m.receiver===annotated[3]);
-   }
-   const binding=[...before.matchAll(/^\s*(?:let\s+)?([A-Za-z_]\w*)\s*=\s*(\w+)\.(\w+)\s*\(/gm)].reverse().find(m=>m[1]===name);
-   if(!functions.length&&binding){
-    const factory=libs.find(l=>l.name===binding[2]);
-    const type=factory?.functions.find(f=>f.name===binding[3])?.signature?.match(/->\s*(\w+)$/)?.[1];
-    functions=(factory?.methods||[]).filter(m=>m.receiver===type);
-   }
+   const owner=recordOwner(libs,before,name);
+   functions=(owner?.lib?.methods||[]).filter(m=>m.receiver===owner.type);
   }
   if(gatewayArgument){
    const [, ,method,choicePrefix]=gatewayArgument;
