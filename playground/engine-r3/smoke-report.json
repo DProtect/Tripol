@@ -1,8 +1,16 @@
 {
-  "total": 50,
-  "passed": 50,
+  "total": 54,
+  "passed": 54,
   "failed": 0,
   "rows": [
+    {
+      "name": "struct Counter {value:int=0}\nfunc Counter.add(self:Counter,step=1)->int {self.value+=step;return self.value}\nc=Counter()\nalias=c\nshow alias.add(),c.add(2),Counter(6).add()",
+      "status": "pass"
+    },
+    {
+      "name": "import tripol.discord\na=discord.bot()\nb=discord.bot()\na.prefix(\"!\")\na.command(\"hola\",\"¡Hola!\")\nb.command(\"hola\",\"Otra respuesta\")\nshow a.preview(\"!hola\"),b.preview(\"hola\"),a.preview(\"hola\")==\"\"",
+      "status": "pass"
+    },
     {
       "name": "show input(),input_int()",
       "status": "pass"
@@ -165,6 +173,14 @@
     },
     {
       "name": "array bounds",
+      "status": "pass"
+    },
+    {
+      "name": "Discord embed JSON",
+      "status": "pass"
+    },
+    {
+      "name": "Discord transport requires native execution",
       "status": "pass"
     },
     {

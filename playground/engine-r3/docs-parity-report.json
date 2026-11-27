@@ -1,16 +1,29 @@
 {
-  "commit": "a0985d5d7d6bedf0ab0452bed5fc0530ead502fb",
+  "commit": "e6d6a5dc0fc0aa829e99723a14e624e0bbb0b2d5",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
-  "total": 136,
+  "total": 139,
   "counts": {
-    "native-only": 13,
-    "executed": 123
+    "executed": 125,
+    "native-only": 14
   },
   "rows": [
     {
       "file": "docs/discord.html",
       "index": 1,
+      "source": "import tripol.discord\n\nbot = discord.bot()\nbot.prefix(\"!\")\nbot.command(\"hola\", \"¡Hola, compañero!\")\nbot.command(\"ping\", \"Pong!\")\nshow bot.preview(\"!hola\")\n\nembed = discord.embed()\nembed.title(\"DISCORD NEW\")\nembed.description(\"Un embed de TRIPOL\")\nembed.color(\"#00A0FF\")\nembed.field(\"Versión\", \"0.28.0\", true)\nshow embed.payload()",
+      "status": "executed",
+      "output": "¡Hola, compañero!\n{\"embeds\":[{\"title\":\"DISCORD NEW\",\"description\":\"Un embed de TRIPOL\",\"color\":41215,\"fields\":[{\"name\":\"Versión\",\"value\":\"0.28.0\",\"inline\":true}]}],\"allowed_mentions\":{\"parse\":[]}}\n"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 2,
+      "source": "import tripol.discord\n\nbot = discord.bot()\nbot.command(\"hola\", \"¡Hola, compañero!\")\nbot.activity(\"Creado con TRIPOL\")\nbot.start()",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 3,
       "source": "import tripol.discord\n\ndiscord.login_env()\ndiscord.activity(\"Programming in TRIPOL\")\ndiscord.reply(\"!hello\", \"Hello, friend!\")\ndiscord.reply(\"!ping\", \"Pong!\")\ndiscord.run()\n",
       "status": "native-only"
     },
@@ -548,6 +561,13 @@
     {
       "file": "docs/libraries/discord.html",
       "index": 1,
+      "source": "import tripol.discord\n\nbot = discord.bot()\nbot.prefix(\"!\")\nbot.command(\"hola\", \"¡Hola, compañero!\")\nbot.command(\"ping\", \"Pong!\")\nshow bot.preview(\"!hola\")\n\nembed = discord.embed()\nembed.title(\"DISCORD NEW\")\nembed.description(\"Un embed de TRIPOL\")\nembed.color(\"#00A0FF\")\nembed.field(\"Versión\", \"0.28.0\", true)\nshow embed.payload()",
+      "status": "executed",
+      "output": "¡Hola, compañero!\n{\"embeds\":[{\"title\":\"DISCORD NEW\",\"description\":\"Un embed de TRIPOL\",\"color\":41215,\"fields\":[{\"name\":\"Versión\",\"value\":\"0.28.0\",\"inline\":true}]}],\"allowed_mentions\":{\"parse\":[]}}\n"
+    },
+    {
+      "file": "docs/libraries/discord.html",
+      "index": 2,
       "source": "import tripol.discord\n\ndiscord.reply(\"!hello\", \"Hello!\")\nshow discord.preview(\"!hello\")",
       "status": "native-only"
     },
@@ -890,7 +910,7 @@
       "index": 1,
       "source": "import tripol.system\n\nshow system.platform()\nshow system.compiler()",
       "status": "executed",
-      "output": "web\n0.27.1\n"
+      "output": "web\n0.28.0\n"
     },
     {
       "file": "docs/libraries/testing.html",
@@ -918,7 +938,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "7904\n"
+      "output": "7804\n"
     },
     {
       "file": "docs/libraries/ui.html",

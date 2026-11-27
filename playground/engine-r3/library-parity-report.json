@@ -1,7 +1,7 @@
 {
-  "total": 50,
+  "total": 51,
   "counts": {
-    "match": 50
+    "match": 51
   },
   "rows": [
     {
@@ -303,6 +303,12 @@
       "status": "match",
       "native": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\n",
       "wasm": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\n"
+    },
+    {
+      "name": "discord",
+      "status": "match",
+      "native": "¡Hola!\n{\"embeds\":[{\"title\":\"¡Hola!\"}],\"allowed_mentions\":{\"parse\":[]}}\n",
+      "wasm": "¡Hola!\n{\"embeds\":[{\"title\":\"¡Hola!\"}],\"allowed_mentions\":{\"parse\":[]}}\n"
     }
   ]
 }

@@ -1,10 +1,11 @@
 {
   "modules": 64,
-  "functions": 383,
+  "functions": 385,
+  "methods": 13,
   "summary": {
-    "native compiled": 383,
-    "web executed": 322,
-    "web native-only": 61
+    "native compiled": 398,
+    "web executed": 335,
+    "web native-only": 63
   },
   "rows": [
     {
@@ -1414,7 +1415,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "3140\n"
+      "output": "1701\n"
     },
     {
       "name": "time.elapsed",
@@ -1437,7 +1438,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "3167916000\n"
+      "output": "1718926674\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -1920,6 +1921,18 @@
       "web": "native-only"
     },
     {
+      "name": "discord.bot",
+      "native": "compiled",
+      "web": "executed",
+      "output": "¡Hola!\n"
+    },
+    {
+      "name": "discord.embed",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"embeds\":[{\"title\":\"Bienvenido\"}],\"allowed_mentions\":{\"parse\":[]}}\n"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2154,7 +2167,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n31969\n"
+      "output": "4950\n27662\n"
     },
     {
       "name": "simd.equal",
@@ -2178,7 +2191,7 @@
       "name": "system.compiler",
       "native": "compiled",
       "web": "executed",
-      "output": "0.27.1\n"
+      "output": "0.28.0\n"
     },
     {
       "name": "system.is_windows",
@@ -2241,6 +2254,84 @@
     },
     {
       "name": "ui.choose",
+      "native": "compiled",
+      "web": "native-only"
+    }
+  ],
+  "methodRows": [
+    {
+      "name": "discord.Bot.prefix",
+      "native": "compiled",
+      "web": "executed",
+      "output": "¡Hola!\n"
+    },
+    {
+      "name": "discord.Bot.status",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.activity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.command",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Pong!\n"
+    },
+    {
+      "name": "discord.Bot.preview",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Pong! true\n"
+    },
+    {
+      "name": "discord.Bot.start",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Embed.title",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.description",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.footer",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.color",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.field",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Embed.payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"embeds\":[{\"title\":\"Hola\"}],\"allowed_mentions\":{\"parse\":[]}}\n"
+    },
+    {
+      "name": "discord.Embed.send",
       "native": "compiled",
       "web": "native-only"
     }
