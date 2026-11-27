@@ -83,6 +83,18 @@
       "bot.start()"
     ]
   },
+  "Discord Gateway event callback": {
+    "prefix": "discord-event",
+    "body": [
+      "func ${1:ready}(event:discord.GatewayEvent)->bool {",
+      "    show event.name",
+      "    return true",
+      "}",
+      "registry=discord.events()",
+      "registry.on(\"${2:READY}\",&${1:ready})",
+      "bot.start_with_events(registry)"
+    ]
+  },
   "Discord autocomplete callback": {
     "prefix": "discord-autocomplete",
     "body": [

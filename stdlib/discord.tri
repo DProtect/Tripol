@@ -5,6 +5,7 @@ import tripol.json
 import tripol.time
 import tripol.errors
 import tripol.utf8
+import tripol.bits
 // Public Discord API discovery, no bot token or authentication required.
 func gateway()->string {return https.get("discord.com","/api/v10/gateway")}
 func api_host()->string {return "discord.com"}
@@ -346,8 +347,14 @@ func run_handler(handler:func(Message)->string,intents=33281)->int {
 
 func run_session(handler:func(Message)->string,intents:int,keys:string_list,handlers:list[func(Interaction)->string])->int {
  assert intents==1 or intents==33281,"Unsupported Discord Gateway intents"
+ return events().__run(handler,intents,keys,handlers)
+}
+
+func GatewayEvents.__run(self:GatewayEvents,handler:func(Message)->string,intents:int,keys:string_list,handlers:list[func(Interaction)->string])->int {
  assert configured(),"Call discord.login first"
  scratch {assert has_channel() or len(bot_slot_get(36))==0,"Welcome requires a selected channel"}
+ events=self.__names
+ callbacks=self.__handlers
  if platform_name()=="linux" {
   started=false
   scratch {started=gw_host_start(identify_payload(intents))=="1"}
@@ -384,6 +391,13 @@ func run_session(handler:func(Message)->string,intents:int,keys:string_list,hand
         deliver_interaction(event,key,handlers.get(i))
         break
        }
+      }
+     }
+     for i in range(events.size()) {
+      name=events.get(i)
+      if json.string_equals(kind,name) {
+       deliver_gateway_event(event,name,callbacks.get(i))
+       break
       }
      }
     }
@@ -433,6 +447,15 @@ func run_session(handler:func(Message)->string,intents:int,keys:string_list,hand
        key=keys.get(i)
        if interaction_matches(key,selector) {
         deliver_interaction(event,key,handlers.get(i))
+        break
+       }
+      }
+     }
+     if ready {
+      for i in range(events.size()) {
+       name=events.get(i)
+       if json.string_equals(kind,name) {
+        deliver_gateway_event(event,name,callbacks.get(i))
         break
        }
       }
@@ -541,6 +564,10 @@ func Bot.preview_event(self:Bot,event:string)->string {
 }
 
 func Bot.start(self:Bot)->int {
+ return self.start_with_events(events())
+}
+
+func Bot.start_with_events(self:Bot,registry:GatewayEvents)->int {
  names=self.command_names
  replies=self.responses
  assert names.size()==replies.size() and names.size()<=16,"Invalid Discord command table"
@@ -556,9 +583,111 @@ func Bot.start(self:Bot)->int {
  }
  // Registering a text command explicitly requests guild message content.
  sync_slash_commands(self.slash_definitions,self.slash_guilds)
- intents=1
- if names.size()>0 or self.handles_messages {intents=33281}
- return run_session(self.message_handler,intents,self.interaction_keys,self.interaction_handlers)
+ intents=registry.intent_mask()
+ if names.size()>0 or self.handles_messages {intents=bits.set(bits.set(intents,9),15)}
+ return registry.__run(self.message_handler,intents,self.interaction_keys,self.interaction_handlers)
+}
+
+struct GatewayEvent {
+ name:string
+ sequence:int
+ guild_id:string
+ channel_id:string
+ user_id:string
+ data_json:string
+}
+
+func GatewayEvent.field(self:GatewayEvent,name:string)->string {
+ return json.get_raw_large(self.data_json,name)
+}
+
+func ignore_gateway_event(event:GatewayEvent)->bool {return false}
+
+struct GatewayEvents {
+ __names:string_list
+ __handlers:list[func(GatewayEvent)->bool]
+ __intents:int
+}
+
+func events()->GatewayEvents {
+ handlers=list([&ignore_gateway_event])
+ handlers.clear()
+ return GatewayEvents(string_list(),handlers,1)
+}
+
+func gateway_intent(name:string)->int {
+ if name=="" {return -1}
+ names=list(["GUILDS","GUILD_MEMBERS","GUILD_MODERATION","GUILD_EXPRESSIONS","GUILD_INTEGRATIONS","GUILD_WEBHOOKS","GUILD_INVITES","GUILD_VOICE_STATES","GUILD_PRESENCES","GUILD_MESSAGES","GUILD_MESSAGE_REACTIONS","GUILD_MESSAGE_TYPING","DIRECT_MESSAGES","DIRECT_MESSAGE_REACTIONS","DIRECT_MESSAGE_TYPING","MESSAGE_CONTENT","GUILD_SCHEDULED_EVENTS","","","","AUTO_MODERATION_CONFIGURATION","AUTO_MODERATION_EXECUTION","","","GUILD_MESSAGE_POLLS","DIRECT_MESSAGE_POLLS"])
+ for i in range(names.size()) {if names[i]==name {return i}}
+ return -1
+}
+
+func GatewayEvents.intent(self:GatewayEvents,name:string)->bool {
+ index=gateway_intent(name)
+ assert index>=0,"Unknown Discord Gateway intent"
+ self.__intents=bits.set(self.__intents,index)
+ return true
+}
+
+func GatewayEvents.intent_mask(self:GatewayEvents)->int {return self.__intents}
+
+func gateway_event_name(name:string)->string {
+ if name=="member_join" {return "GUILD_MEMBER_ADD"}
+ if name=="member_leave" {return "GUILD_MEMBER_REMOVE"}
+ if name=="member_update" {return "GUILD_MEMBER_UPDATE"}
+ for i in range(len(name)) {
+  ch=byte_at(name,i)
+  if not ((ch>=65 and ch<=90) or (ch>=48 and ch<=57) or ch==95) {return ""}
+ }
+ return name
+}
+
+func GatewayEvents.on(self:GatewayEvents,name:string,handler:func(GatewayEvent)->bool)->bool {
+ name=gateway_event_name(name)
+ assert name!="","Use an official Discord Gateway event name"
+ assert name!="INTERACTION_CREATE","Register typed interactions on the bot"
+ assert name!="VOICE_SERVER_UPDATE","Voice server credentials are reserved for the voice transport"
+ if name=="GUILD_MEMBER_ADD" or name=="GUILD_MEMBER_REMOVE" or name=="GUILD_MEMBER_UPDATE" or name=="GUILD_MEMBERS_CHUNK" {
+  assert bits.test(self.__intents,1),"Enable GUILD_MEMBERS before registering member callbacks"
+ }
+ if name=="PRESENCE_UPDATE" {assert bits.test(self.__intents,8),"Enable GUILD_PRESENCES before registering presence callbacks"}
+ names=self.__names
+ handlers=self.__handlers
+ for i in range(names.size()) {
+  if names[i]==name {
+   handlers.set(i,handler)
+   return true
+  }
+ }
+ names.add(name)
+ handlers.add(handler)
+ return true
+}
+
+func deliver_gateway_event(event:string,name:string,handler:func(GatewayEvent)->bool)->bool {
+ if name=="INTERACTION_CREATE" or name=="VOICE_SERVER_UPDATE" {return false}
+ if json.get_raw_large(event,"op")!="0" or not json.string_equals(json.get_raw_large(event,"t"),name) {return false}
+ data=json.get_raw_large(event,"d")
+ if len(data)<2 or byte_at(data,0)!=123 {return false}
+ sequence=errors.int_or(json.get_raw_large(event,"s"),-1)
+ guild_id=event_id(json.get_raw_large(data,"guild_id"))
+ if guild_id=="" and (name=="GUILD_CREATE" or name=="GUILD_DELETE" or name=="GUILD_UPDATE") {guild_id=event_id(json.get_raw_large(data,"id"))}
+ channel_id=event_id(json.get_raw_large(data,"channel_id"))
+ if channel_id=="" and (has_prefix(name,"CHANNEL_") or has_prefix(name,"THREAD_")) {channel_id=event_id(json.get_raw_large(data,"id"))}
+ user_id=event_id(json.get_raw_large(data,"user_id"))
+ if user_id=="" {user_id=event_id(json.get_raw_large(json.get_raw_large(data,"user"),"id"))}
+ if user_id=="" {user_id=event_id(json.get_raw_large(json.get_raw_large(data,"author"),"id"))}
+ return handler(GatewayEvent(name,sequence,guild_id,channel_id,user_id,data))
+}
+
+func GatewayEvents.preview(self:GatewayEvents,event:string)->bool {
+ kind=json.get_raw_large(event,"t")
+ names=self.__names
+ handlers=self.__handlers
+ for i in range(names.size()) {
+  if json.string_equals(kind,names[i]) {return deliver_gateway_event(event,names[i],handlers[i])}
+ }
+ return false
 }
 
 // Traditional embeds use Discord's character limits.

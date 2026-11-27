@@ -1,5 +1,6 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
+- `discord.events()` registers ordered, typed Gateway callbacks and lets applications opt into gateway intents by name. The same callbacks can be checked offline with `registry.preview` or connected alongside existing commands with `bot.start_with_events`.
 - Slash schemas support subcommands, groups and fixed string or integer choices. Autocomplete dispatches a typed callback for the registered command scope, including nested options, and returns Discord's type-8 response.
 - A connected interaction callback can acknowledge once with `ctx.respond`, edit its original response with `ctx.edit_reply` or `ctx.edit_response`, and post a text follow-up with `ctx.followup`. Slash callbacks with the same command name are dispatched independently for global and guild scopes.
 - Slash commands synchronize global or guild definitions, keep unrelated commands, and support typed standard options. Named callbacks handle commands, buttons, selects and modal submissions. Acknowledgments, private replies, deferred responses, modal opening, and V2 message updates use the Discord interaction callback endpoint.

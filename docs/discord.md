@@ -56,6 +56,30 @@ Use `bot.start()` for the Gateway. Fixed text commands have precedence over the 
 
 Usa `bot.start()` para conectarte al Gateway. Los comandos de texto fijos tienen prioridad. Devuelve un texto vacío para omitir la respuesta. El contexto expone `author_id`, `channel_id`, `content_json` y `event_json`. Se omiten los mensajes de bots y webhooks.
 
+## Gateway events / Eventos del Gateway
+
+```tripol
+import tripol.discord
+
+func joined(event:discord.GatewayEvent)->bool {
+    show "Nuevo miembro", event.guild_id, event.user_id
+    return true
+}
+
+registry = discord.events()
+registry.intent("GUILD_MEMBERS")
+registry.on("member_join", &joined)
+show registry.preview("{\"op\":0,\"t\":\"GUILD_MEMBER_ADD\",\"s\":9,\"d\":{\"guild_id\":\"321\",\"user\":{\"id\":\"567\"}}}")
+```
+
+Call `bot.start_with_events(registry)` to connect with the same callbacks while keeping existing text and slash commands. Each event uses a `func(discord.GatewayEvent)->bool` handler. The context exposes `name`, `sequence`, `guild_id`, `channel_id`, `user_id` and `data_json`. Use `event.field(name)` to read any event property as JSON. Callbacks execute in arrival order and `registry.preview(event_json)` returns the handler's boolean result for testing.
+
+Usa `bot.start_with_events(registry)` para conectar los mismos callbacks y conservar los comandos de texto y slash. Cada evento usa un manejador `func(discord.GatewayEvent)->bool`. El contexto expone `name`, `sequence`, `guild_id`, `channel_id`, `user_id` y `data_json`. Usa `event.field(nombre)` para leer cualquier propiedad como JSON. Los callbacks se ejecutan en orden de llegada y `registry.preview(event_json)` devuelve el booleano del manejador durante las pruebas.
+
+Register official dispatch names such as `READY`, `GUILD_ROLE_UPDATE`, `MESSAGE_DELETE`, `MESSAGE_REACTION_ADD`, `VOICE_STATE_UPDATE` and `RESUMED`. The three member aliases are `member_join`, `member_leave` and `member_update`. The registry requests `GUILDS` by default. Use `registry.intent("GUILD_MESSAGE_REACTIONS")` for guild reactions and enable `GUILD_MEMBERS` or `GUILD_PRESENCES` in the registry and Developer Portal before registering privileged callbacks. The dedicated slash, button, select and modal methods handle interactions. Voice server credentials remain reserved for voice transport.
+
+Registra nombres oficiales como `READY`, `GUILD_ROLE_UPDATE`, `MESSAGE_DELETE`, `MESSAGE_REACTION_ADD`, `VOICE_STATE_UPDATE` y `RESUMED`. Los alias de miembros son `member_join`, `member_leave` y `member_update`. El registro solicita `GUILDS` de forma predeterminada. Usa `registry.intent("GUILD_MESSAGE_REACTIONS")` para las reacciones del servidor y activa `GUILD_MEMBERS` o `GUILD_PRESENCES` en el registro y en el portal de desarrolladores antes de registrar callbacks privilegiados. Los métodos slash, de botones, selectores y formularios manejan las interacciones. Las credenciales del servidor de voz quedan reservadas para el transporte de voz.
+
 ## Slash commands and interactions / Comandos slash e interacciones
 
 ```tripol
@@ -239,7 +263,7 @@ The generated template does not need a channel ID. `login_env()` reads `DISCORD_
 
 Initial Hello (10), Identify (2), Dispatch (0), sequence tracking, periodic Heartbeat (1) with null before the first sequence, Heartbeat ACK (11), server heartbeat requests, READY and MESSAGE_CREATE are implemented. `connected()` reports local READY state; `ping()` reports last heartbeat round trip in milliseconds or -1 before ACK, not message latency. Both are primarily diagnostics while running; the simple `run` API blocks. `preview` and `gateway_reply` support offline matching tests. `identify_payload` is a protocol helper containing the secret; do not print or log it.
 
-The experimental Windows Gateway uses the official host and OS certificate validation. A single worker receives uncompressed text frames up to 65,535 bytes and dispatches callbacks in order. The JSON nesting limit is 32. Oversized or unsupported frames stop reception. Windows support for compression, sharding, Resume, and automatic reconnect is pending. Reconnect (7), Invalid Session (9) and failed receives stop the connection. A missed ACK, READY timeout or send failure stops the process to avoid closing a handle while a receive is pending. WinHTTP creates a separate session per REST request. The original legacy message POST halts on failure, while slash synchronization and interaction requests return failures to their callers. Measured presence, round-trip latency and live execution against Discord on Windows are pending. Ctrl+C exits.
+The experimental Windows Gateway uses the official host and OS certificate validation. A single worker receives uncompressed text frames up to 65,535 bytes and dispatches callbacks in order. The JSON nesting limit is 32. Oversized or unsupported frames stop reception. Windows support for compression, sharding, Resume, and automatic reconnect is pending. Reconnect (7), Invalid Session (9) and failed receives stop the connection. A missed ACK, READY timeout or send failure stops the process to avoid closing a handle while a receive is pending. WinHTTP creates a separate session per REST request. Authenticated REST requests currently stop the bot on failure. Interaction callbacks and interaction webhook requests return failures to their callers. Measured presence, round-trip latency and live execution against Discord on Windows are pending. Ctrl+C exits.
 
 Explicit fallback: `discord.run_rest()` restores ECLIPSE's 2.5-second REST polling, which may miss messages. Legacy `listen`, `send`, `latest`, `matches`, `message_id`, `gateway` and token/URL helpers remain available. See `tripol docs discord` for the complete module, including the protocol helpers.
 

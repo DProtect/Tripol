@@ -205,6 +205,11 @@
     "run_handler": "func discord.run_handler(handler:func(Message)->string,intents=33281)->int",
     "run_session": "func discord.run_session(handler:func(Message)->string,intents:int,keys:string_list,handlers:list[func(Interaction)->string])->int",
     "bot": "func discord.bot()->Bot",
+    "ignore_gateway_event": "func discord.ignore_gateway_event(event:GatewayEvent)->bool",
+    "events": "func discord.events()->GatewayEvents",
+    "gateway_intent": "func discord.gateway_intent(name:string)->int",
+    "gateway_event_name": "func discord.gateway_event_name(name:string)->string",
+    "deliver_gateway_event": "func discord.deliver_gateway_event(event:string,name:string,handler:func(GatewayEvent)->bool)->bool",
     "embed": "func discord.embed()->Embed",
     "media_url": "func discord.media_url(value:string)->bool",
     "components": "func discord.components()->Components",
@@ -245,6 +250,7 @@
     "on_message": "Bot.on_message(handler:func(Message)->string)->bool",
     "preview_event": "Bot.preview_event(event:string)->string",
     "start": "Bot.start()->int",
+    "start_with_events": "Bot.start_with_events(registry:GatewayEvents)->int",
     "bind_interaction": "Bot.bind_interaction(key:string,handler:func(Interaction)->string,definition=\"\",guild_id=\"\")->bool",
     "slash": "Bot.slash(name:string,description:string,handler:func(Interaction)->string,guild_id=\"\")->bool",
     "slash_with_options": "Bot.slash_with_options(name:string,description:string,handler:func(Interaction)->string,options:SlashOptions,guild_id=\"\")->bool",
@@ -253,6 +259,15 @@
     "on_modal": "Bot.on_modal(id:string,handler:func(Interaction)->string)->bool",
     "on_autocomplete": "Bot.on_autocomplete(name:string,handler:func(Interaction)->string,guild_id=\"\")->bool",
     "preview_interaction": "Bot.preview_interaction(event:string)->string"
+  },
+  "discord.GatewayEvent": {
+    "field": "GatewayEvent.field(name:string)->string"
+  },
+  "discord.GatewayEvents": {
+    "intent": "GatewayEvents.intent(name:string)->bool",
+    "intent_mask": "GatewayEvents.intent_mask()->int",
+    "on": "GatewayEvents.on(name:string,handler:func(GatewayEvent)->bool)->bool",
+    "preview": "GatewayEvents.preview(event:string)->bool"
   },
   "discord.Embed": {
     "title": "Embed.title(value:string)->bool",

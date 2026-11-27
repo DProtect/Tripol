@@ -3,6 +3,7 @@ const vscode = require("vscode");
 const cp = require("child_process");
 const path = require("path");
 const catalog = require("./catalog.json");
+const gatewayChoices = require("./discord-gateway.json");
 function activate(context) {
  const output = vscode.window.createOutputChannel("TRIPOL");
  const diagnostics = vscode.languages.createDiagnosticCollection("tripol");
@@ -24,6 +25,18 @@ function activate(context) {
  context.subscriptions.push(output,diagnostics,vscode.languages.registerCompletionItemProvider(selector,{
   provideCompletionItems(doc,pos){
    const line=doc.lineAt(pos.line).text.slice(0,pos.character);
+   const gatewayArgument=line.match(/^\s*(\w+)\.(on|intent)\(\s*"(\w*)$/);
+   if(gatewayArgument){
+    const [,receiver,method,prefix]=gatewayArgument;
+    if(members(doc,pos,receiver)?.[method]?.startsWith("GatewayEvents.")){
+     const range=new vscode.Range(pos.line,pos.character-prefix.length,pos.line,pos.character);
+     return gatewayChoices[method].filter(value=>value.startsWith(prefix)).map(value=>{
+      const item=new vscode.CompletionItem(value,vscode.CompletionItemKind.EnumMember);
+      item.range=range;
+      return item;
+     });
+    }
+   }
    const moduleMatch=line.match(/\bimport\s+tripol\.[\w]*$/);
    const member=line.match(/\b(\w+)\.\w*$/);
    if(moduleMatch)return Object.keys(catalog).filter(n=>!n.includes(".")).map(n=>new vscode.CompletionItem(n,vscode.CompletionItemKind.Module));
@@ -31,7 +44,7 @@ function activate(context) {
    if(entries)return Object.entries(entries).map(([name,detail])=>{const item=new vscode.CompletionItem(name,vscode.CompletionItemKind.Function);item.detail=detail;return item;});
    return [...keyword.map(n=>new vscode.CompletionItem(n,vscode.CompletionItemKind.Keyword)),...localNames(doc).map(n=>new vscode.CompletionItem(n,vscode.CompletionItemKind.Variable))];
   }
- },"."),vscode.languages.registerHoverProvider(selector,{
+ },".","\""),vscode.languages.registerHoverProvider(selector,{
   provideHover(doc,pos){const range=doc.getWordRangeAtPosition(pos,/\w+\.\w+/);if(!range)return;const [m,n]=doc.getText(range).split(".");const signature=members(doc,pos,m)?.[n];if(signature){const md=new vscode.MarkdownString();md.appendCodeblock(signature,"tripol");return new vscode.Hover(md,range);}}
  }),vscode.languages.registerDefinitionProvider(selector,{
   provideDefinition(doc,pos){const r=doc.getWordRangeAtPosition(pos);if(!r)return;const name=doc.getText(r);for(let i=0;i<doc.lineCount;i++){const m=doc.lineAt(i).text.match(/^\s*func\s+(\w+)\s*\(/);if(m&&m[1]===name)return new vscode.Location(doc.uri,new vscode.Position(i,0));}}

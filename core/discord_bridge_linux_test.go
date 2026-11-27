@@ -141,7 +141,7 @@ func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
  assert c.followup("Más",true)=="999"
  return c.reply("Should not acknowledge twice")
 }`, 1)
-	if err := os.WriteFile(path, compileProfile(source+commandTree+"b.start()", "linux", "turbo"), 0700); err != nil {
+	if err := os.WriteFile(path, compileProfile(source+commandTree+eventRegistry+"b.start_with_events(registry)", "linux", "turbo"), 0700); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("DISCORD_TOKEN", "fixture-token")
@@ -159,6 +159,10 @@ func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
 	if err := <-fixture; err != nil {
 		t.Fatal(err)
 	}
+	if out := output.String(); !strings.Contains(out, "GUILD_MEMBER_ADD 9 321 18446744073709551614\n") ||
+		!strings.Contains(out, "GUILD_ROLE_UPDATE 321 {\"id\":\"812\",\"name\":\"Maintainer\"}\n") {
+		t.Fatal(out)
+	}
 }
 
 func interactionFixture(input io.Reader, output io.Writer) error {
@@ -172,7 +176,7 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 		{discordtransport.OpREST, "/api/v10/oauth2/applications/@me", "fixture-token", "", `{"id":"890"}`},
 		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", "", first},
 		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", `"name":"wait"`, `{"id":"922"}`},
-		{discordtransport.OpStart, "", "", `"intents":1`, "1"},
+		{discordtransport.OpStart, "", "", `"intents":3,`, "1"},
 		{discordtransport.OpPoll, "", "", "", `{"op":0,"t":"READY","s":3,"d":{}}`},
 		{discordtransport.OpPoll, "", "", "", slashEvent},
 		{discordtransport.OpInteraction, "/api/v10/interactions/710/interaction-fixture/callback", "", `"content":"567 café 😀","flags":64`, "{}"},
@@ -192,6 +196,8 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 		{discordtransport.OpInteraction, "/api/v10/webhooks/890/interaction-fixture", "", `"content":"Más","flags":64`, `{"id":"999"}`},
 		{discordtransport.OpPoll, "", "", "", expired},
 		{discordtransport.OpInteraction, "/api/v10/interactions/716/interaction-fixture/callback", "", `"type":5`, ""},
+		{discordtransport.OpPoll, "", "", "", memberJoined},
+		{discordtransport.OpPoll, "", "", "", roleChanged},
 		{discordtransport.OpPoll, "", "", "", "!"},
 		{discordtransport.OpClose, "", "", "", "1"},
 	}
