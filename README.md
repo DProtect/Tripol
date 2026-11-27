@@ -14,6 +14,10 @@ A free, experimental programming language that turns readable code directly into
 
 </div>
 
+## AI-ready reference / Referencia para IA
+
+[TRIPOL-AI.md](TRIPOL-AI.md) contains the full v0.27.1 documentation snapshot: 64 modules, 383 functions, 18 guides and 14 guided lessons. Download the Markdown and attach it to your preferred AI assistant. [Direct download](https://tripollas.github.io/Tripol/TRIPOL-AI.md).
+
 ## Why TRIPOL?
 
 TRIPOL aims to combine approachable syntax, static type checking, fast compilation and small standalone binaries. Its compiler emits x86-64 instructions directly into PE32+ or ELF64 images. It is implemented in Go, but generated programs do not require Go, Python, a C compiler, LLVM, or a virtual machine. Native operating-system APIs provide I/O, networking and Windows dialogs.
