@@ -5,7 +5,7 @@
 <h2 id="exceptions">Exceptions</h2>
 <p><code>try { ... } catch code { ... } finally { ... }</code> (finally optional). Catch receives integer 10 for arithmetic, 11 for bounds, 12 for assertions, or 100..255 from <code>throw n</code> (other values normalize to 100). Catches work across function calls and nested blocks. Finally runs after success, recovery, or a recoverable failure in catch; an exception in finally replaces a pending one. Native input, file, socket, float-format, UI and allocator failures remain fatal. Return inside protected blocks is rejected; break/continue may only target loops inside the same protected block. See <a href="errors.html">errors</a>. No exceptions for OS faults or native stack overflow.</p>
 <h2 id="temporary-memory">Temporary memory</h2>
-<pre><code class="language-tripol">total=0
+<pre data-native-only><code class="language-tripol">total=0
 repeat 1000 {
     scratch {
         values=ints(65535)
