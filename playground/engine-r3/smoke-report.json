@@ -1,6 +1,6 @@
 {
-  "total": 54,
-  "passed": 54,
+  "total": 55,
+  "passed": 55,
   "failed": 0,
   "rows": [
     {
@@ -177,6 +177,10 @@
     },
     {
       "name": "Discord embed JSON",
+      "status": "pass"
+    },
+    {
+      "name": "Unicode JSON string equality",
       "status": "pass"
     },
     {

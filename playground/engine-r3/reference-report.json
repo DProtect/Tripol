@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 385,
+  "functions": 386,
   "methods": 13,
   "summary": {
-    "native compiled": 398,
-    "web executed": 335,
-    "web native-only": 63
+    "native compiled": 399,
+    "web executed": 337,
+    "web native-only": 62
   },
   "rows": [
     {
@@ -1058,6 +1058,12 @@
       "output": "{\"score\":100}\n"
     },
     {
+      "name": "json.string_equals",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
       "name": "matrix.size",
       "native": "compiled",
       "web": "executed",
@@ -1415,7 +1421,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "1701\n"
+      "output": "3113\n"
     },
     {
       "name": "time.elapsed",
@@ -1438,7 +1444,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "1718926674\n"
+      "output": "3146842973\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -1788,7 +1794,8 @@
     {
       "name": "discord.matches",
       "native": "compiled",
-      "web": "native-only"
+      "web": "executed",
+      "output": "true\nfalse\n"
     },
     {
       "name": "discord.listen",
@@ -2167,7 +2174,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n27662\n"
+      "output": "4950\n32210\n"
     },
     {
       "name": "simd.equal",
