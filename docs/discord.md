@@ -69,16 +69,37 @@ options=discord.slash_options()
 options.add("name", "Tu nombre", "string", true)
 bot=discord.bot()
 bot.slash_with_options("hello", "Saluda", &hello, options, "123")
-show bot.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":2,\"data\":{\"type\":1,\"name\":\"hello\",\"options\":[{\"type\":3,\"name\":\"name\",\"value\":\"Ana\"}]}}}")
+show bot.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":2,\"data\":{\"type\":1,\"name\":\"hello\",\"guild_id\":\"123\",\"options\":[{\"type\":3,\"name\":\"name\",\"value\":\"Ana\"}]}}}")
 ```
 
-Use `bot.slash(name, description, &handler, guild_id="")` for a command without options. An empty guild ID registers globally. A guild ID limits registration to a test server. At startup the bot reads its application ID, compares remote commands with the local definitions and creates or updates the changed ones. Registration leaves unrelated commands in place. This version supports ASCII lowercase command names and flat string, integer, boolean, user, channel, role, mentionable, number and attachment options.
+Use `bot.slash(name, description, &handler, guild_id="")` for a command without options. An empty guild ID registers globally. A guild ID limits registration to one server. The same name can have a different callback in each registered scope. At startup the bot reads its application ID, compares remote commands with the local definitions and creates or updates the changed ones. Registration leaves unrelated commands in place. This version supports ASCII lowercase command names and flat string, integer, boolean, user, channel, role, mentionable, number and attachment options.
 
-Usa `bot.slash(nombre, descripción, &manejador, guild_id="")` para un comando sin opciones. Un ID de servidor vacío hace el registro global. Con un ID, el registro se limita al servidor de pruebas. Al iniciar, el bot consulta su aplicación, compara los comandos y crea o actualiza los que cambiaron. El registro conserva los demás comandos. Se admiten nombres ASCII en minúsculas y opciones planas de texto, entero, booleano, usuario, canal, rol, mencionable, número y adjunto.
+Usa `bot.slash(nombre, descripción, &manejador, guild_id="")` para un comando sin opciones. Un ID de servidor vacío hace el registro global. Con un ID, el registro se limita a ese servidor. Un mismo nombre puede tener un callback diferente en cada ámbito. Al iniciar, el bot consulta su aplicación, compara los comandos y crea o actualiza los que cambiaron. El registro conserva los demás comandos. Se admiten nombres ASCII en minúsculas y opciones planas de texto, entero, booleano, usuario, canal, rol, mencionable, número y adjunto.
 
-Register component and modal callbacks with `bot.on_button(id, &handler)`, `bot.on_select(id, &handler)` and `bot.on_modal(id, &handler)`. The handler returns an initial response such as `ctx.reply(text, true)`, `ctx.defer(true)`, `ctx.ack()`, `ctx.reply_components(layout)`, `ctx.update_components(layout)`, `ctx.reply_embeds(batch)` or `ctx.open_modal(form)`. Discord requires an initial response within three seconds. Edit and follow-up endpoints after a deferred response are pending.
+Register component and modal callbacks with `bot.on_button(id, &handler)`, `bot.on_select(id, &handler)` and `bot.on_modal(id, &handler)`. The handler can return an initial response such as `ctx.reply(text, true)`, `ctx.defer(true)`, `ctx.ack()`, `ctx.reply_components(layout)`, `ctx.update_components(layout)`, `ctx.reply_embeds(batch)` or `ctx.open_modal(form)`. Discord requires an initial response within three seconds.
 
-Registra callbacks con `bot.on_button(id, &manejador)`, `bot.on_select(id, &manejador)` y `bot.on_modal(id, &manejador)`. El manejador devuelve la respuesta inicial. `ctx.reply(texto, true)` responde en privado, `ctx.defer(true)` difiere la respuesta privada, y `ctx.ack()` confirma una interacción sobre un mensaje. Los métodos de componentes, embeds y formularios devuelven sus respectivos payloads. Discord exige una respuesta inicial en tres segundos. Quedan pendientes la edición y los mensajes de seguimiento posteriores.
+Registra callbacks con `bot.on_button(id, &manejador)`, `bot.on_select(id, &manejador)` y `bot.on_modal(id, &manejador)`. El manejador puede devolver la respuesta inicial. `ctx.reply(texto, true)` responde en privado, `ctx.defer(true)` difiere la respuesta privada, y `ctx.ack()` confirma una interacción sobre un mensaje. Los métodos de componentes, embeds y formularios devuelven sus respectivos payloads. Discord exige una respuesta inicial en tres segundos.
+
+```tripol
+import tripol.discord
+
+func report(ctx:discord.Interaction)->string {
+    if ctx.respond(ctx.defer(true)) {
+        if ctx.edit_reply("Informe listo") {
+            ctx.followup("Consulta el resultado arriba", true)
+        }
+    }
+    return ""
+}
+
+bot = discord.bot()
+bot.slash("informe", "Prepara un informe", &report)
+bot.start()
+```
+
+Connected native handlers can use `ctx.respond(payload)` to send the initial response before doing more work. It attempts delivery once and reports whether Discord acknowledged it. Use `ctx.edit_reply(text)` to fill a deferred response or edit its original message. `ctx.edit_response(body)` accepts a Discord edit payload, including `layout.payload()` for an original Components V2 message. `ctx.followup(text, true)` sends a private follow-up and returns its message ID, or an empty string if the request fails. For a response deferred with `ctx.defer()`, edit the original before posting a separate follow-up. The interaction token stays internal. Linux end-to-end tests use a local TLS server. Windows builds use WinHTTP and still need live validation.
+
+Los callbacks nativos conectados pueden usar `ctx.respond(payload)` para enviar la respuesta inicial antes de continuar. Intenta entregarla una vez e indica si Discord la confirmó. Usa `ctx.edit_reply(texto)` para completar una respuesta diferida o editar su mensaje original. `ctx.edit_response(body)` acepta un payload de edición de Discord, incluido `layout.payload()` para un mensaje original Components V2. `ctx.followup(texto, true)` envía un seguimiento privado y devuelve el ID del mensaje, o una cadena vacía si falla la solicitud. Para una respuesta diferida con `ctx.defer()`, edita el original antes de enviar un seguimiento separado. El token de interacción queda en el contexto interno. Las pruebas de extremo a extremo de Linux usan un servidor TLS local. Las compilaciones de Windows usan WinHTTP y siguen pendientes de validación en vivo.
 
 `ctx.option(name)` returns raw JSON, `ctx.option_text(name)` decodes a JSON string, `ctx.values()` returns selected values and `ctx.field(id)` reads a submitted text input. `ctx.field_data(id)` returns the JSON array for select and file-upload inputs. The original interaction data is available as `ctx.data_json`, including resolved attachment metadata.
 
@@ -182,7 +203,7 @@ The generated template does not need a channel ID. `login_env()` reads `DISCORD_
 
 Initial Hello (10), Identify (2), Dispatch (0), sequence tracking, periodic Heartbeat (1) with null before the first sequence, Heartbeat ACK (11), server heartbeat requests, READY and MESSAGE_CREATE are implemented. `connected()` reports local READY state; `ping()` reports last heartbeat round trip in milliseconds or -1 before ACK, not message latency. Both are primarily diagnostics while running; the simple `run` API blocks. `preview` and `gateway_reply` support offline matching tests. `identify_payload` is a protocol helper containing the secret; do not print or log it.
 
-This is an experimental first Gateway client for a small test server. Windows native live execution, TLS and actual presence/latency have not been verified in the Linux release environment. The Gateway uses a fixed official host and OS certificate validation without redirects. One receive worker at a time; no separate message queue or concurrent event callbacks. For this Windows backend, max complete UTF-8 payload 65535 bytes, bounded JSON nesting 32. Oversized or unsupported frames stop reception; complex/oversized READY payloads may prevent startup. No compression, binary frames, sharding, slash commands, interaction callbacks, Resume, automatic reconnect or production delivery guarantee. Reconnect (7), Invalid Session (9) and closed/failed receive stop safely; missed ACK, timeout waiting for READY, or send failure terminates the process to avoid an unsafe close while a receive is pending. Restart manually only after checking the cause; respect Discord identify and rate limits. No guaranteed delivery on disconnect. REST POST still creates its own WinHTTP session; delays depend on network/TLS/Discord, and failure (including HTTP 429) stops the process rather than retrying blindly. No measured Windows end-to-end latency claim. Ctrl+C exits. Do not deploy for critical workloads.
+The experimental Windows Gateway uses the official host and OS certificate validation. A single worker receives uncompressed text frames up to 65,535 bytes and dispatches callbacks in order. The JSON nesting limit is 32. Oversized or unsupported frames stop reception. Windows support for compression, sharding, Resume, and automatic reconnect is pending. Reconnect (7), Invalid Session (9) and failed receives stop the connection. A missed ACK, READY timeout or send failure stops the process to avoid closing a handle while a receive is pending. WinHTTP creates a separate session per REST request. The original legacy message POST halts on failure, while slash synchronization and interaction requests return failures to their callers. Measured presence, round-trip latency and live execution against Discord on Windows are pending. Ctrl+C exits.
 
 Explicit fallback: `discord.run_rest()` restores ECLIPSE's 2.5-second REST polling, which may miss messages. Legacy `listen`, `send`, `latest`, `matches`, `message_id`, `gateway` and token/URL helpers remain available. See `tripol docs discord` for the complete module, including the protocol helpers.
 

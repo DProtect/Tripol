@@ -87,15 +87,15 @@ func (c *compiler) omegaBuiltin(e *expr) (string, bool) {
 		c.require(c.expression(e.args[0]), "string")
 		a.call("env_get")
 		return "string", true
-	case "discord_callback":
+	case "discord_callback", "discord_edit":
 		if len(e.args) != 2 {
-			c.err("discord_callback expects path and body")
+			c.err(e.s+" expects path and body")
 		}
 		c.require(c.expression(e.args[0]), "string")
 		a.emit(0x50)
 		c.require(c.expression(e.args[1]), "string")
 		a.emit(0x48, 0x89, 0xc2, 0x58)
-		a.call("discord_callback")
+		a.call(e.s)
 		return "string", true
 	case "discord_request":
 		if len(e.args) != 3 {

@@ -83,6 +83,15 @@
       "bot.start()"
     ]
   },
+  "Discord deferred reply": {
+    "prefix": "discord-defer",
+    "body": [
+      "if ctx.respond(ctx.defer(true)) {",
+      "    ctx.edit_reply(\"${1:Listo}\")",
+      "}",
+      "return \"\""
+    ]
+  },
   "Discord modal": {
     "prefix": "discord-modal",
     "body": [

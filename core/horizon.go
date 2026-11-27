@@ -1,6 +1,9 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Horizon records are typed references to arena-resident sequences of 8-byte slots.
 func (c *compiler) isRecord(t string) bool { f, ok := c.fs[t]; return ok && f.record }
@@ -50,6 +53,15 @@ func (c *compiler) validateTypes(fs []fn) {
 		}
 	}
 }
+
+// Double-underscore fields in embedded standard-library records belong to
+// their defining module. Locally defined records keep their original syntax.
+func (c *compiler) checkRecordFieldAccess(f fn, name string) {
+	if strings.HasPrefix(name, "__") && isStandardFunction(f.name) && c.source != f.source {
+		c.err("private field " + f.name + "." + name)
+	}
+}
+
 func (c *compiler) recordField(t, n string) (param, int) {
 	f, ok := c.fs[t]
 	if !ok || !f.record {
@@ -57,6 +69,7 @@ func (c *compiler) recordField(t, n string) (param, int) {
 	}
 	for i, p := range f.args {
 		if p.name == n {
+			c.checkRecordFieldAccess(f, n)
 			return p, i * 8
 		}
 	}
@@ -65,6 +78,9 @@ func (c *compiler) recordField(t, n string) (param, int) {
 }
 func (c *compiler) recordConstruct(f fn, e *expr) string {
 	args := c.callArguments(f, e)
+	for i := range e.args {
+		c.checkRecordFieldAccess(f, f.args[i].name)
+	}
 	a := c.a
 	for i, x := range args {
 		c.require(c.expression(x), f.args[i].typ)

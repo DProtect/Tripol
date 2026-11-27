@@ -872,13 +872,20 @@ struct Interaction {
  user_id:string
  data_json:string
  has_message:bool
+ // Internal credentials are populated only by live dispatch.
+ __interaction_token:string=""
+ __response_state:int=0
 }
 
-func Interaction.reply(self:Interaction,content:string,ephemeral=false)->string {
+func interaction_message(content:string,ephemeral=false)->string {
  assert len(content)>0 and utf8.valid(content) and utf8.count(content)<=2000,"Discord replies require 1 to 2000 characters"
  flags=""
  if ephemeral {flags=",\"flags\":64"}
- return "{\"type\":4,\"data\":{\"content\":"+json.quote(content)+flags+",\"allowed_mentions\":{\"parse\":[]}}}"
+ return "{\"content\":"+json.quote(content)+flags+",\"allowed_mentions\":{\"parse\":[]}}"
+}
+
+func Interaction.reply(self:Interaction,content:string,ephemeral=false)->string {
+ return "{\"type\":4,\"data\":"+interaction_message(content,ephemeral)+"}"
 }
 
 func Interaction.defer(self:Interaction,ephemeral=false)->string {
@@ -950,7 +957,10 @@ func interaction_selector(event:string)->string {
  payload=json.get_raw_large(event,"d")
  kind=json.get_raw_large(payload,"type")
  data=json.get_raw_large(payload,"data")
- if kind=="2" and json.get_raw_large(data,"type")=="1" {return "s"+json.get_raw_large(data,"name")}
+ if kind=="2" and json.get_raw_large(data,"type")=="1" {
+  scope=event_id(json.get_raw_large(data,"guild_id"))
+  return "s"+json.get_raw_large(data,"name")+"/"+scope
+ }
  if kind=="3" {
   component=json.get_raw_large(data,"component_type")
   id=json.get_raw_large(data,"custom_id")
@@ -963,39 +973,71 @@ func interaction_selector(event:string)->string {
 
 func interaction_matches(key:string,selector:string)->bool {
  if len(key)<2 or len(selector)<3 or byte_at(key,0)!=byte_at(selector,0) {return false}
- return json.string_equals(slice(selector,1,len(selector)),slice(key,1,len(key)))
+ key_end=len(key)
+ selector_end=len(selector)
+ if byte_at(key,0)==115 {
+  key_scope=""
+  selector_scope=""
+  key_slash=find_bytes(key,"/")
+  selector_slash=find_bytes(selector,"/")
+  if key_slash>=0 {
+   key_end=key_slash
+   key_scope=slice(key,key_slash+1,len(key))
+  }
+  if selector_slash>=0 {
+   selector_end=selector_slash
+   selector_scope=slice(selector,selector_slash+1,len(selector))
+  }
+  if key_scope!=selector_scope {return false}
+ }
+ return json.string_equals(slice(selector,1,selector_end),slice(key,1,key_end))
 }
 
-func dispatch_interaction(event:string,key:string,handler:func(Interaction)->string)->string {
- if not interaction_matches(key,interaction_selector(event)) {return ""}
- payload=json.get_raw_large(event,"d")
+func interaction_context(payload:string,key:string)->Interaction {
+ assert len(key)>=2,"Invalid Discord interaction key"
  data=json.get_raw_large(payload,"data")
  kind=errors.int_or(json.get_raw_large(payload,"type"),0)
  author=json.get_raw_large(payload,"user")
  if len(author)==0 {author=json.get_raw_large(json.get_raw_large(payload,"member"),"user")}
- name=slice(key,1,len(key))
+ end=len(key)
+ if byte_at(key,0)==115 {
+  scope=find_bytes(key,"/")
+  if scope>=0 {end=scope}
+ }
+ name=slice(key,1,end)
  id=event_id(json.get_raw_large(payload,"id"))
  app=event_id(json.get_raw_large(payload,"application_id"))
  guild=event_id(json.get_raw_large(payload,"guild_id"))
  channel_id=event_id(json.get_raw_large(payload,"channel_id"))
  user=event_id(json.get_raw_large(author,"id"))
  has_message=len(json.get_raw_large(payload,"message"))>0
- return handler(Interaction(kind,name,id,app,guild,channel_id,user,data,has_message))
+ return Interaction(kind,name,id,app,guild,channel_id,user,data,has_message)
+}
+
+func dispatch_interaction(event:string,key:string,handler:func(Interaction)->string)->string {
+ if not interaction_matches(key,interaction_selector(event)) {return ""}
+ return handler(interaction_context(json.get_raw_large(event,"d"),key))
 }
 
 func deliver_interaction(event:string,key:string,handler:func(Interaction)->string)->bool {
+ if not interaction_matches(key,interaction_selector(event)) {return false}
  payload=json.get_raw_large(event,"d")
- id=event_id(json.get_raw_large(payload,"id"))
  raw=json.get_raw_large(payload,"token")
- if len(id)==0 or len(raw)<3 or len(raw)>514 or byte_at(raw,0)!=34 or byte_at(raw,len(raw)-1)!=34 {return false}
+ if len(raw)<3 or len(raw)>514 or byte_at(raw,0)!=34 or byte_at(raw,len(raw)-1)!=34 {return false}
  for i in range(1,len(raw)-1) {
   b=byte_at(raw,i)
   if not ((b>=48 and b<=57) or (b>=65 and b<=90) or (b>=97 and b<=122) or b==45 or b==46 or b==95) {return false}
  }
- body=dispatch_interaction(event,key,handler)
+ secret=slice(raw,1,len(raw)-1)
+ if secret=="." or secret==".." {return false}
+ context=interaction_context(payload,key)
+ if context.id=="" {return false}
+ context.__interaction_token=secret
+ body=handler(context)
+ // A failed attempt can still be ambiguous. Never replay it automatically.
+ if context.__response_state!=0 {return context.__response_state==2}
  if len(body)==0 {return false}
- result=discord_callback("/api/v10/interactions/"+id+"/"+slice(raw,1,len(raw)-1)+"/callback",body)
- return len(result)>0
+ return context.respond(body)
 }
 
 func slash_name(name:string)->bool {
@@ -1008,6 +1050,7 @@ func slash_name(name:string)->bool {
 }
 
 func Bot.bind_interaction(self:Bot,key:string,handler:func(Interaction)->string,definition="",guild_id="")->bool {
+ if len(key)>1 and byte_at(key,0)==115 and find_bytes(key,"/")<0 {key+="/"+guild_id}
  keys=self.interaction_keys
  handlers=self.interaction_handlers
  specs=self.slash_definitions
@@ -1623,4 +1666,36 @@ func Modal.checkbox(self:Modal,id:string,label:string,checked=false,description=
 
 func Interaction.checked(self:Interaction,id:string)->bool {
  return modal_field_value(self.data_json,id,"value",0)=="true"
+}
+
+// Explicitly send the initial response before doing more work in the handler.
+func Interaction.respond(self:Interaction,body:string)->bool {
+ if self.__interaction_token=="" or self.id=="" or self.__response_state!=0 {return false}
+ if json.get_raw_large(body,"type")=="" {return false}
+ path="/api/v10/interactions/"+self.id+"/"+self.__interaction_token+"/callback"
+ self.__response_state=1
+ ok=false
+ scratch {ok=len(discord_callback(path,body))>0}
+ if ok {self.__response_state=2}
+ return ok
+}
+
+func Interaction.edit_response(self:Interaction,body:string)->bool {
+ if self.__response_state!=2 or self.__interaction_token=="" or self.application_id=="" {return false}
+ if len(body)<2 or byte_at(body,0)!=123 {return false}
+ path="/api/v10/webhooks/"+self.application_id+"/"+self.__interaction_token+"/messages/@original"
+ ok=false
+ scratch {ok=len(discord_edit(path,body))>0}
+ return ok
+}
+
+func Interaction.edit_reply(self:Interaction,content:string)->bool {
+ return self.edit_response(interaction_message(content))
+}
+
+func Interaction.followup(self:Interaction,content:string,ephemeral=false)->string {
+ if self.__response_state!=2 or self.__interaction_token=="" or self.application_id=="" {return ""}
+ path="/api/v10/webhooks/"+self.application_id+"/"+self.__interaction_token
+ body=interaction_message(content,ephemeral)
+ return event_id(json.get_raw_large(discord_callback(path,body),"id"))
 }

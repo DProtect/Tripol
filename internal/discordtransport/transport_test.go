@@ -271,3 +271,51 @@ func TestInteractionCallbackDoesNotExposeCredentials(t *testing.T) {
 		t.Fatal(calls.Load())
 	}
 }
+
+func TestInteractionWebhookEditAndFollowup(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var requests atomic.Int32
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		call := requests.Add(1)
+		if r.Header.Get("Authorization") != "" {
+			t.Error("webhook sent bot Authorization")
+		}
+		body, err := io.ReadAll(r.Body)
+		if err != nil || string(body) != `{"content":"ready","allowed_mentions":{"parse":[]}}` {
+			t.Error("webhook body differs")
+		}
+		switch call {
+		case 1:
+			if r.Method != http.MethodPatch || r.URL.Path != "/api/v10/webhooks/42/fixture-short-lived/messages/@original" {
+				t.Error("invalid original response edit")
+			}
+		case 2:
+			if r.Method != http.MethodPost || r.URL.Path != "/api/v10/webhooks/42/fixture-short-lived" {
+				t.Error("invalid follow-up route")
+			}
+		default:
+			t.Error("unexpected webhook request")
+		}
+		fmt.Fprint(w, `{"id":"123"}`)
+	}))
+	defer server.Close()
+	client := newClient(server.Client(), server.URL)
+	defer client.Close()
+	body := []byte(`{"content":"ready","allowed_mentions":{"parse":[]}}`)
+	webhook := "/api/v10/webhooks/42/fixture-short-lived"
+	for _, route := range []string{webhook, webhook + "/messages/123", webhook + "/messages/@original?wait=true", "/api/v10/interactions/42/fixture-short-lived/callback"} {
+		if _, err := client.EditInteraction(ctx, route, body); err == nil {
+			t.Fatalf("accepted invalid edit route %s", route)
+		}
+	}
+	if result, err := client.EditInteraction(ctx, webhook+"/messages/@original", body); err != nil || string(result) != `{"id":"123"}` {
+		t.Fatalf("edit: %s %v", result, err)
+	}
+	if result, err := client.Interaction(ctx, webhook, body); err != nil || string(result) != `{"id":"123"}` {
+		t.Fatalf("follow-up: %s %v", result, err)
+	}
+	if requests.Load() != 2 {
+		t.Fatal(requests.Load())
+	}
+}

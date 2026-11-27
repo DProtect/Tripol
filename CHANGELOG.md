@@ -1,5 +1,6 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
+- A connected interaction callback can acknowledge once with `ctx.respond`, edit its original response with `ctx.edit_reply` or `ctx.edit_response`, and post a text follow-up with `ctx.followup`. Slash callbacks with the same command name are dispatched independently for global and guild scopes.
 - Slash commands synchronize global or guild definitions, keep unrelated commands, and support typed standard options. Named callbacks handle commands, buttons, selects and modal submissions. Acknowledgments, private replies, deferred responses, modal opening, and V2 message updates use the Discord interaction callback endpoint.
 - Components V2 adds multi-button rows, all five select menu types and character-based Text Display accounting. Modals support labels, text inputs, all select types, file-upload inputs, radio groups, checkbox groups, individual checkboxes and help text. Traditional embeds support authors, icons, timestamps and batches of up to ten embeds.
 - The JSON runtime quotes strings with one native arena allocation and decodes escaped Unicode on native and WebAssembly targets. Typed callback lists support read-only access from scratch regions.

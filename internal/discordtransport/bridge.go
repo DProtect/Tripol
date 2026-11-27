@@ -17,6 +17,7 @@ const (
 	OpClose
 	OpREST
 	OpInteraction
+	OpInteractionEdit
 )
 
 // Serve is the private, process-local protocol between a launcher and one
@@ -54,7 +55,7 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 			if lengths != [3]int{} {
 				return errors.New("invalid Discord bridge command")
 			}
-		case OpInteraction:
+		case OpInteraction, OpInteractionEdit:
 			if lengths[0] == 0 || lengths[0] > 1024 || lengths[1] != 0 || lengths[2] == 0 {
 				return errors.New("invalid Discord bridge callback")
 			}
@@ -101,8 +102,12 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 				gateway = nil
 			}
 			reply = []byte("1")
-		case OpInteraction:
-			reply, err = client.Interaction(ctx, string(args[0]), args[2])
+		case OpInteraction, OpInteractionEdit:
+			if op == OpInteractionEdit {
+				reply, err = client.EditInteraction(ctx, string(args[0]), args[2])
+			} else {
+				reply, err = client.Interaction(ctx, string(args[0]), args[2])
+			}
 			if err != nil {
 				fmt.Fprintln(diagnostics, err)
 				reply, err = nil, nil

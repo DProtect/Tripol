@@ -81,15 +81,38 @@ func (c *Client) Request(ctx context.Context, method, path, token string, body [
 }
 
 func (c *Client) Interaction(ctx context.Context, path string, body []byte) ([]byte, error) {
+	return c.interaction(ctx, http.MethodPost, path, body)
+}
+
+func (c *Client) EditInteraction(ctx context.Context, path string, body []byte) ([]byte, error) {
+	return c.interaction(ctx, http.MethodPatch, path, body)
+}
+
+func (c *Client) interaction(ctx context.Context, method, path string, body []byte) ([]byte, error) {
 	parts := strings.Split(path, "/")
-	if len(parts) != 7 || parts[0] != "" || parts[1] != "api" || parts[2] != "v10" ||
-		parts[3] != "interactions" || parts[6] != "callback" || !snowflake(parts[4]) ||
-		(!validToken(parts[5]) || parts[5] == "." || parts[5] == "..") || len(body) == 0 || !json.Valid(body) {
-		return nil, errors.New("invalid Discord interaction callback")
+	if len(parts) < 6 || parts[0] != "" || parts[1] != "api" || parts[2] != "v10" ||
+		!snowflake(parts[4]) || !validToken(parts[5]) || parts[5] == "." || parts[5] == ".." ||
+		len(body) == 0 || !json.Valid(body) {
+		return nil, errors.New("invalid Discord interaction request")
 	}
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-	defer cancel()
-	return c.request(ctx, http.MethodPost, path, "", body, true)
+	switch parts[3] {
+	case "interactions":
+		if method != http.MethodPost || len(parts) != 7 || parts[6] != "callback" {
+			return nil, errors.New("invalid Discord interaction callback route")
+		}
+		initial, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+		ctx = initial
+	case "webhooks":
+		valid := method == http.MethodPost && len(parts) == 6 ||
+			method == http.MethodPatch && len(parts) == 8 && parts[6] == "messages" && parts[7] == "@original"
+		if !valid {
+			return nil, errors.New("invalid Discord interaction webhook route")
+		}
+	default:
+		return nil, errors.New("invalid Discord interaction endpoint")
+	}
+	return c.request(ctx, method, path, "", body, true)
 }
 
 func snowflake(id string) bool {

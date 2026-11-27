@@ -1878,6 +1878,10 @@ method: .short 71,69,84,0
  leave
  ret
 
+.section .text.discord_edit_windows,"ax"
+ mov ecx,1
+ jmp discord_request
+
 .section .text.discord_callback_windows,"ax"
  xor ecx,ecx
  jmp discord_request
@@ -1891,7 +1895,7 @@ method: .short 71,69,84,0
  sub rsp,2048
  test byte ptr [rsp],0
  mov [rsp+72],rax # path
- mov [rsp+64],rcx # token
+ mov [rsp+64],rcx # token address, 0 for anonymous POST, 1 for anonymous PATCH
  mov [rsp+160],rdx # body
  mov qword ptr [rsp+168],0 # body length
  mov qword ptr [rsp+80],0
@@ -1917,8 +1921,8 @@ method: .short 71,69,84,0
  jmp 9f
 4: # Build wide Authorization header; no CR/LF in token.
  lea rdi,[rsp+2400]
- cmp qword ptr [rsp+64],0
- je .dcontent_type
+ cmp qword ptr [rsp+64],1
+ jbe .dcontent_type
  lea rsi,[rip+discord_header]
  mov ecx,19
  rep movsw
@@ -1983,8 +1987,8 @@ method: .short 71,69,84,0
  mov [rsp+80],rax
  mov rcx,rax
  mov edx,5000
- cmp qword ptr [rsp+64],0
- jne .dtimeouts
+ cmp qword ptr [rsp+64],1
+ ja .dtimeouts
  mov edx,2000
 .dtimeouts:
  mov r8d,edx
@@ -2006,6 +2010,9 @@ method: .short 71,69,84,0
  cmp qword ptr [rsp+168],0
  je .dverb
  lea rdx,[rip+discord_post]
+ cmp qword ptr [rsp+64],1
+ jne .dverb
+ lea rdx,[rip+discord_patch]
 .dverb:
  lea r8,[rsp+256]
  xor r9d,r9d
@@ -2105,8 +2112,8 @@ method: .short 71,69,84,0
  call qword ptr [rip+iat36]
 13: cmp qword ptr [rsp+120],0
  jne .dresult
- cmp qword ptr [rsp+64],0
- jne discord_error
+ cmp qword ptr [rsp+64],1
+ ja discord_error
  lea rax,[rip+.dempty]
  leave
  ret
@@ -2118,8 +2125,8 @@ method: .short 71,69,84,0
  sub [r8],rdx
  add [r8+8],rdx
  mov rax,[rsp+104]
- cmp qword ptr [rsp+64],0
- jne .dreturn
+ cmp qword ptr [rsp+64],1
+ ja .dreturn
  cmp qword ptr [rsp+112],0
  jne .dreturn
  lea rax,[rip+.daccepted]
@@ -2137,7 +2144,14 @@ discord_host: .short 100,105,115,99,111,114,100,46,99,111,109,0
 discord_agent: .short 84,82,73,80,79,76,0
 discord_get: .short 71,69,84,0
 discord_post: .short 80,79,83,84,0
+discord_patch: .short 80,65,84,67,72,0
 
+.section .text.discord_edit_linux,"ax"
+ mov r8,rax
+ xor r9d,r9d
+ mov r10,rdx
+ mov eax,6
+ jmp discord_pipe
 .section .text.discord_callback_linux,"ax"
  mov r8,rax
  xor r9d,r9d

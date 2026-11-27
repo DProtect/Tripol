@@ -208,10 +208,12 @@
     "embed": "func discord.embed()->Embed",
     "media_url": "func discord.media_url(value:string)->bool",
     "components": "func discord.components()->Components",
+    "interaction_message": "func discord.interaction_message(content:string,ephemeral=false)->string",
     "ignore_interaction": "func discord.ignore_interaction(context:Interaction)->string",
     "empty_interactions": "func discord.empty_interactions()->list[func(Interaction)->string]",
     "interaction_selector": "func discord.interaction_selector(event:string)->string",
     "interaction_matches": "func discord.interaction_matches(key:string,selector:string)->bool",
+    "interaction_context": "func discord.interaction_context(payload:string,key:string)->Interaction",
     "dispatch_interaction": "func discord.dispatch_interaction(event:string,key:string,handler:func(Interaction)->string)->string",
     "deliver_interaction": "func discord.deliver_interaction(event:string,key:string,handler:func(Interaction)->string)->bool",
     "slash_name": "func discord.slash_name(name:string)->bool",
@@ -292,7 +294,11 @@
     "open_modal": "Interaction.open_modal(form:Modal)->string",
     "reply_embeds": "Interaction.reply_embeds(batch:Embeds,ephemeral=false)->string",
     "field_data": "Interaction.field_data(id:string)->string",
-    "checked": "Interaction.checked(id:string)->bool"
+    "checked": "Interaction.checked(id:string)->bool",
+    "respond": "Interaction.respond(body:string)->bool",
+    "edit_response": "Interaction.edit_response(body:string)->bool",
+    "edit_reply": "Interaction.edit_reply(content:string)->bool",
+    "followup": "Interaction.followup(content:string,ephemeral=false)->string"
   },
   "discord.Modal": {
     "add_label": "Modal.add_label(id:string,label:string,component:string,description=\"\")->bool",

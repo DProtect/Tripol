@@ -142,7 +142,7 @@ func (e *webEmitter) expression(x *expr)string{
    }[name];if len(x.args)!=len(spec.args){webReject("invalid graphics arguments for %s",name)}
    z:=e.constant(0);v:=[3]uint32{z,z,z};for i,a:=range x.args{tmp,t:=e.save(a);if t!=spec.args[i]&&!(spec.args[i]=="ints"&&webElem(t)=="int"){webReject("invalid graphics argument for %s",name)};v[i]=tmp};e.val(spec.op,v[0],v[1],v[2]);return "bool"
   }
-  if name=="discord_request"||name=="discord_callback"||name=="gw_open"||strings.HasPrefix(name,"gw_host_")||name=="env_get"{
+  if name=="discord_request"||name=="discord_callback"||name=="discord_edit"||name=="gw_open"||strings.HasPrefix(name,"gw_host_")||name=="env_get"{
    webReject("%s requires a native target",name)
   }
   if name=="thread_sum"{webReject("native worker threads require a browser concurrency adapter")}

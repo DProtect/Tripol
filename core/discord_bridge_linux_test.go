@@ -132,7 +132,16 @@ func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
 		t.Skip("requires native x86-64")
 	}
 	path := filepath.Join(t.TempDir(), "bot")
-	if err := os.WriteFile(path, compileProfile(interactionBot+"b.start()", "linux", "turbo"), 0700); err != nil {
+	source := strings.Replace(interactionBot,
+		`func defer_reply(c:discord.Interaction)->string {return c.defer(true)}`,
+		`func defer_reply(c:discord.Interaction)->string {
+ if not c.respond(c.defer(true)) {return c.reply("Should not retry")}
+ assert not c.respond(c.defer(true))
+ assert c.edit_reply("Listo")
+ assert c.followup("Más",true)=="999"
+ return c.reply("Should not acknowledge twice")
+}`, 1)
+	if err := os.WriteFile(path, compileProfile(source+"b.start()", "linux", "turbo"), 0700); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("DISCORD_TOKEN", "fixture-token")
@@ -153,6 +162,8 @@ func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
 }
 
 func interactionFixture(input io.Reader, output io.Writer) error {
+	deferred := strings.ReplaceAll(strings.ReplaceAll(slashEvent, `"name":"hola"`, `"name":"wait"`), `"id":"710"`, `"id":"715"`)
+	expired := strings.Replace(deferred, `"id":"715"`, `"id":"716"`, 1)
 	first := `[{"type":1,"name":"hola","description":"La descripci\u00f3n","id":"919","options":[{"required":true,"type":3,"description":"La opci\u00f3n","name":"text"}]},{"type":1,"name":"unmanaged","description":"Leave it alone","id":"920"}]`
 	steps := []struct {
 		op                          uint32
@@ -173,6 +184,12 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 		{discordtransport.OpInteraction, "/api/v10/interactions/713/modal-fixture/callback", "", `"content":"Revisión"`, ""},
 		{discordtransport.OpPoll, "", "", "", selectEvent},
 		{discordtransport.OpInteraction, "/api/v10/interactions/712/select-fixture/callback", "", `"content":"101 102"`, "{}"},
+		{discordtransport.OpPoll, "", "", "", deferred},
+		{discordtransport.OpInteraction, "/api/v10/interactions/715/interaction-fixture/callback", "", `"type":5,"data":{"flags":64}`, "{}"},
+		{discordtransport.OpInteractionEdit, "/api/v10/webhooks/890/interaction-fixture/messages/@original", "", `"content":"Listo"`, `{"id":"998"}`},
+		{discordtransport.OpInteraction, "/api/v10/webhooks/890/interaction-fixture", "", `"content":"Más","flags":64`, `{"id":"999"}`},
+		{discordtransport.OpPoll, "", "", "", expired},
+		{discordtransport.OpInteraction, "/api/v10/interactions/716/interaction-fixture/callback", "", `"type":5`, ""},
 		{discordtransport.OpPoll, "", "", "", "!"},
 		{discordtransport.OpClose, "", "", "", "1"},
 	}

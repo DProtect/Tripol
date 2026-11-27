@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-const slashEvent = `{"op":0,"t":"INTERACTION_CREATE","s":4,"d":{"id":"710","application_id":"890","guild_id":"321","channel_id":"123","type":2,"token":"interaction-fixture","data":{"type":1,"name":"hola","options":[{"type":1,"name":"say","options":[{"type":3,"name":"text","value":"caf\u00e9 \ud83d\ude00"}]}]},"member":{"user":{"id":"567"}}}}`
+const slashEvent = `{"op":0,"t":"INTERACTION_CREATE","s":4,"d":{"id":"710","application_id":"890","guild_id":"321","channel_id":"123","type":2,"token":"interaction-fixture","data":{"type":1,"name":"hola","guild_id":"321","options":[{"type":1,"name":"say","options":[{"type":3,"name":"text","value":"caf\u00e9 \ud83d\ude00"}]}]},"member":{"user":{"id":"567"}}}}`
 const buttonEvent = `{"op":0,"t":"INTERACTION_CREATE","s":5,"d":{"id":"711","application_id":"890","type":3,"token":"button-fixture","message":{"id":"99"},"data":{"component_type":2,"custom_id":"caf\u00e9"}}}`
 const selectEvent = `{"op":0,"t":"INTERACTION_CREATE","s":6,"d":{"id":"712","application_id":"890","type":3,"token":"select-fixture","message":{"id":"99"},"data":{"component_type":6,"custom_id":"roles","values":["101","102"]}}}`
 const modalEvent = `{"op":0,"t":"INTERACTION_CREATE","s":7,"d":{"id":"713","application_id":"890","type":5,"token":"modal-fixture","data":{"custom_id":"ticket","components":[{"type":18,"component":{"type":4,"custom_id":"topic","value":"Revisi\u00f3n"}}]}}}`
@@ -207,5 +207,35 @@ show ctx.field("colors"),ctx.field_data("days"),ctx.checked("agree"),ctx.checked
 	}
 	if _, err := CompileWeb(src); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestDiscordSlashRoutesAreScopedByRegistration(t *testing.T) {
+	runCase(t, `import tripol.discord
+func global(c:discord.Interaction)->string {return "global "+c.name}
+func local(c:discord.Interaction)->string {return "local "+c.name}
+func another(c:discord.Interaction)->string {return "another "+c.name}
+b=discord.bot()
+b.slash("hola","Global",&global)
+b.slash("hola","Local",&local,"321")
+b.slash("hola","Another",&another,"654")
+show b.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":2,\"guild_id\":\"321\",\"data\":{\"type\":1,\"name\":\"hola\"}}}")
+show b.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":2,\"guild_id\":\"321\",\"data\":{\"type\":1,\"name\":\"hola\",\"guild_id\":\"321\"}}}")
+show b.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":2,\"guild_id\":\"654\",\"data\":{\"type\":1,\"name\":\"hola\",\"guild_id\":\"654\"}}}")
+show b.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":2,\"data\":{\"type\":1,\"name\":\"hola\",\"guild_id\":\"111\"}}}")==""
+`, "global hola\nlocal hola\nanother hola\ntrue\n", false)
+}
+
+func TestDiscordLiveInteractionStateIsPrivate(t *testing.T) {
+	context := `import tripol.discord
+ctx=discord.Interaction(2,"hola","1","2","","","","{}",false`
+	for _, src := range []string{
+		context + ")\nshow ctx.__interaction_token",
+		context + ")\nctx.__response_state=2",
+		context + `,"literal-credential")`,
+	} {
+		if _, err := CompileWeb(src); err == nil || !strings.Contains(err.Error(), "private field discord.Interaction") {
+			t.Fatalf("unexpected diagnostic: %v", err)
+		}
 	}
 }
