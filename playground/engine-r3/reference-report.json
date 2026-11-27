@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 411,
-  "methods": 80,
+  "functions": 413,
+  "methods": 84,
   "summary": {
-    "native compiled": 491,
-    "web executed": 423,
-    "web native-only": 68
+    "native compiled": 497,
+    "web executed": 425,
+    "web native-only": 72
   },
   "rows": [
     {
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2492\n"
+      "output": "3189\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2517426358\n"
+      "output": "3222360287\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2001,7 +2001,7 @@
       "name": "discord.interaction_selector",
       "native": "compiled",
       "web": "executed",
-      "output": "s\"hola\"\n"
+      "output": "s\"hola\"/\n"
     },
     {
       "name": "discord.interaction_matches",
@@ -2084,6 +2084,18 @@
       "native": "compiled",
       "web": "executed",
       "output": "true\n"
+    },
+    {
+      "name": "discord.interaction_message",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"content\":\"Hola\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}\n"
+    },
+    {
+      "name": "discord.interaction_context",
+      "native": "compiled",
+      "web": "executed",
+      "output": "123 hola\n"
     },
     {
       "name": "encoding.hex_digit",
@@ -2320,7 +2332,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n24998\n"
+      "output": "4950\n41628\n"
     },
     {
       "name": "simd.equal",
@@ -2887,6 +2899,26 @@
       "native": "compiled",
       "web": "executed",
       "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.respond",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.edit_response",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.edit_reply",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.followup",
+      "native": "compiled",
+      "web": "native-only"
     }
   ],
   "examples": [

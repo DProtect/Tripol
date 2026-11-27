@@ -1,11 +1,11 @@
 {
-  "commit": "3e8b890733b917ec589a13716a2e3fa6ead28ecf",
+  "commit": "568b1a3495b0146ebf08cb0e21ab765a7d4dc4d3",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
-  "total": 143,
+  "total": 144,
   "counts": {
     "executed": 129,
-    "native-only": 14
+    "native-only": 15
   },
   "rows": [
     {
@@ -38,13 +38,19 @@
     {
       "file": "docs/discord.html",
       "index": 5,
+      "source": "import tripol.discord\n\nfunc report(ctx:discord.Interaction)->string {\n    if ctx.respond(ctx.defer(true)) {\n        if ctx.edit_reply(\"Informe listo\") {\n            ctx.followup(\"Consulta el resultado arriba\", true)\n        }\n    }\n    return \"\"\n}\n\nbot = discord.bot()\nbot.slash(\"informe\", \"Prepara un informe\", &report)\nbot.start()",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 6,
       "source": "import tripol.discord\n\npanel = discord.components()\npanel.text(\"## Bienvenido\")\npanel.separator()\npanel.link(\"Docs\", \"https://example.org/docs\")\nmessage = discord.components()\nmessage.container(panel, 41215)\nshow message.payload()",
       "status": "executed",
       "output": "{\"flags\":32768,\"components\":[{\"type\":17,\"components\":[{\"type\":10,\"content\":\"## Bienvenido\"},{\"type\":14,\"divider\":true,\"spacing\":1},{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"Docs\",\"url\":\"https://example.org/docs\"}]}],\"spoiler\":false,\"accent_color\":41215}],\"allowed_mentions\":{\"parse\":[]}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 6,
+      "index": 7,
       "source": "import tripol.discord\n\ndiscord.login_env()\ndiscord.activity(\"Programming in TRIPOL\")\ndiscord.reply(\"!hello\", \"Hello, friend!\")\ndiscord.reply(\"!ping\", \"Pong!\")\ndiscord.run()\n",
       "status": "native-only"
     },
@@ -966,7 +972,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "5398\n"
+      "output": "6742\n"
     },
     {
       "file": "docs/libraries/ui.html",
