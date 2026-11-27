@@ -1,12 +1,11 @@
 {
-  "commit": "c2d136adb7a11afad5720ec4b620a9652b06b53f",
+  "commit": "868f2c0f7602d4656721cefd5e722fd644290bba",
   "pagesRef": "origin/gh-pages",
-  "pages": 52,
-  "total": 71,
+  "pages": 64,
+  "total": 83,
   "counts": {
-    "executed": 50,
-    "compiled-only": 17,
-    "compiler-rejected": 4
+    "executed": 79,
+    "native-only": 4
   },
   "rows": [
     {
@@ -20,8 +19,8 @@
       "file": "docs/libraries/animation.html",
       "index": 2,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.animation\n\nw = 96\nh = 64\ngame.window(\"Animation\", w, h)\npixels = canvas.create(w, h)\nfor i in range(0, 40) {\n    frame = animation.frame(i * 25, 250, 4)\n    canvas.clear(pixels, 1052688)\n    canvas.rectangle(pixels, w, h, 8 + frame * 20, 24, 12, 12, 65535)\n    game.present(pixels, w, h)\n    game.wait(25)\n}\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/arrays.html",
@@ -29,6 +28,20 @@
       "source": "import tripol.arrays\n\nvalues = arrays.make(4, 7)\nshow arrays.total(values)\ncopy = ints(4)\nassert arrays.copy_into(copy, values)\nshow copy",
       "status": "executed",
       "output": "28\n[7, 7, 7, 7]\n"
+    },
+    {
+      "file": "docs/libraries/atomic.html",
+      "index": 1,
+      "source": "import tripol.atomic\n\na=ints(1)\na[0]=7\nshow atomic.load(a,0)",
+      "status": "executed",
+      "output": "7\n"
+    },
+    {
+      "file": "docs/libraries/audio.html",
+      "index": 1,
+      "source": "import tripol.audio\n\na=ints(1)\nshow len(audio.wav_mono(a))",
+      "status": "executed",
+      "output": "46\n"
     },
     {
       "file": "docs/libraries/binary.html",
@@ -69,8 +82,8 @@
       "file": "docs/libraries/camera.html",
       "index": 2,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.camera\n\nw = 96\nh = 64\ngame.window(\"Camera\", w, h)\npixels = canvas.create(w, h)\ncanvas.clear(pixels, 1052688)\nx = camera.screen(50, 20)\ncanvas.rectangle(pixels, w, h, x, 20, 18, 18, 65535)\ngame.present(pixels, w, h)\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/canvas.html",
@@ -83,8 +96,8 @@
       "file": "docs/libraries/canvas.html",
       "index": 2,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.colors\n\nw = 160\nh = 90\ngame.window(\"TRIPOL Canvas\", w, h)\npixels = canvas.create(w, h)\ncanvas.clear(pixels, colors.rgb(22, 28, 45))\ncanvas.rectangle(pixels, w, h, 20, 20, 55, 35, colors.rgb(75, 180, 230))\ncanvas.circle(pixels, w, h, 110, 45, 20, colors.rgb(255, 170, 70))\ngame.present(pixels, w, h)\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/checksum.html",
@@ -92,6 +105,13 @@
       "source": "import tripol.checksum\n\nshow checksum.adler32(\"Hello\")",
       "status": "executed",
       "output": "93061621\n"
+    },
+    {
+      "file": "docs/libraries/cli.html",
+      "index": 1,
+      "source": "import tripol.cli\n\nshow cli.option_name(\"retries\")",
+      "status": "executed",
+      "output": "true\n"
     },
     {
       "file": "docs/libraries/collections.html",
@@ -111,8 +131,8 @@
       "file": "docs/libraries/colors.html",
       "index": 2,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.colors\n\nw = 96\nh = 64\ngame.window(\"Colors\", w, h)\npixels = canvas.create(w, h)\ncanvas.rectangle(pixels, w, h, 0, 0, 32, h, colors.rgb(255, 0, 0))\ncanvas.rectangle(pixels, w, h, 32, 0, 32, h, colors.rgb(0, 255, 0))\ncanvas.rectangle(pixels, w, h, 64, 0, 32, h, colors.rgb(0, 0, 255))\ngame.present(pixels, w, h)\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/compression.html",
@@ -136,6 +156,20 @@
       "output": "68.000000\n"
     },
     {
+      "file": "docs/libraries/crypto.html",
+      "index": 1,
+      "source": "import tripol.crypto\n\ndata=ints(1)\ndata[0]=97\nshow len(crypto.sha256_bytes(data))",
+      "status": "executed",
+      "output": "32\n"
+    },
+    {
+      "file": "docs/libraries/csv.html",
+      "index": 1,
+      "source": "import tripol.csv\n\nshow csv.escape(\"a,b\")",
+      "status": "executed",
+      "output": "\"a,b\"\n"
+    },
+    {
       "file": "docs/libraries/datetime.html",
       "index": 1,
       "source": "import tripol.datetime\n\nshow datetime.days_in_month(2024, 2)",
@@ -153,8 +187,7 @@
       "file": "docs/libraries/discord.html",
       "index": 1,
       "source": "import tripol.discord\n\ndiscord.reply(\"!hello\", \"Hello!\")\nshow discord.preview(\"!hello\")",
-      "status": "compiler-rejected",
-      "diagnostic": "Web Engine R3: library @std:discord requires a browser adapter or native target"
+      "status": "native-only"
     },
     {
       "file": "docs/libraries/encoding.html",
@@ -167,8 +200,7 @@
       "file": "docs/libraries/env.html",
       "index": 1,
       "source": "import tripol.env\n\nshow env.get(\"TEMP\")",
-      "status": "compiler-rejected",
-      "diagnostic": "Web Engine R3: library @std:env requires a browser adapter or native target"
+      "status": "native-only"
     },
     {
       "file": "docs/libraries/errors.html",
@@ -181,8 +213,8 @@
       "file": "docs/libraries/events.html",
       "index": 1,
       "source": "import tripol.events\n\nshow events.space()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": "32\n"
     },
     {
       "file": "docs/libraries/files.html",
@@ -195,29 +227,29 @@
       "file": "docs/libraries/game.html",
       "index": 1,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.colors\n\nw = 160\nh = 90\ngame.window(\"TRIPOL Canvas\", w, h)\npixels = canvas.create(w, h)\ncanvas.clear(pixels, colors.rgb(22, 28, 45))\ncanvas.rectangle(pixels, w, h, 20, 20, 55, 35, colors.rgb(75, 180, 230))\ncanvas.circle(pixels, w, h, 110, 45, 20, colors.rgb(255, 170, 70))\ngame.present(pixels, w, h)\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/game.html",
       "index": 2,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.colors\n\nw = 160\nh = 90\ngame.window(\"TRIPOL Canvas\", w, h)\npixels = canvas.create(w, h)\ncanvas.clear(pixels, colors.rgb(22, 28, 45))\ncanvas.rectangle(pixels, w, h, 20, 20, 55, 35, colors.rgb(75, 180, 230))\ncanvas.circle(pixels, w, h, 110, 45, 20, colors.rgb(255, 170, 70))\ngame.present(pixels, w, h)\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/game.html",
       "index": 3,
       "source": "import tripol.game\n\ngame.window(\"RGB Triangle\", 160, 120)\nv = ints(9)\nv[0] = -800\nv[1] = -800\nv[2] = 16711680\nv[3] = 800\nv[4] = -800\nv[5] = 65280\nv[6] = 0\nv[7] = 800\nv[8] = 255\ngame.gl_frame(v)\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/game.html",
       "index": 4,
       "source": "import tripol.game\nimport tripol.canvas\n\nw = 96\nh = 64\ngame.window(\"Moving square\", w, h)\npixels = canvas.create(w, h)\nfor x in range(0, 40) {\n    canvas.clear(pixels, 1052688)\n    canvas.rectangle(pixels, w, h, x * 2, 24, 12, 12, 65535)\n    game.present(pixels, w, h)\n    game.wait(25)\n}\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/geometry.html",
@@ -227,18 +259,24 @@
       "output": "12.566371\n"
     },
     {
+      "file": "docs/libraries/heap.html",
+      "index": 1,
+      "source": "import tripol.heap\n\nh=heap.create(3)\nshow heap.size(h)",
+      "status": "executed",
+      "output": "0\n"
+    },
+    {
       "file": "docs/libraries/http.html",
       "index": 1,
       "source": "import tripol.http\n\nresponse = \"HTTP/1.0 200 OK\\r\\n\\r\\nHello\"\nshow http.status(response)\nshow http.body(response)",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": "200\nHello\n"
     },
     {
       "file": "docs/libraries/https.html",
       "index": 1,
       "source": "import tripol.https\n\nshow https.get(\"example.com\", \"/\")",
-      "status": "compiler-rejected",
-      "diagnostic": "Web Engine R3: library @std:https requires a browser adapter or native target"
+      "status": "native-only"
     },
     {
       "file": "docs/libraries/image.html",
@@ -251,8 +289,15 @@
       "file": "docs/libraries/image.html",
       "index": 2,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.image\n\nw = 64\nh = 48\ngame.window(\"Flipped image\", w, h)\npixels = canvas.create(w, h)\ncanvas.clear(pixels, 1052688)\ncanvas.rectangle(pixels, w, h, 4, 8, 20, 32, 16753920)\nflipped = image.flip_x(pixels, w, h)\ngame.present(flipped, w, h)\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
+    },
+    {
+      "file": "docs/libraries/io.html",
+      "index": 1,
+      "source": "import tripol.io\n\ndata=ints(2)\ndata[0]=255\nio.write(\"data.bin\",data)\nshow io.read(\"data.bin\",2)",
+      "status": "executed",
+      "output": "[255, 0]\n"
     },
     {
       "file": "docs/libraries/json.html",
@@ -342,8 +387,8 @@
       "file": "docs/libraries/network.html",
       "index": 1,
       "source": "import tripol.network\n\nshow network.ipv4(127, 0, 0, 1)",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": "2130706433\n"
     },
     {
       "file": "docs/libraries/particles.html",
@@ -356,8 +401,8 @@
       "file": "docs/libraries/particles.html",
       "index": 2,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.particles\n\nw = 96\nh = 64\ngame.window(\"Particles\", w, h)\npixels = canvas.create(w, h)\np = particles.create(28)\nparticles.burst(p, 48, 32, 12)\nrepeat 12 {\n    canvas.clear(pixels, 1052688)\n    particles.draw(p, pixels, w, h, 0, 0, 16753920)\n    game.present(pixels, w, h)\n    particles.step(p)\n    game.wait(50)\n}\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/path.html",
@@ -377,15 +422,22 @@
       "file": "docs/libraries/physics.html",
       "index": 2,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.physics\n\nw = 96\nh = 64\ngame.window(\"Overlap\", w, h)\npixels = canvas.create(w, h)\ncanvas.clear(pixels, 1052688)\ncolor = 65280\nif physics.overlap(20, 20, 24, 24, 32, 28, 24, 24) {\n    color = 16711680\n}\ncanvas.rectangle(pixels, w, h, 20, 20, 24, 24, 65535)\ncanvas.rectangle(pixels, w, h, 32, 28, 24, 24, color)\ngame.present(pixels, w, h)\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
+    },
+    {
+      "file": "docs/libraries/process.html",
+      "index": 1,
+      "source": "import tripol.process\n\nshow process.platform()!=\"unknown\"",
+      "status": "executed",
+      "output": "true\n"
     },
     {
       "file": "docs/libraries/profiler.html",
       "index": 1,
       "source": "import tripol.profiler\n\nstarted = profiler.start()\nshow profiler.elapsed(started) >= 0",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": "true\n"
     },
     {
       "file": "docs/libraries/queue.html",
@@ -400,6 +452,13 @@
       "source": "import tripol.random\n\nseed = random.next(123)\nshow random.bounded(seed, 10)",
       "status": "executed",
       "output": "1\n"
+    },
+    {
+      "file": "docs/libraries/regex.html",
+      "index": 1,
+      "source": "import tripol.regex\n\nshow regex.valid(\"ab.*\")",
+      "status": "executed",
+      "output": "true\n"
     },
     {
       "file": "docs/libraries/search.html",
@@ -440,8 +499,8 @@
       "file": "docs/libraries/sprite.html",
       "index": 2,
       "source": "import tripol.game\nimport tripol.canvas\nimport tripol.sprite\n\nw = 96\nh = 64\ngame.window(\"Sprite\", w, h)\npixels = canvas.create(w, h)\ncanvas.clear(pixels, 1052688)\nicon = sprite.solid(16, 16, 16753920)\nsprite.draw(pixels, w, h, icon, 16, 16, 40, 24)\ngame.present(pixels, w, h)\ngame.close()",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": ""
     },
     {
       "file": "docs/libraries/stack.html",
@@ -456,6 +515,13 @@
       "source": "import tripol.stats\n\nitems = [1, 2, 3, 4]\nshow stats.mean(items)\n",
       "status": "executed",
       "output": "2.500000\n"
+    },
+    {
+      "file": "docs/libraries/stream.html",
+      "index": 1,
+      "source": "import tripol.stream\n\ncursor=stream.create()\nshow stream.position(cursor)",
+      "status": "executed",
+      "output": "0\n"
     },
     {
       "file": "docs/libraries/system.html",
@@ -479,18 +545,31 @@
       "output": "true\nHe\n"
     },
     {
+      "file": "docs/libraries/thread.html",
+      "index": 1,
+      "source": "import tripol.thread\n\nshow thread.supported()",
+      "status": "executed",
+      "output": "false\n"
+    },
+    {
       "file": "docs/libraries/time.html",
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
-      "status": "compiled-only",
-      "reason": "Input, timing or platform-dependent example"
+      "status": "executed",
+      "output": "7542\n"
     },
     {
       "file": "docs/libraries/ui.html",
       "index": 1,
       "source": "import tripol.ui\n\nui.message(\"TRIPOL\", \"Hello!\")",
-      "status": "compiler-rejected",
-      "diagnostic": "Web Engine R3: library @std:ui requires a browser adapter or native target"
+      "status": "native-only"
+    },
+    {
+      "file": "docs/libraries/utf8.html",
+      "index": 1,
+      "source": "import tripol.utf8\n\nshow utf8.continuation(169)",
+      "status": "executed",
+      "output": "true\n"
     },
     {
       "file": "docs/libraries/validate.html",

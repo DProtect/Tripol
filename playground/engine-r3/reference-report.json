@@ -1,0 +1,4110 @@
+{
+  "modules": 64,
+  "functions": 383,
+  "summary": {
+    "native compiled": 383,
+    "web executed": 322,
+    "web native-only": 61
+  },
+  "rows": [
+    {
+      "name": "arrays.make",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[7, 7, 7]\n"
+    },
+    {
+      "name": "arrays.total",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "name": "arrays.count",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "arrays.contains",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "arrays.reversed",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[3, 2, 1]\n"
+    },
+    {
+      "name": "arrays.copy",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[1, 2] [9, 2]\n"
+    },
+    {
+      "name": "arrays.length",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "arrays.copy_into",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n[4, 7]\n"
+    },
+    {
+      "name": "cli.option_name",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "cli.find_option",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "name": "cli.has",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "cli.value",
+      "native": "compiled",
+      "web": "executed",
+      "output": "fast\n"
+    },
+    {
+      "name": "cli.integer",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "collections.append",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[1, 2, 3]\n"
+    },
+    {
+      "name": "collections.concat",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[1, 2, 3, 4]\n"
+    },
+    {
+      "name": "collections.part",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[20, 30]\n"
+    },
+    {
+      "name": "collections.remove_at",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[10, 30]\n"
+    },
+    {
+      "name": "collections.insert",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[10, 20, 30]\n"
+    },
+    {
+      "name": "collections.equal",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "console.ask",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Name:\nAda\n"
+    },
+    {
+      "name": "console.ask_int",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Age:\n17\n"
+    },
+    {
+      "name": "console.line",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Hola TRIPOL\n"
+    },
+    {
+      "name": "convert.celsius_to_fahrenheit",
+      "native": "compiled",
+      "web": "executed",
+      "output": "68.000000\n"
+    },
+    {
+      "name": "convert.fahrenheit_to_celsius",
+      "native": "compiled",
+      "web": "executed",
+      "output": "20.000000\n"
+    },
+    {
+      "name": "convert.km_to_miles",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "name": "convert.miles_to_km",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1.609344\n"
+    },
+    {
+      "name": "convert.kg_to_lb",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "name": "convert.lb_to_kg",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0.453592\n"
+    },
+    {
+      "name": "convert.celsius_to_kelvin",
+      "native": "compiled",
+      "web": "executed",
+      "output": "273.150000\n"
+    },
+    {
+      "name": "convert.kelvin_to_celsius",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0.000000\n"
+    },
+    {
+      "name": "csv.escape",
+      "native": "compiled",
+      "web": "executed",
+      "output": "\"a,b\"\n"
+    },
+    {
+      "name": "csv.fields",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "csv.valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "datetime.leap",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "datetime.days_in_month",
+      "native": "compiled",
+      "web": "executed",
+      "output": "29\n"
+    },
+    {
+      "name": "datetime.valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "datetime.day_of_year",
+      "native": "compiled",
+      "web": "executed",
+      "output": "32\n"
+    },
+    {
+      "name": "datetime.ordinal",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n2\n"
+    },
+    {
+      "name": "datetime.weekday",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "datetime.days_between",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "errors.is_int",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "errors.int_or",
+      "native": "compiled",
+      "web": "executed",
+      "output": "7\n"
+    },
+    {
+      "name": "errors.can_divide",
+      "native": "compiled",
+      "web": "executed",
+      "output": "false\n"
+    },
+    {
+      "name": "errors.div_or",
+      "native": "compiled",
+      "web": "executed",
+      "output": "-1\n"
+    },
+    {
+      "name": "errors.get_or",
+      "native": "compiled",
+      "web": "executed",
+      "output": "-1\n"
+    },
+    {
+      "name": "errors.message",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Index out of bounds\n"
+    },
+    {
+      "name": "errors.message_es",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Indice fuera de rango\n"
+    },
+    {
+      "name": "files.read",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Hola\n"
+    },
+    {
+      "name": "files.write",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Hola\n"
+    },
+    {
+      "name": "files.append",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Hola TRIPOL\n"
+    },
+    {
+      "name": "files.write_line",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "name": "files.append_line",
+      "native": "compiled",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "name": "math.square",
+      "native": "compiled",
+      "web": "executed",
+      "output": "25\n"
+    },
+    {
+      "name": "math.cube",
+      "native": "compiled",
+      "web": "executed",
+      "output": "27\n"
+    },
+    {
+      "name": "math.clamp",
+      "native": "compiled",
+      "web": "executed",
+      "output": "100\n"
+    },
+    {
+      "name": "math.power",
+      "native": "compiled",
+      "web": "executed",
+      "output": "16\n"
+    },
+    {
+      "name": "math.gcd",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "name": "math.root",
+      "native": "compiled",
+      "web": "executed",
+      "output": "9.000000\n"
+    },
+    {
+      "name": "math.pi",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3.141593\n"
+    },
+    {
+      "name": "math.percent",
+      "native": "compiled",
+      "web": "executed",
+      "output": "20.000000\n"
+    },
+    {
+      "name": "math.sqrt_value",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "name": "math.absolute",
+      "native": "compiled",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "name": "math.minimum",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "math.maximum",
+      "native": "compiled",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "name": "path.separator",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\ntrue\n"
+    },
+    {
+      "name": "path.last_separator",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "path.basename",
+      "native": "compiled",
+      "web": "executed",
+      "output": "main.tri\n"
+    },
+    {
+      "name": "path.dirname",
+      "native": "compiled",
+      "web": "executed",
+      "output": "docs\n"
+    },
+    {
+      "name": "path.extension",
+      "native": "compiled",
+      "web": "executed",
+      "output": ".tri\n"
+    },
+    {
+      "name": "path.join",
+      "native": "compiled",
+      "web": "executed",
+      "output": "docs/main.tri\n"
+    },
+    {
+      "name": "random.next",
+      "native": "compiled",
+      "web": "executed",
+      "output": "48271\n"
+    },
+    {
+      "name": "random.unit",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "random.bounded",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "search.linear",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "search.lower_bound",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "search.binary",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "search.last",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "sort.sift",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[3, 1, 2]\n"
+    },
+    {
+      "name": "sort.ascending",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[1, 2, 3]\n"
+    },
+    {
+      "name": "sort.descending",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[3, 2, 1]\n"
+    },
+    {
+      "name": "sort.sorted",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "text.size",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "name": "text.empty",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "text.from_int",
+      "native": "compiled",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "name": "text.to_int",
+      "native": "compiled",
+      "web": "executed",
+      "output": "43\n"
+    },
+    {
+      "name": "text.part",
+      "native": "compiled",
+      "web": "executed",
+      "output": "TRI\n"
+    },
+    {
+      "name": "text.starts_with",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "text.ends_with",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "text.index_of",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "text.contains",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "validate.digit",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "validate.letter",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "validate.whitespace",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "validate.integer",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "validate.ascii",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "validate.identifier",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "animation.clamp01",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "name": "animation.linear",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "name": "animation.ease_in",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0.250000\n"
+    },
+    {
+      "name": "animation.ease_out",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0.750000\n"
+    },
+    {
+      "name": "animation.smoothstep",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0.500000\n"
+    },
+    {
+      "name": "animation.frame",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "buffer.create",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "buffer.capacity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4\n"
+    },
+    {
+      "name": "buffer.size",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "buffer.push",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[10, 20]\n"
+    },
+    {
+      "name": "buffer.get",
+      "native": "compiled",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "name": "buffer.set",
+      "native": "compiled",
+      "web": "executed",
+      "output": "9\n"
+    },
+    {
+      "name": "buffer.pop",
+      "native": "compiled",
+      "web": "executed",
+      "output": "7\n"
+    },
+    {
+      "name": "buffer.values",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[5]\n"
+    },
+    {
+      "name": "camera.screen",
+      "native": "compiled",
+      "web": "executed",
+      "output": "30\n"
+    },
+    {
+      "name": "camera.world",
+      "native": "compiled",
+      "web": "executed",
+      "output": "12\n"
+    },
+    {
+      "name": "camera.follow",
+      "native": "compiled",
+      "web": "executed",
+      "output": "40\n"
+    },
+    {
+      "name": "camera.visible",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "canvas.size",
+      "native": "compiled",
+      "web": "executed",
+      "output": "12\n"
+    },
+    {
+      "name": "canvas.create",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[0, 0, 0, 0]\n"
+    },
+    {
+      "name": "canvas.clear",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[255, 255, 255, 255]\n"
+    },
+    {
+      "name": "canvas.pixel",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n[0, 255, 0, 0]\n"
+    },
+    {
+      "name": "canvas.get",
+      "native": "compiled",
+      "web": "executed",
+      "output": "255\n"
+    },
+    {
+      "name": "canvas.rectangle",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n[0, 255, 255, 0, 0, 0]\n"
+    },
+    {
+      "name": "canvas.line",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "canvas.circle",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "name": "canvas.blend",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n[127]\n"
+    },
+    {
+      "name": "canvas.tile_map",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n[0, 255]\n"
+    },
+    {
+      "name": "colors.rgb",
+      "native": "compiled",
+      "web": "executed",
+      "output": "16711680\n"
+    },
+    {
+      "name": "colors.valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "colors.red",
+      "native": "compiled",
+      "web": "executed",
+      "output": "10\n"
+    },
+    {
+      "name": "colors.green",
+      "native": "compiled",
+      "web": "executed",
+      "output": "20\n"
+    },
+    {
+      "name": "colors.blue",
+      "native": "compiled",
+      "web": "executed",
+      "output": "30\n"
+    },
+    {
+      "name": "colors.invert",
+      "native": "compiled",
+      "web": "executed",
+      "output": "16777215\n"
+    },
+    {
+      "name": "colors.gray",
+      "native": "compiled",
+      "web": "executed",
+      "output": "65793\n"
+    },
+    {
+      "name": "colors.mix",
+      "native": "compiled",
+      "web": "executed",
+      "output": "127\n"
+    },
+    {
+      "name": "dictionary.create",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "dictionary.capacity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4\n"
+    },
+    {
+      "name": "dictionary.locate",
+      "native": "compiled",
+      "web": "executed",
+      "output": "-1\n"
+    },
+    {
+      "name": "dictionary.contains",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "dictionary.get",
+      "native": "compiled",
+      "web": "executed",
+      "output": "-1\n"
+    },
+    {
+      "name": "dictionary.size",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "dictionary.set",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n42\n"
+    },
+    {
+      "name": "dictionary.remove",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n0\n"
+    },
+    {
+      "name": "geometry.rectangle",
+      "native": "compiled",
+      "web": "executed",
+      "output": "12.000000\n"
+    },
+    {
+      "name": "geometry.circle",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3.141593\n"
+    },
+    {
+      "name": "geometry.circumference",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6.283185\n"
+    },
+    {
+      "name": "geometry.triangle",
+      "native": "compiled",
+      "web": "executed",
+      "output": "12.000000\n"
+    },
+    {
+      "name": "geometry.distance",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "name": "geometry.lerp",
+      "native": "compiled",
+      "web": "executed",
+      "output": "15.000000\n"
+    },
+    {
+      "name": "heap.create",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "heap.capacity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "heap.size",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "heap.push",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true false\n"
+    },
+    {
+      "name": "heap.peek",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4\n"
+    },
+    {
+      "name": "heap.pop",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4 7\n"
+    },
+    {
+      "name": "image.flip_x",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[2, 1, 4, 3]\n"
+    },
+    {
+      "name": "image.flip_y",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[3, 4, 1, 2]\n"
+    },
+    {
+      "name": "image.crop",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[2, 4]\n"
+    },
+    {
+      "name": "image.grayscale",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[0, 16777215]\n"
+    },
+    {
+      "name": "image.ppm",
+      "native": "compiled",
+      "web": "executed",
+      "output": "P3\n1 1\n255\n255 0 0\n\n"
+    },
+    {
+      "name": "image.save_ppm",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "io.read",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[255, 0]\n"
+    },
+    {
+      "name": "io.write",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "json.quote",
+      "native": "compiled",
+      "web": "executed",
+      "output": "\"Hola \\\"TRIPOL\\\"\"\n"
+    },
+    {
+      "name": "json.integer",
+      "native": "compiled",
+      "web": "executed",
+      "output": "-42\n"
+    },
+    {
+      "name": "json.boolean",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "json.pair",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"name\":\"TRIPOL\"}\n"
+    },
+    {
+      "name": "json.integers",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[1,2,3]\n"
+    },
+    {
+      "name": "json.ws",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "json.hex",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "json.digit",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "json.quoted",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "name": "json.literal",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4\n-1\n"
+    },
+    {
+      "name": "json.number",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "name": "json.value",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "name": "json.valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "json.get_raw",
+      "native": "compiled",
+      "web": "executed",
+      "output": "\"TRIPOL\"\n100\n"
+    },
+    {
+      "name": "json.get_raw_large",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"score\":100}\n"
+    },
+    {
+      "name": "matrix.size",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "name": "matrix.zeros",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[0, 0, 0, 0]\n"
+    },
+    {
+      "name": "matrix.identity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[1, 0, 0, 1]\n"
+    },
+    {
+      "name": "matrix.transpose",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[1, 4, 2, 5, 3, 6]\n"
+    },
+    {
+      "name": "matrix.add",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[4, 6]\n"
+    },
+    {
+      "name": "matrix.dot",
+      "native": "compiled",
+      "web": "executed",
+      "output": "11\n"
+    },
+    {
+      "name": "particles.create",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "particles.count",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "particles.step",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "particles.alive",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "particles.burst",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "particles.draw",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "physics.overlap",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "physics.contains",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "physics.clamp_position",
+      "native": "compiled",
+      "web": "executed",
+      "output": "90\n"
+    },
+    {
+      "name": "physics.integrate",
+      "native": "compiled",
+      "web": "executed",
+      "output": "20.000000\n"
+    },
+    {
+      "name": "physics.gravity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "9.800000\n"
+    },
+    {
+      "name": "queue.create",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "queue.capacity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "queue.size",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "queue.push",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "queue.peek",
+      "native": "compiled",
+      "web": "executed",
+      "output": "10\n"
+    },
+    {
+      "name": "queue.pop",
+      "native": "compiled",
+      "web": "executed",
+      "output": "10\n"
+    },
+    {
+      "name": "queue.clear",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n0\n"
+    },
+    {
+      "name": "regex.valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "regex.matches",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "sequences.arithmetic",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[2, 5, 8, 11]\n"
+    },
+    {
+      "name": "sequences.fibonacci",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[0, 1, 1, 2, 3, 5, 8]\n"
+    },
+    {
+      "name": "sequences.factorial",
+      "native": "compiled",
+      "web": "executed",
+      "output": "120\n"
+    },
+    {
+      "name": "sequences.triangular",
+      "native": "compiled",
+      "web": "executed",
+      "output": "15\n"
+    },
+    {
+      "name": "sprite.draw_key",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n[0, 255]\n"
+    },
+    {
+      "name": "sprite.draw",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n[0, 255]\n"
+    },
+    {
+      "name": "sprite.solid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[255, 255]\n"
+    },
+    {
+      "name": "sprite.rotate90",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[3, 1, 4, 2]\n"
+    },
+    {
+      "name": "sprite.scale_nearest",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[1, 1, 2, 2]\n"
+    },
+    {
+      "name": "sprite.draw_scaled",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n[255, 255]\n"
+    },
+    {
+      "name": "stack.create",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "stack.capacity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "stack.size",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "stack.push",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "stack.peek",
+      "native": "compiled",
+      "web": "executed",
+      "output": "20\n"
+    },
+    {
+      "name": "stack.pop",
+      "native": "compiled",
+      "web": "executed",
+      "output": "20\n"
+    },
+    {
+      "name": "stack.clear",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n0\n"
+    },
+    {
+      "name": "stats.mean",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4.000000\n"
+    },
+    {
+      "name": "stats.minimum",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "stats.maximum",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "name": "stats.variance",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "name": "stats.deviation",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "name": "stats.total",
+      "native": "compiled",
+      "web": "executed",
+      "output": "12\n"
+    },
+    {
+      "name": "stream.create",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "stream.position",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "stream.remaining",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "stream.seek",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "stream.read_byte",
+      "native": "compiled",
+      "web": "executed",
+      "output": "255\n"
+    },
+    {
+      "name": "stream.read_u16",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4660\n"
+    },
+    {
+      "name": "testing.equal_int",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "testing.equal_text",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "testing.equal_bool",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "testing.near",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "time.now_ms",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3048\n"
+    },
+    {
+      "name": "time.elapsed",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "time.sleep",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "time.seconds",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2.500000\n"
+    },
+    {
+      "name": "time.now_ns",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3079066022\n"
+    },
+    {
+      "name": "time.elapsed_ns",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "utf8.continuation",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "utf8.width_at",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "utf8.valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "utf8.count",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4\n"
+    },
+    {
+      "name": "utf8.scalar_at",
+      "native": "compiled",
+      "web": "executed",
+      "output": "233\n"
+    },
+    {
+      "name": "vector.dot2",
+      "native": "compiled",
+      "web": "executed",
+      "output": "11.000000\n"
+    },
+    {
+      "name": "vector.cross2",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "name": "vector.length2",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "name": "vector.distance2",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "name": "vector.normalized_x",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0.600000\n"
+    },
+    {
+      "name": "vector.normalized_y",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0.800000\n"
+    },
+    {
+      "name": "vector.scale",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[2, 4, 6]\n"
+    },
+    {
+      "name": "atomic.load",
+      "native": "compiled",
+      "web": "executed",
+      "output": "7\n"
+    },
+    {
+      "name": "atomic.exchange",
+      "native": "compiled",
+      "web": "executed",
+      "output": "7 9\n"
+    },
+    {
+      "name": "atomic.compare_exchange",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true 9\n"
+    },
+    {
+      "name": "atomic.add",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4\n"
+    },
+    {
+      "name": "audio.wav_mono",
+      "native": "compiled",
+      "web": "executed",
+      "output": "46\n"
+    },
+    {
+      "name": "audio.square_wave",
+      "native": "compiled",
+      "web": "executed",
+      "output": "80\n"
+    },
+    {
+      "name": "audio.save_wav",
+      "native": "compiled",
+      "web": "executed",
+      "output": "46\n"
+    },
+    {
+      "name": "audio.playback_supported",
+      "native": "compiled",
+      "web": "executed",
+      "output": "false\n"
+    },
+    {
+      "name": "audio.play_file",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "audio.beep",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "binary.is_byte",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "binary.valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "binary.read_u16_le",
+      "native": "compiled",
+      "web": "executed",
+      "output": "513\n"
+    },
+    {
+      "name": "binary.read_u32_le",
+      "native": "compiled",
+      "web": "executed",
+      "output": "513\n"
+    },
+    {
+      "name": "binary.u16_le",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[1, 2]\n"
+    },
+    {
+      "name": "binary.u32_le",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[0, 0, 1, 0]\n"
+    },
+    {
+      "name": "binary.read_u16_be",
+      "native": "compiled",
+      "web": "executed",
+      "output": "513\n"
+    },
+    {
+      "name": "binary.u16_be",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[2, 1]\n"
+    },
+    {
+      "name": "bits.mask",
+      "native": "compiled",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "name": "bits.test",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "bits.set",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "name": "bits.clear",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "name": "bits.toggle",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "bits.count",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "bitset.create",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "bitset.capacity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "100\n"
+    },
+    {
+      "name": "bitset.contains",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "bitset.add",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "name": "bitset.remove",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "bitset.count",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "name": "checksum.adler32",
+      "native": "compiled",
+      "web": "executed",
+      "output": "38600999\n"
+    },
+    {
+      "name": "checksum.sum8",
+      "native": "compiled",
+      "web": "executed",
+      "output": "38\n"
+    },
+    {
+      "name": "checksum.sum16",
+      "native": "compiled",
+      "web": "executed",
+      "output": "294\n"
+    },
+    {
+      "name": "compression.rle_encode",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[7, 3, 2, 1]\n"
+    },
+    {
+      "name": "compression.rle_valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "compression.rle_decode",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[7, 7, 7, 2]\n"
+    },
+    {
+      "name": "crypto.sha256_bytes",
+      "native": "compiled",
+      "web": "executed",
+      "output": "32\n"
+    },
+    {
+      "name": "crypto.sha256",
+      "native": "compiled",
+      "web": "executed",
+      "output": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb\n"
+    },
+    {
+      "name": "crypto.sha256_text",
+      "native": "compiled",
+      "web": "executed",
+      "output": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad\n"
+    },
+    {
+      "name": "discord.gateway",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.api_host",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.token",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.channel_path",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.send",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.latest",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.message_id",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.matches",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.listen",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.login",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.login_env",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.channel",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.reply",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.reset",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.configured",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.preview",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.dispatch",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.send_to",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.has_channel",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.all_channels",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.say",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.parse_latest",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.run_rest",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.setup",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.status",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.activity",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.welcome",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.connected",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.ping",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.identify_payload",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.heartbeat_payload",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.event_channel",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.gateway_reply",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.run",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "encoding.hex_digit",
+      "native": "compiled",
+      "web": "executed",
+      "output": "f\n"
+    },
+    {
+      "name": "encoding.hex_byte",
+      "native": "compiled",
+      "web": "executed",
+      "output": "ff\n"
+    },
+    {
+      "name": "encoding.hex_int",
+      "native": "compiled",
+      "web": "executed",
+      "output": "100\n"
+    },
+    {
+      "name": "encoding.hex_text",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4869\n"
+    },
+    {
+      "name": "env.get",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "events.pressed",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "events.left",
+      "native": "compiled",
+      "web": "executed",
+      "output": "37\n"
+    },
+    {
+      "name": "events.right",
+      "native": "compiled",
+      "web": "executed",
+      "output": "39\n"
+    },
+    {
+      "name": "events.up",
+      "native": "compiled",
+      "web": "executed",
+      "output": "38\n"
+    },
+    {
+      "name": "events.down",
+      "native": "compiled",
+      "web": "executed",
+      "output": "40\n"
+    },
+    {
+      "name": "events.escape",
+      "native": "compiled",
+      "web": "executed",
+      "output": "27\n"
+    },
+    {
+      "name": "events.space",
+      "native": "compiled",
+      "web": "executed",
+      "output": "32\n"
+    },
+    {
+      "name": "events.pad_connected",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "events.pad_buttons",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "events.pad_axis",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "events.pad_trigger",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "events.mouse_x",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "events.mouse_y",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "events.mouse_left",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "game.window",
+      "native": "compiled",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "name": "game.running",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "game.present",
+      "native": "compiled",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "name": "game.key",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "game.close",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "game.wait",
+      "native": "compiled",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "name": "game.gl_frame",
+      "native": "compiled",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "name": "http.get_raw",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.status",
+      "native": "compiled",
+      "web": "executed",
+      "output": "200\n"
+    },
+    {
+      "name": "http.body",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Hola\n"
+    },
+    {
+      "name": "https.get",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "memory.capacity",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6291456\n"
+    },
+    {
+      "name": "memory.used",
+      "native": "compiled",
+      "web": "executed",
+      "output": "80\n"
+    },
+    {
+      "name": "memory.committed",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "memory.available",
+      "native": "compiled",
+      "web": "executed",
+      "output": "6291456\n"
+    },
+    {
+      "name": "network.ipv4",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2130706433\n"
+    },
+    {
+      "name": "network.exchange",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "network.loopback",
+      "native": "compiled",
+      "web": "executed",
+      "output": "2130706433\n"
+    },
+    {
+      "name": "process.id",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "process.platform",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "process.exit",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "profiler.start",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "profiler.elapsed",
+      "native": "compiled",
+      "web": "executed",
+      "output": "4950\n26840\n"
+    },
+    {
+      "name": "simd.equal",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "system.platform",
+      "native": "compiled",
+      "web": "executed",
+      "output": "web\n"
+    },
+    {
+      "name": "system.architecture",
+      "native": "compiled",
+      "web": "executed",
+      "output": "wasm32\n"
+    },
+    {
+      "name": "system.compiler",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0.27.1\n"
+    },
+    {
+      "name": "system.is_windows",
+      "native": "compiled",
+      "web": "executed",
+      "output": "false\n"
+    },
+    {
+      "name": "system.is_linux",
+      "native": "compiled",
+      "web": "executed",
+      "output": "false\n"
+    },
+    {
+      "name": "thread.supported",
+      "native": "compiled",
+      "web": "executed",
+      "output": "false\n"
+    },
+    {
+      "name": "thread.sum",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "thread.sleep",
+      "native": "compiled",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "name": "ui.message",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "ui.confirm",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "ui.form",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "ui.warning",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "ui.error",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "ui.retry",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "ui.choose",
+      "native": "compiled",
+      "web": "native-only"
+    }
+  ],
+  "examples": [
+    {
+      "index": 0,
+      "name": "Hello world",
+      "web": "executed",
+      "output": "Hello, TRIPOL!\n"
+    },
+    {
+      "index": 1,
+      "name": "Variables",
+      "web": "executed",
+      "output": "TRIPOL 27\n"
+    },
+    {
+      "index": 2,
+      "name": "Arithmetic",
+      "web": "executed",
+      "output": "14\n20\n-2 -1\n"
+    },
+    {
+      "index": 3,
+      "name": "Constants",
+      "web": "executed",
+      "output": "50 100\n"
+    },
+    {
+      "index": 4,
+      "name": "Booleans",
+      "web": "executed",
+      "output": "true\nfalse\ntrue\n"
+    },
+    {
+      "index": 5,
+      "name": "Conditionals",
+      "web": "executed",
+      "output": "Passed\n"
+    },
+    {
+      "index": 6,
+      "name": "Range loop",
+      "web": "executed",
+      "output": "1\n2\n3\n4\n5\n"
+    },
+    {
+      "index": 7,
+      "name": "While loop",
+      "web": "executed",
+      "output": "3\n2\n1\nGo!\n"
+    },
+    {
+      "index": 8,
+      "name": "Repeat",
+      "web": "executed",
+      "output": "10\n"
+    },
+    {
+      "index": 9,
+      "name": "Functions",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "index": 10,
+      "name": "Short function",
+      "web": "executed",
+      "output": "81\n"
+    },
+    {
+      "index": 11,
+      "name": "Factorial",
+      "web": "executed",
+      "output": "720\n"
+    },
+    {
+      "index": 12,
+      "name": "Fibonacci",
+      "web": "executed",
+      "output": "55\n"
+    },
+    {
+      "index": 13,
+      "name": "Arrays",
+      "web": "executed",
+      "output": "20\n3 60\n"
+    },
+    {
+      "index": 14,
+      "name": "Dynamic arrays",
+      "web": "executed",
+      "output": "[0, 1, 4, 9, 16]\n"
+    },
+    {
+      "index": 15,
+      "name": "Array updates",
+      "web": "executed",
+      "output": "12\n"
+    },
+    {
+      "index": 16,
+      "name": "Loop control",
+      "web": "executed",
+      "output": "0\n1\n3\n4\n"
+    },
+    {
+      "index": 17,
+      "name": "Console input",
+      "web": "executed",
+      "output": "Your name: \nHello Ada\n"
+    },
+    {
+      "index": 18,
+      "name": "Assertions",
+      "web": "executed",
+      "output": "Test passed\n"
+    },
+    {
+      "index": 19,
+      "name": "Prime checker",
+      "web": "executed",
+      "output": "2\n3\n5\n7\n11\n"
+    },
+    {
+      "index": 20,
+      "name": "String interpolation",
+      "web": "executed",
+      "output": "Hello TRIPOL! Score: 40\n"
+    },
+    {
+      "index": 21,
+      "name": "Array iteration",
+      "web": "executed",
+      "output": "10\n20\n30\n"
+    },
+    {
+      "index": 22,
+      "name": "Indexed iteration",
+      "web": "executed",
+      "output": "0: 7\n1: 8\n2: 9\n"
+    },
+    {
+      "index": 23,
+      "name": "Even or odd",
+      "web": "executed",
+      "output": "false\n"
+    },
+    {
+      "index": 24,
+      "name": "Absolute value",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "index": 25,
+      "name": "Maximum of three",
+      "web": "executed",
+      "output": "20\n"
+    },
+    {
+      "index": 26,
+      "name": "Minimum of three",
+      "web": "executed",
+      "output": "-11\n"
+    },
+    {
+      "index": 27,
+      "name": "Triangle area",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "index": 28,
+      "name": "Rectangle area",
+      "web": "executed",
+      "output": "40\n26\n"
+    },
+    {
+      "index": 29,
+      "name": "Integer power",
+      "web": "executed",
+      "output": "81\n"
+    },
+    {
+      "index": 30,
+      "name": "Greatest common divisor",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 31,
+      "name": "Least common multiple",
+      "web": "executed",
+      "output": "36\n"
+    },
+    {
+      "index": 32,
+      "name": "Arithmetic progression",
+      "web": "executed",
+      "output": "3\n7\n11\n15\n19\n"
+    },
+    {
+      "index": 33,
+      "name": "Geometric progression",
+      "web": "executed",
+      "output": "2\n6\n18\n54\n162\n"
+    },
+    {
+      "index": 34,
+      "name": "Integer square root",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "index": 35,
+      "name": "Digit sum",
+      "web": "executed",
+      "output": "15\n"
+    },
+    {
+      "index": 36,
+      "name": "Binary digit count",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 37,
+      "name": "Pythagorean triple",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 38,
+      "name": "Sum from 1 to N",
+      "web": "executed",
+      "output": "55\n"
+    },
+    {
+      "index": 39,
+      "name": "Sum of squares",
+      "web": "executed",
+      "output": "55\n"
+    },
+    {
+      "index": 40,
+      "name": "Count divisors",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "index": 41,
+      "name": "Perfect number",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 42,
+      "name": "Reverse digits",
+      "web": "executed",
+      "output": "4321\n"
+    },
+    {
+      "index": 43,
+      "name": "Numeric palindrome",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 44,
+      "name": "Collatz sequence",
+      "web": "executed",
+      "output": "6\n3\n10\n5\n16\n8\n4\n2\n1\n"
+    },
+    {
+      "index": 45,
+      "name": "Linear search",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 46,
+      "name": "Binary search",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 47,
+      "name": "Bubble sort",
+      "web": "executed",
+      "output": "[1, 2, 4, 5]\n"
+    },
+    {
+      "index": 48,
+      "name": "Selection sort",
+      "web": "executed",
+      "output": "[1, 2, 7, 9]\n"
+    },
+    {
+      "index": 49,
+      "name": "Insertion sort",
+      "web": "executed",
+      "output": "[1, 2, 3, 4]\n"
+    },
+    {
+      "index": 50,
+      "name": "Prefix sums",
+      "web": "executed",
+      "output": "[3, 4, 8, 10]\n"
+    },
+    {
+      "index": 51,
+      "name": "Maximum subarray",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 52,
+      "name": "Run length count",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 53,
+      "name": "Array sum",
+      "web": "executed",
+      "output": "24\n"
+    },
+    {
+      "index": 54,
+      "name": "Integer average",
+      "web": "executed",
+      "output": "9\n"
+    },
+    {
+      "index": 55,
+      "name": "Find largest item",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "index": 56,
+      "name": "Find smallest item",
+      "web": "executed",
+      "output": "-8\n"
+    },
+    {
+      "index": 57,
+      "name": "Count occurrences",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 58,
+      "name": "Reverse array",
+      "web": "executed",
+      "output": "[4, 3, 2, 1]\n"
+    },
+    {
+      "index": 59,
+      "name": "Array copy",
+      "web": "executed",
+      "output": "[3, 5, 7]\n"
+    },
+    {
+      "index": 60,
+      "name": "Dot product",
+      "web": "executed",
+      "output": "32\n"
+    },
+    {
+      "index": 61,
+      "name": "Elementwise addition",
+      "web": "executed",
+      "output": "[5, 7, 9]\n"
+    },
+    {
+      "index": 62,
+      "name": "Scale vector",
+      "web": "executed",
+      "output": "[6, 12, 18]\n"
+    },
+    {
+      "index": 63,
+      "name": "Histogram",
+      "web": "executed",
+      "output": "[1, 2, 3]\n"
+    },
+    {
+      "index": 64,
+      "name": "Matrix indexing",
+      "web": "executed",
+      "output": "6\n15\n"
+    },
+    {
+      "index": 65,
+      "name": "Diagonal sum",
+      "web": "executed",
+      "output": "15\n"
+    },
+    {
+      "index": 66,
+      "name": "Array rotation",
+      "web": "executed",
+      "output": "[2, 3, 4, 1]\n"
+    },
+    {
+      "index": 67,
+      "name": "Count positive values",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 68,
+      "name": "Join strings",
+      "web": "executed",
+      "output": "Hello TRIPOL\n"
+    },
+    {
+      "index": 69,
+      "name": "String length",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 70,
+      "name": "Text equality",
+      "web": "executed",
+      "output": "true\ntrue\n"
+    },
+    {
+      "index": 71,
+      "name": "Escaped quotes",
+      "web": "executed",
+      "output": "Hello \"world\"\n"
+    },
+    {
+      "index": 72,
+      "name": "Escaped braces",
+      "web": "executed",
+      "output": "{score} = 42\n"
+    },
+    {
+      "index": 73,
+      "name": "Text banner",
+      "web": "executed",
+      "output": "********\nTRIPOL\n********\n"
+    },
+    {
+      "index": 74,
+      "name": "Numbered labels",
+      "web": "executed",
+      "output": "Item 1\nItem 2\nItem 3\n"
+    },
+    {
+      "index": 75,
+      "name": "Greeting function",
+      "web": "executed",
+      "output": "Hello Ada\n"
+    },
+    {
+      "index": 76,
+      "name": "Two inputs",
+      "web": "executed",
+      "output": "Name: \nCity: \nAda from Bogota\n"
+    },
+    {
+      "index": 77,
+      "name": "Boolean interpolation",
+      "web": "executed",
+      "output": "Active: true\n"
+    },
+    {
+      "index": 78,
+      "name": "Temperature conversion",
+      "web": "executed",
+      "output": "68\n"
+    },
+    {
+      "index": 79,
+      "name": "Function composition",
+      "web": "executed",
+      "output": "12\n"
+    },
+    {
+      "index": 80,
+      "name": "Boolean function",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 81,
+      "name": "Recursive countdown",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "index": 82,
+      "name": "Recursive power",
+      "web": "executed",
+      "output": "1024\n"
+    },
+    {
+      "index": 83,
+      "name": "Return branches",
+      "web": "executed",
+      "output": "-1 0 1\n"
+    },
+    {
+      "index": 84,
+      "name": "Local variables",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "index": 85,
+      "name": "Forward function call",
+      "web": "executed",
+      "output": "21\n"
+    },
+    {
+      "index": 86,
+      "name": "Nested calls",
+      "web": "executed",
+      "output": "10\n"
+    },
+    {
+      "index": 87,
+      "name": "Function with array",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 88,
+      "name": "Shopping receipt",
+      "web": "executed",
+      "output": "Subtotal: 7000\nTotal: 6300\n"
+    },
+    {
+      "index": 89,
+      "name": "Grade report",
+      "web": "executed",
+      "output": "Average: 80\nPassed\n"
+    },
+    {
+      "index": 90,
+      "name": "Game score",
+      "web": "executed",
+      "output": "Final score: 80\n"
+    },
+    {
+      "index": 91,
+      "name": "Health simulation",
+      "web": "executed",
+      "output": "Health: 45\n"
+    },
+    {
+      "index": 92,
+      "name": "Simple inventory",
+      "web": "executed",
+      "output": "[8, 8, 8]\n"
+    },
+    {
+      "index": 93,
+      "name": "Savings calculator",
+      "web": "executed",
+      "output": "Savings: 60000\n"
+    },
+    {
+      "index": 94,
+      "name": "Unit converter",
+      "web": "executed",
+      "output": "7 km = 7000 m\n"
+    },
+    {
+      "index": 95,
+      "name": "Trip cost",
+      "web": "executed",
+      "output": "32000\n"
+    },
+    {
+      "index": 96,
+      "name": "ASCII rectangle",
+      "web": "executed",
+      "output": "#####\n#####\n#####\n"
+    },
+    {
+      "index": 97,
+      "name": "ASCII staircase",
+      "web": "executed",
+      "output": "*\n**\n***\n****\n"
+    },
+    {
+      "index": 98,
+      "name": "Multiplication table",
+      "web": "executed",
+      "output": "7 x 1 = 7\n7 x 2 = 14\n7 x 3 = 21\n7 x 4 = 28\n7 x 5 = 35\n"
+    },
+    {
+      "index": 99,
+      "name": "Simple chatbot",
+      "web": "executed",
+      "output": "You: \nBot: Hello!\n"
+    },
+    {
+      "index": 100,
+      "name": "Power with math",
+      "web": "executed",
+      "output": "81\n"
+    },
+    {
+      "index": 101,
+      "name": "Factorial with sequences",
+      "web": "executed",
+      "output": "720\n"
+    },
+    {
+      "index": 102,
+      "name": "Find a value",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 103,
+      "name": "Sort numbers",
+      "web": "executed",
+      "output": "[1, 2, 4, 5]\n"
+    },
+    {
+      "index": 104,
+      "name": "Greatest common divisor",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 105,
+      "name": "Reverse an array",
+      "web": "executed",
+      "output": "[4, 3, 2, 1]\n"
+    },
+    {
+      "index": 106,
+      "name": "Square root",
+      "web": "executed",
+      "output": "8.000000\n"
+    },
+    {
+      "index": 107,
+      "name": "Clamp health",
+      "web": "executed",
+      "output": "100\n"
+    },
+    {
+      "index": 108,
+      "name": "Find the average",
+      "web": "executed",
+      "output": "4.000000\n"
+    },
+    {
+      "index": 109,
+      "name": "Convert temperature",
+      "web": "executed",
+      "output": "77.000000\n"
+    },
+    {
+      "index": 110,
+      "name": "console.line",
+      "web": "executed",
+      "output": "Hola TRIPOL\n"
+    },
+    {
+      "index": 111,
+      "name": "math.square",
+      "web": "executed",
+      "output": "25\n"
+    },
+    {
+      "index": 112,
+      "name": "math.cube",
+      "web": "executed",
+      "output": "27\n"
+    },
+    {
+      "index": 113,
+      "name": "math.clamp",
+      "web": "executed",
+      "output": "100\n"
+    },
+    {
+      "index": 114,
+      "name": "math.power",
+      "web": "executed",
+      "output": "16\n"
+    },
+    {
+      "index": 115,
+      "name": "math.gcd",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 116,
+      "name": "math.root",
+      "web": "executed",
+      "output": "9.000000\n"
+    },
+    {
+      "index": 117,
+      "name": "math.pi",
+      "web": "executed",
+      "output": "3.141593\n"
+    },
+    {
+      "index": 118,
+      "name": "math.percent",
+      "web": "executed",
+      "output": "20.000000\n"
+    },
+    {
+      "index": 119,
+      "name": "math.sqrt_value",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "index": 120,
+      "name": "math.absolute",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "index": 121,
+      "name": "math.minimum",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 122,
+      "name": "math.maximum",
+      "web": "executed",
+      "output": "8\n"
+    },
+    {
+      "index": 123,
+      "name": "text.size",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 124,
+      "name": "text.empty",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 125,
+      "name": "text.from_int",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "index": 126,
+      "name": "text.to_int",
+      "web": "executed",
+      "output": "43\n"
+    },
+    {
+      "index": 127,
+      "name": "text.part",
+      "web": "executed",
+      "output": "TRI\n"
+    },
+    {
+      "index": 128,
+      "name": "text.starts_with",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 129,
+      "name": "text.ends_with",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 130,
+      "name": "text.index_of",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 131,
+      "name": "text.contains",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 132,
+      "name": "convert.celsius_to_fahrenheit",
+      "web": "executed",
+      "output": "68.000000\n"
+    },
+    {
+      "index": 133,
+      "name": "convert.fahrenheit_to_celsius",
+      "web": "executed",
+      "output": "20.000000\n"
+    },
+    {
+      "index": 134,
+      "name": "convert.km_to_miles",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "index": 135,
+      "name": "convert.miles_to_km",
+      "web": "executed",
+      "output": "1.609344\n"
+    },
+    {
+      "index": 136,
+      "name": "convert.kg_to_lb",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "index": 137,
+      "name": "convert.lb_to_kg",
+      "web": "executed",
+      "output": "0.453592\n"
+    },
+    {
+      "index": 138,
+      "name": "convert.celsius_to_kelvin",
+      "web": "executed",
+      "output": "273.150000\n"
+    },
+    {
+      "index": 139,
+      "name": "convert.kelvin_to_celsius",
+      "web": "executed",
+      "output": "0.000000\n"
+    },
+    {
+      "index": 140,
+      "name": "random.next",
+      "web": "executed",
+      "output": "48271\n"
+    },
+    {
+      "index": 141,
+      "name": "random.unit",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 142,
+      "name": "random.bounded",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "index": 143,
+      "name": "datetime.leap",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 144,
+      "name": "datetime.days_in_month",
+      "web": "executed",
+      "output": "29\n"
+    },
+    {
+      "index": 145,
+      "name": "datetime.valid",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 146,
+      "name": "datetime.day_of_year",
+      "web": "executed",
+      "output": "32\n"
+    },
+    {
+      "index": 147,
+      "name": "datetime.weekday",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "index": 148,
+      "name": "datetime.days_between",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 149,
+      "name": "arrays.make",
+      "web": "executed",
+      "output": "[7, 7, 7]\n"
+    },
+    {
+      "index": 150,
+      "name": "validate.digit",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 151,
+      "name": "validate.letter",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 152,
+      "name": "validate.whitespace",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 153,
+      "name": "errors.int_or",
+      "web": "executed",
+      "output": "7\n"
+    },
+    {
+      "index": 154,
+      "name": "errors.can_divide",
+      "web": "executed",
+      "output": "false\n"
+    },
+    {
+      "index": 155,
+      "name": "errors.div_or",
+      "web": "executed",
+      "output": "-1\n"
+    },
+    {
+      "index": 156,
+      "name": "errors.message",
+      "web": "executed",
+      "output": "Index out of bounds\n"
+    },
+    {
+      "index": 157,
+      "name": "errors.message_es",
+      "web": "executed",
+      "output": "Indice fuera de rango\n"
+    },
+    {
+      "index": 158,
+      "name": "path.last_separator",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "index": 159,
+      "name": "path.basename",
+      "web": "executed",
+      "output": "main.tri\n"
+    },
+    {
+      "index": 160,
+      "name": "path.dirname",
+      "web": "executed",
+      "output": "docs\n"
+    },
+    {
+      "index": 161,
+      "name": "path.extension",
+      "web": "executed",
+      "output": ".tri\n"
+    },
+    {
+      "index": 162,
+      "name": "path.join",
+      "web": "executed",
+      "output": "docs/main.tri\n"
+    },
+    {
+      "index": 163,
+      "name": "datetime.ordinal",
+      "web": "executed",
+      "output": "1\n2\n"
+    },
+    {
+      "index": 164,
+      "name": "arrays.total",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 165,
+      "name": "arrays.count",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 166,
+      "name": "arrays.contains",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 167,
+      "name": "arrays.reversed",
+      "web": "executed",
+      "output": "[3, 2, 1]\n"
+    },
+    {
+      "index": 168,
+      "name": "arrays.length",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 169,
+      "name": "collections.append",
+      "web": "executed",
+      "output": "[1, 2, 3]\n"
+    },
+    {
+      "index": 170,
+      "name": "collections.part",
+      "web": "executed",
+      "output": "[20, 30]\n"
+    },
+    {
+      "index": 171,
+      "name": "collections.remove_at",
+      "web": "executed",
+      "output": "[10, 30]\n"
+    },
+    {
+      "index": 172,
+      "name": "collections.insert",
+      "web": "executed",
+      "output": "[10, 20, 30]\n"
+    },
+    {
+      "index": 173,
+      "name": "search.linear",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "index": 174,
+      "name": "search.lower_bound",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 175,
+      "name": "search.binary",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 176,
+      "name": "search.last",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 177,
+      "name": "sort.ascending",
+      "web": "executed",
+      "output": "[1, 2, 3]\n"
+    },
+    {
+      "index": 178,
+      "name": "sort.descending",
+      "web": "executed",
+      "output": "[3, 2, 1]\n"
+    },
+    {
+      "index": 179,
+      "name": "sort.sorted",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 180,
+      "name": "validate.integer",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "index": 181,
+      "name": "validate.ascii",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "index": 182,
+      "name": "validate.identifier",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "index": 183,
+      "name": "errors.is_int",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "index": 184,
+      "name": "errors.get_or",
+      "web": "executed",
+      "output": "-1\n"
+    },
+    {
+      "index": 185,
+      "name": "path.separator",
+      "web": "executed",
+      "output": "true\ntrue\n"
+    },
+    {
+      "index": 186,
+      "name": "collections.concat",
+      "web": "executed",
+      "output": "[1, 2, 3, 4]\n"
+    },
+    {
+      "index": 187,
+      "name": "collections.equal",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 188,
+      "name": "arrays.copy",
+      "web": "executed",
+      "output": "[1, 2] [9, 2]\n"
+    },
+    {
+      "index": 189,
+      "name": "arrays.copy_into",
+      "web": "executed",
+      "output": "true\n[4, 7]\n"
+    },
+    {
+      "index": 190,
+      "name": "sort.sift",
+      "web": "executed",
+      "output": "[3, 1, 2]\n"
+    },
+    {
+      "index": 191,
+      "name": "sequences.arithmetic",
+      "web": "executed",
+      "output": "[2, 5, 8, 11]\n"
+    },
+    {
+      "index": 192,
+      "name": "sequences.fibonacci",
+      "web": "executed",
+      "output": "[0, 1, 1, 2, 3, 5, 8]\n"
+    },
+    {
+      "index": 193,
+      "name": "sequences.factorial",
+      "web": "executed",
+      "output": "120\n"
+    },
+    {
+      "index": 194,
+      "name": "sequences.triangular",
+      "web": "executed",
+      "output": "15\n"
+    },
+    {
+      "index": 195,
+      "name": "testing.equal_int",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 196,
+      "name": "testing.equal_text",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 197,
+      "name": "testing.equal_bool",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 198,
+      "name": "testing.near",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 199,
+      "name": "time.seconds",
+      "web": "executed",
+      "output": "2.500000\n"
+    },
+    {
+      "index": 200,
+      "name": "json.quote",
+      "web": "executed",
+      "output": "\"Hola \\\"TRIPOL\\\"\"\n"
+    },
+    {
+      "index": 201,
+      "name": "json.integer",
+      "web": "executed",
+      "output": "-42\n"
+    },
+    {
+      "index": 202,
+      "name": "json.pair",
+      "web": "executed",
+      "output": "{\"name\":\"TRIPOL\"}\n"
+    },
+    {
+      "index": 203,
+      "name": "colors.rgb",
+      "web": "executed",
+      "output": "16711680\n"
+    },
+    {
+      "index": 204,
+      "name": "colors.valid",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 205,
+      "name": "colors.red",
+      "web": "executed",
+      "output": "10\n"
+    },
+    {
+      "index": 206,
+      "name": "colors.green",
+      "web": "executed",
+      "output": "20\n"
+    },
+    {
+      "index": 207,
+      "name": "colors.blue",
+      "web": "executed",
+      "output": "30\n"
+    },
+    {
+      "index": 208,
+      "name": "colors.invert",
+      "web": "executed",
+      "output": "16777215\n"
+    },
+    {
+      "index": 209,
+      "name": "colors.gray",
+      "web": "executed",
+      "output": "65793\n"
+    },
+    {
+      "index": 210,
+      "name": "colors.mix",
+      "web": "executed",
+      "output": "127\n"
+    },
+    {
+      "index": 211,
+      "name": "geometry.rectangle",
+      "web": "executed",
+      "output": "12.000000\n"
+    },
+    {
+      "index": 212,
+      "name": "geometry.circle",
+      "web": "executed",
+      "output": "3.141593\n"
+    },
+    {
+      "index": 213,
+      "name": "geometry.circumference",
+      "web": "executed",
+      "output": "6.283185\n"
+    },
+    {
+      "index": 214,
+      "name": "geometry.triangle",
+      "web": "executed",
+      "output": "12.000000\n"
+    },
+    {
+      "index": 215,
+      "name": "geometry.distance",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "index": 216,
+      "name": "geometry.lerp",
+      "web": "executed",
+      "output": "15.000000\n"
+    },
+    {
+      "index": 217,
+      "name": "animation.clamp01",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "index": 218,
+      "name": "animation.linear",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "index": 219,
+      "name": "animation.ease_in",
+      "web": "executed",
+      "output": "0.250000\n"
+    },
+    {
+      "index": 220,
+      "name": "animation.ease_out",
+      "web": "executed",
+      "output": "0.750000\n"
+    },
+    {
+      "index": 221,
+      "name": "animation.smoothstep",
+      "web": "executed",
+      "output": "0.500000\n"
+    },
+    {
+      "index": 222,
+      "name": "animation.frame",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 223,
+      "name": "vector.dot2",
+      "web": "executed",
+      "output": "11.000000\n"
+    },
+    {
+      "index": 224,
+      "name": "vector.cross2",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "index": 225,
+      "name": "vector.length2",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "index": 226,
+      "name": "vector.distance2",
+      "web": "executed",
+      "output": "5.000000\n"
+    },
+    {
+      "index": 227,
+      "name": "vector.normalized_x",
+      "web": "executed",
+      "output": "0.600000\n"
+    },
+    {
+      "index": 228,
+      "name": "vector.normalized_y",
+      "web": "executed",
+      "output": "0.800000\n"
+    },
+    {
+      "index": 229,
+      "name": "matrix.size",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 230,
+      "name": "matrix.zeros",
+      "web": "executed",
+      "output": "[0, 0, 0, 0]\n"
+    },
+    {
+      "index": 231,
+      "name": "matrix.identity",
+      "web": "executed",
+      "output": "[1, 0, 0, 1]\n"
+    },
+    {
+      "index": 232,
+      "name": "physics.overlap",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 233,
+      "name": "physics.contains",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 234,
+      "name": "physics.clamp_position",
+      "web": "executed",
+      "output": "90\n"
+    },
+    {
+      "index": 235,
+      "name": "physics.integrate",
+      "web": "executed",
+      "output": "20.000000\n"
+    },
+    {
+      "index": 236,
+      "name": "physics.gravity",
+      "web": "executed",
+      "output": "9.800000\n"
+    },
+    {
+      "index": 237,
+      "name": "canvas.size",
+      "web": "executed",
+      "output": "12\n"
+    },
+    {
+      "index": 238,
+      "name": "sprite.solid",
+      "web": "executed",
+      "output": "[255, 255]\n"
+    },
+    {
+      "index": 239,
+      "name": "camera.screen",
+      "web": "executed",
+      "output": "30\n"
+    },
+    {
+      "index": 240,
+      "name": "camera.world",
+      "web": "executed",
+      "output": "12\n"
+    },
+    {
+      "index": 241,
+      "name": "camera.follow",
+      "web": "executed",
+      "output": "40\n"
+    },
+    {
+      "index": 242,
+      "name": "camera.visible",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 243,
+      "name": "dictionary.create",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "index": 244,
+      "name": "dictionary.capacity",
+      "web": "executed",
+      "output": "4\n"
+    },
+    {
+      "index": 245,
+      "name": "dictionary.locate",
+      "web": "executed",
+      "output": "-1\n"
+    },
+    {
+      "index": 246,
+      "name": "dictionary.get",
+      "web": "executed",
+      "output": "-1\n"
+    },
+    {
+      "index": 247,
+      "name": "buffer.create",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "index": 248,
+      "name": "buffer.capacity",
+      "web": "executed",
+      "output": "4\n"
+    },
+    {
+      "index": 249,
+      "name": "stack.create",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "index": 250,
+      "name": "stack.capacity",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 251,
+      "name": "stack.push",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 252,
+      "name": "queue.create",
+      "web": "executed",
+      "output": "0\n"
+    },
+    {
+      "index": 253,
+      "name": "queue.capacity",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 254,
+      "name": "queue.push",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 255,
+      "name": "stats.mean",
+      "web": "executed",
+      "output": "4.000000\n"
+    },
+    {
+      "index": 256,
+      "name": "stats.minimum",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 257,
+      "name": "stats.maximum",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 258,
+      "name": "stats.variance",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "index": 259,
+      "name": "stats.deviation",
+      "web": "executed",
+      "output": "1.000000\n"
+    },
+    {
+      "index": 260,
+      "name": "stats.total",
+      "web": "executed",
+      "output": "12\n"
+    },
+    {
+      "index": 261,
+      "name": "time.elapsed",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 262,
+      "name": "time.elapsed_ns",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 263,
+      "name": "json.boolean",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "index": 264,
+      "name": "json.integers",
+      "web": "executed",
+      "output": "[1,2,3]\n"
+    },
+    {
+      "index": 265,
+      "name": "json.valid",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "index": 266,
+      "name": "json.get_raw_large",
+      "web": "executed",
+      "output": "{\"score\":100}\n"
+    },
+    {
+      "index": 267,
+      "name": "json.ws",
+      "web": "executed",
+      "output": "2\n"
+    },
+    {
+      "index": 268,
+      "name": "json.hex",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "index": 269,
+      "name": "json.digit",
+      "web": "executed",
+      "output": "true\nfalse\n"
+    },
+    {
+      "index": 270,
+      "name": "json.quoted",
+      "web": "executed",
+      "output": "6\n"
+    },
+    {
+      "index": 271,
+      "name": "json.number",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "index": 272,
+      "name": "json.value",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "index": 273,
+      "name": "vector.scale",
+      "web": "executed",
+      "output": "[2, 4, 6]\n"
+    },
+    {
+      "index": 274,
+      "name": "matrix.transpose",
+      "web": "executed",
+      "output": "[1, 4, 2, 5, 3, 6]\n"
+    },
+    {
+      "index": 275,
+      "name": "canvas.create",
+      "web": "executed",
+      "output": "[0, 0, 0, 0]\n"
+    },
+    {
+      "index": 276,
+      "name": "canvas.line",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 277,
+      "name": "canvas.circle",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "index": 278,
+      "name": "sprite.rotate90",
+      "web": "executed",
+      "output": "[3, 1, 4, 2]\n"
+    },
+    {
+      "index": 279,
+      "name": "sprite.scale_nearest",
+      "web": "executed",
+      "output": "[1, 1, 2, 2]\n"
+    },
+    {
+      "index": 280,
+      "name": "particles.create",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 281,
+      "name": "particles.burst",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "index": 282,
+      "name": "image.flip_x",
+      "web": "executed",
+      "output": "[2, 1, 4, 3]\n"
+    },
+    {
+      "index": 283,
+      "name": "image.flip_y",
+      "web": "executed",
+      "output": "[3, 4, 1, 2]\n"
+    },
+    {
+      "index": 284,
+      "name": "image.crop",
+      "web": "executed",
+      "output": "[2, 4]\n"
+    },
+    {
+      "index": 285,
+      "name": "image.grayscale",
+      "web": "executed",
+      "output": "[0, 16777215]\n"
+    },
+    {
+      "index": 286,
+      "name": "dictionary.contains",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 287,
+      "name": "dictionary.size",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "index": 288,
+      "name": "dictionary.set",
+      "web": "executed",
+      "output": "true\n42\n"
+    },
+    {
+      "index": 289,
+      "name": "buffer.size",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "index": 290,
+      "name": "buffer.get",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "index": 291,
+      "name": "buffer.set",
+      "web": "executed",
+      "output": "9\n"
+    },
+    {
+      "index": 292,
+      "name": "buffer.pop",
+      "web": "executed",
+      "output": "7\n"
+    },
+    {
+      "index": 293,
+      "name": "buffer.values",
+      "web": "executed",
+      "output": "[5]\n"
+    },
+    {
+      "index": 294,
+      "name": "stack.size",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "index": 295,
+      "name": "queue.size",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "index": 296,
+      "name": "json.get_raw",
+      "web": "executed",
+      "output": "\"TRIPOL\"\n100\n"
+    },
+    {
+      "index": 297,
+      "name": "json.literal",
+      "web": "executed",
+      "output": "4\n-1\n"
+    },
+    {
+      "index": 298,
+      "name": "matrix.add",
+      "web": "executed",
+      "output": "[4, 6]\n"
+    },
+    {
+      "index": 299,
+      "name": "matrix.dot",
+      "web": "executed",
+      "output": "11\n"
+    },
+    {
+      "index": 300,
+      "name": "Canvas preview",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "index": 301,
+      "name": "WebGPU triangle",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "index": 302,
+      "name": "Moving square",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "index": 303,
+      "name": "Sprite preview",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "index": 304,
+      "name": "Particle burst",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "index": 305,
+      "name": "Image flip preview",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "index": 306,
+      "name": "Animation frames",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "index": 307,
+      "name": "Camera preview",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "index": 308,
+      "name": "Collision preview",
+      "web": "executed",
+      "output": ""
+    },
+    {
+      "index": 309,
+      "name": "RGB color preview",
+      "web": "executed",
+      "output": ""
+    }
+  ]
+}
