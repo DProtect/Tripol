@@ -1,10 +1,10 @@
 {
-  "commit": "4961f38b79c99ef60470070b2fd695f9d4575366",
+  "commit": "bfc3a58c56b3d1c73f628fcdd1fd8cadd53bd09b",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
-  "total": 145,
+  "total": 146,
   "counts": {
-    "executed": 130,
+    "executed": 131,
     "native-only": 15
   },
   "rows": [
@@ -31,33 +31,40 @@
     {
       "file": "docs/discord.html",
       "index": 4,
+      "source": "import tripol.discord\n\nfunc joined(event:discord.GatewayEvent)->bool {\n    show \"Nuevo miembro\", event.guild_id, event.user_id\n    return true\n}\n\nregistry = discord.events()\nregistry.intent(\"GUILD_MEMBERS\")\nregistry.on(\"member_join\", &joined)\nshow registry.preview(\"{\\\"op\\\":0,\\\"t\\\":\\\"GUILD_MEMBER_ADD\\\",\\\"s\\\":9,\\\"d\\\":{\\\"guild_id\\\":\\\"321\\\",\\\"user\\\":{\\\"id\\\":\\\"567\\\"}}}\")",
+      "status": "executed",
+      "output": "Nuevo miembro 321 567\ntrue\n"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 5,
       "source": "import tripol.discord\n\nfunc answer(ctx:discord.Interaction)->string {return ctx.reply(\"Hola, \"+ctx.option_text(\"text\"),true)}\nb=discord.bot()\nb.slash(\"hola\",\"Saluda\",&answer)\nshow b.preview_interaction(\"{\\\"op\\\":0,\\\"t\\\":\\\"INTERACTION_CREATE\\\",\\\"d\\\":{\\\"id\\\":\\\"123\\\",\\\"token\\\":\\\"fixture-token\\\",\\\"type\\\":2,\\\"data\\\":{\\\"type\\\":1,\\\"name\\\":\\\"hola\\\",\\\"options\\\":[{\\\"type\\\":3,\\\"name\\\":\\\"text\\\",\\\"value\\\":\\\"Ana\\\"}]}}}\")",
       "status": "executed",
       "output": "{\"type\":4,\"data\":{\"content\":\"Hola, Ana\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 5,
+      "index": 6,
       "source": "import tripol.discord\n\nfunc report(ctx:discord.Interaction)->string {\n    if ctx.respond(ctx.defer(true)) {\n        if ctx.edit_reply(\"Informe listo\") {\n            ctx.followup(\"Consulta el resultado arriba\", true)\n        }\n    }\n    return \"\"\n}\n\nbot = discord.bot()\nbot.slash(\"informe\", \"Prepara un informe\", &report)\nbot.start()",
       "status": "native-only"
     },
     {
       "file": "docs/discord.html",
-      "index": 6,
+      "index": 7,
       "source": "import tripol.discord\n\nfunc search(ctx:discord.Interaction)->string {\n    return ctx.reply(\"Busca \" + ctx.option_text(\"query\"), true)\n}\n\nfunc suggest(ctx:discord.Interaction)->string {\n    choices = discord.command_choices()\n    if ctx.focused()==\"query\" and ctx.option_text(\"query\")==\"ca\" {\n        choices.add(\"Café\", \"cafe\")\n    }\n    return ctx.autocomplete(choices)\n}\n\narguments = discord.slash_options()\narguments.add(\"query\", \"Qué buscar\", \"string\", true, true)\nlimits = discord.command_choices()\nlimits.integer(\"Diez\", 10)\narguments.choose(\"limit\", \"Resultados máximos\", limits)\ncommands = discord.slash_options()\ncommands.subcommand(\"find\", \"Busca una bebida\", arguments)\nroot = discord.slash_options()\nroot.group(\"drinks\", \"Bebidas\", commands)\nbot = discord.bot()\nbot.slash_with_options(\"order\", \"Haz tu pedido\", &search, root)\nbot.on_autocomplete(\"order\", &suggest)\nshow bot.preview_interaction(\"{\\\"op\\\":0,\\\"t\\\":\\\"INTERACTION_CREATE\\\",\\\"d\\\":{\\\"type\\\":4,\\\"data\\\":{\\\"type\\\":1,\\\"name\\\":\\\"order\\\",\\\"options\\\":[{\\\"type\\\":2,\\\"name\\\":\\\"drinks\\\",\\\"options\\\":[{\\\"type\\\":1,\\\"name\\\":\\\"find\\\",\\\"options\\\":[{\\\"name\\\":\\\"query\\\",\\\"type\\\":3,\\\"value\\\":\\\"ca\\\",\\\"focused\\\":true}]}]}]}}}\")",
       "status": "executed",
       "output": "{\"type\":8,\"data\":{\"choices\":[{\"name\":\"Café\",\"value\":\"cafe\"}]}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 7,
+      "index": 8,
       "source": "import tripol.discord\n\npanel = discord.components()\npanel.text(\"## Bienvenido\")\npanel.separator()\npanel.link(\"Docs\", \"https://example.org/docs\")\nmessage = discord.components()\nmessage.container(panel, 41215)\nshow message.payload()",
       "status": "executed",
       "output": "{\"flags\":32768,\"components\":[{\"type\":17,\"components\":[{\"type\":10,\"content\":\"## Bienvenido\"},{\"type\":14,\"divider\":true,\"spacing\":1},{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"Docs\",\"url\":\"https://example.org/docs\"}]}],\"spoiler\":false,\"accent_color\":41215}],\"allowed_mentions\":{\"parse\":[]}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 8,
+      "index": 9,
       "source": "import tripol.discord\n\ndiscord.login_env()\ndiscord.activity(\"Programming in TRIPOL\")\ndiscord.reply(\"!hello\", \"Hello, friend!\")\ndiscord.reply(\"!ping\", \"Pong!\")\ndiscord.run()\n",
       "status": "native-only"
     },
@@ -979,7 +986,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "4928\n"
+      "output": "7725\n"
     },
     {
       "file": "docs/libraries/ui.html",

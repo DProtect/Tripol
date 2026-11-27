@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 417,
-  "methods": 95,
+  "functions": 422,
+  "methods": 101,
   "summary": {
-    "native compiled": 512,
-    "web executed": 440,
-    "web native-only": 72
+    "native compiled": 523,
+    "web executed": 450,
+    "web native-only": 73
   },
   "rows": [
     {
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2654\n"
+      "output": "2719\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2684730285\n"
+      "output": "2746348216\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2122,6 +2122,36 @@
       "output": "\"Díez\":10;\n"
     },
     {
+      "name": "discord.ignore_gateway_event",
+      "native": "compiled",
+      "web": "executed",
+      "output": "false\n"
+    },
+    {
+      "name": "discord.events",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "discord.gateway_intent",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "discord.gateway_event_name",
+      "native": "compiled",
+      "web": "executed",
+      "output": "GUILD_MEMBER_ADD\n"
+    },
+    {
+      "name": "discord.deliver_gateway_event",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2356,7 +2386,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n32810\n"
+      "output": "4950\n52958\n"
     },
     {
       "name": "simd.equal",
@@ -3009,6 +3039,41 @@
       "native": "compiled",
       "web": "executed",
       "output": "{\"type\":8,\"data\":{\"choices\":[{\"name\":\"Café\",\"value\":\"cafe\"}]}}\n"
+    },
+    {
+      "name": "discord.GatewayEvent.field",
+      "native": "compiled",
+      "web": "executed",
+      "output": "\"999\"\n"
+    },
+    {
+      "name": "discord.GatewayEvents.intent",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.GatewayEvents.intent_mask",
+      "native": "compiled",
+      "web": "executed",
+      "output": "3\n"
+    },
+    {
+      "name": "discord.GatewayEvents.on",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.GatewayEvents.preview",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.start_with_events",
+      "native": "compiled",
+      "web": "native-only"
     }
   ],
   "examples": [
