@@ -1,5 +1,6 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
+- `discord.channel_ref` adds channel lookup, slowmode, pin and unpin, individual and bulk message deletion, and the bot's own reactions through recoverable native REST.
 - SIMPLE R2 infers monomorphic function signatures from calls and typed callbacks across modules, supports automatic function references and anonymous callbacks with scalar literal captures, lowers terminal expressions to returns, and resolves method overloads before code generation. Discord replies accept embeds and Components V2, and panel builders support named button styles and premium SKUs. Interaction follow-ups support edits and deletion.
 
 - `discord.guild(id).member(id)` adds native member lookup, kicks, bans, unbans, nicknames, timeouts, role assignment and direct messages through recoverable authenticated REST. The `discord-welcome` template filters member joins by server and keeps processing events after delivery failures.

@@ -6,6 +6,18 @@ import (
 	"testing"
 )
 
+func TestDiscordChannelModerationValidation(t *testing.T) {
+	runCase(t, `import tripol.discord
+room=discord.channel_ref("123")
+show room.id()
+try {room.purge(list(["5"]))} catch code {show code}
+try {room.purge(list(["5","5"]))} catch code {show code}
+try {room.delete_message("../5")} catch code {show code}
+try {room.slowmode(21601)} catch code {show code}
+try {room.react("5","")} catch code {show code}
+`, "123\n12\n12\n12\n12\n12\n", false)
+}
+
 const discordComponentsDemo = `import tripol.discord
 panel=discord.components()
 panel.text("¡Hola! \"TRIPOL\"")

@@ -240,7 +240,8 @@
     "button_row": "func discord.button_row()->Buttons",
     "button_style": "func discord.button_style(name:string)->int",
     "guild": "func discord.guild(id:string)->Guild",
-    "post_message": "func discord.post_message(channel_id:string,content:string)->string"
+    "post_message": "func discord.post_message(channel_id:string,content:string)->string",
+    "channel_ref": "func discord.channel_ref(id:string)->Channel"
   },
   "discord.Message": {
     "matches": "Message.matches(content:string)->bool",
@@ -387,6 +388,15 @@
     "timeout": "Member.timeout(until=\"\")->bool",
     "role": "Member.role(role_id:string,enabled=true)->bool",
     "dm": "Member.dm(content:string)->string"
+  },
+  "discord.Channel": {
+    "id": "Channel.id()->string",
+    "read": "Channel.read()->string",
+    "slowmode": "Channel.slowmode(seconds:int)->bool",
+    "delete_message": "Channel.delete_message(message_id:string)->bool",
+    "purge": "Channel.purge(message_ids:string_list)->bool",
+    "pin": "Channel.pin(message_id:string,pinned=true)->bool",
+    "react": "Channel.react(message_id:string,emoji:string,enabled=true)->bool"
   },
   "encoding": {
     "hex_digit": "func encoding.hex_digit(n:int) -> string",

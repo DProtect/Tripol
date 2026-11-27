@@ -236,6 +236,23 @@ Use `tripol new Welcome --template discord-welcome` to send a welcome to a chann
 
 Usa `tripol new Bienvenida --template discord-welcome` para enviar un saludo a un canal cuando se une una persona al servidor configurado. El README generado indica las variables de entorno, Server Members Intent y los permisos del canal. La plantilla omite bots y otros servidores y continúa recibiendo eventos si falla un envío.
 
+## Channel moderation / Moderación de canales
+
+```tripol
+import tripol.discord
+
+room = discord.channel_ref("123")
+show room.read()
+```
+
+`room.slowmode(15)` sets a 15-second delay and `room.slowmode(0)` clears it. Use `room.pin(message_id)` to pin and `room.pin(message_id, false)` to unpin. `room.delete_message(id)` removes one message. `room.purge(ids)` requires a list of 2–100 distinct message IDs. Discord enforces bulk deletion eligibility, including the 14-day age limit. `room.react(id, "🔥")` adds the bot's reaction. Use `false` as the last argument to remove it. Unicode emoji and custom `name:id` values are percent-encoded automatically.
+
+`room.slowmode(15)` fija una espera de 15 segundos y `room.slowmode(0)` la retira. Usa `room.pin(message_id)` para fijar un mensaje y `room.pin(message_id, false)` para desfijarlo. `room.delete_message(id)` borra un mensaje. `room.purge(ids)` requiere entre 2 y 100 IDs distintos. Discord aplica los requisitos del borrado masivo, incluido el límite de 14 días de antigüedad. `room.react(id, "🔥")` añade la reacción del bot. Usa `false` como último argumento para retirarla. Los emoji Unicode y los valores personalizados `nombre:id` se codifican automáticamente.
+
+Configure the token of an authorized bot. Discord checks the required permissions. These methods return a boolean on mutations and keep the native program running if the request fails.
+
+Configura el token de un bot autorizado. Discord comprueba los permisos requeridos. Los métodos que modifican el canal o un mensaje devuelven un booleano y permiten que el programa siga ejecutándose si falla la solicitud.
+
 ## API
 
 | Method / Método | Behavior / Comportamiento |

@@ -103,6 +103,10 @@ Use `func info(ctx) { ctx.reply("Hola") }` with `bot.slash("info", "Informacion"
 
 Usa `func info(ctx) { ctx.reply("Hola") }` con `bot.slash("info", "Informacion", info)`. TRIPOL infiere la firma del callback y devuelve la expresión final. `&info` y los tipos explícitos siguen siendo válidos. Escribe callbacks inline con `func(ctx) { ctx.reply("Gracias", true) }`; pueden capturar constantes declaradas con literales escalares. `ctx.reply` elige la implementación de texto, embed, lote de embeds o Components V2 durante la compilación. Usa `discord.container("#FFFFFF")` y `panel.button("Aceptar", "accept", "primary")` para un panel con color. Usa `ctx.edit_followup(id, texto)` y `ctx.delete_followup(id)` dentro de un callback nativo confirmado.
 
+Use `room=discord.channel_ref(id)` for channel moderation. `room.read()` fetches channel JSON, `room.slowmode(seconds)` sets or clears the delay, `room.pin(id,false)` unpins a message, and `room.react(id,emoji,false)` removes the bot's reaction. `room.purge(ids)` performs bulk deletion of 2–100 distinct message IDs. Discord enforces permissions and age limits.
+
+Usa `room=discord.channel_ref(id)` para moderar un canal. `room.read()` consulta el JSON del canal, `room.slowmode(segundos)` ajusta o retira la espera, `room.pin(id,false)` desfija un mensaje y `room.react(id,emoji,false)` retira la reacción del bot. `room.purge(ids)` ejecuta un borrado masivo de entre 2 y 100 IDs distintos. Discord aplica los permisos y límites de antigüedad.
+
 ## Cómo usar este archivo / How to use this file
 
 Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».

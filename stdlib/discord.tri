@@ -2164,3 +2164,72 @@ func Member.dm(self:Member,content:string)->string {
  if channel=="" {return ""}
  return event_id(json.get_raw_large(discord_rest(2,channel_path(channel),credential,payload),"id"))
 }
+
+struct Channel {
+ __id:string
+}
+
+func channel_ref(id:string)->Channel {
+ assert id!="" and event_id(json.quote(id))==id,"Invalid Discord channel ID"
+ return Channel(id)
+}
+
+func Channel.id(self:Channel)->string {return self.__id}
+
+func Channel.read(self:Channel)->string {
+ return discord_rest(1,"/api/v10/channels/"+self.__id,token(),"")
+}
+
+func Channel.slowmode(self:Channel,seconds:int)->bool {
+ assert seconds>=0 and seconds<=21600,"Discord slowmode requires 0 to 21600 seconds"
+ body="{\"rate_limit_per_user\":"+text(seconds)+"}"
+ return len(discord_rest(4,"/api/v10/channels/"+self.__id,token(),body))>0
+}
+
+func Channel.delete_message(self:Channel,message_id:string)->bool {
+ assert message_id!="" and event_id(json.quote(message_id))==message_id,"Invalid Discord message ID"
+ return len(discord_rest(5,channel_path(self.__id)+"/"+message_id,token(),""))>0
+}
+
+func Channel.purge(self:Channel,message_ids:string_list)->bool {
+ count=message_ids.size()
+ assert count>=2 and count<=100,"Discord bulk deletion requires 2 to 100 message IDs"
+ seen=string_list(count)
+ body="{\"messages\":["
+ for i in range(count) {
+  id=message_ids[i]
+  assert id!="" and event_id(json.quote(id))==id,"Invalid Discord message ID"
+  assert not seen.contains(id),"Discord bulk deletion requires distinct message IDs"
+  seen.add(id)
+  if i>0 {body+=","}
+  body+=json.quote(id)
+ }
+ return len(discord_rest(2,channel_path(self.__id)+"/bulk-delete",token(),body+"]}"))>0
+}
+
+func Channel.pin(self:Channel,message_id:string,pinned=true)->bool {
+ assert message_id!="" and event_id(json.quote(message_id))==message_id,"Invalid Discord message ID"
+ method=3
+ if not pinned {method=5}
+ return len(discord_rest(method,channel_path(self.__id)+"/pins/"+message_id,token(),""))>0
+}
+
+func Channel.react(self:Channel,message_id:string,emoji:string,enabled=true)->bool {
+ assert message_id!="" and event_id(json.quote(message_id))==message_id,"Invalid Discord message ID"
+ assert emoji!="" and utf8.valid(emoji),"Discord reaction requires a Unicode emoji or name:id"
+ path=channel_path(self.__id)+"/"+message_id+"/reactions/"
+ assert len(emoji)<=1020-len(path),"Discord reaction path exceeds the transport capacity"
+ hex="0123456789ABCDEF"
+ for i in range(len(emoji)) {
+  b=byte_at(emoji,i)
+  if (b>=48 and b<=57) or (b>=65 and b<=90) or (b>=97 and b<=122) or b==95 {
+   path+=slice(emoji,i,i+1)
+  } else {
+   path+="%"+slice(hex,b/16,b/16+1)+slice(hex,b%16,b%16+1)
+  }
+ }
+ assert len(path)+4<=1024,"Discord reaction path exceeds the transport capacity"
+ method=3
+ if not enabled {method=5}
+ return len(discord_rest(method,path+"/@me",token(),""))>0
+}

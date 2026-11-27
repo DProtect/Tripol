@@ -253,7 +253,7 @@ func serveBridgeFixture(input io.Reader, output io.Writer, steps []bridgeStep) e
 	return nil
 }
 
-func TestLinuxDiscordMemberModeration(t *testing.T) {
+func TestLinuxDiscordModeration(t *testing.T) {
 	if runtime.GOARCH != "amd64" {
 		t.Skip("requires native x86-64")
 	}
@@ -271,6 +271,15 @@ assert member.timeout()
 assert member.role("876")
 assert member.role("876",false)
 assert member.dm("Bienvenido")=="42"
+room=discord.channel_ref("345")
+assert room.read()=="{}"
+assert room.slowmode(15)
+assert room.pin("567")
+assert room.pin("567",false)
+assert room.react("567","🔥")
+assert room.react("567","test:890",false)
+assert room.purge(list(["567","568"]))
+assert room.delete_message("569")
 show "moderation OK"
 `
 	path := filepath.Join(t.TempDir(), "moderation")
@@ -294,6 +303,14 @@ show "moderation OK"
 		{discordtransport.OpRESTDelete, "/api/v10/guilds/321/members/567/roles/876", "fixture-token", "", `{}`},
 		{discordtransport.OpRESTPost, "/api/v10/users/@me/channels", "fixture-token", `{"recipient_id":"567"}`, `{"id":"555"}`},
 		{discordtransport.OpRESTPost, "/api/v10/channels/555/messages", "fixture-token", `{"content":"Bienvenido","allowed_mentions":{"parse":[]}}`, `{"id":"42"}`},
+		{discordtransport.OpRESTGet, "/api/v10/channels/345", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTPatch, "/api/v10/channels/345", "fixture-token", `{"rate_limit_per_user":15}`, `{}`},
+		{discordtransport.OpRESTPut, "/api/v10/channels/345/messages/pins/567", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTDelete, "/api/v10/channels/345/messages/pins/567", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTPut, "/api/v10/channels/345/messages/567/reactions/%F0%9F%94%A5/@me", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTDelete, "/api/v10/channels/345/messages/567/reactions/test%3A890/@me", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTPost, "/api/v10/channels/345/messages/bulk-delete", "fixture-token", `{"messages":["567","568"]}`, `{}`},
+		{discordtransport.OpRESTDelete, "/api/v10/channels/345/messages/569", "fixture-token", "", `{}`},
 	}
 	fixture := make(chan error, 1)
 	err := runDiscordPipes(cmd, func(_ context.Context, requests, replies *os.File) error {

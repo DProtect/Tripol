@@ -33,6 +33,7 @@ func TestBridgeAuthenticatedMethodsRecoverFromFailure(t *testing.T) {
 		{OpRESTPut, http.MethodPut, "/api/v10/guilds/123/bans/456", `{"delete_message_seconds":0}`, http.StatusNoContent},
 		{OpRESTPatch, http.MethodPatch, "/api/v10/guilds/123/members/456", `{"nick":null}`, http.StatusNoContent},
 		{OpRESTDelete, http.MethodDelete, "/api/v10/guilds/123/bans/456", "", http.StatusNoContent},
+		{OpRESTPut, http.MethodPut, "/api/v10/channels/345/messages/567/reactions/%F0%9F%94%A5/@me", "", http.StatusNoContent},
 	}
 	var index atomic.Int32
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +45,7 @@ func TestBridgeAuthenticatedMethodsRecoverFromFailure(t *testing.T) {
 		}
 		step := steps[i]
 		body, err := io.ReadAll(r.Body)
-		if err != nil || r.Method != step.method || r.URL.Path != step.path || string(body) != step.body || r.Header.Get("Authorization") != "Bot fixture-token" {
+		if err != nil || r.Method != step.method || r.URL.EscapedPath() != step.path || string(body) != step.body || r.Header.Get("Authorization") != "Bot fixture-token" {
 			t.Errorf("invalid request for step %d", i)
 		}
 		w.WriteHeader(step.status)

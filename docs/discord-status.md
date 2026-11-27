@@ -44,8 +44,9 @@ Estado de desarrollo frente al prompt maestro. «Completo» indica una capacidad
 | Components V2 | Contenedor por color HEX, estilos de botón por nombre y botones premium con SKU | Completo para serialización | [Pruebas](../core/simple_r2_test.go), [referencia oficial](https://docs.discord.com/developers/components/reference) |
 | Components V2 | Adjuntos multipart, componentes File y filtros opcionales de File Upload | Pendiente | [Referencia oficial](https://docs.discord.com/developers/components/reference) |
 | Servidores | Consulta de miembros, expulsión, baneo y revocación, apodos, aislamiento, asignación y retirada de roles y mensajes directos | Experimental | [Rutas, payloads y recuperación en ELF](../core/discord_bridge_linux_test.go), [guía bilingüe](discord.md) |
-| Servidores | Consulta de permisos, gestión de roles, moderación de canales, categorías, webhooks, invitaciones, hilos y foros | Pendiente | [Guía de Discord](discord.md) |
-| Servidores | Administración de mensajes, archivos, reacciones y registros de auditoría | Pendiente | [Guía de Discord](discord.md) |
+| Servidores | Consulta de canales, slowmode, pin y unpin, borrado individual y masivo, y reacciones del bot | Experimental | [Rutas y payloads ELF](../core/discord_bridge_linux_test.go), [codificación en TLS](../internal/discordtransport/transport_test.go), [validaciones locales](../core/discord_components_test.go) |
+| Servidores | Consulta de permisos, gestión de roles, creación y bloqueo de canales, categorías, webhooks, invitaciones, hilos y foros | Pendiente | [Guía de Discord](discord.md) |
+| Servidores | Edición general de mensajes, gestión de archivos, reacciones ajenas y registros de auditoría | Pendiente | [Guía de Discord](discord.md) |
 | Rendimiento | Comparación JSON sin copia, codificación nativa con una sola reserva, decodificación Unicode y reutilización HTTPS | Experimental | [Comparación de texto y memoria](../core/gateway_test.go), [pruebas REST](../internal/discordtransport/transport_test.go) |
 | Rendimiento | Benchmarks equivalentes frente a Discord.js, Discord.py y Serenity, latencia real, RSS y Ryzen 5 3400G | Pendiente | [Benchmarks generales del compilador](../benchmarks/) |
 | Rendimiento | Sharding, despachador concurrente, cachés de entidades y reducción del tamaño del paquete Linux | Pendiente | [Arquitectura del lanzador](../core/discord_bridge_linux.go) |
@@ -65,7 +66,7 @@ Estado de desarrollo frente al prompt maestro. «Completo» indica una capacidad
 
 ## Medición local de SIMPLE R2
 
-31 ejecuciones por compilador y caso con Linux x86-64, perfil `turbo` y `GOMAXPROCS=2`. La compilación parte de `2556c86`. Los tiempos de arranque incluyen el proceso. Los tres casos produjeron la misma salida. [Script reproducible](../benchmarks/simple_r2.py)
+31 ejecuciones por compilador y caso con Linux x86-64, perfil `turbo` y `GOMAXPROCS=2`. La comparación cubre `2556c86` y el bloque SIMPLE R2 publicado en `d3a66ea`. Los tiempos de arranque incluyen el proceso. Los tres casos produjeron la misma salida. [Script reproducible](../benchmarks/simple_r2.py)
 
 | Programa | Compilación mediana antes → después | Arranque mediano antes → después | ELF antes → después |
 | --- | ---: | ---: | ---: |
