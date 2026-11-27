@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/binary"
+	"errors"
 	"io"
 	"os"
 	"os/exec"
@@ -16,11 +17,14 @@ import (
 	"tripol/internal/discordtransport"
 )
 
-func runNativeCommand(cmd *exec.Cmd) error {
+func runNativeCommand(cmd *exec.Cmd, studio *discordStudioOptions) error {
 	if !needsDiscordLauncher(cmd.Path) {
+		if studio != nil {
+			return errors.New("Discord Studio requires a program that uses Discord networking")
+		}
 		return cmd.Run()
 	}
-	return runDiscordCommand(cmd, discordtransport.New())
+	return runDiscordCommand(cmd, discordtransport.New(), studio)
 }
 
 func needsDiscordLauncher(path string) bool {
@@ -38,14 +42,27 @@ func needsDiscordLauncher(path string) bool {
 	return err == nil && string(data) == marker
 }
 
-func runDiscordCommand(cmd *exec.Cmd, client *discordtransport.Client) error {
+func runDiscordCommand(cmd *exec.Cmd, client *discordtransport.Client, studio *discordStudioOptions) error {
 	defer client.Close()
+	var monitor func(context.Context, int)
+	if studio != nil {
+		output := os.Stderr
+		if studio.metricsFile != "" {
+			file, err := os.OpenFile(studio.metricsFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			output = file
+		}
+		monitor = func(ctx context.Context, pid int) { monitorDiscord(ctx, pid, client, output) }
+	}
 	return runDiscordPipes(cmd, func(ctx context.Context, requests, replies *os.File) error {
 		return discordtransport.Serve(ctx, client, requests, replies, os.Stderr)
-	})
+	}, monitor)
 }
 
-func runDiscordPipes(cmd *exec.Cmd, serve func(context.Context, *os.File, *os.File) error) error {
+func runDiscordPipes(cmd *exec.Cmd, serve func(context.Context, *os.File, *os.File) error, monitor func(context.Context, int)) error {
 	requests, childWrite, err := os.Pipe()
 	if err != nil {
 		return err
@@ -84,12 +101,24 @@ func runDiscordPipes(cmd *exec.Cmd, serve func(context.Context, *os.File, *os.Fi
 		case <-finished:
 		}
 	}()
+	var monitored chan struct{}
+	var stopMonitor context.CancelFunc
+	if monitor != nil {
+		monitored = make(chan struct{})
+		monitorCtx, cancelMonitor := context.WithCancel(context.Background())
+		stopMonitor = cancelMonitor
+		go func() { defer close(monitored); monitor(monitorCtx, cmd.Process.Pid) }()
+	}
 	err = cmd.Wait()
 	close(finished)
 	cancel()
 	requests.Close()
 	replies.Close()
 	<-done
+	if monitored != nil {
+		stopMonitor()
+		<-monitored
+	}
 	return err
 }
 
@@ -151,7 +180,7 @@ func runBundledDiscord() bool {
 	defer os.RemoveAll(dir)
 	path := filepath.Join(dir, "bot")
 	write(path, program)
-	runNative(path)
+	runNative(path, nil)
 	return true
 }
 
@@ -166,5 +195,5 @@ func runDiscordExecutable(args []string) {
 	if !needsDiscordLauncher(path) {
 		die("expected a generated Discord ELF with transport enabled")
 	}
-	runNative(path)
+	runNative(path, nil)
 }

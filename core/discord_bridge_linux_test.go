@@ -54,7 +54,7 @@ func TestLinuxDiscordLauncherAndNativeCallback(t *testing.T) {
 		err := botFixture(ctx, requests, replies)
 		fixture <- err
 		return err
-	}); err != nil {
+	}, nil); err != nil {
 		t.Fatalf("bot failed: %v\n%s\n%v", err, output.String(), <-fixture)
 	}
 	if err := <-fixture; err != nil {

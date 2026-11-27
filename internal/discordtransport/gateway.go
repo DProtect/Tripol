@@ -16,11 +16,12 @@ import (
 )
 
 type Gateway struct {
-	events chan []byte
-	done   chan struct{}
-	cancel context.CancelFunc
-	err    error
-	once   sync.Once
+	events  chan []byte
+	done    chan struct{}
+	cancel  context.CancelFunc
+	err     error
+	once    sync.Once
+	metrics *transportMetrics
 }
 
 type gatewayOptions struct {
@@ -61,10 +62,13 @@ func (c *Client) startGateway(parent context.Context, identify []byte, opt gatew
 		return nil, errors.New("invalid Discord Identify payload")
 	}
 	ctx, cancel := context.WithCancel(parent)
-	g := &Gateway{events: make(chan []byte, 32), done: make(chan struct{}), cancel: cancel}
+	g := &Gateway{events: make(chan []byte, 32), done: make(chan struct{}), cancel: cancel, metrics: &c.metrics}
 	go func() {
 		defer close(g.done)
 		g.err = c.supervise(ctx, g.events, append([]byte(nil), identify...), hello.Data.Token, opt)
+		if g.err != nil && ctx.Err() == nil {
+			c.metrics.gatewayErrors.Add(1)
+		}
 	}()
 	return g, nil
 }
@@ -75,6 +79,7 @@ func (g *Gateway) Close() {
 }
 
 func (g *Gateway) Poll(ctx context.Context, timeout time.Duration) ([]byte, bool, error) {
+	defer func() { g.metrics.queueDepth.Store(int64(len(g.events))) }()
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 	select {
@@ -140,6 +145,9 @@ func (c *Client) supervise(ctx context.Context, output chan<- []byte, identify [
 			}
 		}
 
+		if failures > 0 {
+			c.metrics.reconnects.Add(1)
+		}
 		connectedAt := time.Now()
 		result := c.gatewayConnection(ctx, endpoint, identify, token, &state, &lastIdentify, output, opt)
 		if result.terminal {
@@ -249,6 +257,9 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 		}
 		return reconnect{}
 	}
+	c.metrics.connections.Add(1)
+	c.metrics.heartbeatMS.Store(-1)
+	defer c.metrics.connected.Store(false)
 	ws.SetReadLimit(maxMessage)
 	connection, cancelConnection := context.WithCancel(ctx)
 	var readerDone chan struct{}
@@ -316,12 +327,14 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 	deadline := time.NewTimer(30 * time.Second)
 	defer deadline.Stop()
 	awaiting := false
+	var heartbeatSent time.Time
 	beat := func() error {
 		body, _ := json.Marshal(struct {
 			Op   int    `json:"op"`
 			Data *int64 `json:"d"`
 		}{Op: 1, Data: state.sequence})
 		awaiting = true
+		heartbeatSent = time.Now()
 		return sendGateway(connection, ws, body)
 	}
 	for {
@@ -349,8 +362,9 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 				}
 				if message.Type == "READY" {
 					var ready struct {
-						ID     string `json:"session_id"`
-						Resume string `json:"resume_gateway_url"`
+						ID     string            `json:"session_id"`
+						Resume string            `json:"resume_gateway_url"`
+						Guilds []json.RawMessage `json:"guilds"`
 					}
 					if json.Unmarshal(message.Data, &ready) != nil || len(ready.ID) == 0 || len(ready.ID) > 512 {
 						return result
@@ -360,15 +374,22 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 						return reconnect{terminal: true, err: err}
 					}
 					state.id, state.resumeURL = ready.ID, resume
+					c.metrics.guildsAtReady.Store(int64(len(ready.Guilds)))
 				}
 				if message.Type == "READY" || message.Type == "RESUMED" {
 					result.established = true
+					c.metrics.connected.Store(true)
+					if message.Type == "RESUMED" {
+						c.metrics.resumes.Add(1)
+					}
 					deadline.Stop()
 				}
 				select {
 				case output <- record.raw:
 					// Only acknowledge an event after admission to the bounded queue.
 					state.sequence = message.Sequence
+					c.metrics.dispatches.Add(1)
+					c.metrics.queueDepth.Store(int64(len(output)))
 				default:
 					return reconnect{terminal: true, err: errors.New("Discord Gateway event queue is full")}
 				}
@@ -384,6 +405,9 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 				result.invalidate = !resumable
 				return result
 			case 11:
+				if awaiting {
+					c.metrics.heartbeatMS.Store(time.Since(heartbeatSent).Milliseconds())
+				}
 				awaiting = false
 			}
 		}

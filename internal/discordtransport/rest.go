@@ -25,8 +25,10 @@ const (
 )
 
 type Client struct {
-	http *http.Client
-	base string
+	http    *http.Client
+	base    string
+	started time.Time
+	metrics transportMetrics
 
 	mu      sync.Mutex
 	global  time.Time
@@ -49,7 +51,9 @@ func New() *Client {
 }
 
 func newClient(httpClient *http.Client, base string) *Client {
-	return &Client{http: httpClient, base: base, routes: make(map[string]string), blocked: make(map[string]time.Time)}
+	client := &Client{http: httpClient, base: base, started: time.Now(), routes: make(map[string]string), blocked: make(map[string]time.Time)}
+	client.metrics.heartbeatMS.Store(-1)
+	return client
 }
 
 func (c *Client) Close() { c.http.CloseIdleConnections() }
@@ -72,7 +76,12 @@ func (e HTTPError) Error() string { return fmt.Sprintf("Discord HTTP status %d",
 
 // Request sends a bounded authenticated API request. A POST is retried only
 // after an explicit 429 rejection, never after an ambiguous I/O error.
-func (c *Client) Request(ctx context.Context, method, path, token string, body []byte) ([]byte, error) {
+func (c *Client) Request(ctx context.Context, method, path, token string, body []byte) (payload []byte, err error) {
+	defer func() {
+		if err != nil {
+			c.metrics.restErrors.Add(1)
+		}
+	}()
 	target, err := url.ParseRequestURI(path)
 	if err != nil || target.IsAbs() || target.Host != "" || !strings.HasPrefix(path, "/api/v10/") ||
 		strings.ContainsAny(path, "\\#") || len(path) > 1024 || !validToken(token) || len(body) > maxMessage {
@@ -98,6 +107,7 @@ func (c *Client) Request(ctx context.Context, method, path, token string, body [
 			req.Header.Set("Content-Type", "application/json")
 		}
 
+		c.metrics.restAttempts.Add(1)
 		res, err := c.http.Do(req)
 		if err != nil {
 			return nil, errors.New("Discord HTTPS request failed")
@@ -108,6 +118,9 @@ func (c *Client) Request(ctx context.Context, method, path, token string, body [
 			return nil, errors.New("invalid or oversized Discord HTTPS response")
 		}
 		status := res.StatusCode
+		if status == http.StatusTooManyRequests {
+			c.metrics.rateLimits.Add(1)
+		}
 		c.updateLimit(route, major, res, payload)
 		if status == http.StatusTooManyRequests && attempt < 2 {
 			continue

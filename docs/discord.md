@@ -74,6 +74,16 @@ The payload includes flag 32768 and disables mentions. The builder also has `but
 
 El JSON incluye la bandera 32768 y desactiva las menciones. El constructor también ofrece `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` y `gallery(urls)`. Valida el límite de 40 componentes, los IDs de botones duplicados, el anidamiento y las longitudes de los campos. Los límites actuales son 512 bytes por texto y 16.384 bytes por mensaje codificado. Usa `message.send(channel_id)` en Windows o Linux. Quedan pendientes las interacciones de botones, los selectores, los formularios y los archivos adjuntos.
 
+## Discord Studio
+
+```sh
+tripol discord studio main.tri --metrics studio.jsonl
+```
+
+On Linux x86-64, Studio runs the bot and samples its RSS, CPU ticks, connection state, heartbeat latency, uptime, guild count at READY, queued dispatches, REST requests, errors and rate limits. The launcher and bot process are reported separately. The output file must be new. Without `--metrics`, snapshots are sent to standard error. The export contains counters and process measurements. Live command and interaction metrics, log filtering and Windows monitoring are pending.
+
+En Linux x86-64, Studio ejecuta el bot y toma muestras de RSS, ticks de CPU, conexión, latencia de heartbeat, tiempo activo, servidores en READY, cola de eventos, peticiones REST, errores y límites. El lanzador y el bot se miden por separado. Usa un archivo de salida nuevo. Sin `--metrics`, las muestras se escriben en la salida de error. Quedan pendientes las métricas por comando e interacción, el filtrado de logs y el monitoreo en Windows.
+
 ## API
 
 | Method / Método | Behavior / Comportamiento |

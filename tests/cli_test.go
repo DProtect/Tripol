@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -67,6 +68,22 @@ func TestPublicCompilerCLI(t *testing.T) {
 		output, err := cmd.CombinedOutput()
 		if err == nil || !strings.HasPrefix(string(output), "1\n") || !strings.Contains(string(output), "TP2003") || strings.Contains(string(output), "requires the TRIPOL launcher") {
 			t.Fatalf("standalone Discord executable: %v\n%s", err, output)
+		}
+		metrics := filepath.Join(dir, "studio.jsonl")
+		studio := exec.CommandContext(ctx, compiler, "discord", "studio", src, "--metrics", metrics)
+		studio.Env = append(os.Environ(), "DISCORD_TOKEN=", "TRIPOL_NO_UPDATE=1")
+		if output, err := studio.CombinedOutput(); err == nil || !strings.Contains(string(output), "TP2003") {
+			t.Fatalf("studio run: %v\n%s", err, output)
+		}
+		samples, err := os.ReadFile(metrics)
+		if err != nil {
+			t.Fatal(err)
+		}
+		lines := strings.Split(strings.TrimSpace(string(samples)), "\n")
+		if len(lines) != 2 || !json.Valid([]byte(lines[0])) || !json.Valid([]byte(lines[1])) ||
+			!strings.Contains(lines[0], `"final":false`) || !strings.Contains(lines[1], `"final":true`) ||
+			!strings.Contains(lines[0], `"launcher":`) || !strings.Contains(lines[1], `"rest_attempts":0`) {
+			t.Fatalf("unexpected Studio metrics: %s", samples)
 		}
 	}
 

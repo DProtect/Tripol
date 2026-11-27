@@ -8,7 +8,9 @@ import (
 	"strings"
 )
 
-func runNative(p string) {
+type discordStudioOptions struct{ metricsFile string }
+
+func runNative(p string, studio *discordStudioOptions) {
 	c := exec.Command(p)
 	c.Stdout = os.Stdout
 	var stderr bytes.Buffer
@@ -18,7 +20,7 @@ func runNative(p string) {
 		c.Stderr = os.Stderr
 	}
 	c.Stdin = os.Stdin
-	if e := runNativeCommand(c); e != nil {
+	if e := runNativeCommand(c, studio); e != nil {
 		var x *exec.ExitError
 		if errors.As(e, &x) {
 			d := runtimeDiagnostic(x.ExitCode())

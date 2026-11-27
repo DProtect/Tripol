@@ -2,9 +2,17 @@
 
 package core
 
-import "os/exec"
+import (
+	"errors"
+	"os/exec"
+)
 
-func runNativeCommand(cmd *exec.Cmd) error { return cmd.Run() }
+func runNativeCommand(cmd *exec.Cmd, studio *discordStudioOptions) error {
+	if studio != nil {
+		return errors.New("Discord Studio is available on Linux x86-64")
+	}
+	return cmd.Run()
+}
 
 func packageDiscordExecutable(binary []byte, _ string) []byte { return binary }
 func runBundledDiscord() bool                                 { return false }

@@ -1,6 +1,7 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
 - Linux x86-64 builds with Discord networking package the emitted ELF and native launcher. The launcher uses validated TLS, WebSocket Resume and bounded reconnects, reusable HTTPS connections and retry handling for explicit HTTP 429 responses.
+- Discord Studio provides process and transport metrics on Linux x86-64, with JSON Lines export. The snapshot includes CPU ticks, RSS, heartbeat acknowledgement latency, reconnects, event queue depth, and REST counters.
 - `Bot.on_message(&handler)` dispatches a typed message callback with author and channel IDs. `Bot.preview_event` exercises the same parser and callback offline.
 - `discord.components()` builds Components V2 JSON with text, separators, buttons, thumbnails, sections, galleries and containers. It validates component counts and button IDs. Traditional embeds add title links, images and thumbnails.
 

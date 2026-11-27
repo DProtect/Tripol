@@ -58,6 +58,10 @@ func TestREST429UsesSharedConnection(t *testing.T) {
 	if err != nil || string(got) != "{}" || attempts.Load() != 2 {
 		t.Fatalf("attempts=%d response=%q error=%v", attempts.Load(), got, err)
 	}
+	stats := client.Metrics()
+	if stats.RESTAttempts != 2 || stats.RateLimits != 1 || stats.RESTErrors != 0 {
+		t.Fatalf("incorrect REST metrics: %+v", stats)
+	}
 }
 
 func TestRESTRetryBudgetAndNoAmbiguousPOST(t *testing.T) {
@@ -162,6 +166,9 @@ func TestGatewayReconnectResumeAndFatalClose(t *testing.T) {
 			t.Errorf("incorrect heartbeat: %+v", beat)
 			return
 		}
+		if !send(`{"op":11,"d":null}`) {
+			return
+		}
 		_ = ws.Close(websocket.StatusCode(4014), "fixture")
 	})
 	server := httptest.NewTLSServer(router)
@@ -188,6 +195,13 @@ func TestGatewayReconnectResumeAndFatalClose(t *testing.T) {
 	_, done, err := g.Poll(testCtx, 2*time.Second)
 	if !done || err == nil || !strings.Contains(err.Error(), "4014") || discoveries.Load() != 1 || connections.Load() != 2 {
 		t.Fatalf("done=%t err=%v discovery=%d sockets=%d", done, err, discoveries.Load(), connections.Load())
+	}
+	stats := client.Metrics()
+	raw, marshalErr := json.Marshal(stats)
+	if marshalErr != nil || stats.Connected || stats.Resumes != 1 || stats.Dispatches != 2 || stats.QueueDepth != 0 ||
+		stats.HeartbeatMS < 0 || stats.GatewayErrors != 1 || strings.Contains(string(raw), "fixture-token") ||
+		strings.Contains(string(raw), "fixture-session") {
+		t.Fatalf("incorrect or sensitive Gateway metrics: %s", raw)
 	}
 }
 
