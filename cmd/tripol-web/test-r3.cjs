@@ -4,6 +4,8 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
 (async()=>{
  const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync(path.join(__dirname,'tripol-compiler.wasm')),go.importObject);go.run(instance);
  const cases=[
+ ['show input(),input_int()','Ada 42\n','Ada\n42'],
+ ['import tripol.process\nshow process.platform()','web\n'],
  ['import tripol.collections\nitems=[1,2]\nvalues=collections.append(items,3)\nshow values\nshow items','[1, 2, 3]\n[1, 2]\n'],
  ['import tripol.arrays\nitems=[1,2,3]\nshow arrays.total(items)','6\n'],
  ['import tripol.collections\na=[1,2]\nb=[3,4]\nshow collections.concat(a,b),collections.equal(a,a)','[1, 2, 3, 4] true\n'],

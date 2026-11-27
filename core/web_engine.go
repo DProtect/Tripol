@@ -141,12 +141,23 @@ func (e *webEmitter) expression(x *expr)string{
   if name=="thread_sum"{webReject("native worker threads require a browser concurrency adapter")}
   if name=="audio_play_file"||name=="native_beep"{webReject("audio playback requires a browser user-gesture adapter; WAV generation is available")}
 
-  if name=="text"||name=="parse_int"||name=="byte_at"||name=="slice"||name=="has_prefix"||name=="has_suffix"||name=="find_bytes"||name=="input_int"{
+  if name == "input" || name == "input_int" {
+   if len(x.args) > 1 { webReject("input expects at most one prompt") }
+   prompt, silent := e.constant(e.module.stringID("")), e.constant(1)
+   if len(x.args) == 1 {
+    v, t := e.save(x.args[0])
+    if t != "string" { webReject("input prompt requires string") }
+    prompt, silent = v, e.constant(0)
+   }
+   if name == "input_int" { e.val(57, prompt, silent, e.constant(0)); return "int" }
+   e.val(22, prompt, silent, e.constant(0)); return "string"
+  }
+  if name=="text"||name=="parse_int"||name=="byte_at"||name=="slice"||name=="has_prefix"||name=="has_suffix"||name=="find_bytes"{
    spec:=map[string]struct{op int64;args []string;ret string}{
     "text":{50,[]string{"int"},"string"},"parse_int":{51,[]string{"string"},"int"},
     "byte_at":{52,[]string{"string","int"},"int"},"slice":{53,[]string{"string","int","int"},"string"},
     "has_prefix":{54,[]string{"string","string"},"bool"},"has_suffix":{55,[]string{"string","string"},"bool"},
-    "find_bytes":{56,[]string{"string","string"},"int"},"input_int":{57,[]string{"string"},"int"},
+    "find_bytes":{56,[]string{"string","string"},"int"},
    }[name]
    if len(x.args)!=len(spec.args){webReject("wrong argument count: %s",name)}
    z:=e.constant(0);v:=[3]uint32{z,z,z};for i,a:=range x.args{tmp,t:=e.save(a);if t!=spec.args[i]{webReject("invalid argument for %s",name)};v[i]=tmp};e.val(spec.op,v[0],v[1],v[2]);return spec.ret
@@ -175,7 +186,6 @@ func (e *webEmitter) expression(x *expr)string{
    if name=="len"&&t=="string"{e.code.i32(6);e.code.inst(0x20,v);e.code.i64(0);e.code.i32(int64(e.line));e.code.inst(0x10,1);return "int"}
    if webElem(t)==""&&!(name=="len"&&strings.HasPrefix(t,"@webdict:")){webReject("expected collection")};op:=int64(13);if name=="sum"{if webElem(t)!="int"{webReject("sum requires integers")};op=20};e.val(op,v,zero,zero);return "int"
   }
-  if name=="input"&&len(x.args)==1{v,t:=e.save(x.args[0]);if t!="string"{webReject("input prompt requires string")};z:=e.constant(0);e.val(22,v,z,z);return "string"}
   if name=="float"&&len(x.args)==1{v,t:=e.save(x.args[0]);if t!="int"{webReject("float requires int")};z:=e.constant(0);e.val(32,v,z,z);return "float"}
   if name=="sqrt"&&len(x.args)==1{v,t:=e.save(x.args[0]);if t!="float"{webReject("sqrt requires float")};z:=e.constant(0);e.val(34,v,z,z);return "float"}
   if name=="abs"||name=="min"||name=="max"{if len(x.args)<1||len(x.args)>2{webReject("invalid intrinsic args")};a,t:=e.save(x.args[0]);if t!="int"{webReject("expected int")};b:=e.constant(0);if len(x.args)==2{var bt string;b,bt=e.save(x.args[1]);if bt!="int"{webReject("expected int")}};e.val(map[string]int64{"abs":35,"min":36,"max":37}[name],a,b,e.constant(0));return "int"}
@@ -244,8 +254,8 @@ func (e *webEmitter) body()webCode{var b webCode;n:=e.locals-e.params;if n==0{b.
 func CompileWeb(source string)(out []byte,err error){
  defer func(){if v:=recover();v!=nil{out=nil;err=fmt.Errorf("%v",v)}}()
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
- imports,_,_:=parseUnit(source);for _,n:=range imports{switch n{case "@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:thread","@std:game","@std:events":default:webReject("library %s requires a browser adapter or native target",n)}}
- fs,ss:=parse(source);validateCode(fs,ss,"linux")
+ imports,fs,ss:=parseUnit(source);for _,n:=range imports{switch n{case "@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:process","@std:thread","@std:game","@std:events":default:webReject("library %s requires a browser adapter or native target",n)}}
+ fs = withStandardImports(imports, fs);validateCode(fs,ss,"linux")
  m:=&webModule{funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{}}
  m.signature([]byte{0x7f},nil) // tick(line)
  m.signature([]byte{0x7f,0x7e,0x7e,0x7f},[]byte{0x7e}) // checked arithmetic

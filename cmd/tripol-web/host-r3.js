@@ -67,7 +67,7 @@ function execute(binary,options={}){
    }
    if(op===81){if(a<0n||a>1000n)fail(line,'Web sleep limit: 1000 ms');if(windowState){if(frames.length)frames[frames.length-1].delay=Math.max(16,Number(a));return 0n}if(a!==0n){if(typeof SharedArrayBuffer==='undefined'||typeof Atomics==='undefined')fail(line,'Blocking sleep requires an isolated worker');Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,Number(a))}return 0n}
    if(op===21)return intern(scalar(a,Number(b)));
-   if(op===22||op===57){emit(decoded(get(a))+'\n');const text=bytes(lines[cursor++]??'');if(text.length>4096)fail(line,'Input limit reached');if(op===57){if(!/^[+-]?\d+$/.test(text))fail(line,'Invalid integer input');return checked(BigInt(text),line)}return intern(text)}
+   if(op===22||op===57){if(b===0n)emit(decoded(get(a))+'\n');const text=bytes(lines[cursor++]??'');if(text.length>4096)fail(line,'Input limit reached');if(op===57){if(!/^[+-]?\d+$/.test(text))fail(line,'Invalid integer input');return checked(BigInt(text),line)}return intern(text)}
    if(op===50)return intern(String(a));
    if(op===51){const s=get(a);if(!/^[+-]?\d+$/.test(s))fail(line,'Invalid integer text');return checked(BigInt(s),line)}
    if(op===52){const s=get(a);if(b<0n||b>=BigInt(s.length))fail(line,'Byte index out of bounds');return BigInt(s.charCodeAt(Number(b)))}

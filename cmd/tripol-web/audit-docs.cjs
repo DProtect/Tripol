@@ -7,20 +7,20 @@ const files=cp.execFileSync('git',['ls-tree','-r','--name-only',ref,'docs/librar
 const snippets=[];
 for(const file of files){
  const html=cp.execFileSync('git',['show',ref+':'+file],{encoding:'utf8',maxBuffer:4*1024*1024});
- const end=html.search(/<h2\b[^>]*>[^<]*(?:Function reference|Referencia de funciones)/i);
  // Match explicit TRIPOL blocks, excluding function signatures and implementation source.
  const main=html.split(/<section\s+class="function-card"/i)[0];
  let n=0;
- for(const m of main.matchAll(/<pre\b[^>]*>\s*<code\b[^>]*class=["'][^"']*\blanguage-tripol\b[^"']*["'][^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi)){
-  const source=decode(m[1]);if(source.trim())snippets.push({file,index:++n,source})
+ for(const m of main.matchAll(/<pre\b([^>]*)>\s*<code\b[^>]*class=["'][^"']*\blanguage-tripol\b[^"']*["'][^>]*>([\s\S]*?)<\/code>\s*<\/pre>/gi)){
+  const source=decode(m[2]);if(source.trim())snippets.push({file,index:++n,source,native:/\bdata-native-only\b/i.test(m[1])})
  }
 }
 require('./wasm_exec.js');const host=require('./host-r3.js');
 (async()=>{
  const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync(path.join(__dirname,'tripol-compiler.wasm')),go.importObject);go.run(instance);
  const rows=[];
- for(const {file,index,source} of snippets){
+ for(const {file,index,source,native} of snippets){
   const row={file,index,source};
+  if(native){rows.push({...row,status:'native-only'});continue}
   try{
    const compiled=tripolCompileWeb(source);
    if(!compiled.ok){rows.push({...row,status:'compiler-rejected',diagnostic:compiled.error});continue}

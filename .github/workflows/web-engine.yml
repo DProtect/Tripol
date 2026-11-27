@@ -56,7 +56,10 @@ jobs:
           git fetch origin gh-pages
           git show origin/gh-pages:playground/examples-r3.js > web-dist/examples-r3.js
           node --experimental-global-webcrypto web-dist/test-r3.cjs web-dist/examples-r3.js "$(pwd)/web-dist/tripol-native"
-          rm web-dist/tripol-native web-dist/examples-r3.js web-dist/test-r3.cjs
+          cp cmd/tripol-web/verify-reference.cjs web-dist/verify-reference.cjs
+          git show origin/gh-pages:playground/library-catalog-r6.1.js > web-dist/library-catalog.js
+          node --experimental-global-webcrypto web-dist/verify-reference.cjs web-dist/library-catalog.js "$(pwd)/web-dist/tripol-native" web-dist/examples-r3.js
+          rm web-dist/tripol-native web-dist/examples-r3.js web-dist/test-r3.cjs web-dist/library-catalog.js web-dist/verify-reference.cjs
       - name: Upload diagnostic reports even on failed tests
         if: always()
         uses: actions/upload-artifact@v4
