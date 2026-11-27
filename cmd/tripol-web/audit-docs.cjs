@@ -25,10 +25,6 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
    const compiled=tripolCompileWeb(source);
    if(!compiled.ok){rows.push({...row,status:'compiler-rejected',diagnostic:compiled.error});continue}
    if(!WebAssembly.validate(compiled.wasm)){rows.push({...row,status:'invalid-wasm'});continue}
-   // Input and platform-specific examples need fixtures/permissions; only compile them.
-   if(/\binput(?:_int)?\s*\(|\bimport\s+tripol\.(?:discord|env|events|game|ui|https|network|http|thread|process|time|profiler)\b/.test(source)){
-    rows.push({...row,status:'compiled-only',reason:'Input, timing or platform-dependent example'});continue
-   }
    try{const r=host.execute(compiled.wasm);rows.push({...row,status:'executed',output:r.output})}
    catch(e){rows.push({...row,status:'runtime-error',diagnostic:e.message})}
   }catch(e){rows.push({...row,status:'audit-error',diagnostic:e.message})}
@@ -36,5 +32,5 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
  const counts={};for(const r of rows)counts[r.status]=(counts[r.status]||0)+1;
  const report={commit:process.env.GITHUB_SHA||'',pagesRef:ref,pages:files.length,total:rows.length,counts,rows};
  fs.writeFileSync(path.join(__dirname,'docs-parity-report.json'),JSON.stringify(report,null,2));
- console.log('DOCS AUDIT',JSON.stringify({pages:report.pages,total:report.total,counts}));process.exit(0)
+ console.log('DOCS AUDIT',JSON.stringify({pages:report.pages,total:report.total,counts}));process.exit(rows.some(row=>!['executed','native-only'].includes(row.status))?1:0)
 })().catch(e=>{console.error(e);process.exit(1)});
