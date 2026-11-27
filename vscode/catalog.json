@@ -235,7 +235,9 @@
     "command_choices": "func discord.command_choices()->CommandChoices",
     "slash_choice_signature": "func discord.slash_choice_signature(choices:string)->string",
     "slash_option_signature": "func discord.slash_option_signature(options:string,depth=0)->string",
-    "button_row": "func discord.button_row()->Buttons"
+    "button_row": "func discord.button_row()->Buttons",
+    "guild": "func discord.guild(id:string)->Guild",
+    "post_message": "func discord.post_message(channel_id:string,content:string)->string"
   },
   "discord.Message": {
     "matches": "Message.matches(content:string)->bool",
@@ -363,6 +365,20 @@
   "discord.Buttons": {
     "button": "Buttons.button(label:string,id:string,style=1,disabled=false)->bool",
     "link": "Buttons.link(label:string,url:string,disabled=false)->bool"
+  },
+  "discord.Guild": {
+    "member": "Guild.member(id:string)->Member"
+  },
+  "discord.Member": {
+    "id": "Member.id()->string",
+    "read": "Member.read()->string",
+    "kick": "Member.kick()->bool",
+    "ban": "Member.ban(delete_message_seconds=0)->bool",
+    "unban": "Member.unban()->bool",
+    "nickname": "Member.nickname(value:string)->bool",
+    "timeout": "Member.timeout(until=\"\")->bool",
+    "role": "Member.role(role_id:string,enabled=true)->bool",
+    "dm": "Member.dm(content:string)->string"
   },
   "encoding": {
     "hex_digit": "func encoding.hex_digit(n:int) -> string",

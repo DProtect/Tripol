@@ -1887,6 +1887,9 @@ method: .short 71,69,84,0
  jmp discord_request
 
 .section .text.discord_request_windows,"ax"
+ xor r8d,r8d
+ jmp discord_rest
+.section .text.discord_rest_windows,"ax"
  push rbp
  mov rbp,rsp
  and rsp,-16
@@ -1897,10 +1900,14 @@ method: .short 71,69,84,0
  mov [rsp+72],rax # path
  mov [rsp+64],rcx # token address, 0 for anonymous POST, 1 for anonymous PATCH
  mov [rsp+160],rdx # body
+ mov [rsp+176],r8 # method: 0 legacy, 1 GET, 2 POST, 3 PUT, 4 PATCH, 5 DELETE
  mov qword ptr [rsp+168],0 # body length
  mov qword ptr [rsp+80],0
  mov qword ptr [rsp+88],0
  mov qword ptr [rsp+96],0
+ mov qword ptr [rsp+104],0
+ cmp r8,5
+ ja 9f
  # Fixed trusted host, path ASCII and bounded, token restricted to safe chars.
  mov rsi,[rsp+72]
  lea rdi,[rsp+256]
@@ -2006,13 +2013,33 @@ method: .short 71,69,84,0
  jz 9f
  mov [rsp+88],rax
  mov rcx,rax
+ mov eax,[rsp+176]
  lea rdx,[rip+discord_get]
+ cmp eax,1
+ je .dverb
+ cmp eax,2
+ je .dpost
+ cmp eax,3
+ je .dput
+ cmp eax,4
+ je .dpatch
+ cmp eax,5
+ je .ddelete
  cmp qword ptr [rsp+168],0
  je .dverb
- lea rdx,[rip+discord_post]
  cmp qword ptr [rsp+64],1
- jne .dverb
+ je .dpatch
+.dpost:
+ lea rdx,[rip+discord_post]
+ jmp .dverb
+.dput:
+ lea rdx,[rip+discord_put]
+ jmp .dverb
+.dpatch:
  lea rdx,[rip+discord_patch]
+ jmp .dverb
+.ddelete:
+ lea rdx,[rip+discord_delete]
 .dverb:
  lea r8,[rsp+256]
  xor r9d,r9d
@@ -2112,8 +2139,17 @@ method: .short 71,69,84,0
  call qword ptr [rip+iat36]
 13: cmp qword ptr [rsp+120],0
  jne .dresult
+ cmp qword ptr [rsp+176],0
+ jne .drecover
  cmp qword ptr [rsp+64],1
  ja discord_error
+.drecover:
+ cmp qword ptr [rsp+104],0
+ je .dfail
+ lea r8,[rip+arena_state]
+ sub qword ptr [r8],65536
+ add qword ptr [r8+8],65536
+.dfail:
  lea rax,[rip+.dempty]
  leave
  ret
@@ -2125,8 +2161,11 @@ method: .short 71,69,84,0
  sub [r8],rdx
  add [r8+8],rdx
  mov rax,[rsp+104]
+ cmp qword ptr [rsp+176],0
+ jne .dno_content
  cmp qword ptr [rsp+64],1
  ja .dreturn
+.dno_content:
  cmp qword ptr [rsp+112],0
  jne .dreturn
  lea rax,[rip+.daccepted]
@@ -2144,7 +2183,9 @@ discord_host: .short 100,105,115,99,111,114,100,46,99,111,109,0
 discord_agent: .short 84,82,73,80,79,76,0
 discord_get: .short 71,69,84,0
 discord_post: .short 80,79,83,84,0
+discord_put: .short 80,85,84,0
 discord_patch: .short 80,65,84,67,72,0
+discord_delete: .short 68,69,76,69,84,69,0
 
 .section .text.discord_edit_linux,"ax"
  mov r8,rax
@@ -2164,6 +2205,21 @@ discord_patch: .short 80,65,84,67,72,0
  mov r10,rdx
  mov eax,4
  jmp discord_pipe
+.section .text.discord_rest_linux,"ax"
+ cmp r8,1
+ jb .drest_empty
+ cmp r8,5
+ ja .drest_empty
+ lea r11d,[r8+6] # Bridge operations 7 through 11.
+ mov r8,rax
+ mov r9,rcx
+ mov r10,rdx
+ mov eax,r11d
+ jmp discord_pipe
+.drest_empty:
+ lea rax,[rip+.drest_zero]
+ ret
+.drest_zero: .byte 0
 .section .text.discord_error,"ax"
  lea rsi,[rip+1f]
  mov edx,2f-1f

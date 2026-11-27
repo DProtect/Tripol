@@ -1,7 +1,9 @@
 package discordtransport
 
 import (
+	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,6 +20,65 @@ import (
 )
 
 const testIdentify = `{"op":2,"d":{"token":"fixture-token","intents":1}}`
+
+func TestBridgeAuthenticatedMethodsRecoverFromFailure(t *testing.T) {
+	type request struct {
+		op                 uint32
+		method, path, body string
+		status             int
+	}
+	steps := []request{
+		{OpRESTGet, http.MethodGet, "/api/v10/guilds/123/members/456", "", http.StatusForbidden},
+		{OpRESTPost, http.MethodPost, "/api/v10/users/@me/channels", `{"recipient_id":"456"}`, http.StatusNoContent},
+		{OpRESTPut, http.MethodPut, "/api/v10/guilds/123/bans/456", `{"delete_message_seconds":0}`, http.StatusNoContent},
+		{OpRESTPatch, http.MethodPatch, "/api/v10/guilds/123/members/456", `{"nick":null}`, http.StatusNoContent},
+		{OpRESTDelete, http.MethodDelete, "/api/v10/guilds/123/bans/456", "", http.StatusNoContent},
+	}
+	var index atomic.Int32
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		i := int(index.Add(1)) - 1
+		if i >= len(steps) {
+			t.Errorf("unexpected %s request", r.Method)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		step := steps[i]
+		body, err := io.ReadAll(r.Body)
+		if err != nil || r.Method != step.method || r.URL.Path != step.path || string(body) != step.body || r.Header.Get("Authorization") != "Bot fixture-token" {
+			t.Errorf("invalid request for step %d", i)
+		}
+		w.WriteHeader(step.status)
+	}))
+	defer server.Close()
+	var input, output, diagnostics bytes.Buffer
+	for _, step := range steps {
+		const token = "fixture-token"
+		var header [16]byte
+		binary.LittleEndian.PutUint32(header[:4], step.op)
+		binary.LittleEndian.PutUint32(header[4:8], uint32(len(step.path)))
+		binary.LittleEndian.PutUint32(header[8:12], uint32(len(token)))
+		binary.LittleEndian.PutUint32(header[12:], uint32(len(step.body)))
+		input.Write(header[:])
+		input.WriteString(step.path)
+		input.WriteString(token)
+		input.WriteString(step.body)
+	}
+	if err := Serve(context.Background(), newClient(server.Client(), server.URL), &input, &output, &diagnostics); err != nil {
+		t.Fatal(err)
+	}
+	if index.Load() != int32(len(steps)) || diagnostics.String() != "Discord HTTP status 403\n" {
+		t.Fatalf("unexpected request count %d or diagnostics %q", index.Load(), diagnostics.String())
+	}
+	for i := range steps {
+		var size uint32
+		if err := binary.Read(&output, binary.LittleEndian, &size); err != nil {
+			t.Fatal(err)
+		}
+		if i == 0 && size != 0 || i > 0 && (size != 2 || string(output.Next(2)) != "{}") {
+			t.Fatalf("unexpected reply size %d at step %d", size, i)
+		}
+	}
+}
 
 func TestREST429UsesSharedConnection(t *testing.T) {
 	var attempts atomic.Int32

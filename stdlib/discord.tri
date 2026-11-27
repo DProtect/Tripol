@@ -1994,3 +1994,85 @@ func Interaction.followup(self:Interaction,content:string,ephemeral=false)->stri
  body=interaction_message(content,ephemeral)
  return event_id(json.get_raw_large(discord_callback(path,body),"id"))
 }
+
+struct Guild {
+ id:string
+}
+
+struct Member {
+ __guild:string
+ __user:string
+}
+
+func guild(id:string)->Guild {
+ assert id!="" and event_id(json.quote(id))==id,"Invalid Discord guild ID"
+ return Guild(id)
+}
+
+func Guild.member(self:Guild,id:string)->Member {
+ assert self.id!="" and event_id(json.quote(self.id))==self.id,"Invalid Discord guild ID"
+ assert id!="" and event_id(json.quote(id))==id,"Invalid Discord member ID"
+ return Member(self.id,id)
+}
+
+func Member.id(self:Member)->string {return self.__user}
+
+func Member.__path(self:Member,resource:string)->string {
+ return "/api/v10/guilds/"+self.__guild+"/"+resource+"/"+self.__user
+}
+
+func Member.read(self:Member)->string {
+ return discord_rest(1,self.__path("members"),token(),"")
+}
+
+func Member.kick(self:Member)->bool {
+ return len(discord_rest(5,self.__path("members"),token(),""))>0
+}
+
+func Member.ban(self:Member,delete_message_seconds=0)->bool {
+ assert delete_message_seconds>=0 and delete_message_seconds<=604800,"Discord bans allow removing up to seven days of messages"
+ body="{\"delete_message_seconds\":"+text(delete_message_seconds)+"}"
+ return len(discord_rest(3,self.__path("bans"),token(),body))>0
+}
+
+func Member.unban(self:Member)->bool {
+ return len(discord_rest(5,self.__path("bans"),token(),""))>0
+}
+
+func Member.nickname(self:Member,value:string)->bool {
+ assert utf8.valid(value) and utf8.count(value)<=32,"Discord nicknames allow up to 32 characters"
+ nick="null"
+ if value!="" {nick=json.quote(value)}
+ return len(discord_rest(4,self.__path("members"),token(),"{\"nick\":"+nick+"}"))>0
+}
+
+func Member.timeout(self:Member,until="")->bool {
+ deadline="null"
+ if until!="" {
+  assert timestamp_valid(until),"Discord requires an ISO 8601 timeout timestamp"
+  deadline=json.quote(until)
+ }
+ return len(discord_rest(4,self.__path("members"),token(),"{\"communication_disabled_until\":"+deadline+"}"))>0
+}
+
+func Member.role(self:Member,role_id:string,enabled=true)->bool {
+ assert role_id!="" and event_id(json.quote(role_id))==role_id,"Invalid Discord role ID"
+ method=3
+ if not enabled {method=5}
+ return len(discord_rest(method,self.__path("members")+"/roles/"+role_id,token(),""))>0
+}
+
+func post_message(channel_id:string,content:string)->string {
+ payload=interaction_message(content)
+ reply=discord_rest(2,channel_path(channel_id),token(),payload)
+ return event_id(json.get_raw_large(reply,"id"))
+}
+
+func Member.dm(self:Member,content:string)->string {
+ payload=interaction_message(content)
+ credential=token()
+ body="{\"recipient_id\":"+json.quote(self.__user)+"}"
+ channel=event_id(json.get_raw_large(discord_rest(2,"/api/v10/users/@me/channels",credential,body),"id"))
+ if channel=="" {return ""}
+ return event_id(json.get_raw_large(discord_rest(2,channel_path(channel),credential,payload),"id"))
+}

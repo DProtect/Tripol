@@ -219,6 +219,28 @@ bot.slash("feedback","Comparte una sugerencia",&open_feedback,guild)
 bot.on_modal("feedback_form",&receive_feedback)
 bot.start()
 `,
+		"discord-welcome": `import tripol.discord
+import tripol.env
+import tripol.json
+
+func welcome(event:discord.GatewayEvent)->bool {
+    if event.guild_id!=env.get("DISCORD_GUILD_ID") {return true}
+    if event.user_id=="" or json.get_raw_large(event.field("user"),"bot")=="true" {return true}
+    if discord.post_message(env.get("DISCORD_CHANNEL_ID"),"¡Bienvenido al servidor!")=="" {
+        show "No se pudo enviar el mensaje de bienvenida."
+        return false
+    }
+    return true
+}
+
+discord.guild(env.get("DISCORD_GUILD_ID"))
+discord.channel_path(env.get("DISCORD_CHANNEL_ID"))
+registry=discord.events()
+registry.intent("GUILD_MEMBERS")
+registry.on("member_join",&welcome)
+bot=discord.bot()
+bot.start_with_events(registry)
+`,
 		"ecosystem": `import tripol.sort
 import tripol.time
 import tripol.system
@@ -252,7 +274,7 @@ show "Saved:", read_text("profile.txt")
 	}
 	source, ok := templates[template]
 	if !ok {
-		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem, game, discord, discord-embeds, discord-components or discord-slash", template)
+		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem, game, discord, discord-embeds, discord-components, discord-slash or discord-welcome", template)
 	}
 	if err := os.Mkdir(dir, 0755); err != nil {
 		die("cannot create project: %v", err)
@@ -272,6 +294,14 @@ show "Saved:", read_text("profile.txt")
 		guide := "# Discord slash bot\n\n" +
 			"Use an authorized bot application with the applications.commands scope. Set DISCORD_TOKEN and DISCORD_GUILD_ID for a test server, then run `tripol run`. Invoke `/feedback` to open the form and receive a private acknowledgment. An empty guild ID registers the command globally.\n\n" +
 			"Usa una aplicación de bot autorizada con el alcance applications.commands. Configura DISCORD_TOKEN y DISCORD_GUILD_ID para un servidor de pruebas y ejecuta `tripol run`. Usa `/feedback` para abrir el formulario y recibir confirmación privada. Si el ID de servidor está vacío, el registro es global.\n"
+		if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte(guide), 0644); err != nil {
+			die("%v", err)
+		}
+	}
+	if template == "discord-welcome" {
+		guide := "# Discord welcome bot\n\n" +
+			"Set DISCORD_TOKEN, DISCORD_GUILD_ID and DISCORD_CHANNEL_ID in the process environment. Use a channel in that server. Enable Server Members Intent in the Discord Developer Portal and grant View Channel and Send Messages in the welcome channel. Start with `tripol run` on Linux x86-64 or Windows x64. The bot sends a welcome message when a human joins the configured server and logs a delivery failure while continuing to handle events.\n\n" +
+			"Configura DISCORD_TOKEN, DISCORD_GUILD_ID y DISCORD_CHANNEL_ID en el entorno del proceso. Usa un canal de ese servidor. Activa Server Members Intent en el portal de desarrolladores de Discord y concede permisos para ver el canal y enviar mensajes. Ejecuta `tripol run` en Linux x86-64 o Windows x64. El bot da la bienvenida cuando una persona se une al servidor configurado y sigue procesando eventos si falla el envío.\n"
 		if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte(guide), 0644); err != nil {
 			die("%v", err)
 		}

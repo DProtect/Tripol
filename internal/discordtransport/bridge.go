@@ -18,6 +18,11 @@ const (
 	OpREST
 	OpInteraction
 	OpInteractionEdit
+	OpRESTGet
+	OpRESTPost
+	OpRESTPut
+	OpRESTPatch
+	OpRESTDelete
 )
 
 // Serve is the private, process-local protocol between a launcher and one
@@ -59,7 +64,7 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 			if lengths[0] == 0 || lengths[0] > 1024 || lengths[1] != 0 || lengths[2] == 0 {
 				return errors.New("invalid Discord bridge callback")
 			}
-		case OpREST:
+		case OpREST, OpRESTGet, OpRESTPost, OpRESTPut, OpRESTPatch, OpRESTDelete:
 			if lengths[0] == 0 || lengths[0] > 1024 || lengths[1] == 0 || lengths[1] > 512 {
 				return errors.New("invalid Discord bridge REST command")
 			}
@@ -118,6 +123,13 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 				method = http.MethodPost
 			}
 			reply, err = client.Request(ctx, method, string(args[0]), string(args[1]), args[2])
+		case OpRESTGet, OpRESTPost, OpRESTPut, OpRESTPatch, OpRESTDelete:
+			methods := [...]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
+			reply, err = client.Request(ctx, methods[op-OpRESTGet], string(args[0]), string(args[1]), args[2])
+			if err != nil {
+				fmt.Fprintln(diagnostics, err)
+				reply, err = nil, nil
+			}
 		}
 		if err == nil && (len(reply) > maxMessage || bytes.IndexByte(reply, 0) >= 0) {
 			err = errors.New("invalid Discord bridge reply")

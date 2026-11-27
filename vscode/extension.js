@@ -9,18 +9,18 @@ function activate(context) {
  const diagnostics = vscode.languages.createDiagnosticCollection("tripol");
  const selector = {language:"tripol",scheme:"file"};
  const keyword = "import if else while repeat for in break continue return show assert try catch finally throw scratch func struct let const int bool string float ints list true false and or not".split(" ");
- const members=(doc,pos,name)=>{
-  if(catalog[name])return catalog[name];
-  const source=doc.getText(new vscode.Range(0,0,pos.line,pos.character));
+ const recordType=(source,name)=>{
   const annotated=[...source.matchAll(/\b([A-Za-z_]\w*)\s*:\s*(\w+\.\w+)\b/g)].reverse().find(m=>m[1]===name);
-  if(annotated&&catalog[annotated[2]])return catalog[annotated[2]];
+  if(annotated&&catalog[annotated[2]])return annotated[2];
   for(const binding of [...source.matchAll(/^\s*(?:let\s+)?([A-Za-z_]\w*)\s*=\s*(\w+)\.(\w+)\s*\(/gm)].reverse()){
    if(binding[1]!==name)continue;
-   const [, , module, factory]=binding;
-   const result=catalog[module]?.[factory]?.match(/->\s*(\w+)$/)?.[1];
-   return catalog[module+"."+result];
+   const [, , receiver, factory]=binding;
+   const owner=catalog[receiver]?receiver:recordType(source.slice(0,binding.index),receiver);
+   const result=catalog[owner]?.[factory]?.match(/->\s*(\w+)$/)?.[1];
+   if(result)return owner.split(".")[0]+"."+result;
   }
  };
+ const members=(doc,pos,name)=>catalog[name]||catalog[recordType(doc.getText(new vscode.Range(0,0,pos.line,pos.character)),name)];
  const localNames = doc => [...new Set([...doc.getText().matchAll(/\b(?:func\s+)?([A-Za-z_]\w*)\s*(?:\(|=(?!=))/g)].map(x=>x[1]))];
  context.subscriptions.push(output,diagnostics,vscode.languages.registerCompletionItemProvider(selector,{
   provideCompletionItems(doc,pos){

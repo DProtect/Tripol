@@ -169,10 +169,7 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 	deferred := strings.ReplaceAll(strings.ReplaceAll(slashEvent, `"name":"hola"`, `"name":"wait"`), `"id":"710"`, `"id":"715"`)
 	expired := strings.Replace(deferred, `"id":"715"`, `"id":"716"`, 1)
 	first := `[{"type":1,"name":"hola","description":"La descripci\u00f3n","id":"919","options":[{"required":true,"type":3,"description":"La opci\u00f3n","name":"text"}]},{"type":1,"name":"unmanaged","description":"Leave it alone","id":"920"},{"type":1,"name":"inspect","description":"Inspecciona","id":"921","options":[{"type":2,"name":"stock","description":"Inventario","options":[{"type":1,"name":"find","description":"Busca","options":[{"type":3,"name":"query","description":"Qu\u00e9 buscar","autocomplete":true,"required":true},{"choices":[{"value":10,"name":"D\u00e9cada"}],"type":4,"name":"limit","description":"L\u00edmite"}]}]}]}]`
-	steps := []struct {
-		op                          uint32
-		path, auth, contains, reply string
-	}{
+	steps := []bridgeStep{
 		{discordtransport.OpREST, "/api/v10/oauth2/applications/@me", "fixture-token", "", `{"id":"890"}`},
 		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", "", first},
 		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", `"name":"wait"`, `{"id":"922"}`},
@@ -201,6 +198,15 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 		{discordtransport.OpPoll, "", "", "", "!"},
 		{discordtransport.OpClose, "", "", "", "1"},
 	}
+	return serveBridgeFixture(input, output, steps)
+}
+
+type bridgeStep struct {
+	op                          uint32
+	path, auth, contains, reply string
+}
+
+func serveBridgeFixture(input io.Reader, output io.Writer, steps []bridgeStep) error {
 	for index, step := range steps {
 		var hdr [16]byte
 		if _, err := io.ReadFull(input, hdr[:]); err != nil {
@@ -239,4 +245,103 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 		}
 	}
 	return nil
+}
+
+func TestLinuxDiscordMemberModeration(t *testing.T) {
+	if runtime.GOARCH != "amd64" {
+		t.Skip("requires native x86-64")
+	}
+	const source = `import tripol.discord
+guild=discord.guild("321")
+member=guild.member("567")
+show member.read()
+assert not member.kick()
+assert member.ban(3600)
+assert member.unban()
+assert member.nickname("Niña")
+assert member.nickname("")
+assert member.timeout("2026-12-01T00:00:00Z")
+assert member.timeout()
+assert member.role("876")
+assert member.role("876",false)
+assert member.dm("Bienvenido")=="42"
+show "moderation OK"
+`
+	path := filepath.Join(t.TempDir(), "moderation")
+	if err := os.WriteFile(path, compileProfile(source, "linux", "turbo"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DISCORD_TOKEN", "fixture-token")
+	cmd := exec.Command(path)
+	var output bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &output, &output
+	steps := []bridgeStep{
+		{discordtransport.OpRESTGet, "/api/v10/guilds/321/members/567", "fixture-token", "", `{"user":{"id":"567"}}`},
+		{discordtransport.OpRESTDelete, "/api/v10/guilds/321/members/567", "fixture-token", "", ""},
+		{discordtransport.OpRESTPut, "/api/v10/guilds/321/bans/567", "fixture-token", `{"delete_message_seconds":3600}`, `{}`},
+		{discordtransport.OpRESTDelete, "/api/v10/guilds/321/bans/567", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTPatch, "/api/v10/guilds/321/members/567", "fixture-token", `{"nick":"Niña"}`, `{}`},
+		{discordtransport.OpRESTPatch, "/api/v10/guilds/321/members/567", "fixture-token", `{"nick":null}`, `{}`},
+		{discordtransport.OpRESTPatch, "/api/v10/guilds/321/members/567", "fixture-token", `{"communication_disabled_until":"2026-12-01T00:00:00Z"}`, `{}`},
+		{discordtransport.OpRESTPatch, "/api/v10/guilds/321/members/567", "fixture-token", `{"communication_disabled_until":null}`, `{}`},
+		{discordtransport.OpRESTPut, "/api/v10/guilds/321/members/567/roles/876", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTDelete, "/api/v10/guilds/321/members/567/roles/876", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTPost, "/api/v10/users/@me/channels", "fixture-token", `{"recipient_id":"567"}`, `{"id":"555"}`},
+		{discordtransport.OpRESTPost, "/api/v10/channels/555/messages", "fixture-token", `{"content":"Bienvenido","allowed_mentions":{"parse":[]}}`, `{"id":"42"}`},
+	}
+	fixture := make(chan error, 1)
+	err := runDiscordPipes(cmd, func(_ context.Context, requests, replies *os.File) error {
+		err := serveBridgeFixture(requests, replies, steps)
+		fixture <- err
+		return err
+	}, nil)
+	if err != nil {
+		t.Fatalf("moderation executable: %v (%s)", err, output.String())
+	}
+	if fixtureErr := <-fixture; fixtureErr != nil || output.String() != "{\"user\":{\"id\":\"567\"}}\nmoderation OK\n" {
+		t.Fatalf("fixture %v, output %q", fixtureErr, output.String())
+	}
+}
+
+func TestLinuxDiscordWelcomeTemplateFiltersJoinsAndRecovers(t *testing.T) {
+	if runtime.GOARCH != "amd64" {
+		t.Skip("requires native x86-64")
+	}
+	dir := filepath.Join(t.TempDir(), "welcome")
+	newProjectTemplate(dir, "discord-welcome")
+	fs, ss, _ := loadProject(filepath.Join(dir, "main.tri"))
+	tool := filepath.Join(dir, "welcome-bot")
+	if err := os.WriteFile(tool, compileParsed(fs, ss, "linux", "turbo"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DISCORD_TOKEN", "fixture-token")
+	t.Setenv("DISCORD_GUILD_ID", "321")
+	t.Setenv("DISCORD_CHANNEL_ID", "345")
+	cmd := exec.Command(tool)
+	var output bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &output, &output
+	body := `{"content":"¡Bienvenido al servidor!","allowed_mentions":{"parse":[]}}`
+	steps := []bridgeStep{
+		{discordtransport.OpStart, "", "", `"intents":3,`, "1"},
+		{discordtransport.OpPoll, "", "", "", `{"op":0,"t":"READY","s":3,"d":{}}`},
+		{discordtransport.OpPoll, "", "", "", strings.Replace(memberJoined, `"guild_id":"321"`, `"guild_id":"999"`, 1)},
+		{discordtransport.OpPoll, "", "", "", strings.Replace(memberJoined, `"user":{"id"`, `"user":{"bot":true,"id"`, 1)},
+		{discordtransport.OpPoll, "", "", "", memberJoined},
+		{discordtransport.OpRESTPost, "/api/v10/channels/345/messages", "fixture-token", body, ""},
+		{discordtransport.OpPoll, "", "", "", strings.Replace(memberJoined, `"s":9`, `"s":10`, 1)},
+		{discordtransport.OpRESTPost, "/api/v10/channels/345/messages", "fixture-token", body, `{"id":"999"}`},
+		{discordtransport.OpPoll, "", "", "", "!"},
+		{discordtransport.OpClose, "", "", "", "1"},
+	}
+	fixture := make(chan error, 1)
+	if err := runDiscordPipes(cmd, func(_ context.Context, in, out *os.File) error {
+		err := serveBridgeFixture(in, out, steps)
+		fixture <- err
+		return err
+	}, nil); err != nil {
+		t.Fatalf("welcome executable: %v (%s)", err, output.String())
+	}
+	if err := <-fixture; err != nil || strings.Count(output.String(), "No se pudo enviar el mensaje de bienvenida.") != 1 {
+		t.Fatalf("fixture %v, output %q", err, output.String())
+	}
 }

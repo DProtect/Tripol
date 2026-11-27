@@ -1,5 +1,6 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
+- `discord.guild(id).member(id)` adds native member lookup, kicks, bans, unbans, nicknames, timeouts, role assignment and direct messages through recoverable authenticated REST. The `discord-welcome` template filters member joins by server and keeps processing events after delivery failures.
 - `discord.events()` registers ordered, typed Gateway callbacks and lets applications opt into gateway intents by name. The same callbacks can be checked offline with `registry.preview` or connected alongside existing commands with `bot.start_with_events`.
 - Slash schemas support subcommands, groups and fixed string or integer choices. Autocomplete dispatches a typed callback for the registered command scope, including nested options, and returns Discord's type-8 response.
 - A connected interaction callback can acknowledge once with `ctx.respond`, edit its original response with `ctx.edit_reply` or `ctx.edit_response`, and post a text follow-up with `ctx.followup`. Slash callbacks with the same command name are dispatched independently for global and guild scopes.

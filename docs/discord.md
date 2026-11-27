@@ -201,6 +201,24 @@ On Linux x86-64, Studio runs the bot and samples its RSS, CPU ticks, connection 
 
 En Linux x86-64, Studio ejecuta el bot y toma muestras de RSS, ticks de CPU, conexión, latencia de heartbeat, tiempo activo, servidores en READY, cola de eventos, peticiones REST, errores y límites. El lanzador y el bot se miden por separado. Usa un archivo de salida nuevo. Sin `--metrics`, las muestras se escriben en la salida de error. Quedan pendientes las métricas por comando e interacción, el filtrado de logs y el monitoreo en Windows.
 
+## Member moderation and welcome bot / Moderación de miembros y bienvenida
+
+```tripol
+import tripol.discord
+
+server = discord.guild("123")
+member = server.member("456")
+show member.read()
+```
+
+Use the numeric IDs from an authorized server. `member.kick()`, `member.ban(delete_message_seconds=0)` and `member.unban()` remove a member, ban them with optional removal of up to seven days of messages, or revoke a ban. `member.nickname(text)` sets a nickname, and an empty string clears it. `member.timeout(until)` sets an ISO 8601 deadline, and `member.timeout()` clears it. Discord enforces the 28-day maximum. `member.role(id, false)` removes a role and `member.role(id)` adds it. These methods report success as a boolean so the bot can continue after a failed request. Discord enforces bot permissions and role hierarchy. `member.dm(text)` and `discord.post_message(channel_id, text)` return the sent message ID or an empty string if delivery fails.
+
+Usa los IDs numéricos de un servidor autorizado. `member.kick()`, `member.ban(delete_message_seconds=0)` y `member.unban()` expulsan, banean con borrado opcional de hasta siete días de mensajes o revocan el baneo. `member.nickname(texto)` cambia el apodo y una cadena vacía lo elimina. `member.timeout(hasta)` recibe una fecha ISO 8601 y `member.timeout()` retira el aislamiento. Discord aplica el máximo de 28 días. `member.role(id, false)` quita un rol y `member.role(id)` lo añade. Estos métodos devuelven un booleano para que el bot pueda continuar si falla la solicitud. Discord aplica los permisos y la jerarquía de roles del bot. `member.dm(texto)` y `discord.post_message(channel_id, texto)` devuelven el ID del mensaje o una cadena vacía si falla el envío.
+
+Use `tripol new Welcome --template discord-welcome` to send a welcome to a channel when a human joins the configured server. The generated README covers the required environment variables, Server Members Intent and channel permissions. The template skips bots and other servers, and continues receiving events if a send fails.
+
+Usa `tripol new Bienvenida --template discord-welcome` para enviar un saludo a un canal cuando se une una persona al servidor configurado. El README generado indica las variables de entorno, Server Members Intent y los permisos del canal. La plantilla omite bots y otros servidores y continúa recibiendo eventos si falla un envío.
+
 ## API
 
 | Method / Método | Behavior / Comportamiento |
@@ -263,7 +281,7 @@ The generated template does not need a channel ID. `login_env()` reads `DISCORD_
 
 Initial Hello (10), Identify (2), Dispatch (0), sequence tracking, periodic Heartbeat (1) with null before the first sequence, Heartbeat ACK (11), server heartbeat requests, READY and MESSAGE_CREATE are implemented. `connected()` reports local READY state; `ping()` reports last heartbeat round trip in milliseconds or -1 before ACK, not message latency. Both are primarily diagnostics while running; the simple `run` API blocks. `preview` and `gateway_reply` support offline matching tests. `identify_payload` is a protocol helper containing the secret; do not print or log it.
 
-The experimental Windows Gateway uses the official host and OS certificate validation. A single worker receives uncompressed text frames up to 65,535 bytes and dispatches callbacks in order. The JSON nesting limit is 32. Oversized or unsupported frames stop reception. Windows support for compression, sharding, Resume, and automatic reconnect is pending. Reconnect (7), Invalid Session (9) and failed receives stop the connection. A missed ACK, READY timeout or send failure stops the process to avoid closing a handle while a receive is pending. WinHTTP creates a separate session per REST request. Authenticated REST requests currently stop the bot on failure. Interaction callbacks and interaction webhook requests return failures to their callers. Measured presence, round-trip latency and live execution against Discord on Windows are pending. Ctrl+C exits.
+The experimental Windows Gateway uses the official host and OS certificate validation. A single worker receives uncompressed text frames up to 65,535 bytes and dispatches callbacks in order. The JSON nesting limit is 32. Oversized or unsupported frames stop reception. Windows support for compression, sharding, Resume, and automatic reconnect is pending. Reconnect (7), Invalid Session (9) and failed receives stop the connection. A missed ACK, READY timeout or send failure stops the process to avoid closing a handle while a receive is pending. WinHTTP creates a separate session per REST request. Legacy authenticated requests stop the bot on failure. Member moderation, welcome messages and interaction requests return failures to their callers. Measured presence, round-trip latency and live execution against Discord on Windows are pending. Ctrl+C exits.
 
 Explicit fallback: `discord.run_rest()` restores ECLIPSE's 2.5-second REST polling, which may miss messages. Legacy `listen`, `send`, `latest`, `matches`, `message_id`, `gateway` and token/URL helpers remain available. See `tripol docs discord` for the complete module, including the protocol helpers.
 

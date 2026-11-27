@@ -99,7 +99,7 @@ func TestNexusPE(t *testing.T) {
 }
 
 func TestNexusTemplates(t *testing.T) {
-	for _, name := range []string{"basic", "calculator", "files", "discord", "discord-embeds", "discord-components", "discord-slash"} {
+	for _, name := range []string{"basic", "calculator", "files", "discord", "discord-embeds", "discord-components", "discord-slash", "discord-welcome"} {
 		t.Run(name, func(t *testing.T) {
 			dir := filepath.Join(t.TempDir(), name)
 			newProjectTemplate(dir, name)

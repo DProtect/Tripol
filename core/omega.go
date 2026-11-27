@@ -89,7 +89,7 @@ func (c *compiler) omegaBuiltin(e *expr) (string, bool) {
 		return "string", true
 	case "discord_callback", "discord_edit":
 		if len(e.args) != 2 {
-			c.err(e.s+" expects path and body")
+			c.err(e.s + " expects path and body")
 		}
 		c.require(c.expression(e.args[0]), "string")
 		a.emit(0x50)
@@ -107,6 +107,19 @@ func (c *compiler) omegaBuiltin(e *expr) (string, bool) {
 		}
 		a.emit(0x5a, 0x59, 0x58)
 		a.call("discord_request")
+		return "string", true
+	case "discord_rest":
+		if len(e.args) != 4 {
+			c.err("discord_rest expects method, path, token and body")
+		}
+		c.require(c.expression(e.args[0]), "int")
+		a.emit(0x50)
+		for _, arg := range e.args[1:] {
+			c.require(c.expression(arg), "string")
+			a.emit(0x50)
+		}
+		a.emit(0x5a, 0x59, 0x58, 0x41, 0x58) // RDX body, RCX token, RAX path, R8 method.
+		a.call("discord_rest")
 		return "string", true
 	}
 	return "", false
