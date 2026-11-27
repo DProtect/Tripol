@@ -1414,7 +1414,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "3048\n"
+      "output": "3140\n"
     },
     {
       "name": "time.elapsed",
@@ -1437,7 +1437,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "3079066022\n"
+      "output": "3167916000\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2154,7 +2154,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n26840\n"
+      "output": "4950\n31969\n"
     },
     {
       "name": "simd.equal",

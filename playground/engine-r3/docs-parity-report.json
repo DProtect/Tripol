@@ -1,13 +1,375 @@
 {
-  "commit": "868f2c0f7602d4656721cefd5e722fd644290bba",
+  "commit": "a0985d5d7d6bedf0ab0452bed5fc0530ead502fb",
   "pagesRef": "origin/gh-pages",
-  "pages": 64,
-  "total": 83,
+  "pages": 93,
+  "total": 136,
   "counts": {
-    "executed": 79,
-    "native-only": 4
+    "native-only": 13,
+    "executed": 123
   },
   "rows": [
+    {
+      "file": "docs/discord.html",
+      "index": 1,
+      "source": "import tripol.discord\n\ndiscord.login_env()\ndiscord.activity(\"Programming in TRIPOL\")\ndiscord.reply(\"!hello\", \"Hello, friend!\")\ndiscord.reply(\"!ping\", \"Pong!\")\ndiscord.run()\n",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/graphics.html",
+      "index": 1,
+      "source": "import tripol.game\nimport tripol.canvas\np=canvas.create(320,180)\ngame.window(\"QUANTUM\",960,540)\nwhile game.running() {\n    if game.key(27) {break}\n    canvas.clear(p,1052688)\n    canvas.rectangle(p,320,180,140,70,40,40,16777215)\n    game.present(p,320,180)\n    game.wait(16)\n}\ngame.close()\n",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/inicio.html",
+      "index": 1,
+      "source": "name = input(\"Your name? \")\nshow \"Hello\", name",
+      "status": "executed",
+      "output": "Your name? \nHello Ada\n"
+    },
+    {
+      "file": "docs/inicio.html",
+      "index": 2,
+      "source": "func greet(name=\"Guest\", score=10)->string {\n    return f\"Hello {name}, your score is {score}\"\n}\nshow greet()\nshow greet(\"Alice\", 25)",
+      "status": "executed",
+      "output": "Hello Guest, your score is 10\nHello Alice, your score is 25\n"
+    },
+    {
+      "file": "docs/language.html",
+      "index": 1,
+      "source": "total=0\nrepeat 1000 {\n    scratch {\n        values=ints(65535)\n        values[0]=7\n        total+=values[0]\n    }\n}\nshow total\n",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/language.html",
+      "index": 2,
+      "source": "import tripol.buffer\nb = buffer.create()\nb = buffer.push(b, 10)\nb = buffer.push(b, 20)\nshow buffer.values(b)\n",
+      "status": "executed",
+      "output": "[10, 20]\n"
+    },
+    {
+      "file": "docs/learn-arrays.html",
+      "index": 1,
+      "source": "a = [10, 20, 30]\nshow a[0], len(a)\na[1] += 5\nshow a",
+      "status": "executed",
+      "output": "10 3\n[10, 25, 30]\n"
+    },
+    {
+      "file": "docs/learn-arrays.html",
+      "index": 2,
+      "source": "a = ints(3)\nfor i in range(3) {\n    a[i] = i * 2\n}\nshow a, sum(a)",
+      "status": "executed",
+      "output": "[0, 2, 4] 6\n"
+    },
+    {
+      "file": "docs/learn-arrays.html",
+      "index": 3,
+      "source": "import tripol.collections\n\na = [1, 2]\nb = collections.append(a, 3)\nshow a\nshow b",
+      "status": "executed",
+      "output": "[1, 2]\n[1, 2, 3]\n"
+    },
+    {
+      "file": "docs/learn-conditions.html",
+      "index": 1,
+      "source": "score = 80\nif score >= 60 {\n    show \"Passed\"\n}",
+      "status": "executed",
+      "output": "Passed\n"
+    },
+    {
+      "file": "docs/learn-conditions.html",
+      "index": 2,
+      "source": "score = 75\nif score >= 90 {\n    show \"Excellent\"\n} else if score >= 60 {\n    show \"Passed\"\n} else {\n    show \"Try again\"\n}",
+      "status": "executed",
+      "output": "Passed\n"
+    },
+    {
+      "file": "docs/learn-conditions.html",
+      "index": 3,
+      "source": "age = 16\nallowed = true\nif age >= 13 and allowed {\n    show \"Welcome\"\n} else {\n    show \"Unavailable\"\n}",
+      "status": "executed",
+      "output": "Welcome\n"
+    },
+    {
+      "file": "docs/learn-exceptions.html",
+      "index": 1,
+      "source": "a = 10\nb = 0\ntry {\n    show a / b\n} catch code {\n    show code\n}",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/learn-exceptions.html",
+      "index": 2,
+      "source": "try {\n    throw 101\n} catch code {\n    show code\n} finally {\n    show \"Finished\"\n}",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/learn-exceptions.html",
+      "index": 3,
+      "source": "import tripol.errors\n\nshow errors.div_or(10, 0, -1)\nshow errors.int_or(\"abc\", 7)",
+      "status": "executed",
+      "output": "-1\n7\n"
+    },
+    {
+      "file": "docs/learn-functions.html",
+      "index": 1,
+      "source": "func add(a:int, b:int)->int {\n    return a + b\n}\nshow add(4, 5)",
+      "status": "executed",
+      "output": "9\n"
+    },
+    {
+      "file": "docs/learn-functions.html",
+      "index": 2,
+      "source": "func greet(name=\"Guest\")->string {\n    return \"Hello \" + name\n}\nshow greet()\nshow greet(\"Ada\")",
+      "status": "executed",
+      "output": "Hello Guest\nHello Ada\n"
+    },
+    {
+      "file": "docs/learn-functions.html",
+      "index": 3,
+      "source": "func twice(n:int)->int => n * 2\nshow twice(21)",
+      "status": "executed",
+      "output": "42\n"
+    },
+    {
+      "file": "docs/learn-hello.html",
+      "index": 1,
+      "source": "show \"Hello, TRIPOL!\"",
+      "status": "executed",
+      "output": "Hello, TRIPOL!\n"
+    },
+    {
+      "file": "docs/learn-hello.html",
+      "index": 2,
+      "source": "// My first program\nshow \"TRIPOL\", 42\n# Another line\nshow \"Ready\"",
+      "status": "executed",
+      "output": "TRIPOL 42\nReady\n"
+    },
+    {
+      "file": "docs/learn-lists.html",
+      "index": 1,
+      "source": "numbers = list([10, 20, 30])\nnumbers.add(40)\nshow numbers\nshow numbers.get(3), len(numbers)",
+      "status": "executed",
+      "output": "[10, 20, 30, 40]\n40 4\n"
+    },
+    {
+      "file": "docs/learn-lists.html",
+      "index": 2,
+      "source": "numbers = list([10, 20, 30])\nnumbers[0] += 5\nshow numbers.remove_at(1)\nshow numbers",
+      "status": "executed",
+      "output": "20\n[15, 30]\n"
+    },
+    {
+      "file": "docs/learn-lists.html",
+      "index": 3,
+      "source": "names = list([\"Ada\", \"Alex\"])\nnames.add(\"Sam\")\nshow names[2]",
+      "status": "executed",
+      "output": "Sam\n"
+    },
+    {
+      "file": "docs/learn-loops.html",
+      "index": 1,
+      "source": "for i in range(1, 4) {\n    show i\n}",
+      "status": "executed",
+      "output": "1\n2\n3\n"
+    },
+    {
+      "file": "docs/learn-loops.html",
+      "index": 2,
+      "source": "numbers = [10, 20, 30]\nfor i, value in numbers {\n    show i, value\n}",
+      "status": "executed",
+      "output": "0 10\n1 20\n2 30\n"
+    },
+    {
+      "file": "docs/learn-loops.html",
+      "index": 3,
+      "source": "n = 0\nwhile n < 3 {\n    n += 1\n}\nshow n",
+      "status": "executed",
+      "output": "3\n"
+    },
+    {
+      "file": "docs/learn-loops.html",
+      "index": 4,
+      "source": "total = 0\nrepeat 3 {\n    total += 2\n}\nshow total",
+      "status": "executed",
+      "output": "6\n"
+    },
+    {
+      "file": "docs/learn-loops.html",
+      "index": 5,
+      "source": "for i in range(5) {\n    if i == 2 {continue}\n    if i == 4 {break}\n    show i\n}",
+      "status": "executed",
+      "output": "0\n1\n3\n"
+    },
+    {
+      "file": "docs/learn-memory.html",
+      "index": 1,
+      "source": "import tripol.memory\n\nshow memory.capacity()\nshow memory.used()\nshow memory.available()",
+      "status": "executed",
+      "output": "6291456\n0\n6291456\n"
+    },
+    {
+      "file": "docs/learn-memory.html",
+      "index": 2,
+      "source": "total = 0\nrepeat 3 {\n    scratch {\n        values = ints(100)\n        values[0] = 7\n        total += values[0]\n    }\n}\nshow total",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/learn-modules.html",
+      "index": 1,
+      "source": "import tripol.math\n\nshow math.square(7)",
+      "status": "executed",
+      "output": "49\n"
+    },
+    {
+      "file": "docs/learn-modules.html",
+      "index": 2,
+      "source": "func double(n:int)->int {\n    return n * 2\n}",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/learn-modules.html",
+      "index": 3,
+      "source": "import \"helpers.tri\"\n\nshow double(21)",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/learn-modules.html",
+      "index": 4,
+      "source": "import vault.helpers\n\nshow helpers.double(21)",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/learn-operators.html",
+      "index": 1,
+      "source": "show 7 + 3, 7 - 3, 7 * 3\nshow 7 / 3, 7 % 3",
+      "status": "executed",
+      "output": "10 4 21\n2 1\n"
+    },
+    {
+      "file": "docs/learn-operators.html",
+      "index": 2,
+      "source": "show -7 / 3, -7 % 3\nshow 7 / -3, 7 % -3\nshow -7 / -3, -7 % -3",
+      "status": "executed",
+      "output": "-2 -1\n-2 1\n2 -1\n"
+    },
+    {
+      "file": "docs/learn-operators.html",
+      "index": 3,
+      "source": "show 7.0 / 3.0\nshow float(7) / 3.0",
+      "status": "executed",
+      "output": "2.333333\n2.333333\n"
+    },
+    {
+      "file": "docs/learn-operators.html",
+      "index": 4,
+      "source": "show 7 == 7, 7 != 3\nshow 7 > 3, 7 < 3\nshow 7 >= 7, 3 <= 7\nshow true and false, true or false, not true",
+      "status": "executed",
+      "output": "true true\ntrue false\ntrue true\nfalse true false\n"
+    },
+    {
+      "file": "docs/learn-operators.html",
+      "index": 5,
+      "source": "show 2 + 3 * 4\nshow (2 + 3) * 4",
+      "status": "executed",
+      "output": "14\n20\n"
+    },
+    {
+      "file": "docs/learn-operators.html",
+      "index": 6,
+      "source": "n = 10\nn += 5\nn -= 2\nn *= 3\nn /= 2\nn %= 4\nshow n",
+      "status": "executed",
+      "output": "3\n"
+    },
+    {
+      "file": "docs/learn-strings.html",
+      "index": 1,
+      "source": "name = \"TRIPOL\"\nshow \"Hello \" + name",
+      "status": "executed",
+      "output": "Hello TRIPOL\n"
+    },
+    {
+      "file": "docs/learn-strings.html",
+      "index": 2,
+      "source": "show \"Line 1\\nLine 2\"",
+      "status": "executed",
+      "output": "Line 1\nLine 2\n"
+    },
+    {
+      "file": "docs/learn-strings.html",
+      "index": 3,
+      "source": "name = \"Alex\"\nscore = 42\nshow f\"{name}: {score}\"\nshow f\"Total: {2 + 3}\"",
+      "status": "executed",
+      "output": "Alex: 42\nTotal: 5\n"
+    },
+    {
+      "file": "docs/learn-strings.html",
+      "index": 4,
+      "source": "import tripol.text\n\nshow len(\"á\")\nshow text.part(\"TRIPOL\", 0, 3)\nshow text.contains(\"TRIPOL\", \"POL\")",
+      "status": "executed",
+      "output": "2\nTRI\ntrue\n"
+    },
+    {
+      "file": "docs/learn-structs.html",
+      "index": 1,
+      "source": "struct Player {name:string;score:int}\np = Player(\"Alex\", 10)\np.score = 20\nshow p.name, p.score",
+      "status": "executed",
+      "output": "Alex 20\n"
+    },
+    {
+      "file": "docs/learn-structs.html",
+      "index": 2,
+      "source": "struct Player {name:string=\"Alex\";score:int=0}\np = Player()\np.score = 100\nshow f\"{p.name}: {p.score}\"",
+      "status": "executed",
+      "output": "Alex: 100\n"
+    },
+    {
+      "file": "docs/learn-structs.html",
+      "index": 3,
+      "source": "struct Counter {value:int}\na = Counter(1)\nb = a\nb.value = 7\nshow a.value",
+      "status": "executed",
+      "output": "7\n"
+    },
+    {
+      "file": "docs/learn-types.html",
+      "index": 1,
+      "source": "age = 16\nprice = 2.5\nactive = true\nname = \"TRIPOL\"\nshow age, price, active, name",
+      "status": "executed",
+      "output": "16 2.500000 true TRIPOL\n"
+    },
+    {
+      "file": "docs/learn-types.html",
+      "index": 2,
+      "source": "show float(9) / 2.0\nshow \"Score: \" + text(42)\nshow parse_int(\"42\") + 1",
+      "status": "executed",
+      "output": "4.500000\nScore: 42\n43\n"
+    },
+    {
+      "file": "docs/learn-types.html",
+      "index": 3,
+      "source": "numbers = [10, 20, 30]\nshow numbers[0]",
+      "status": "executed",
+      "output": "10\n"
+    },
+    {
+      "file": "docs/learn-variables.html",
+      "index": 1,
+      "source": "score = 10\nlet bonus = 5\nscore = score + bonus\nshow score",
+      "status": "executed",
+      "output": "15\n"
+    },
+    {
+      "file": "docs/learn-variables.html",
+      "index": 2,
+      "source": "health = 100\nhealth -= 20\nhealth += 5\nshow health",
+      "status": "executed",
+      "output": "85\n"
+    },
+    {
+      "file": "docs/learn-variables.html",
+      "index": 3,
+      "source": "const max_health = 100\nhealth = 75\nshow health, max_health",
+      "status": "executed",
+      "output": "75 100\n"
+    },
     {
       "file": "docs/libraries/animation.html",
       "index": 1,
@@ -556,7 +918,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "7542\n"
+      "output": "7904\n"
     },
     {
       "file": "docs/libraries/ui.html",
