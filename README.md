@@ -14,9 +14,9 @@ A free, experimental programming language that turns readable code directly into
 
 </div>
 
-## DISCORD NEW — 0.28 development
+## DISCORD REVOLUTION — 0.28 development
 
-Source builds identify as **0.28.0 — DISCORD NEW**. The first development increment adds typed structure methods, per-bot configuration, offline command previews and embeds. The native Windows backend provides Gateway and REST transport. Offline commands and embed JSON also run on Linux and in the WebAssembly Playground. [Discord guide](docs/discord.md) · [Runnable example](examples/discord_new.tri)
+Source builds identify as **0.28.0 — DISCORD REVOLUTION**. Windows and Linux builds support Discord Gateway and REST. The development build includes typed message callbacks, offline previews, traditional embeds and an initial Components V2 builder. See the bilingual guide and validation matrix for supported features and open work. [Discord guide](docs/discord.md) · [Status and evidence](docs/discord-status.md)
 
 ## AI-ready reference / Referencia para IA
 

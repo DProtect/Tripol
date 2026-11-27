@@ -1,9 +1,13 @@
-# v0.28.0 DISCORD NEW (development)
+# v0.28.0 DISCORD REVOLUTION (development)
+
+- Linux x86-64 builds with Discord networking package the emitted ELF and native launcher. The launcher uses validated TLS, WebSocket Resume and bounded reconnects, reusable HTTPS connections and retry handling for explicit HTTP 429 responses.
+- `Bot.on_message(&handler)` dispatches a typed message callback with author and channel IDs. `Bot.preview_event` exercises the same parser and callback offline.
+- `discord.components()` builds Components V2 JSON with text, separators, buttons, thumbnails, sections, galleries and containers. It validates component counts and button IDs. Traditional embeds add title links, images and thumbnails.
 
 - SIMPLE R2 adds typed references to named functions, including structure fields, parameters and return values. Callback dispatch uses the checked native ABI or an internal WebAssembly function table.
 - SIMPLE R2 adds typed methods on structures, with an explicit receiver, optional arguments and calls on computed receivers. Native profiles and WebAssembly share the parser and type validation.
-- `discord.bot()` creates independent command and presence settings. `bot.preview()` runs offline. On Windows, `bot.start()` reads `DISCORD_TOKEN` and uses the existing Gateway transport. Only bots with prefix commands request Message Content Intent.
-- `discord.embed()` builds embeds with a title, description, footer, RGB color and fields. `embed.payload()` builds JSON offline with mentions disabled. `embed.send()` uses native Windows REST.
+- `discord.bot()` creates independent command and presence settings. `bot.preview()` runs offline. `bot.start()` reads `DISCORD_TOKEN` on Windows and Linux. Bots using prefix commands or message handlers request Message Content Intent.
+- `discord.embed()` builds embeds with a title, description, footer, RGB color and fields. `embed.payload()` builds JSON offline with mentions disabled. `embed.send()` uses native REST on Windows and Linux.
 - The Discord project template and VS Code suggestions and snippets use the new API. Existing module-level Discord calls retain their defaults.
 - Gateway and legacy dispatch compare the decoded JSON text. Escaped accents, emoji and slashes match the same configured command as their literal equivalents.
 - Added native and browser tests for typed dispatch, independent bot state, UTF-8 embeds, and the native transport boundary.

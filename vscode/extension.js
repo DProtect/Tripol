@@ -11,6 +11,8 @@ function activate(context) {
  const members=(doc,pos,name)=>{
   if(catalog[name])return catalog[name];
   const source=doc.getText(new vscode.Range(0,0,pos.line,pos.character));
+  const annotated=[...source.matchAll(/\b([A-Za-z_]\w*)\s*:\s*(\w+\.\w+)\b/g)].reverse().find(m=>m[1]===name);
+  if(annotated&&catalog[annotated[2]])return catalog[annotated[2]];
   for(const binding of [...source.matchAll(/^\s*(?:let\s+)?([A-Za-z_]\w*)\s*=\s*(\w+)\.(\w+)\s*\(/gm)].reverse()){
    if(binding[1]!==name)continue;
    const [, , module, factory]=binding;

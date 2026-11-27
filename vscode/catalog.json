@@ -198,9 +198,19 @@
     "heartbeat_payload": "func discord.heartbeat_payload(sequence:int)->string",
     "event_channel": "func discord.event_channel(event:string)->string",
     "gateway_reply": "func discord.gateway_reply(event:string)->string",
+    "ignore_message": "func discord.ignore_message(message:Message)->string",
+    "event_id": "func discord.event_id(raw:string)->string",
+    "dispatch_message": "func discord.dispatch_message(event:string,handler:func(Message)->string)->string",
     "run": "func discord.run(intents=33281)->int",
+    "run_handler": "func discord.run_handler(handler:func(Message)->string,intents=33281)->int",
     "bot": "func discord.bot()->Bot",
-    "embed": "func discord.embed()->Embed"
+    "embed": "func discord.embed()->Embed",
+    "media_url": "func discord.media_url(value:string)->bool",
+    "components": "func discord.components()->Components"
+  },
+  "discord.Message": {
+    "matches": "Message.matches(content:string)->bool",
+    "reply": "Message.reply(content:string)->string"
   },
   "discord.Bot": {
     "prefix": "Bot.prefix(value:string)->bool",
@@ -208,6 +218,8 @@
     "activity": "Bot.activity(value:string)->bool",
     "command": "Bot.command(name:string,response:string)->bool",
     "preview": "Bot.preview(content:string)->string",
+    "on_message": "Bot.on_message(handler:func(Message)->string)->bool",
+    "preview_event": "Bot.preview_event(event:string)->string",
     "start": "Bot.start()->int"
   },
   "discord.Embed": {
@@ -215,9 +227,25 @@
     "description": "Embed.description(value:string)->bool",
     "footer": "Embed.footer(value:string)->bool",
     "color": "Embed.color(value:string)->bool",
+    "url": "Embed.url(value:string)->bool",
+    "image": "Embed.image(value:string)->bool",
+    "thumbnail": "Embed.thumbnail(value:string)->bool",
     "field": "Embed.field(label:string,value:string,inline=false)->bool",
     "payload": "Embed.payload()->string",
     "send": "Embed.send(channel_id:string)->bool"
+  },
+  "discord.Components": {
+    "append_entry": "Components.append_entry(entry:string,weight:int)->bool",
+    "entries_json": "Components.entries_json()->string",
+    "text": "Components.text(content:string)->bool",
+    "separator": "Components.separator(spacing=1,divider=true)->bool",
+    "link": "Components.link(label:string,url:string)->bool",
+    "button": "Components.button(label:string,custom_id:string,style=1)->bool",
+    "section": "Components.section(content:string,thumbnail_url:string,description=\"\")->bool",
+    "gallery": "Components.gallery(urls:string_list)->bool",
+    "container": "Components.container(children:Components,accent=-1,spoiler=false)->bool",
+    "payload": "Components.payload()->string",
+    "send": "Components.send(channel_id:string)->bool"
   },
   "encoding": {
     "hex_digit": "func encoding.hex_digit(n:int) -> string",

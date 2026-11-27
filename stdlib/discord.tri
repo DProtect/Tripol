@@ -246,7 +246,8 @@ func identify_payload(intents=33281)->string {
  activities="[]"
  if len(act)>0 {activities="[{\"name\":"+json.quote(act)+",\"type\":0}]"}
  // GUILDS | GUILD_MESSAGES | MESSAGE_CONTENT (privileged).
- return "{\"op\":2,\"d\":{\"token\":"+json.quote(secret)+",\"intents\":"+text(intents)+",\"properties\":{\"os\":\"windows\",\"browser\":\"TRIPOL\",\"device\":\"TRIPOL\"},\"presence\":{\"since\":null,\"activities\":"+activities+",\"status\":"+json.quote(state)+",\"afk\":false}}}"
+ os=platform_name()
+ return "{\"op\":2,\"d\":{\"token\":"+json.quote(secret)+",\"intents\":"+text(intents)+",\"properties\":{\"os\":"+json.quote(os)+",\"browser\":\"TRIPOL\",\"device\":\"TRIPOL\"},\"presence\":{\"since\":null,\"activities\":"+activities+",\"status\":"+json.quote(state)+",\"afk\":false}}}"
 }
 func heartbeat_payload(sequence:int)->string {
  if sequence<0 {return "{\"op\":1,\"d\":null}"}
@@ -289,11 +290,96 @@ func gateway_reply(event:string)->string {
  if slot_found<0 {return ""}
  return bot_slot_get(slot_found)
 }
+// The JSON event is preserved for consumers that need additional Discord fields.
+struct Message {
+ event_json:string
+ content_json:string
+ channel_id:string
+ author_id:string
+}
+
+func Message.matches(self:Message,content:string)->bool {
+ return json.string_equals(self.content_json,content)
+}
+
+func Message.reply(self:Message,content:string)->string {
+ assert len(content)>0 and len(content)<=512 and utf8.valid(content),"Discord response must be 1 to 512 UTF-8 bytes"
+ return content
+}
+
+func ignore_message(message:Message)->string {return ""}
+
+// Validate a Discord snowflake without converting its unsigned value to int64.
+func event_id(raw:string)->string {
+ if len(raw)<3 or len(raw)>22 {return ""}
+ if byte_at(raw,0)!=34 or byte_at(raw,len(raw)-1)!=34 {return ""}
+ for i in range(1,len(raw)-1) {
+  b=byte_at(raw,i)
+  if b<48 or b>57 {return ""}
+ }
+ return slice(raw,1,len(raw)-1)
+}
+
+func dispatch_message(event:string,handler:func(Message)->string)->string {
+ if json.get_raw_large(event,"op")!="0" or json.get_raw_large(event,"t")!="\"MESSAGE_CREATE\"" {return ""}
+ data=json.get_raw_large(event,"d")
+ channel_id=event_id(json.get_raw_large(data,"channel_id"))
+ if len(channel_id)==0 {return ""}
+ author=json.get_raw_large(data,"author")
+ author_id=event_id(json.get_raw_large(author,"id"))
+ if len(author_id)==0 or json.get_raw_large(author,"bot")=="true" or len(json.get_raw_large(data,"webhook_id"))>0 {return ""}
+ content=json.get_raw_large(data,"content")
+ if len(content)<2 or byte_at(content,0)!=34 {return ""}
+ result=handler(Message(event,content,channel_id,author_id))
+ assert len(result)<=512 and utf8.valid(result),"Discord response must be UTF-8, up to 512 bytes"
+ return result
+}
+
 func run(intents=33281)->int {
+ return run_handler(&ignore_message,intents)
+}
+
+func run_handler(handler:func(Message)->string,intents=33281)->int {
  assert intents==1 or intents==33281,"Unsupported Discord Gateway intents"
  assert configured(),"Call discord.login first"
  scratch {assert has_channel() or len(bot_slot_get(36))==0,"Welcome requires a selected channel"}
- assert gw_open(),"Gateway TLS/WebSocket open failed (Windows only)"
+ if platform_name()=="linux" {
+  started=false
+  scratch {started=gw_host_start(identify_payload(intents))=="1"}
+  assert started,"Unable to start Discord Gateway"
+  bot_slot_set(37,"");bot_slot_set(38,"")
+  show "TRIPOL Discord Gateway connecting..."
+  done=false;greeted=false
+  while not done {
+   scratch {
+    event=gw_host_poll()
+    if event=="!" {done=true}
+    else if len(event)>0 {
+     kind=json.get_raw_large(event,"t")
+     if kind=="\"READY\"" or kind=="\"RESUMED\"" {
+      bot_slot_set(38,"ready")
+      if not greeted and kind=="\"READY\"" {
+       greeted=true
+       show "TRIPOL Discord Gateway READY - Ctrl+C to stop."
+       greeting=bot_slot_get(36)
+       if len(greeting)>0 {say(greeting)}
+      }
+     } else if kind=="\"MESSAGE_CREATE\"" {
+      channel_id=event_channel(event)
+      if len(channel_id)>0 {
+       response=gateway_reply(event)
+       if len(response)==0 and handler!=&ignore_message {response=dispatch_message(event,handler)}
+       if len(response)>0 {send_to(channel_id,response)}
+      }
+     }
+    }
+   }
+  }
+  gw_host_stop()
+  bot_slot_set(38,"")
+  return 1
+ }
+ assert gw_open(),"Gateway TLS/WebSocket open failed"
  bot_slot_set(37,"");bot_slot_set(38,"")
  show "TRIPOL Discord Gateway connecting..."
  interval=0; sequence=-1; next_heartbeat=0; sent=0; awaiting=false; done=false
@@ -321,8 +407,12 @@ func run(intents=33281)->int {
       greeting=bot_slot_get(36)
       if len(greeting)>0 {say(greeting)}
      } else if ready and kind=="\"MESSAGE_CREATE\"" {
-      response=gateway_reply(event)
-      if len(response)>0 {send_to(event_channel(event),response)}
+      channel_id=event_channel(event)
+      if len(channel_id)>0 {
+       response=gateway_reply(event)
+       if len(response)==0 and handler!=&ignore_message {response=dispatch_message(event,handler)}
+       if len(response)>0 {send_to(channel_id,response)}
+      }
      }
     } else if op==11 {
      if awaiting {bot_slot_set(37,text(time.now_ms()-sent));awaiting=false}
@@ -355,10 +445,12 @@ struct Bot {
  activity_text:string
  command_names:string_list
  responses:string_list
+ message_handler:func(Message)->string
+ handles_messages:bool
 }
 
 func bot()->Bot {
- return Bot("", "online", "", string_list(4), string_list(4))
+ return Bot("", "online", "", string_list(4), string_list(4), &ignore_message, false)
 }
 
 func Bot.prefix(self:Bot,value:string)->bool {
@@ -411,8 +503,17 @@ func Bot.preview(self:Bot,content:string)->string {
  return ""
 }
 
+func Bot.on_message(self:Bot,handler:func(Message)->string)->bool {
+ self.message_handler=handler
+ self.handles_messages=true
+ return true
+}
+
+func Bot.preview_event(self:Bot,event:string)->string {
+ return dispatch_message(event,self.message_handler)
+}
+
 func Bot.start(self:Bot)->int {
- assert platform_name()=="windows","Discord Gateway transport requires Windows"
  names=self.command_names
  replies=self.responses
  assert names.size()==replies.size() and names.size()<=16,"Invalid Discord command table"
@@ -427,8 +528,8 @@ func Bot.start(self:Bot)->int {
   scratch {reply(prefix+name,response)}
  }
  // Registering a text command explicitly requests guild message content.
- if names.size()>0 {return run()}
- return run(1)
+ if names.size()>0 or self.handles_messages {return run_handler(self.message_handler)}
+ return run_handler(self.message_handler,1)
 }
 
 // Embed builder. String limits are in UTF-8 bytes, a conservative subset
@@ -438,13 +539,16 @@ struct Embed {
  description_text:string
  footer_text:string
  color_value:int
+ title_url:string
+ image_url:string
+ thumbnail_url:string
  labels:string_list
  values:string_list
  inline_flags:bool_list
 }
 
 func embed()->Embed {
- return Embed("", "", "", -1, string_list(4), string_list(4), bool_list(4))
+ return Embed("", "", "", -1, "", "", "", string_list(4), string_list(4), bool_list(4))
 }
 
 func Embed.title(self:Embed,value:string)->bool {
@@ -479,6 +583,24 @@ func Embed.color(self:Embed,value:string)->bool {
  return true
 }
 
+func Embed.url(self:Embed,value:string)->bool {
+ assert value=="" or media_url(value),"Invalid Discord embed URL"
+ self.title_url=value
+ return true
+}
+
+func Embed.image(self:Embed,value:string)->bool {
+ assert value=="" or media_url(value),"Invalid Discord embed image URL"
+ self.image_url=value
+ return true
+}
+
+func Embed.thumbnail(self:Embed,value:string)->bool {
+ assert value=="" or media_url(value),"Invalid Discord embed thumbnail URL"
+ self.thumbnail_url=value
+ return true
+}
+
 func Embed.field(self:Embed,label:string,value:string,inline=false)->bool {
  assert len(label)>0 and len(label)<=256 and utf8.valid(label),"Embed field name must be UTF-8, 1 to 256 bytes"
  assert len(value)>0 and len(value)<=512 and utf8.valid(value),"Embed field value must be UTF-8, 1 to 512 bytes"
@@ -501,7 +623,7 @@ func Embed.payload(self:Embed)->string {
  assert labels.size()==values.size() and labels.size()==flags.size() and labels.size()<=25,"Invalid embed fields"
  count=len(self.title_text)+len(self.description_text)+len(self.footer_text)
  for i in range(labels.size()) {count+=len(labels[i])+len(values[i])}
- assert count>0 and count<=6000,"Embed requires text and accepts at most 6000 text bytes"
+ assert (count>0 or len(self.image_url)>0 or len(self.thumbnail_url)>0) and count<=6000,"Embed requires text or media and accepts at most 6000 text bytes"
  body="{\"embeds\":[{"
  separator=""
  if len(self.title_text)>0 {
@@ -520,6 +642,18 @@ func Embed.payload(self:Embed)->string {
   body+=separator+"\"color\":"+text(self.color_value)
   separator=","
  }
+ if len(self.title_url)>0 {
+  body+=separator+"\"url\":"+json.quote(self.title_url)
+  separator=","
+ }
+ if len(self.image_url)>0 {
+  body+=separator+"\"image\":{\"url\":"+json.quote(self.image_url)+"}"
+  separator=","
+ }
+ if len(self.thumbnail_url)>0 {
+  body+=separator+"\"thumbnail\":{\"url\":"+json.quote(self.thumbnail_url)+"}"
+  separator=","
+ }
  if labels.size()>0 {
   body+=separator+"\"fields\":["
   for i in range(labels.size()) {
@@ -534,8 +668,135 @@ func Embed.payload(self:Embed)->string {
 }
 
 func Embed.send(self:Embed,channel_id:string)->bool {
- assert platform_name()=="windows","Discord REST transport requires Windows"
  body=self.payload()
- result=discord_request(channel_path(channel_id),token(),body)
- return len(result)>0
+ ok=false
+ scratch {ok=len(discord_request(channel_path(channel_id),token(),body))>0}
+ return ok
+}
+
+// Validate the supported URL subset without issuing a network request.
+func media_url(value:string)->bool {
+ if len(value)>512 or not utf8.valid(value) {return false}
+ start=0
+ if has_prefix(value,"https://") {start=8}
+ else if has_prefix(value,"http://") {start=7}
+ else {return false}
+ if len(value)<=start {return false}
+ first=byte_at(value,start)
+ if first==47 or first==63 or first==35 or first==64 {return false}
+ for i in range(start,len(value)) {
+  b=byte_at(value,i)
+  if b<=32 or b==92 or b==127 {return false}
+ }
+ return true
+}
+
+struct Components {
+ entries:string_list
+ total:int
+ containers:bool
+ custom_ids:string_list
+}
+
+func components()->Components {
+ return Components(string_list(4),0,false,string_list(4))
+}
+
+// Keep the total limit inclusive of nested children and accessories.
+func Components.append_entry(self:Components,entry:string,weight:int)->bool {
+ assert weight>=1 and weight<=40 and self.total>=0 and self.total+weight<=40,"Maximum 40 Discord message components"
+ list=self.entries
+ list.add(entry)
+ self.total+=weight
+ return true
+}
+
+func Components.entries_json(self:Components)->string {
+ list=self.entries
+ assert self.total>0 and self.total<=40 and list.size()>0 and list.size()<=self.total,"Invalid Discord component count"
+ body="["
+ for i in range(list.size()) {
+  if i>0 {body+=","}
+  assert len(body)+len(list[i])+1<=16384,"Discord component payload exceeds 16384 bytes"
+  body+=list[i]
+ }
+ return body+"]"
+}
+
+func Components.text(self:Components,content:string)->bool {
+ assert len(content)>0 and len(content)<=512 and utf8.valid(content),"Text display must be 1 to 512 UTF-8 bytes"
+ return self.append_entry("{\"type\":10,\"content\":"+json.quote(content)+"}",1)
+}
+
+func Components.separator(self:Components,spacing=1,divider=true)->bool {
+ assert spacing==1 or spacing==2,"Discord separator spacing must be 1 or 2"
+ return self.append_entry("{\"type\":14,\"divider\":"+json.boolean(divider)+",\"spacing\":"+text(spacing)+"}",1)
+}
+
+func Components.link(self:Components,label:string,url:string)->bool {
+ assert len(label)>0 and len(label)<=80 and utf8.valid(label),"Button label must be 1 to 80 UTF-8 bytes"
+ assert media_url(url),"Invalid Discord button URL"
+ body="{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":"+json.quote(label)+",\"url\":"+json.quote(url)+"}]}"
+ return self.append_entry(body,2)
+}
+
+func Components.button(self:Components,label:string,custom_id:string,style=1)->bool {
+ assert len(label)>0 and len(label)<=80 and utf8.valid(label),"Button label must be 1 to 80 UTF-8 bytes"
+ assert len(custom_id)>0 and len(custom_id)<=100 and utf8.valid(custom_id),"Button ID must be 1 to 100 UTF-8 bytes"
+ assert style>=1 and style<=4,"Discord custom button style must be 1 to 4"
+ ids=self.custom_ids
+ assert not ids.contains(custom_id),"Duplicate Discord component ID"
+ body="{\"type\":1,\"components\":[{\"type\":2,\"style\":"+text(style)+",\"label\":"+json.quote(label)+",\"custom_id\":"+json.quote(custom_id)+"}]}"
+ self.append_entry(body,2)
+ ids.add(custom_id)
+ return true
+}
+
+func Components.section(self:Components,content:string,thumbnail_url:string,description="")->bool {
+ assert len(content)>0 and len(content)<=512 and utf8.valid(content),"Section text must be 1 to 512 UTF-8 bytes"
+ assert media_url(thumbnail_url),"Invalid Discord thumbnail URL"
+ assert len(description)<=512 and utf8.valid(description),"Thumbnail description must be up to 512 UTF-8 bytes"
+ thumb="{\"type\":11,\"media\":{\"url\":"+json.quote(thumbnail_url)+"}"
+ if len(description)>0 {thumb+=",\"description\":"+json.quote(description)}
+ body="{\"type\":9,\"components\":[{\"type\":10,\"content\":"+json.quote(content)+"}],\"accessory\":"+thumb+"}}"
+ return self.append_entry(body,3)
+}
+
+func Components.gallery(self:Components,urls:string_list)->bool {
+ assert urls.size()>=1 and urls.size()<=10,"Discord gallery requires 1 to 10 items"
+ body="{\"type\":12,\"items\":["
+ for i in range(urls.size()) {
+  assert media_url(urls[i]),"Invalid Discord gallery URL"
+  if i>0 {body+=","}
+  body+="{\"media\":{\"url\":"+json.quote(urls[i])+"}}"
+ }
+ return self.append_entry(body+"]}",1)
+}
+
+func Components.container(self:Components,children:Components,accent=-1,spoiler=false)->bool {
+ assert not children.containers,"Discord containers cannot contain containers"
+ assert accent>=-1 and accent<=16777215,"Invalid Discord container RGB color"
+ assert children.total>=1 and children.total<40 and self.total+children.total+1<=40,"Maximum 40 Discord message components"
+ ids=self.custom_ids
+ child_ids=children.custom_ids
+ for i in range(child_ids.size()) {assert not ids.contains(child_ids[i]),"Duplicate Discord component ID"}
+ body="{\"type\":17,\"components\":"+children.entries_json()+",\"spoiler\":"+json.boolean(spoiler)
+ if accent>=0 {body+=",\"accent_color\":"+text(accent)}
+ self.append_entry(body+"}",children.total+1)
+ for i in range(child_ids.size()) {ids.add(child_ids[i])}
+ self.containers=true
+ return true
+}
+
+func Components.payload(self:Components)->string {
+ body="{\"flags\":32768,\"components\":"+self.entries_json()+",\"allowed_mentions\":{\"parse\":[]}}"
+ assert len(body)<=16384,"Discord component payload exceeds 16384 bytes"
+ return body
+}
+
+func Components.send(self:Components,channel_id:string)->bool {
+ body=self.payload()
+ result=false
+ scratch {result=len(discord_request(channel_path(channel_id),token(),body))>0}
+ return result
 }

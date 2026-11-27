@@ -150,8 +150,19 @@ func (c *compiler) floatOp(op string) string {
 // Runtime sections contain hand-written x86-64, with relocations resolved by Forge.
 // Ordered dependency closure keeps unused helpers out of tiny binaries.
 func (a *asm) libertyRuntime() {
-	order := []string{"gw_open", "gw_send", "gw_receive", "gw_worker", "gw_close", "gw_abort", "game_open", "game_running", "game_present", "game_key", "game_close", "game_error", "arena_used", "arena_committed", "array_fill", "array_fill_range", "array_equal", "array_copy", "array_copy_into", "array_find", "vector_fill", "cpu_has_avx2", "bot_slot_set", "bot_slot_get", "ui_form", "ui_form_proc", "discord_request", "env_get", "discord_error", "https_get", "https_error", "tcp_exchange", "net_connect", "net_send", "net_shutdown", "net_recv", "net_close", "net_error", "find_bytes", "clock_ms", "clock_ns", "sleep_ms", "has_prefix", "has_suffix", "raw_bool", "raw_int", "raw_float", "raw_string", "print:float", "input", "concat", "parseint", "list_new", "list_add", "list_remove", "bytes_read", "bytes_write", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "oscommit", "readbyte", "text_error", "float_error"}
+	order := []string{"gw_host_start", "gw_host_poll", "gw_host_stop", "gw_open", "gw_send", "gw_receive", "gw_worker", "gw_close", "game_open", "game_running", "game_present", "game_key", "game_close", "game_error", "arena_used", "arena_committed", "array_fill", "array_fill_range", "array_equal", "array_copy", "array_copy_into", "array_find", "vector_fill", "cpu_has_avx2", "bot_slot_set", "bot_slot_get", "ui_form", "ui_form_proc", "discord_request", "discord_pipe", "discord_pipe_io", "gw_abort", "env_get", "discord_error", "https_get", "https_error", "tcp_exchange", "net_connect", "net_send", "net_shutdown", "net_recv", "net_close", "net_error", "find_bytes", "clock_ms", "clock_ns", "sleep_ms", "has_prefix", "has_suffix", "raw_bool", "raw_int", "raw_float", "raw_string", "print:float", "input", "concat", "parseint", "list_new", "list_add", "list_remove", "bytes_read", "bytes_write", "file_read", "file_write", "file_append", "file_write_common", "file_open", "file_chunk_read", "file_chunk_write", "file_close", "file_error", "int_text", "text_slice", "ints_alloc", "strlen", "alloc", "osalloc", "oscommit", "readbyte", "text_error", "float_error"}
 	for _, name := range order {
+		switch name {
+		case "gw_host_start", "gw_host_poll", "gw_host_stop", "discord_pipe", "discord_pipe_io":
+			if a.target != "linux" || !a.needed(name) {
+				continue
+			}
+		case "discord_request", "env_get":
+			if a.target == "linux" && !a.needed(name) {
+				continue
+			}
+		}
+
 		if (name == "ui_form_proc" || name == "gw_worker") && a.target != "windows" {
 			continue
 		}

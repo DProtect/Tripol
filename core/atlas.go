@@ -1,9 +1,9 @@
 package core
 
 import (
-	"tripol/stdlib"
 	"fmt"
 	"strings"
+	"tripol/stdlib"
 )
 
 var standardSources = stdlib.Sources
@@ -88,12 +88,13 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 		}
 	}
 	// Resolve library-local functions and intrinsic calls independently of user symbols.
+	var callbackParams map[string]bool
 	var exprWalk func(*expr)
 	exprWalk = func(e *expr) {
 		if e == nil {
 			return
 		}
-		if e.op == "call" && !strings.Contains(e.s, ".") {
+		if e.op == "call" && !strings.Contains(e.s, ".") && !callbackParams[e.s] {
 			if qualified, ok := names[e.s]; ok {
 				e.s = qualified
 			} else {
@@ -124,8 +125,15 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 	for _, f := range fs {
 		f.name = names[f.name]
 		f.ret = qualifyType(f.ret)
+		callbackParams = nil
 		for i := range f.args {
 			f.args[i].typ = qualifyType(f.args[i].typ)
+			if strings.HasPrefix(f.args[i].typ, callbackPrefix) {
+				if callbackParams == nil {
+					callbackParams = make(map[string]bool)
+				}
+				callbackParams[f.args[i].name] = true
+			}
 		}
 		stmtWalk(f.body)
 		l.functions = append(l.functions, f)

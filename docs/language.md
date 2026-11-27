@@ -1,6 +1,6 @@
 # Language reference — QUANTUM X 0.27.1
 
-## DISCORD NEW 0.28 development
+## DISCORD REVOLUTION 0.28 development
 
 A named function can be stored as a typed callback. `&format_name` takes a reference to the function. Declare the corresponding parameter or field as `func(string)->string` and call a local callback as a regular function.
 

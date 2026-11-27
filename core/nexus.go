@@ -30,7 +30,9 @@ func (c *compiler) nexusBuiltin(e *expr) (string, bool) {
 		v := c.arrayVar(e.args[0].s)
 		if v.typ == "ints" || isList(v.typ) {
 			a.load(v.off)
-			if isList(v.typ){a.emit(0x48,0x8b,0x40,0x08)}
+			if isList(v.typ) {
+				a.emit(0x48, 0x8b, 0x40, 0x08)
+			}
 			a.emit(0x48, 0x8b, 0x00)
 		} else {
 			a.imm(int64(arrayLen(v)))
@@ -67,10 +69,14 @@ func (c *compiler) nexusBuiltin(e *expr) (string, bool) {
 			c.err("sum expects a named integer array")
 		}
 		v := c.arrayVar(e.args[0].s)
-        if isList(v.typ)&&v.typ!="list"{c.err("sum requires integer elements")}
-		if v.typ == "ints" || v.typ=="list" {
+		if isList(v.typ) && v.typ != "list" {
+			c.err("sum requires integer elements")
+		}
+		if v.typ == "ints" || v.typ == "list" {
 			a.load(v.off)
-			if v.typ=="list"{a.emit(0x48,0x8b,0x40,0x08)}
+			if v.typ == "list" {
+				a.emit(0x48, 0x8b, 0x40, 0x08)
+			}
 			a.emit(0x48, 0x8b, 0x08, 0x48, 0x8d, 0x50, 0x08) // rcx=len, rdx=data
 		} else {
 			a.emit(0xb9)
@@ -168,6 +174,31 @@ bot.command("hola", "Hola desde TRIPOL!")
 bot.command("ping", "Pong!")
 bot.start()
 `,
+		"discord-embeds": `import tripol.discord
+import tripol.env
+
+card = discord.embed()
+card.title("TRIPOL")
+card.description("Bienvenido al servidor")
+card.color("#5865F2")
+card.field("Versión", "0.28.0", true)
+
+channel = env.get("DISCORD_CHANNEL_ID")
+if channel == "" {show card.payload()} else {assert card.send(channel)}
+`,
+		"discord-components": `import tripol.discord
+import tripol.env
+
+panel = discord.components()
+panel.text("## Bienvenido")
+panel.separator()
+panel.link("Documentación", "https://tripollas.github.io/Tripol/docs/")
+message = discord.components()
+message.container(panel, 5793266)
+
+channel = env.get("DISCORD_CHANNEL_ID")
+if channel == "" {show message.payload()} else {assert message.send(channel)}
+`,
 		"ecosystem": `import tripol.sort
 import tripol.time
 import tripol.system
@@ -201,13 +232,21 @@ show "Saved:", read_text("profile.txt")
 	}
 	source, ok := templates[template]
 	if !ok {
-		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem, game or discord", template)
+		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem, game, discord, discord-embeds or discord-components", template)
 	}
 	if err := os.Mkdir(dir, 0755); err != nil {
 		die("cannot create project: %v", err)
 	}
 	if err := os.WriteFile(filepath.Join(dir, "main.tri"), []byte(source), 0644); err != nil {
 		die("%v", err)
+	}
+	if template == "discord-embeds" || template == "discord-components" {
+		guide := "# TRIPOL Discord\n\n" +
+			"Run with `tripol run` on Windows or Linux x86-64. For sending, set DISCORD_CHANNEL_ID and DISCORD_TOKEN in the process environment. The bot needs View Channel and Send Messages. Embeds also need Embed Links. An unset channel ID opens the local JSON preview.\n\n" +
+			"Ejecuta `tripol run` en Windows o Linux x86-64. Para enviar, configura DISCORD_CHANNEL_ID y DISCORD_TOKEN en el entorno del proceso. El bot necesita permisos para ver el canal y enviar mensajes. Los embeds también requieren insertar enlaces. Con el ID de canal vacío se muestra el JSON local.\n"
+		if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte(guide), 0644); err != nil {
+			die("%v", err)
+		}
 	}
 	fmt.Printf("Created %s (%s)\ncd %s\ntripol run\n", dir, template, dir)
 }

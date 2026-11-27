@@ -18,7 +18,7 @@ func runNative(p string) {
 		c.Stderr = os.Stderr
 	}
 	c.Stdin = os.Stdin
-	if e := c.Run(); e != nil {
+	if e := runNativeCommand(c); e != nil {
 		var x *exec.ExitError
 		if errors.As(e, &x) {
 			d := runtimeDiagnostic(x.ExitCode())

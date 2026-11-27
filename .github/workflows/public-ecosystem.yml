@@ -36,8 +36,8 @@ jobs:
           node-version: '22'
       - name: Build and test
         run: |
-          go test -count=1 ./core ./tests
-          go vet . ./core ./stdlib ./tests
+          go test -count=1 ./...
+          go vet ./...
           mkdir -p dist
           CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
           ./tripol --version
@@ -47,7 +47,7 @@ jobs:
           ./tripol build examples/projects/notes.tri --target linux -o /tmp/tripol-notes
           scratch=$(mktemp -d)
           (cd "$scratch"; printf 'Test note\n' | /tmp/tripol-notes; grep -q 'Test note' notes.txt)
-          tar -czf dist/TRIPOL-v0.28-Linux-x64.tar.gz tripol LICENSE
+          tar -czf dist/TRIPOL-v0.28-Linux-x64.tar.gz tripol LICENSE -C core discord-websocket-LICENSE.txt
       - name: Package editor extension
         run: |
           cp LICENSE vscode/LICENSE
@@ -73,9 +73,9 @@ jobs:
       - name: Build and test unsigned installer
         shell: pwsh
         run: |
-          go test -count=1 ./core ./tests
+          go test -count=1 ./...
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          go vet . ./core ./stdlib ./tests
+          go vet ./...
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force installer/payload, dist | Out-Null
           Copy-Item examples/hello.tri installer/payload/hello.tri
@@ -133,4 +133,4 @@ jobs:
           artifacts=(TRIPOL-v0.28-Windows-x64.exe TRIPOL-v0.28-Setup-x64.exe TRIPOL-v0.28-Installer.zip TRIPOL-v0.28-Linux-x64.tar.gz tripol-language-0.28.0.vsix)
           sha256sum "${artifacts[@]}" > SHA256SUMS.txt
           if gh release view v0.28.0 >/dev/null 2>&1; then echo 'Release or draft already exists'; exit 0; fi
-          gh release create v0.28.0 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.28.0 — DISCORD NEW" --notes "Experimental preview. Review the validation evidence and SHA256SUMS.txt before publishing. The Windows installer is unsigned." "${artifacts[@]}" SHA256SUMS.txt
+          gh release create v0.28.0 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.28.0 — DISCORD REVOLUTION" --notes "Experimental preview. Review the validation evidence and SHA256SUMS.txt before publishing. The Windows installer is unsigned." "${artifacts[@]}" SHA256SUMS.txt

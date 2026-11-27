@@ -13,7 +13,7 @@ import (
 )
 
 const version = "0.28.0"
-const releaseName = "DISCORD NEW"
+const releaseName = "DISCORD REVOLUTION"
 
 type token struct {
 	s, k      string
@@ -696,7 +696,7 @@ func (c *compiler) err(s string) {
 func (c *compiler) lookup(n string) (variable, bool) {
 	for i := len(c.scopes) - 1; i >= 0; i-- {
 		if v, ok := c.scopes[i][n]; ok {
-			if len(c.scratchScopes) > 0 && i < c.scratchScopes[len(c.scratchScopes)-1] && v.typ != "int" && v.typ != "bool" && v.typ != "float" && v.typ != "string" {
+			if len(c.scratchScopes) > 0 && i < c.scratchScopes[len(c.scratchScopes)-1] && v.typ != "int" && v.typ != "bool" && v.typ != "float" && v.typ != "string" && !strings.HasPrefix(v.typ, callbackPrefix) {
 				c.err("scratch cannot access outer aggregate " + n)
 			}
 			return v, true
@@ -1402,13 +1402,28 @@ func elf(a *asm) []byte {
 	const base = 0x400000
 	const off = 0x100
 	bot := a.needed("bot_state")
-	arena := a.needed("arena_state") || a.needed("guard_state") || bot
+	environment := a.needed("linux_env")
+	entry := 0
+	if environment {
+		entry = len(a.b)
+		// Linux entry stack contains argc, argv, a null pointer and envp.
+		a.emit(0x48, 0x8b, 0x04, 0x24, 0x48, 0x8d, 0x44, 0xc4, 0x10)
+		a.rel("linux_env", 0x48, 0x89, 0x05)
+		a.jmp("fn:@main")
+	}
+	arena := a.needed("arena_state") || a.needed("guard_state") || bot || environment
 	arenaOff := align(off+len(a.b), 0x1000)
+	memsz := 48
+	if bot { memsz += botStateSize }
 	if arena {
 		a.labels["arena_state"] = arenaOff - off
 		a.labels["guard_state"] = arenaOff - off + 32
 		if bot {
 			a.labels["bot_state"] = arenaOff - off + 48
+		}
+		if environment {
+			a.labels["linux_env"] = arenaOff - off + memsz
+			memsz += 8
 		}
 	}
 	a.finish()
@@ -1417,7 +1432,7 @@ func elf(a *asm) []byte {
 	put16(b, 16, 2)
 	put16(b, 18, 62)
 	put32(b, 20, 1)
-	put64(b, 24, base+off)
+	put64(b, 24, uint64(base+off+entry))
 	put64(b, 32, 64)
 	put16(b, 52, 64)
 	put16(b, 54, 56)
@@ -1429,10 +1444,6 @@ func elf(a *asm) []byte {
 		put64(b, 184, uint64(arenaOff))
 		put64(b, 192, uint64(base+arenaOff))
 		put64(b, 200, uint64(base+arenaOff))
-		memsz := 40
-		if bot {
-			memsz = 48 + botStateSize
-		}
 		put64(b, 216, uint64(memsz))
 		put64(b, 224, 0x1000)
 	}
@@ -1447,6 +1458,9 @@ func elf(a *asm) []byte {
 	put32(b, 124, 6)
 	put64(b, 168, 16)
 	copy(b[off:], a.b)
+	if a.needed("discord_pipe") {
+		return append(b, discordBridgeMarker...)
+	}
 	return b
 }
 func pe(a *asm) []byte {
@@ -1681,6 +1695,10 @@ func linkCode(a *asm)[]byte {
 func cli() {
 	diagnosticOptions()
 	args := os.Args[1:]
+	if len(args) > 0 && args[0] == "discord-run" {
+		runDiscordExecutable(args[1:])
+		return
+	}
  if len(args)>0&&args[0]=="pgo-train"{pgoTrainCLI(args[1:]);return}
  if len(args)>0&&args[0]=="compile-report"{compileReportCLI(args[1:]);return}
  if len(args)>0&&args[0]=="shell"{shellCLI(args[1:]);return}
@@ -1701,7 +1719,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL " + version + " — " + releaseName + "\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol pgo-train FILE.tri -o PROFILE.json\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache|--pgo PROFILE.json]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL " + version + " — " + releaseName + "\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord|discord-embeds|discord-components]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol discord-run FILE (Linux)\ntripol pgo-train FILE.tri -o PROFILE.json\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache|--pgo PROFILE.json]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {
@@ -1782,7 +1800,7 @@ func cli() {
 		if len(args) == 4 && args[2] == "--template" {
 			template = args[3]
 		} else if len(args) != 2 {
-			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]")
+			die("usage: tripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord|discord-embeds|discord-components]")
 		}
 		newProjectTemplate(src, template)
 		return
@@ -1894,6 +1912,7 @@ func cli() {
 			}
 		}
 	}
+	bin = packageDiscordExecutable(bin, target)
 	write(out, bin)
 	fmt.Printf("Built %s (%d bytes)\n", out, len(bin))
 }
@@ -1919,5 +1938,7 @@ func Run() {
 			os.Exit(1)
 		}
 	}()
-	cli()
+	if !runBundledDiscord() {
+		cli()
+	}
 }

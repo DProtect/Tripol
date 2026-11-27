@@ -55,4 +55,19 @@ func TestPublicCompilerCLI(t *testing.T) {
 	if got := run(program); got != "49" {
 		t.Fatalf("native output: %q", got)
 	}
+	if runtime.GOOS == "linux" {
+		src = filepath.Join(dir, "bot.tri")
+		if err := os.WriteFile(src, []byte("import tripol.discord\nimport tripol.env\nshow env.get(\"TRIPOL_DISCORD_PIPE\")\nb=discord.bot()\nb.start()\n"), 0600); err != nil {
+			t.Fatal(err)
+		}
+		bot := filepath.Join(dir, "bot")
+		run(compiler, "build", src, "--target", "linux", "-o", bot)
+		cmd := exec.CommandContext(ctx, bot)
+		cmd.Env = append(os.Environ(), "DISCORD_TOKEN=", "TRIPOL_DISCORD_PIPE=")
+		output, err := cmd.CombinedOutput()
+		if err == nil || !strings.HasPrefix(string(output), "1\n") || !strings.Contains(string(output), "TP2003") || strings.Contains(string(output), "requires the TRIPOL launcher") {
+			t.Fatalf("standalone Discord executable: %v\n%s", err, output)
+		}
+	}
+
 }

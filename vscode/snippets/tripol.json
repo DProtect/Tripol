@@ -42,5 +42,31 @@
       "embed.description(\"${2:Hello!}\")",
       "show embed.payload()"
     ]
+  },
+  "Discord message callback": {
+    "prefix": "discord-message",
+    "body": [
+      "import tripol.discord",
+      "",
+      "func respond(message:discord.Message)->string {",
+      "    if message.matches(\"${1:hola}\") {return message.reply(\"${2:Hola!}\")}",
+      "    return \"\"",
+      "}",
+      "",
+      "bot = discord.bot()",
+      "bot.on_message(&respond)",
+      "bot.start()"
+    ]
+  },
+  "Discord Components V2": {
+    "prefix": "discord-components",
+    "body": [
+      "import tripol.discord",
+      "",
+      "message = discord.components()",
+      "message.text(\"${1:Bienvenido}\")",
+      "message.separator()",
+      "show message.payload()"
+    ]
   }
 }

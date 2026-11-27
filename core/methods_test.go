@@ -49,7 +49,7 @@ embed=discord.embed()
 embed.title("Hola, Ada")
 embed.description("Una \"cita\" y café")
 embed.color("#Aa11Ff")
-embed.footer("DISCORD NEW")
+embed.footer("DISCORD REVOLUTION")
 embed.field("Versión","0.28.0",true)
 embed.field("Estado","Experimental")
 show embed.payload()`
@@ -79,7 +79,7 @@ show embed.payload()`
 				t.Fatal(got)
 			}
 			embed := body.Embeds[0]
-			if embed.Description != "Una \"cita\" y café" || embed.Color != 0xaa11ff || embed.Footer.Text != "DISCORD NEW" ||
+			if embed.Description != "Una \"cita\" y café" || embed.Color != 0xaa11ff || embed.Footer.Text != "DISCORD REVOLUTION" ||
 				len(embed.Fields) != 2 || embed.Fields[0].Name != "Versión" || embed.Fields[0].Value != "0.28.0" ||
 				!embed.Fields[0].Inline || embed.Fields[1].Inline {
 				t.Fatal(got)

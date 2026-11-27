@@ -1979,7 +1979,11 @@ discord_get: .short 71,69,84,0
 discord_post: .short 80,79,83,84,0
 
 .section .text.discord_request_linux,"ax"
- jmp discord_error
+ mov r8,rax
+ mov r9,rcx
+ mov r10,rdx
+ mov eax,4
+ jmp discord_pipe
 .section .text.discord_error,"ax"
  lea rsi,[rip+1f]
  mov edx,2f-1f
@@ -2020,9 +2024,43 @@ discord_post: .short 80,79,83,84,0
  leave
  ret
 .section .text.env_get_linux,"ax"
- lea rax,[rip+1f]
+ cmp byte ptr [rax],0
+ je .environ_empty
+ mov r8,rax
+ mov r9,[rip+linux_env]
+.environ_next:
+ mov rax,[r9]
+ add r9,8
+ test rax,rax
+ jz .environ_empty
+ mov rdx,r8
+.environ_compare:
+ mov cl,[rdx]
+ test cl,cl
+ jz .environ_match
+ cmp cl,[rax]
+ jne .environ_next
+ inc rax
+ inc rdx
+ jmp .environ_compare
+.environ_match:
+ cmp byte ptr [rax],61
+ jne .environ_next
+ inc rax
+ mov rdi,rax
+ mov ecx,4096
+ xor edx,edx
+.environ_bound:
+ cmp byte ptr [rdi+rdx],0
+ je .environ_found
+ inc rdx
+ dec ecx
+ jnz .environ_bound
+.environ_empty:
+ lea rax,[rip+.environ_none]
+.environ_found:
  ret
-1: .byte 0
+.environ_none: .byte 0
 
 # SSE2 equality of dynamic int64 arrays. Two elements per vector; scalar tail.
 .section .text.array_equal,"ax"
@@ -2566,6 +2604,130 @@ discord_post: .short 80,79,83,84,0
  leave
  ret
 
+# Linux launcher requests: op, three byte lengths, then unpadded text.
+# Replies: one length followed by text. 0xffffffff denotes a diagnosed error.
+.section .text.discord_pipe,"ax"
+ push rbp
+ mov rbp,rsp
+ sub rsp,64
+ mov [rbp-16],eax
+ mov [rbp-32],r8
+ mov [rbp-40],r9
+ mov [rbp-48],r10
+ lea rax,[rip+.discord_pipe_env]
+ call env_get
+ cmp byte ptr [rax],49
+ jne .discord_pipe_missing
+ cmp byte ptr [rax+1],0
+ jne .discord_pipe_missing
+ mov qword ptr [rbp-56],0
+.discord_pipe_lengths:
+ mov rdi,[rbp-56]
+ lea rsi,[rbp-32]
+ mov rax,[rsi+rdi]
+ test rax,rax
+ jz .discord_pipe_length_ready
+ call strlen
+ cmp rax,65535
+ ja gw_abort
+.discord_pipe_length_ready:
+ mov rdi,[rbp-56]
+ neg rdi
+ shr rdi,1
+ mov [rbp+rdi-12],eax
+ sub qword ptr [rbp-56],8
+ cmp qword ptr [rbp-56],-24
+ jne .discord_pipe_lengths
+ mov edi,3
+ lea rsi,[rbp-16]
+ mov edx,16
+ mov r8d,1
+ call discord_pipe_io
+ mov qword ptr [rbp-56],0
+.discord_pipe_arguments:
+ mov rcx,[rbp-56]
+ mov r10,rcx
+ neg rcx
+ shr rcx,1
+ mov edx,[rbp+rcx-12]
+ test edx,edx
+ jz .discord_pipe_next
+ mov rsi,[rbp+r10-32]
+ mov edi,3
+ mov r8d,1
+ call discord_pipe_io
+.discord_pipe_next:
+ sub qword ptr [rbp-56],8
+ cmp qword ptr [rbp-56],-24
+ jne .discord_pipe_arguments
+ mov edi,4
+ lea rsi,[rbp-16]
+ mov edx,4
+ xor r8d,r8d
+ call discord_pipe_io
+ mov eax,[rbp-16]
+ cmp eax,65535
+ ja gw_abort
+ test eax,eax
+ jz .discord_pipe_empty
+ inc eax
+ call alloc
+ mov [rbp-24],rax
+ mov rsi,rax
+ mov edi,4
+ mov edx,[rbp-16]
+ xor r8d,r8d
+ call discord_pipe_io
+ mov rax,[rbp-24]
+ mov edx,[rbp-16]
+ mov byte ptr [rax+rdx],0
+ leave
+ ret
+.discord_pipe_empty:
+ lea rax,[rip+.discord_pipe_none]
+ leave
+ ret
+.discord_pipe_missing:
+ lea rsi,[rip+.discord_pipe_message]
+ mov edx,.discord_pipe_message_end-.discord_pipe_message
+ call writeerr
+ mov eax,15
+ jmp exit
+.discord_pipe_env: .asciz "TRIPOL_DISCORD_PIPE"
+.discord_pipe_none: .byte 0
+.discord_pipe_message: .ascii "Discord transport on Linux requires the TRIPOL launcher. Run the source with tripol run.\n"
+.discord_pipe_message_end:
+
+.section .text.discord_pipe_io,"ax"
+ mov eax,r8d
+ syscall
+ cmp rax,-4
+ je discord_pipe_io
+ test rax,rax
+ jle gw_abort
+ add rsi,rax
+ sub rdx,rax
+ jnz discord_pipe_io
+ ret
+
+.section .text.gw_host_start,"ax"
+ mov r8,rax
+ xor r9d,r9d
+ xor r10d,r10d
+ mov eax,1
+ jmp discord_pipe
+.section .text.gw_host_poll,"ax"
+ xor r8d,r8d
+ xor r9d,r9d
+ xor r10d,r10d
+ mov eax,2
+ jmp discord_pipe
+.section .text.gw_host_stop,"ax"
+ xor r8d,r8d
+ xor r9d,r9d
+ xor r10d,r10d
+ mov eax,3
+ jmp discord_pipe
 .section .text.gw_open_linux,"ax"
  xor eax,eax
  ret
