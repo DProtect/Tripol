@@ -315,6 +315,7 @@
     "hex": "func json.hex(b:int)->bool",
     "digit": "func json.digit(b:int)->bool",
     "quoted": "func json.quoted(s:string,i:int,n:int)->int",
+    "string_equals": "func json.string_equals(raw:string,value:string)->bool",
     "literal": "func json.literal(s:string,i:int,n:int,w:string)->int",
     "number": "func json.number(s:string,i:int,n:int)->int",
     "value": "func json.value(s:string,i:int,n:int,depth:int)->int",

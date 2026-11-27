@@ -74,6 +74,11 @@ show e.payload()`;
    allowed_mentions:{parse:[]},
   });
  });
+ check('Unicode JSON string equality',()=>{
+  const source='import tripol.json\nshow json.string_equals(' +
+   JSON.stringify('"!caf\\u00E9\\/\\uD83D\\uDE00"') + ', "!café/😀")';
+  assert.equal(execute(source),'true\n');
+ });
  check('Discord transport requires native execution',()=>{
   for(const source of ['b=discord.bot()\nb.start()','e=discord.embed()\ne.title("hello")\ne.send("123")','show discord.token()']){
    const result=tripolCompileWeb('import tripol.discord\n'+source);

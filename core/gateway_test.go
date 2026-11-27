@@ -54,6 +54,34 @@ import tripol.json
  show json.valid(large),json.get_raw_large(large,"op"),discord.gateway_reply(large)`
 	runCase(t, src, "Pong!\ntrue\ntrue\ntrue\ntrue\nfalse 0 Pong!\n", false)
 }
+func TestDiscordGatewayDecodesCommandText(t *testing.T) {
+	source := `import tripol.discord
+import tripol.json
+import tripol.memory
+
+command="!café/😀"
+discord.reply(command,"Pong!")
+message="{\"content\":\"!caf\\u00e9\\/\\ud83d\\ude00\",\"author\":{}}"
+event="{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"!caf\\u00E9\\/\\uD83D\\uDe00\",\"author\":{}}}"
+show discord.matches(message,command),discord.dispatch(message),discord.gateway_reply(event)
+show json.string_equals("\"\\n\\t\\r\"", "\n\t\r")
+show json.string_equals("\"\\uD800\"", "�"),json.string_equals("\"\\uDC00\"", "�")
+show json.string_equals("\"\\uD800\\u0041\"", "𐀀"),json.string_equals("\"\\u00x0\"", "Z")
+show json.string_equals("\"\\u0000\"", ""),json.string_equals("\"a\" \"", "a")
+show json.string_equals("\"ab\"", "a"),json.string_equals("\"a\"", "ab"),json.string_equals("\"\"", "")
+before=memory.used()
+repeat 2000 {assert json.string_equals("\"!caf\\u00E9\\/\\uD83D\\uDe00\"",command)}
+show before==memory.used()`
+	const want = "true Pong! Pong!\ntrue\nfalse false\nfalse false\nfalse false\nfalse false true\ntrue\n"
+	for _, profile := range []string{"debug", "nano", "balanced", "turbo"} {
+		t.Run(profile, func(t *testing.T) {
+			got, failed := hyperRun(t, source, profile)
+			if failed || got != want {
+				t.Fatalf("got %q (failed=%v), want %q", got, failed, want)
+			}
+		})
+	}
+}
 func TestNexusGatewayImports(t *testing.T) {
 	src := `import tripol.discord
  discord.setup("dummy.token","123")

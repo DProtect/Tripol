@@ -48,7 +48,7 @@ func matches(message:string,command:string)->bool {
  if len(author)==0 {return false}
  if json.get_raw(author,"bot")=="true" {return false}
  if len(json.get_raw(message,"webhook_id"))>0 {return false}
- return json.get_raw(message,"content")==json.quote(command)
+ return json.string_equals(json.get_raw(message,"content"),command)
 }
 // Single command in a quiet test channel; polls only the newest message.
 func listen(channel:string,command:string,response:string)->int {
@@ -280,7 +280,7 @@ func gateway_reply(event:string)->string {
       slot=2+i*2
       command=bot_slot_get(slot)
       if command=="" {break}
-      if content==json.quote(command) {slot_found=slot+1;break}
+      if json.string_equals(content,command) {slot_found=slot+1;break}
      }
     }
    }

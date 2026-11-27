@@ -1,4 +1,5 @@
 import tripol.encoding
+import tripol.utf8
 // Small JSON writer; input strings must be valid UTF-8. No general parser yet.
 func quote(s:string) -> string {
     assert len(s)<=512, "JSON string limit 512 bytes"
@@ -53,6 +54,62 @@ func quoted(s:string,i:int,n:int)->int {
   }
  }
  return -1
+}
+// Compare one raw JSON string to UTF-8 text without allocating a decoded copy.
+func string_equals(raw:string,value:string)->bool {
+ n=len(raw)
+ size=len(value)
+ if size>512 or n<size+2 or n>size*6+2 or quoted(raw,0,n)!=n {return false}
+ at=1
+ pos=0
+ end=n-1
+ while at<end {
+  if pos>=size {return false}
+  b=byte_at(raw,at)
+  at+=1
+  if b==92 {
+   b=byte_at(raw,at)
+   at+=1
+   if b==117 {
+    high=0
+    scalar=0
+    while true {
+     scalar=0
+     for i in range(4) {
+      h=byte_at(raw,at+i)
+      digit=0
+      if h<=57 {digit=h-48} else if h<=70 {digit=h-55} else {digit=h-87}
+      scalar=scalar*16+digit
+     }
+     at+=4
+     if high>0 {
+      if scalar<56320 or scalar>57343 {return false}
+      scalar=65536+(high-55296)*1024+(scalar-56320)
+      break
+     }
+     if scalar<55296 or scalar>56319 {
+      if scalar>=56320 and scalar<=57343 {return false}
+      break
+     }
+     if at+6>end or byte_at(raw,at)!=92 or byte_at(raw,at+1)!=117 {return false}
+     high=scalar
+     at+=2
+    }
+    width=utf8.width_at(value,pos)
+    if width==0 or utf8.scalar_at(value,pos)!=scalar {return false}
+    pos+=width
+    continue
+   }
+   if b==98 {b=8}
+   else if b==102 {b=12}
+   else if b==110 {b=10}
+   else if b==114 {b=13}
+   else if b==116 {b=9}
+  }
+  if b!=byte_at(value,pos) {return false}
+  pos+=1
+ }
+ return pos==size
 }
 func literal(s:string,i:int,n:int,w:string)->int {
  k=len(w);if i+k>n {return -1}

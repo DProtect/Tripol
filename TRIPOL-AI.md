@@ -23,6 +23,8 @@ embed.field("Versión", "0.28.0", true)
 show embed.payload()
 ```
 
+Gateway text commands compare the decoded JSON string to the configured UTF-8 command. The `json.string_equals(raw, value)` helper does the same comparison offline. Los comandos del Gateway comparan el texto UTF-8 una vez interpretados los escapes JSON.
+
 Bot methods are `prefix(value)`, `status(value)`, `activity(value)`, `command(name, response)`, `preview(content)` and `start()`. Embed methods are `title(value)`, `description(value)`, `footer(value)`, `color("#RRGGBB")`, `field(label, value, inline=false)`, `payload()` and `send(channel_id)`. Use `DISCORD_TOKEN` for live calls on Windows. Preview and JSON generation run offline on Linux, Windows and WebAssembly.
 
 Los métodos `start()` y `send(channel_id)` usan `DISCORD_TOKEN` en Windows. La vista previa y el JSON funcionan sin conexión en Linux, Windows y WebAssembly.

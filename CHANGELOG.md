@@ -4,6 +4,7 @@
 - `discord.bot()` creates independent command and presence settings. `bot.preview()` runs offline. On Windows, `bot.start()` reads `DISCORD_TOKEN` and uses the existing Gateway transport. Only bots with prefix commands request Message Content Intent.
 - `discord.embed()` builds embeds with a title, description, footer, RGB color and fields. `embed.payload()` builds JSON offline with mentions disabled. `embed.send()` uses native Windows REST.
 - The Discord project template and VS Code suggestions and snippets use the new API. Existing module-level Discord calls retain their defaults.
+- Gateway and legacy dispatch compare the decoded JSON text. Escaped accents, emoji and slashes match the same configured command as their literal equivalents.
 - Added native and browser tests for typed dispatch, independent bot state, UTF-8 embeds, and the native transport boundary.
 
 # v0.27.1 QUANTUM X (development)
