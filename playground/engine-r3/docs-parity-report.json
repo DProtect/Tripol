@@ -1,10 +1,10 @@
 {
-  "commit": "e8b4e145a31298a57dac3e70abcf17ab476ce9e0",
+  "commit": "9fef69993b6bfef6e6a3be75466057ae006a461f",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
-  "total": 139,
+  "total": 140,
   "counts": {
-    "executed": 125,
+    "executed": 126,
     "native-only": 14
   },
   "rows": [
@@ -141,6 +141,13 @@
       "source": "func twice(n:int)->int => n * 2\nshow twice(21)",
       "status": "executed",
       "output": "42\n"
+    },
+    {
+      "file": "docs/learn-functions.html",
+      "index": 4,
+      "source": "func greet(name:string)->string {\n    return \"Hola, \" + name\n}\n\nfunc apply(handler:func(string)->string,name:string)->string {\n    return handler(name)\n}\n\nshow apply(&greet, \"Ada\")",
+      "status": "executed",
+      "output": "Hola, Ada\n"
     },
     {
       "file": "docs/learn-hello.html",
@@ -938,7 +945,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "7725\n"
+      "output": "8248\n"
     },
     {
       "file": "docs/libraries/ui.html",

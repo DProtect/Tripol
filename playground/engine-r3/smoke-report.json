@@ -1,8 +1,12 @@
 {
-  "total": 55,
-  "passed": 55,
+  "total": 56,
+  "passed": 56,
   "failed": 0,
   "rows": [
+    {
+      "name": "struct Context {username:string}\nstruct Handler {reply:func(Context)->string}\nfunc greet(ctx:Context)->string {return \"Hola, \"+ctx.username}\nfunc alternate(ctx:Context)->string {return \"Bienvenido, \"+ctx.username}\nfunc dispatch(h:Handler,ctx:Context)->string {reply=h.reply;return reply(ctx)}\nctx=Context(\"Ada\")\nh=Handler(&greet)\nshow dispatch(h,ctx)\nh.reply=&alternate\nshow dispatch(h,ctx)",
+      "status": "pass"
+    },
     {
       "name": "struct Counter {value:int=0}\nfunc Counter.add(self:Counter,step=1)->int {self.value+=step;return self.value}\nc=Counter()\nalias=c\nshow alias.add(),c.add(2),Counter(6).add()",
       "status": "pass"
