@@ -13,7 +13,23 @@ function suggestions(src,pos){
  const imp=line.match(/^\s*import\s+tripol\.([A-Za-z_0-9]*)$/);
  if(imp){const prefix=imp[1];return {prefix,items:libs.map(l=>l.name).filter(n=>n.startsWith(prefix)&&n!==prefix).sort().slice(0,12),details:{}}}
  const member=line.match(/\b([A-Za-z_]\w*)\.([A-Za-z_0-9]*)$/);
- if(member){const l=libs.find(x=>x.name===member[1]);if(l){const prefix=member[2],fs=l.functions.filter(f=>f.name.startsWith(prefix)&&f.name!==prefix).slice(0,12);return {prefix,items:fs.map(f=>f.name),details:Object.fromEntries(fs.map(f=>[f.name,f])),library:l.name,member:true}}}
+ if(member){
+  const [,name,prefix]=member;
+  const lib=libs.find(l=>l.name===name);
+  let functions=lib?.functions||[];
+  if(!lib){
+   const binding=[...before.matchAll(/^\s*(?:let\s+)?([A-Za-z_]\w*)\s*=\s*(\w+)\.(\w+)\s*\(/gm)].reverse().find(m=>m[1]===name);
+   if(binding){
+    const factory=libs.find(l=>l.name===binding[2]);
+    const type=factory?.functions.find(f=>f.name===binding[3])?.signature?.match(/->\s*(\w+)$/)?.[1];
+    functions=(factory?.methods||[]).filter(m=>m.receiver===type);
+   }
+  }
+  if(lib||functions.length){
+   const matches=functions.filter(f=>f.name.startsWith(prefix)&&f.name!==prefix).slice(0,12);
+   return {prefix,items:matches.map(f=>f.name),details:Object.fromEntries(matches.map(f=>[f.name,f])),library:lib?.name,member:true};
+  }
+ }
  const prefix=(before.match(/[A-Za-z_][A-Za-z_0-9]*$/)||[''])[0];
  const known=[...keywords,...types,...builtins,'true','false',...libs.map(l=>l.name)];
  const local=tokenize(src).filter(t=>t.kind==='plain'||t.kind==='function').map(t=>t.v).filter(v=>/^[A-Za-z_][A-Za-z_0-9]*$/.test(v)&&!reserved.has(v));

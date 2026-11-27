@@ -48,7 +48,7 @@ function loadLibrary(l,f){
 function renderLibraries(){
  const host=$('library-list');host.replaceChildren();const q=normalize($('library-search').value.trim());
  let last=-1;
- for(const l of libraries){const matches=l.functions.filter(f=>!q||normalize(l.name+'.'+f.name+' '+l.name+' '+f.en+' '+f.es).includes(q));if(!matches.length)continue;
+ for(const l of libraries){const matches=[...l.functions,...(l.methods||[])].filter(f=>!q||normalize([l.name+'.'+f.name,l.name,f.signature,f.en,f.es].join(' ')).includes(q));if(!matches.length)continue;
  if(l.level!==last){const h=document.createElement('div');h.className='pg-level-heading';h.textContent=levelName(l.level);host.append(h);last=l.level}
  const details=document.createElement('details');details.className='pg-library';details.open=librarySelected===l.name||!!q;
  const summary=document.createElement('summary');summary.textContent='tripol.'+l.name+' · '+l.functions.length;details.append(summary);details.addEventListener('toggle',()=>{if(details.open)librarySelected=l.name});
@@ -113,6 +113,10 @@ if(['}',']',')'].includes(e.key)&&editor.selectionStart===editor.selectionEnd&&e
 });document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();run()}});
 $('menu').onclick=()=>{const open=$('navlinks').classList.toggle('open');$('menu').setAttribute('aria-expanded',String(open))};document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('navlinks').classList.contains('open')){$('navlinks').classList.remove('open');$('menu').setAttribute('aria-expanded','false');$('menu').focus()}});
 let draft;try{draft=JSON.parse(localStorage.getItem('tripol-playground-draft'))}catch{}language();if(draft&&typeof draft.code==='string'&&draft.code.length<=32768&&Number.isInteger(draft.active)&&(draft.active===-1||examples[draft.active])){active=draft.active;editor.value=draft.code;stdin.value=typeof draft.input==='string'?draft.input.slice(0,32768):'';list();sync();$('input-panel').open=/\b(?:input|input_int|console\.ask|console\.ask_int)\s*\(/.test(editor.value);setStatus(say('Ready to run','Listo para ejecutar'))}else load(0);
+const requestedLibrary=new URLSearchParams(location.search).get('library');
+if(libraries.some(l=>l.name===requestedLibrary)){
+ librarySelected=requestedLibrary;$('library-search').value=requestedLibrary;selectTab('libraries');
+}
 checkEngine();
 if(location.hash.startsWith('#code=')){try{const shared=decodeURIComponent(location.hash.slice(6));if(shared.length<=32768&&confirm(say('Open shared code? It will replace the current draft.','¿Abrir código compartido? Reemplazará el borrador actual.'))){load(-1);editor.value=shared;sync()}}catch{setStatus(say('Invalid shared link','Enlace compartido inválido'),'error')}}
 })();

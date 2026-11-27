@@ -4,6 +4,43 @@
 
 Experimental pre-release · Apache-2.0 · Windows and Linux x86-64. Web engine support is a separate subset. Official release: https://github.com/Tripollas/Tripol/releases/tag/v0.27.1 · Docs: https://tripollas.github.io/Tripol/docs/
 
+## Anexo de desarrollo / Development addendum — v0.28 DISCORD NEW
+
+Use this section for source builds that report `0.28.0`. The reference below describes the published 0.27.1 snapshot. See the [bilingual Discord guide](https://tripollas.github.io/Tripol/docs/discord.html).
+
+Usa este anexo para compilaciones desde código fuente que indiquen `0.28.0`. La referencia que sigue corresponde a la v0.27.1 publicada. Consulta la [guía bilingüe de Discord](https://tripollas.github.io/Tripol/docs/discord.html).
+
+```tripol
+import tripol.discord
+
+bot = discord.bot()
+bot.command("hola", "¡Hola, compañero!")
+show bot.preview("hola")
+
+embed = discord.embed()
+embed.title("DISCORD NEW")
+embed.field("Versión", "0.28.0", true)
+show embed.payload()
+```
+
+Bot methods are `prefix(value)`, `status(value)`, `activity(value)`, `command(name, response)`, `preview(content)` and `start()`. Embed methods are `title(value)`, `description(value)`, `footer(value)`, `color("#RRGGBB")`, `field(label, value, inline=false)`, `payload()` and `send(channel_id)`. Use `DISCORD_TOKEN` for live calls on Windows. Preview and JSON generation run offline on Linux, Windows and WebAssembly.
+
+Los métodos `start()` y `send(channel_id)` usan `DISCORD_TOKEN` en Windows. La vista previa y el JSON funcionan sin conexión en Linux, Windows y WebAssembly.
+
+A method declaration uses a typed first argument. The caller supplies that argument before the dot. Structure aliases refer to the same object, so field assignments in a method are visible through all aliases.
+
+Una declaración de método usa un primer argumento tipado. Al llamar, ese argumento va antes del punto. Los alias apuntan a la misma estructura y observan los cambios de sus campos.
+
+```tripol
+struct Counter {value:int=0}
+func Counter.add(self:Counter,step=1)->int {
+    self.value += step
+    return self.value
+}
+counter = Counter()
+show counter.add(), counter.add(4)
+```
+
 ## Cómo usar este archivo / How to use this file
 
 Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».
