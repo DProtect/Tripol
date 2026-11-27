@@ -1,10 +1,10 @@
 {
   "modules": 64,
-  "functions": 413,
-  "methods": 84,
+  "functions": 417,
+  "methods": 95,
   "summary": {
-    "native compiled": 497,
-    "web executed": 425,
+    "native compiled": 512,
+    "web executed": 440,
     "web native-only": 72
   },
   "rows": [
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "3189\n"
+      "output": "2654\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "3222360287\n"
+      "output": "2684730285\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2098,6 +2098,30 @@
       "output": "123 hola\n"
     },
     {
+      "name": "discord.interaction_option",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"name\":\"query\",\"type\":3,\"value\":\"ca\",\"focused\":true}\n"
+    },
+    {
+      "name": "discord.first_command_option",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":2,\"name\":\"drinks\",\"options\":[{\"type\":1,\"name\":\"find\",\"options\":[{\"name\":\"query\",\"type\":3,\"value\":\"ca\",\"focused\":true}]}]}\n"
+    },
+    {
+      "name": "discord.command_choices",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[]\n"
+    },
+    {
+      "name": "discord.slash_choice_signature",
+      "native": "compiled",
+      "web": "executed",
+      "output": "\"Díez\":10;\n"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2332,7 +2356,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n41628\n"
+      "output": "4950\n32810\n"
     },
     {
       "name": "simd.equal",
@@ -2919,6 +2943,72 @@
       "name": "discord.Interaction.followup",
       "native": "compiled",
       "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.command_group",
+      "native": "compiled",
+      "web": "executed",
+      "output": "drinks\n"
+    },
+    {
+      "name": "discord.Interaction.subcommand",
+      "native": "compiled",
+      "web": "executed",
+      "output": "find\n"
+    },
+    {
+      "name": "discord.Interaction.focused",
+      "native": "compiled",
+      "web": "executed",
+      "output": "query\n"
+    },
+    {
+      "name": "discord.Bot.on_autocomplete",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":8,\"data\":{\"choices\":[{\"name\":\"Café\",\"value\":\"cafe\"}]}}\n"
+    },
+    {
+      "name": "discord.SlashOptions.subcommand",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.SlashOptions.group",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.SlashOptions.choose",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.CommandChoices.add",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.CommandChoices.integer",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.CommandChoices.payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[{\"name\":\"Diez\",\"value\":10}]\n"
+    },
+    {
+      "name": "discord.Interaction.autocomplete",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"type\":8,\"data\":{\"choices\":[{\"name\":\"Café\",\"value\":\"cafe\"}]}}\n"
     }
   ],
   "examples": [
