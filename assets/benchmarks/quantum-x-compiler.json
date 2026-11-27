@@ -1,0 +1,53 @@
+{
+  "host": "Linux x86-64",
+  "cpu": "AMD EPYC 9V74",
+  "result_scope": "Two workloads on this host. Arena growth and peak RSS are separate measurements.",
+  "baseline_revision": "c2d136adb7a11afad5720ec4b620a9652b06b53f",
+  "current_revision": "b2e54476bfff67da753996f0ad9f0194563105e9",
+  "flow": {
+    "source": "import tripol.time\nfunc sum_range(n:int,swap:bool)->int {\n    total=0\n    i=0\n    while i<n {\n        if swap and i%2==0 {total+=i} else {total+=2*i}\n        i+=1\n    }\n    return total\n}\nn=input_int()\nstart=time.now_ns()\nanswer=sum_range(n,true)\nns=time.elapsed_ns(start)\nshow answer\nshow \"TRIPOL_NS:\",ns\n",
+    "input": 3000000,
+    "verified_output": 6749998500000,
+    "runs": 9,
+    "before_internal_median_ms": 5.686315,
+    "after_internal_median_ms": 4.712692,
+    "internal_samples_ms": {
+      "before": [
+        6.025327,
+        5.840463,
+        5.77111,
+        5.686315,
+        5.589771,
+        5.618164,
+        5.58846,
+        7.260407,
+        5.558436
+      ],
+      "final": [
+        4.296226,
+        4.712692,
+        5.446094,
+        4.429003,
+        4.921321,
+        4.214134,
+        4.146214,
+        5.631964,
+        5.692925
+      ]
+    }
+  },
+  "memory": {
+    "source": "import tripol.memory\nbefore=memory.used()\ntotal=0\nrepeat 1000000 {\n    messages=string_list(0)\n    messages.add(text(17))\n    for j in range(3) {total+=len(messages[0])}\n}\nshow total\nshow memory.used()-before\n",
+    "iterations": 1000000,
+    "before": {
+      "verified_output": 6000000,
+      "arena_growth_bytes": 43000000,
+      "peak_rss_kib": 41984
+    },
+    "after": {
+      "verified_output": 6000000,
+      "arena_growth_bytes": 0,
+      "peak_rss_kib": 8940
+    }
+  }
+}
