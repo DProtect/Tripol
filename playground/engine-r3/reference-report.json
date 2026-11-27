@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 427,
-  "methods": 116,
+  "functions": 428,
+  "methods": 123,
   "summary": {
-    "native compiled": 543,
-    "web executed": 458,
-    "web native-only": 85
+    "native compiled": 551,
+    "web executed": 460,
+    "web native-only": 91
   },
   "rows": [
     {
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2319\n"
+      "output": "2999\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2343702201\n"
+      "output": "3028038741\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2181,6 +2181,12 @@
       "output": "true\n"
     },
     {
+      "name": "discord.channel_ref",
+      "native": "compiled",
+      "web": "executed",
+      "output": "123\n"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2415,7 +2421,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n43175\n"
+      "output": "4950\n54663\n"
     },
     {
       "name": "simd.equal",
@@ -3180,6 +3186,42 @@
     },
     {
       "name": "discord.Interaction.delete_followup",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.id",
+      "native": "compiled",
+      "web": "executed",
+      "output": "123\n"
+    },
+    {
+      "name": "discord.Channel.read",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.slowmode",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.pin",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.delete_message",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.purge",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.react",
       "native": "compiled",
       "web": "native-only"
     }

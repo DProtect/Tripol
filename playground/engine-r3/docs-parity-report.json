@@ -1,11 +1,11 @@
 {
-  "commit": "d3a66eac9d57d6042014f2c5d309f07b1a005cde",
+  "commit": "17ff73c6209ab1f13db0ece18945514406a8943c",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
-  "total": 149,
+  "total": 150,
   "counts": {
     "executed": 133,
-    "native-only": 16
+    "native-only": 17
   },
   "rows": [
     {
@@ -78,6 +78,12 @@
     {
       "file": "docs/discord.html",
       "index": 11,
+      "source": "import tripol.discord\n\nroom = discord.channel_ref(\"123\")\nshow room.read()",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 12,
       "source": "import tripol.discord\n\ndiscord.login_env()\ndiscord.activity(\"Programming in TRIPOL\")\ndiscord.reply(\"!hello\", \"Hello, friend!\")\ndiscord.reply(\"!ping\", \"Pong!\")\ndiscord.run()\n",
       "status": "native-only"
     },
@@ -1006,7 +1012,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "5428\n"
+      "output": "7494\n"
     },
     {
       "file": "docs/libraries/ui.html",
