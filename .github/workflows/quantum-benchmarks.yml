@@ -18,6 +18,11 @@ jobs:
           ref: v0.26.0
           path: baseline
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: v0.27.0
+          path: baseline027
+          persist-credentials: false
       - uses: actions/setup-go@v5
         with:
           go-version: '1.23.x'
@@ -25,11 +30,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Build both compiler versions
+      - name: Build current and baseline compilers
         run: |
           go build -trimpath -o "$RUNNER_TEMP/tripol027" .
           (cd baseline && go build -trimpath -o "$RUNNER_TEMP/tripol026" .)
+          (cd baseline027 && go build -trimpath -o "$RUNNER_TEMP/tripol0270" .)
           "$RUNNER_TEMP/tripol026" --version
+          "$RUNNER_TEMP/tripol0270" --version
           "$RUNNER_TEMP/tripol027" --version
       - name: Reproduce old/new and cross-language measurements
         env:
@@ -37,7 +44,10 @@ jobs:
         run: |
           mkdir -p benchmark-results
           python benchmarks/compare_versions.py --old "$RUNNER_TEMP/tripol026" --new "$RUNNER_TEMP/tripol027" --runs 7 --out benchmark-results/compare.json
-          python benchmarks/quantum_x.py --compiler "$RUNNER_TEMP/tripol027" --runs 7 --out benchmark-results/languages.json
+          python benchmarks/compare_versions.py --old "$RUNNER_TEMP/tripol0270" --new "$RUNNER_TEMP/tripol027" --runs 7 --out benchmark-results/compare-0.27.0.json
+          python benchmarks/quantum_x.py --compiler "$RUNNER_TEMP/tripol027" \
+            --baseline "0.26.0=$RUNNER_TEMP/tripol026" --baseline "0.27.0=$RUNNER_TEMP/tripol0270" \
+            --runs 7 --out benchmark-results/languages.json
       - name: Measure compiler validation and stage breakdown
         shell: bash
         run: |

@@ -27,6 +27,10 @@ Enter `examples/projects/genesis_functions.tri` and a new output path such as `g
 
 The declaration pass now builds the function signature table before emitting code. Calls target stable native jump stubs patched to actual function bodies, enabling forward calls and mutual recursion. Conditions support integer comparisons, boolean literals, `not`, `and`, `or` (also !, &&, ||), short-circuit evaluation and boolean grouping; `else if` chains are supported. Booleans are now first-class scalar values in local variables, parameters and function returns; `show` remains integer-only in this stage. Integer and boolean expressions now pass through a separate bounded AST; statements still lower directly from tokens, functions cannot access main's local slots, and self-compilation is not yet possible. See examples/projects/genesis_control.tri.
 
+### Loop control
+
+`break` exits the nearest `while` or `for` loop. `continue` rechecks a `while` condition or advances a `for` counter. Both are available inside nested conditionals. GENESIS rejects loop control outside a loop.
+
 ## Integer expression AST
 
 `compiler/ast.tri` represents literals, variable references, unary negation, checked arithmetic, calls and linked argument nodes in a bounded integer array (1024 nodes per expression). Parsing is separate from native code emission. The backend preserves left-to-right argument evaluation, precedence and checked overflow/division. Existing mutable integer variables support `+=`, `-=`, `*=`, `/=`, `%=`; range counters remain immutable. `examples/projects/genesis_ast.tri` exercises the AST on both native targets. This is not yet a full program AST or a self-hosting compiler.

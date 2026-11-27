@@ -37,14 +37,15 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 - 64 standard modules, including SHA-256, PCM WAV creation, Windows WAV playback, explicit option parsing, native process ID/exit and a joined native Windows worker for checked integer sum. General thread callbacks, process spawning and OS argument parsing are not yet included.
 
-- MEMORY R2: automatic scoped reclamation for proven non-escaping temporary arrays, lists and strings in loop bodies, with explicit scratch fallback for other cases.
-- TIR R6: constant-branch elimination after complete validation, CFG inspection and native single-block checked SSA with linear scan, spills, expression reuse and constant propagation.
+- MEMORY R3 extends automatic temporary reclamation to locally owned typed lists and outer allocations around nested loops whose inner iterations allocate no temporaries.
+- TIR R7: turbo emits multi-block native SSA for eligible call-free integer and boolean functions, with phi edges, liveness and register allocation. The checked emitter handles the remaining language.
+- INCREMENTAL R1 reuses parsed local and embedded modules in cached builds. VECTOR R2 dispatches long constant integer array fills to OS-enabled AVX2, with SSE2 and scalar-tail handling.
 - Native checked x86-64 atomics (load, exchange, compare-and-swap, add); no general user thread API yet.
 - UPDATE R2: transactional per-user installation with confirmation, rollback backups and a Windows helper; portable/system installs remain manual.
 
 - Native byte I/O (`tripol.io`), bounded binary cursor (`tripol.stream`) and bounded literal/dot/star matching (`tripol.regex`).
 - Growable integer lists: `list()`, `add`, `get`, `set`, `remove_at`, `clear`, `size`, `capacity`; stable reference semantics across growth.
-- GENESIS R3 extends the experimental Linux ELF subset with typed integer functions, forward calls, mutual recursion, short-circuit boolean conditions, else-if, `for`/range, repeated `show`, and direct binary output in `compiler/direct.tri`. Experimental PE32+ console backend also emits Windows executables; not self-hosting yet.
+- GENESIS R3 extends the experimental Linux ELF subset with typed integer functions, forward calls, mutual recursion, short-circuit boolean conditions, else-if, `for`/range, `break`, `continue`, repeated `show`, and direct binary output in `compiler/direct.tri`. Experimental PE32+ console backend also emits Windows executables; not self-hosting yet.
 
 ### 0.27.0 foundation
 

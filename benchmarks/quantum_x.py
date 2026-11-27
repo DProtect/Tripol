@@ -64,12 +64,19 @@ def p95(values):
     import math
     return sorted(values)[max(0,math.ceil(len(values)*.95)-1)]
 def main():
-    p=argparse.ArgumentParser();p.add_argument("--compiler",required=True);p.add_argument("--runs",type=int,default=7);p.add_argument("--out",required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument("--compiler",required=True);p.add_argument("--runs",type=int,default=7);p.add_argument("--out",required=True);p.add_argument("--baseline", action="append", default=[], metavar="LABEL=COMPILER");a=p.parse_args()
     if platform.system()!="Linux" or not 1<=a.runs<=30:p.error("Linux, 1..30 runs required")
     results=[];skipped=[]
     with tempfile.TemporaryDirectory(prefix="tripol-x-") as td:
         d=pathlib.Path(td)
         cases=[("TRIPOL",str(pathlib.Path(a.compiler).resolve()),".tri",TRI,lambda tool,s,b:[tool,"build",str(s),"--profile","turbo","-o",str(b)]),("C",shutil.which("gcc"),".c",C,lambda t,s,b:[t,"-O3",str(s),"-o",str(b)]),("C++",shutil.which("g++"),".cpp",C,lambda t,s,b:[t,"-O3",str(s),"-o",str(b)]),("Rust",shutil.which("rustc"),".rs",RUST,lambda t,s,b:[t,str(s),"-C","opt-level=3","-C","overflow-checks=yes","-C","strip=symbols","-o",str(b)]),("Go",shutil.which("go"),".go",GO,lambda t,s,b:[t,"build","-trimpath","-ldflags=-s -w","-o",str(b),str(s)]),("Zig",shutil.which("zig"),".zig",ZIG,lambda t,s,b:[t,"build-exe",str(s),"-O","ReleaseSafe","-lc","-femit-bin="+str(b)]),("Python",sys.executable,".py",PYTHON,None)]
+        baselines = []
+        for item in a.baseline:
+            label, sep, command = item.partition("=")
+            if not sep or not label or not command:
+                p.error("--baseline requires LABEL=COMPILER")
+            baselines.append(("TRIPOL " + label, str(pathlib.Path(command).resolve()), *cases[0][2:]))
+        cases[1:1] = baselines
         for i,(name,tool,ext,source,build) in enumerate(cases):
             if not tool:skipped.append({"name":name,"reason":"compiler unavailable"});continue
             s=d/(f"case{i}"+ext);b=d/f"bin{i}";s.write_text(source,encoding="utf8")
@@ -83,7 +90,7 @@ def main():
                 ver,_=run([tool]+version_args,d)
                 results.append({"name":name,"tool_version":ver.splitlines()[0],"cmd":cmd,"bytes":size,"build_samples_ms":builds,"internal_samples_ms":[],"process_samples_ms":[]})
             except Exception as e:
-                if name=="TRIPOL":raise
+                if name.startswith("TRIPOL"):raise
                 skipped.append({"name":name,"reason":str(e)})
         def sample(r,record):
             out,ms=run(r["cmd"],d,"30\n")
