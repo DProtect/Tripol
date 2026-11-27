@@ -11334,3 +11334,477 @@ Expected output (ES: Resultado esperado)
 ```output
 42
 ```
+
+---
+
+## Lesson 8 — docs/learn-arrays.html
+
+LESSON 08 OF 14 (ES: LECCIÓN 08 DE 14)
+
+### Arrays (ES: Arreglos)
+Create, index, change and iterate integer arrays. (ES: Crea, consulta, modifica y recorre arreglos de enteros.)
+
+#### Fixed arrays (ES: Arreglos fijos)
+A literal like [10,20,30] creates a fixed integer array. Indexes begin at zero; len counts elements. Its length cannot grow. (ES: Un literal como [10,20,30] crea un arreglo entero fijo. Los índices comienzan en cero; len cuenta los elementos. Su longitud no puede crecer.)
+
+```tripol
+a = [10, 20, 30]
+show a[0], len(a)
+a[1] += 5
+show a
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+10 3
+[10, 25, 30]
+```
+
+Important (ES: Importante)Accessing an index outside the array is an error. (ES: Acceder a un índice fuera del arreglo es un error.)
+
+#### Runtime-sized arrays (ES: Arreglos de tamaño en ejecución)
+ints(n) creates an integer array of n zero-initialized elements. Its length is chosen at runtime but remains fixed. Assignment of dynamic arrays shares their backing reference. (ES: ints(n) crea un arreglo entero de n elementos inicializados en cero. Su longitud se decide en ejecución, pero permanece fija. La asignación de arreglos dinámicos comparte su referencia.)
+
+```tripol
+a = ints(3)
+for i in range(3) {
+    a[i] = i * 2
+}
+show a, sum(a)
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+[0, 2, 4] 6
+```
+
+#### Array utilities (ES: Utilidades de arreglos)
+Import arrays or collections for operations such as sum, copying and appending into a new array. Mutating library functions generally require a dynamic array. (ES: Importa arrays o collections para operaciones como sumar, copiar o añadir a un arreglo nuevo. Las funciones de biblioteca que modifican el arreglo generalmente requieren uno dinámico.)
+
+```tripol
+import tripol.collections
+
+a = [1, 2]
+b = collections.append(a, 3)
+show a
+show b
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+[1, 2]
+[1, 2, 3]
+```
+
+Important (ES: Importante)For a collection that grows in place through a handle, use list(). (ES: Para una colección que crece mediante una referencia estable, utiliza list().)
+
+Array library (ES: Biblioteca arrays) · Collection library (ES: Biblioteca collections)
+
+---
+
+## Lesson 9 — docs/learn-lists.html
+
+LESSON 09 OF 14 (ES: LECCIÓN 09 DE 14)
+
+### Lists (ES: Listas)
+Use growable, homogeneous collections. (ES: Utiliza colecciones dinámicas de un mismo tipo.)
+
+#### Create and grow a list (ES: Crear y ampliar una lista)
+list() creates an empty integer list. list([values]) initializes a list from homogeneous scalar values. add appends an element and returns the new size. (ES: list() crea una lista de enteros vacía. list([valores]) inicializa una lista con valores escalares del mismo tipo. add añade un elemento y devuelve el nuevo tamaño.)
+
+```tripol
+numbers = list([10, 20, 30])
+numbers.add(40)
+show numbers
+show numbers.get(3), len(numbers)
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+[10, 20, 30, 40]
+40 4
+```
+
+#### Read, update and remove (ES: Leer, modificar y eliminar)
+Use zero-based indexing, get, set and remove_at. remove_at returns the removed element. clear resets the logical length; size and capacity report current size and reserved capacity. (ES: Usa índices desde cero, get, set y remove_at. remove_at devuelve el elemento eliminado. clear reinicia la longitud lógica; size y capacity indican el tamaño actual y la capacidad reservada.)
+
+```tripol
+numbers = list([10, 20, 30])
+numbers[0] += 5
+show numbers.remove_at(1)
+show numbers
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+20
+[15, 30]
+```
+
+#### Typed lists (ES: Listas tipadas)
+Nonempty homogeneous initializers infer string, boolean or float lists as well. For empty typed lists, use string_list(), bool_list() or float_list(). Mixed element types are rejected. (ES: Los inicializadores no vacíos y homogéneos también permiten inferir listas de texto, booleanos o decimales. Para listas tipadas vacías utiliza string_list(), bool_list() o float_list(). No se pueden mezclar tipos.)
+
+```tripol
+names = list(["Ada", "Alex"])
+names.add("Sam")
+show names[2]
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Sam
+```
+
+Important (ES: Importante)Lists are distinct from ints. Array-only library functions do not accept lists. Aliases share one list handle; integer, boolean and string lists have contains, remove and sort; float lists do not have these methods in R1. (ES: Las listas son distintas de ints. Las funciones exclusivas de arreglos no aceptan listas. Los alias comparten una referencia; las listas de enteros, booleanos y textos tienen contains, remove y sort; las de float no incluyen esos métodos en R1.)
+
+---
+
+## Lesson 10 — docs/learn-strings.html
+
+LESSON 10 OF 14 (ES: LECCIÓN 10 DE 14)
+
+### Strings (ES: Strings)
+Build, inspect and interpolate immutable text. (ES: Crea, consulta e interpola textos inmutables.)
+
+#### Text and concatenation (ES: Texto y concatenación)
+Write text inside double quotes and join strings with +. Use escape sequences such as \n and \" for a newline or quotation mark. (ES: Escribe texto entre comillas dobles y une cadenas con +. Utiliza secuencias de escape como \n y \" para saltos de línea o comillas.)
+
+```tripol
+name = "TRIPOL"
+show "Hello " + name
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Hello TRIPOL
+```
+
+```tripol
+show "Line 1\nLine 2"
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Line 1
+Line 2
+```
+
+#### Interpolation (ES: Interpolación)
+An f-prefixed string inserts int, bool or string expressions between braces. Double braces escape literal braces. Float interpolation is not currently supported. (ES: Una cadena con prefijo f inserta expresiones int, bool o string entre llaves. Las llaves dobles representan llaves literales. Actualmente no se admite interpolar float.)
+
+```tripol
+name = "Alex"
+score = 42
+show f"{name}: {score}"
+show f"Total: {2 + 3}"
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Alex: 42
+Total: 5
+```
+
+#### Bytes and text helpers (ES: Bytes y utilidades de texto)
+len measures UTF-8 bytes rather than visible characters. The text library provides byte slicing, prefix/suffix tests and substring search. Slicing inside a multibyte character can produce invalid text. (ES: len mide bytes UTF-8 en vez de caracteres visibles. La biblioteca text ofrece recortes por bytes, comprobaciones de prefijos y sufijos y búsqueda de fragmentos. Recortar dentro de un carácter multibyte puede producir texto inválido.)
+
+```tripol
+import tripol.text
+
+show len("á")
+show text.part("TRIPOL", 0, 3)
+show text.contains("TRIPOL", "POL")
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+2
+TRI
+true
+```
+
+Important (ES: Importante)Strings are immutable; create a new value instead of changing an individual byte. (ES: Las cadenas son inmutables; crea un nuevo valor en lugar de modificar un byte individual.)
+
+Text library (ES: Biblioteca text)
+
+---
+
+## Lesson 11 — docs/learn-structs.html
+
+LESSON 11 OF 14 (ES: LECCIÓN 11 DE 14)
+
+### Structures (ES: Estructuras)
+Group named fields with struct. (ES: Agrupa campos con nombre mediante struct.)
+
+#### Declare a structure (ES: Declarar una estructura)
+A struct describes named, typed fields. Construct an instance by calling its name with positional field values. Use dot notation to read and write fields. (ES: Un struct describe campos con nombre y tipo. Crea una instancia llamando a su nombre con los valores en orden. Utiliza un punto para leer y escribir campos.)
+
+```tripol
+struct Player {name:string;score:int}
+p = Player("Alex", 10)
+p.score = 20
+show p.name, p.score
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Alex 20
+```
+
+#### Default fields (ES: Campos predeterminados)
+Trailing scalar fields may have constant defaults. You can omit them when calling the constructor. (ES: Los campos escalares finales pueden tener valores predeterminados constantes. Puedes omitirlos al llamar al constructor.)
+
+```tripol
+struct Player {name:string="Alex";score:int=0}
+p = Player()
+p.score = 100
+show f"{p.name}: {p.score}"
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+Alex: 100
+```
+
+#### Reference semantics (ES: Semántica de referencia)
+Assigning a structure to another variable shares the same instance. Fields can be scalar values or ints; nested named records and methods are not supported in this version. (ES: Asignar una estructura a otra variable comparte la misma instancia. Los campos pueden contener escalares o ints; esta versión no admite estructuras con nombre anidadas ni métodos.)
+
+```tripol
+struct Counter {value:int}
+a = Counter(1)
+b = a
+b.value = 7
+show a.value
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+7
+```
+
+---
+
+## Lesson 12 — docs/learn-exceptions.html
+
+LESSON 12 OF 14 (ES: LECCIÓN 12 DE 14)
+
+### Error handling (ES: Manejo de errores)
+Recover from selected failures with try, catch, finally and throw. (ES: Recupérate de fallos seleccionados con try, catch, finally y throw.)
+
+#### Catch an arithmetic error (ES: Capturar un error aritmético)
+On the native compiler, try runs protected code and catch receives the numeric error code if a recoverable failure occurs. Arithmetic errors use code 10; bounds errors use 11; failed assertions use 12. (ES: En el compilador nativo, try ejecuta código protegido y catch recibe el código numérico si ocurre un fallo recuperable. Los errores aritméticos usan 10; los de índices 11; las aserciones fallidas 12.)
+Native TRIPOL · local execution (ES: TRIPOL nativo · ejecución local)
+
+```tripol
+a = 10
+b = 0
+try {
+    show a / b
+} catch code {
+    show code
+}
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+10
+```
+
+#### finally and throw (ES: finally y throw)
+finally is optional and runs after success or recoverable unwinding. throw raises an application exception; use codes 100–255. Values outside that range normalize to 100. (ES: finally es opcional y se ejecuta tras el éxito o durante una recuperación. throw genera una excepción de aplicación; utiliza códigos de 100 a 255. Los valores fuera del rango se normalizan a 100.)
+Native TRIPOL · local execution (ES: TRIPOL nativo · ejecución local)
+
+```tripol
+try {
+    throw 101
+} catch code {
+    show code
+} finally {
+    show "Finished"
+}
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+101
+Finished
+```
+
+#### Prevent errors (ES: Prevenir errores)
+Check values before dangerous operations. The errors library offers fallback helpers that avoid selected arithmetic and parsing failures without using exceptions. (ES: Comprueba los valores antes de operaciones peligrosas. La biblioteca errors ofrece funciones con valores alternativos que evitan algunos fallos aritméticos y de conversión sin utilizar excepciones.)
+
+```tripol
+import tripol.errors
+
+show errors.div_or(10, 0, -1)
+show errors.int_or("abc", 7)
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+-1
+7
+```
+
+Important (ES: Importante)try/catch/finally/throw are native features not yet supported by Web Engine R3. Native I/O, allocation and OS faults are not generally recoverable. return inside protected blocks is rejected. (ES: try/catch/finally/throw son funciones nativas aún no disponibles en Web Engine R3. Los fallos nativos de E/S, asignación de memoria y sistema operativo no suelen ser recuperables. return dentro de bloques protegidos se rechaza.)
+
+Technical error guide (ES: Guía técnica de errores) · Error library (ES: Biblioteca errors)
+
+---
+
+## Lesson 13 — docs/learn-memory.html
+
+LESSON 13 OF 14 (ES: LECCIÓN 13 DE 14)
+
+### Memory (ES: Memoria)
+Understand temporary allocation and scratch regions. (ES: Comprende las asignaciones temporales y las regiones scratch.)
+
+#### The arena (ES: La arena de memoria)
+Native TRIPOL stores ordinary arena allocations until program exit unless it can reclaim a proven temporary scope. The native arena reserves 256 MiB of virtual space; this is not total RAM or a promise of free physical memory. (ES: TRIPOL nativo conserva las asignaciones normales de la arena hasta terminar el programa, salvo cuando puede recuperar un ámbito temporal comprobado. La arena nativa reserva 256 MiB virtuales; no es la RAM total ni una garantía de memoria física disponible.)
+
+```tripol
+import tripol.memory
+
+show memory.capacity()
+show memory.used()
+show memory.available()
+```
+
+Important (ES: Importante)The browser adapter reports a smaller logical budget, not actual process memory. Values depend on the target and program. (ES: El adaptador web informa un presupuesto lógico menor, no la memoria real del proceso. Los valores dependen del destino y del programa.)
+
+#### Temporary memory with scratch (ES: Memoria temporal con scratch)
+scratch saves and restores the allocation frontier. Allocate temporary arrays or strings inside it; only permitted outer scalar values can be updated and survive the block. (ES: scratch guarda y restaura el límite de asignación. Reserva arreglos o textos temporales dentro del bloque; solo los escalares externos permitidos pueden modificarse y sobrevivir al bloque.)
+Native TRIPOL · local execution (ES: TRIPOL nativo · ejecución local)
+
+```tripol
+total = 0
+repeat 3 {
+    scratch {
+        values = ints(100)
+        values[0] = 7
+        total += values[0]
+    }
+}
+show total
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+21
+```
+
+#### Lifetime rules (ES: Reglas de duración)
+Scratch locals cannot escape. Outer strings are read-only and outer aggregates cannot be accessed inside the region. Control flow cannot leave the protected region. Scratch does not undo file writes or other external side effects, and retained memory is not securely erased. (ES: Las variables locales de scratch no pueden escapar. Los textos externos son de solo lectura y no se puede acceder a agregados externos dentro de la región. El control de flujo no puede salir de la región protegida. scratch no deshace escrituras de archivos ni otros efectos externos, y la memoria retenida no se borra de forma segura.)
+Important (ES: Importante)scratch lifetime semantics require native TRIPOL; Web Engine R3 does not implement full scratch parity. General garbage collection is not available. (ES: La semántica de duración de scratch requiere TRIPOL nativo; Web Engine R3 no ofrece paridad completa. No hay recolector de basura general.)
+
+Memory library (ES: Biblioteca memory)
+
+---
+
+## Lesson 14 — docs/learn-modules.html
+
+LESSON 14 OF 14 (ES: LECCIÓN 14 DE 14)
+
+### Modules (ES: Módulos)
+Import standard libraries and create your own reusable modules. (ES: Importa bibliotecas estándar y crea tus propios módulos reutilizables.)
+
+#### Import a standard library (ES: Importar una biblioteca estándar)
+Place import statements before declarations and program instructions. Standard library imports use tripol.name; call functions with their module prefix. (ES: Coloca import antes de las declaraciones e instrucciones del programa. Las bibliotecas estándar se importan con tripol.nombre; llama las funciones usando el prefijo del módulo.)
+
+```tripol
+import tripol.math
+
+show math.square(7)
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+49
+```
+
+Standard library catalog (ES: Catálogo de bibliotecas)
+
+#### Create a local library (ES: Crear una biblioteca local)
+Create two files in the same project directory. Local .tri modules can contain function definitions and imports, not top-level executable statements. Imported local functions share the top-level namespace and are called without a prefix. (ES: Crea dos archivos en el mismo directorio del proyecto. Los módulos .tri locales pueden contener funciones e importaciones, no instrucciones ejecutables de nivel superior. Las funciones locales importadas comparten el espacio de nombres y se llaman sin prefijo.)
+helpers.tri
+Native TRIPOL · local execution (ES: TRIPOL nativo · ejecución local)
+
+```tripol
+func double(n:int)->int {
+    return n * 2
+}
+```
+
+main.tri
+Native TRIPOL · local execution (ES: TRIPOL nativo · ejecución local)
+
+```tripol
+import "helpers.tri"
+
+show double(21)
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+42
+```
+
+Native TRIPOL · local execution (ES: TRIPOL nativo · ejecución local)
+
+```cmd
+tripol run main.tri
+```
+
+Important (ES: Importante)Paths are relative to the importing file and must stay inside the project. Local module examples need real project files; the browser compiler does not provide them yet. (ES: Las rutas son relativas al archivo que importa y deben permanecer dentro del proyecto. Los ejemplos de módulos locales necesitan archivos reales; el compilador web todavía no los proporciona.)
+
+#### Package your code with Vault (ES: Empaquetar código con Vault)
+Vault installs a local .tri library as a named package with a version and source hash in the lockfile. Use the helpers.tri file from the previous example and run these commands in the native project. (ES: Vault instala una biblioteca .tri local como paquete con nombre, versión y hash de código en el archivo de bloqueo. Utiliza helpers.tri del ejemplo anterior y ejecuta estos comandos en el proyecto nativo.)
+Native TRIPOL · local execution (ES: TRIPOL nativo · ejecución local)
+
+```cmd
+tripol add helpers helpers.tri --version 1.0.0
+tripol packages
+tripol verify
+```
+
+main.tri
+Native TRIPOL · local execution (ES: TRIPOL nativo · ejecución local)
+
+```tripol
+import vault.helpers
+
+show helpers.double(21)
+```
+
+Expected output (ES: Resultado esperado)
+
+```output
+42
+```
+
+Important (ES: Importante)Vault is local and has no public remote package registry. Only use trusted code; keep the lockfile and local package cache for reproducible offline builds. (ES: Vault es local y no dispone de un registro público remoto. Utiliza únicamente código de confianza; conserva el archivo de bloqueo y la caché local para compilaciones reproducibles sin conexión.)
+
+Build and package reference (ES: Referencia de compilación y paquetes)
+
+---
+
+End of TRIPOL v0.27.1 AI reference.
