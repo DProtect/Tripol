@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 422,
-  "methods": 101,
+  "functions": 424,
+  "methods": 111,
   "summary": {
-    "native compiled": 523,
-    "web executed": 450,
-    "web native-only": 73
+    "native compiled": 535,
+    "web executed": 453,
+    "web native-only": 82
   },
   "rows": [
     {
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2719\n"
+      "output": "1999\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2746348216\n"
+      "output": "2021507895\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2152,6 +2152,17 @@
       "output": "true\n"
     },
     {
+      "name": "discord.guild",
+      "native": "compiled",
+      "web": "executed",
+      "output": "123\n"
+    },
+    {
+      "name": "discord.post_message",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2386,7 +2397,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n52958\n"
+      "output": "4950\n36528\n"
     },
     {
       "name": "simd.equal",
@@ -3072,6 +3083,58 @@
     },
     {
       "name": "discord.Bot.start_with_events",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Guild.member",
+      "native": "compiled",
+      "web": "executed",
+      "output": "456\n"
+    },
+    {
+      "name": "discord.Member.id",
+      "native": "compiled",
+      "web": "executed",
+      "output": "456\n"
+    },
+    {
+      "name": "discord.Member.read",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Member.kick",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Member.ban",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Member.unban",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Member.nickname",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Member.timeout",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Member.role",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Member.dm",
       "native": "compiled",
       "web": "native-only"
     }
