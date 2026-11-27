@@ -1,10 +1,10 @@
 {
   "modules": 64,
   "functions": 411,
-  "methods": 75,
+  "methods": 80,
   "summary": {
-    "native compiled": 486,
-    "web executed": 418,
+    "native compiled": 491,
+    "web executed": 423,
     "web native-only": 68
   },
   "rows": [
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2443\n"
+      "output": "2492\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2469822310\n"
+      "output": "2517426358\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2320,7 +2320,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n43666\n"
+      "output": "4950\n24998\n"
     },
     {
       "name": "simd.equal",
@@ -2857,6 +2857,36 @@
       "name": "discord.Embeds.send",
       "native": "compiled",
       "web": "native-only"
+    },
+    {
+      "name": "discord.Modal.choice_group",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Modal.radio",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Modal.checkbox_group",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Modal.checkbox",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.checked",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
     }
   ],
   "examples": [
