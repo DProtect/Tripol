@@ -20,7 +20,7 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 | Current release | Built-in modules | Callable library functions* | Hello world (Windows / Linux) |
 |---|---:|---:|---:|
-| **0.27.1 — QUANTUM X (development)** | 64 | 383 (including scanner helpers) | see v0.24 baseline |
+| **0.27.1 — QUANTUM X (experimental release)** | 64 | 383 (including scanner helpers) | see v0.24 baseline |
 
 *Includes JSON scanner helpers. Sizes are measured for `examples/hello.tri` in nano mode, not a promise for arbitrary programs. TRIPOL is pre-1.0 and is not yet a replacement for mature production languages.*
 
@@ -87,7 +87,7 @@ The small root `main.go` keeps `go build -o tripol .` compatible. Run the comple
 
 ## Quick start
 
-Install the Windows x64 distribution (`TRIPOL-v0.27-Setup-x64.exe`) when provided by the project maintainer, or [build from source](docs/build.md). The installer is unsigned, per-user and configures PATH. Check GitHub Releases for published assets; the installer is not available there until the release draft has been reviewed and published.
+Install the [Windows x64 setup](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Setup-x64.exe), [Linux x64 archive](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Linux-x64.tar.gz), or [build from source](docs/build.md). The Windows installer is unsigned, per-user and configures PATH. See the [experimental v0.27.1 release](https://github.com/Tripollas/Tripol/releases/tag/v0.27.1) for all assets, including the VS Code VSIX and SHA-256 checksums. Physical Ryzen 5 3400G and Radeon Vega 11 / WebGPU validation remains pending.
 
 ```cmd
 tripol --version
