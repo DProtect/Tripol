@@ -16,23 +16,23 @@ The `gh-pages` branch hosts the official static website for TRIPOL, a free exper
 
 The compiler and standard library source code live in [`main`](https://github.com/Tripollas/Tripol/tree/main).
 
-## OVERDRIVE — v0.26.0
+## QUANTUM X — v0.27.1 development
 
 - Official landing page with a monochrome glassmorphism design and the TRIPOL emblem.
 - English by default, with Spanish navigation and library overviews. Code examples remain in English.
-- Reference pages for all 52 standard libraries and 319 callable functions.
-- Searchable documentation, benchmark results, install scripts and official GitHub Releases downloads, GENESIS R2, UPDATE R1 and new Bitset/Profiler guides.
+- Reference pages for all 64 standard libraries and 383 callable functions.
+- Searchable documentation, benchmark results, install scripts and official GitHub Releases downloads, GENESIS R3, UPDATE R2 and new Bitset/Profiler guides.
 
 ## Downloads
 
 | Platform | Distribution |
 | --- | --- |
-| Windows x64 | [Installer ZIP](https://github.com/Tripollas/Tripol/releases/download/v0.26.0/TRIPOL-v0.26-Installer.zip) |
-| Windows x64 | [Setup EXE](https://github.com/Tripollas/Tripol/releases/download/v0.26.0/TRIPOL-v0.26-Setup-x64.exe) |
-| Linux x64 | [Tarball](https://github.com/Tripollas/Tripol/releases/download/v0.26.0/TRIPOL-v0.26-Linux-x64.tar.gz) |
-| Source | [Source ZIP](https://github.com/Tripollas/Tripol/archive/refs/tags/v0.26.0.zip) |
-| VS Code | [VSIX](https://github.com/Tripollas/Tripol/releases/download/v0.26.0/tripol-language-0.26.0.vsix) |
-| Integrity | [SHA-256 checksums](https://github.com/Tripollas/Tripol/releases/download/v0.26.0/SHA256SUMS.txt) |
+| Windows x64 | [Installer ZIP](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/TRIPOL-v0.27-Installer.zip) |
+| Windows x64 | [Setup EXE](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/TRIPOL-v0.27-Setup-x64.exe) |
+| Linux x64 | [Tarball](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/TRIPOL-v0.27-Linux-x64.tar.gz) |
+| Source | [Source ZIP](https://github.com/Tripollas/Tripol/archive/refs/tags/v0.27.0.zip) |
+| VS Code | [VSIX](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/tripol-language-0.27.0.vsix) |
+| Integrity | [SHA-256 checksums](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/SHA256SUMS.txt) |
 
 OVERDRIVE is a pre-release. The previous v0.24 downloads remain archived in downloads/. The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
 

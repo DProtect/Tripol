@@ -7,9 +7,11 @@ const reserved=new Set([...keywords,...types,...builtins,'true','false']);
 function tokenize(src){const pattern=/(\/\/[^\n]*|#[^\n]*|f?"(?:\\.|[^"\\\n])*"?|\b\d+(?:\.\d+)?\b|[A-Za-z_][A-Za-z_0-9]*|==|!=|<=|>=|=>|->|\+=|-=|\*=|\/=|%=|&&|\|\||[+\-*/%=<>!]|[{}()[\],.:;]|\s+|.)/gu;let out=[];for(const m of src.matchAll(pattern)){const v=m[0];let kind='plain';if(v.startsWith('//')||v.startsWith('#'))kind='comment';else if(v.startsWith('"')||v.startsWith('f"'))kind='string';else if(/^\d/.test(v))kind='number';else if(v==='true'||v==='false')kind='literal';else if(keywords.has(v))kind='keyword';else if(types.has(v))kind='type';else if(builtins.has(v)||/^[A-Za-z_]/.test(v)&&/^\s*\(/.test(src.slice(m.index+v.length)))kind='function';else if(/^[A-Za-z_]/.test(v)&&/^\s*\./.test(src.slice(m.index+v.length)))kind='namespace';else if(/^[+\-*/%=<>!&|]/.test(v))kind='operator';else if(/^[{}()[\],.:;]$/.test(v))kind='punct';out.push({v,kind})}return out}
 function suggestions(src,pos){
  const before=src.slice(0,pos),line=before.split('\n').at(-1),libs=root.TripolLibraries||[];
- if(/^\s*(?:\/\/|#)/.test(line)||tokenize(line).at(-1)?.kind==='string')return {prefix:'',items:[],details:{}};
+ if(['comment','string'].includes(tokenize(line).at(-1)?.kind))return {prefix:'',items:[],details:{}};
+ const namespace=line.match(/^\s*import\s+([A-Za-z_0-9]*)$/);
+ if(namespace&&'tripol'.startsWith(namespace[1]))return {prefix:namespace[1],items:['tripol.'],details:{},member:true};
  const imp=line.match(/^\s*import\s+tripol\.([A-Za-z_0-9]*)$/);
- if(imp){const prefix=imp[1];return {prefix,items:libs.map(l=>l.name).filter(n=>n.startsWith(prefix)&&n!==prefix).slice(0,12),details:{}}}
+ if(imp){const prefix=imp[1];return {prefix,items:libs.map(l=>l.name).filter(n=>n.startsWith(prefix)&&n!==prefix).sort().slice(0,12),details:{}}}
  const member=line.match(/\b([A-Za-z_]\w*)\.([A-Za-z_0-9]*)$/);
  if(member){const l=libs.find(x=>x.name===member[1]);if(l){const prefix=member[2],fs=l.functions.filter(f=>f.name.startsWith(prefix)&&f.name!==prefix).slice(0,12);return {prefix,items:fs.map(f=>f.name),details:Object.fromEntries(fs.map(f=>[f.name,f])),library:l.name,member:true}}}
  const prefix=(before.match(/[A-Za-z_][A-Za-z_0-9]*$/)||[''])[0];

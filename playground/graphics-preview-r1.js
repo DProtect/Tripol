@@ -15,26 +15,44 @@ async function gpuRenderer(canvas){
  const triangle=device.createRenderPipeline({layout:'auto',vertex:{module:tri,entryPoint:'vs',buffers:[{arrayStride:20,attributes:[{shaderLocation:0,offset:0,format:'float32x2'},{shaderLocation:1,offset:8,format:'float32x3'}]}]},fragment:{module:tri,entryPoint:'fs',targets:[{format}]},primitive:{topology:'triangle-list'}});
  const err=await device.popErrorScope();if(err){device.destroy();throw Error(err.message)}
  let lost=false;device.lost.then(()=>{lost=true});
+ let texture=null,bind=null,textureWidth=0,textureHeight=0,vertexBuffer=null,vertexCapacity=0,vertexData=null;
+ function release(resource){if(resource)device.queue.onSubmittedWorkDone().then(()=>resource.destroy(),()=>resource.destroy())}
  return {name:'WebGPU',draw(f){
   if(lost)throw Error('WebGPU device lost');
   if(canvas.width!==f.width)canvas.width=f.width;if(canvas.height!==f.height)canvas.height=f.height;
-  const encoder=device.createCommandEncoder();let res=null,bind=null,vertices=0;
+  const encoder=device.createCommandEncoder();let vertices=0;
   if(f.kind==='rgb'){
-   res=device.createTexture({size:[f.width,f.height],format:'rgba8unorm',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST});
-   device.queue.writeTexture({texture:res},f.rgba,{bytesPerRow:f.width*4},[f.width,f.height]);
-   bind=device.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:res.createView()}]});
+   if(textureWidth!==f.width||textureHeight!==f.height){
+    release(texture);
+    texture=device.createTexture({size:[f.width,f.height],format:'rgba8unorm',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST});
+    bind=device.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:texture.createView()}]});
+    textureWidth=f.width;textureHeight=f.height;
+   }
+   device.queue.writeTexture({texture},f.rgba,{bytesPerRow:f.width*4},[f.width,f.height]);
   }else{
-   const values=[];for(let i=0;i<f.vertices.length;i+=3)values.push(f.vertices[i]/1000,f.vertices[i+1]/1000,...rgb(f.vertices[i+2]));
-   const bytes=new Float32Array(values);vertices=values.length/5;if(bytes.length){res=device.createBuffer({size:bytes.byteLength,usage:GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST});device.queue.writeBuffer(res,0,bytes)}
+   vertices=f.vertices.length/3;
+   if(vertices){
+    const size=vertices*5;
+    if(!vertexData||vertexData.length<size)vertexData=new Float32Array(size);
+    for(let i=0,j=0;i<f.vertices.length;i+=3,j+=5){
+     const color=f.vertices[i+2];vertexData[j]=f.vertices[i]/1000;vertexData[j+1]=f.vertices[i+1]/1000;
+     vertexData[j+2]=(color>>>16&255)/255;vertexData[j+3]=(color>>>8&255)/255;vertexData[j+4]=(color&255)/255;
+    }
+    if(vertexCapacity<size*4){
+     release(vertexBuffer);vertexCapacity=size*4;
+     vertexBuffer=device.createBuffer({size:vertexCapacity,usage:GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST});
+    }
+    device.queue.writeBuffer(vertexBuffer,0,vertexData,0,size);
+   }
   }
   const [r,g,b]=rgb(f.background||0),pass=encoder.beginRenderPass({colorAttachments:[{view:context.getCurrentTexture().createView(),clearValue:{r,g,b,a:1},loadOp:'clear',storeOp:'store'}]});
   if(f.kind==='rgb'){pass.setPipeline(pipeline);pass.setBindGroup(0,bind);pass.draw(3)}
-  else if(vertices){pass.setPipeline(triangle);pass.setVertexBuffer(0,res);pass.draw(vertices)}
-  pass.end();device.queue.submit([encoder.finish()]);if(res)device.queue.onSubmittedWorkDone().then(()=>res.destroy(),()=>res.destroy());
+  else if(vertices){pass.setPipeline(triangle);pass.setVertexBuffer(0,vertexBuffer);pass.draw(vertices)}
+  pass.end();device.queue.submit([encoder.finish()]);
  },dispose(){device.destroy()}};
 }
-function rasterTriangles(f){
- const w=f.width,h=f.height,p=new Uint8ClampedArray(w*h*4),bg=rgb(f.background||0).map(x=>Math.round(x*255));for(let i=0;i<p.length;i+=4){p[i]=bg[0];p[i+1]=bg[1];p[i+2]=bg[2];p[i+3]=255}
+function rasterTriangles(f,p=new Uint8ClampedArray(f.width*f.height*4)){
+ const w=f.width,h=f.height,bg=rgb(f.background||0).map(x=>Math.round(x*255));for(let i=0;i<p.length;i+=4){p[i]=bg[0];p[i+1]=bg[1];p[i+2]=bg[2];p[i+3]=255}
  const edge=(a,b,x,y)=>(x-a.x)*(b.y-a.y)-(y-a.y)*(b.x-a.x);let work=0;
  for(let i=0;i<f.vertices.length;i+=9){
   const v=[];for(let j=0;j<9;j+=3)v.push({x:(f.vertices[i+j]/1000+1)*w/2,y:(1-f.vertices[i+j+1]/1000)*h/2,c:rgb(f.vertices[i+j+2])});
@@ -46,7 +64,14 @@ function rasterTriangles(f){
 }
 function software(canvas){
  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas 2D unavailable');
- return {name:'Canvas 2D',draw(f){canvas.width=f.width;canvas.height=f.height;const p=f.kind==='rgb'?new Uint8ClampedArray(f.rgba):rasterTriangles(f);ctx.putImageData(new ImageData(p,f.width,f.height),0,0)},dispose(){}}
+ let image=null;
+ return {name:'Canvas 2D',draw(f){
+  if(!image||image.width!==f.width||image.height!==f.height){
+   canvas.width=f.width;canvas.height=f.height;image=ctx.createImageData(f.width,f.height);
+  }
+  if(f.kind==='rgb')image.data.set(f.rgba);else rasterTriangles(f,image.data);
+  ctx.putImageData(image,0,0);
+ },dispose(){image=null}}
 }
 function create(host,language=()=>document.documentElement.lang){
  const say=(en,es)=>language()==='es'?es:en,heading=document.createElement('div'),label=document.createElement('span'),replay=document.createElement('button');heading.className='tripol-preview-head';replay.type='button';heading.append(label,replay);const stage=document.createElement('div');stage.className='tripol-preview-stage';let canvas=document.createElement('canvas');canvas.setAttribute('aria-label','TRIPOL graphics preview');stage.append(canvas);const status=document.createElement('p');status.className='tripol-preview-status';host.replaceChildren(heading,stage,status);host.hidden=true;

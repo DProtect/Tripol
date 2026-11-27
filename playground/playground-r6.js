@@ -42,17 +42,17 @@ function addImport(name){
 }
 function loadLibrary(l,f){
  if(!f.source||!canReplace())return;load(-1);
- loadedLibraryExample={source:f.source,expected:f.expected,input:'',meta:{lib:l.name,native:f.native,level:l.level,en:f.en,es:f.es}};
- editor.value=f.source;stdin.value='';if(!f.native)chooseWeb();sync();list();setStatus(f.native?say('Native example. Download .tri to run locally.','Ejemplo nativo. Descarga el .tri para ejecutarlo localmente.'):say('Ready to run with Web Engine R3','Listo para ejecutar con Web Engine R3'));editor.focus()
+ loadedLibraryExample={source:f.source,expected:f.expected,input:f.input||'',meta:{lib:l.name,native:f.native,level:l.level,en:f.en,es:f.es}};
+ editor.value=f.source;stdin.value=f.input||'';if(!f.native)chooseWeb();sync();list();setStatus(f.native?say('Native example. Download .tri to run locally.','Ejemplo nativo. Descarga el .tri para ejecutarlo localmente.'):say('Ready to run with Web Engine R3','Listo para ejecutar con Web Engine R3'));editor.focus()
 }
 function renderLibraries(){
  const host=$('library-list');host.replaceChildren();const q=normalize($('library-search').value.trim());
  let last=-1;
- for(const l of libraries){const matches=l.functions.filter(f=>!q||normalize(l.name+' '+f.name+' '+f.en+' '+f.es).includes(q));if(!matches.length)continue;
+ for(const l of libraries){const matches=l.functions.filter(f=>!q||normalize(l.name+'.'+f.name+' '+l.name+' '+f.en+' '+f.es).includes(q));if(!matches.length)continue;
  if(l.level!==last){const h=document.createElement('div');h.className='pg-level-heading';h.textContent=levelName(l.level);host.append(h);last=l.level}
  const details=document.createElement('details');details.className='pg-library';details.open=librarySelected===l.name||!!q;
  const summary=document.createElement('summary');summary.textContent='tripol.'+l.name+' · '+l.functions.length;details.append(summary);details.addEventListener('toggle',()=>{if(details.open)librarySelected=l.name});
- const info=document.createElement('p');info.textContent=l.status==='graphics'?say('Graphics preview · verified engine required','Vista gráfica · requiere motor verificado'):l.status==='partial'?say('Key constants supported; live input native only','Constantes de teclas compatibles; entrada en vivo solo nativa'):l.status==='native'?say('Native only','Solo nativo'):l.status==='probe'?say('Library probe passed; functions may differ','Prueba de biblioteca superada; las funciones pueden variar'):say('Web support unverified','Soporte web sin verificar');details.append(info);
+ const info=document.createElement('p');info.textContent=l.status==='graphics'?say('Graphics preview · verified engine required','Vista gráfica · requiere motor verificado'):l.status==='partial'?say('Some examples require native TRIPOL only','Constantes de teclas compatibles; entrada en vivo solo nativa'):l.status==='native'?say('Native only','Solo nativo'):l.status==='probe'?say('Library probe passed; functions may differ','Prueba de biblioteca superada; las funciones pueden variar'):say('Web support unverified','Soporte web sin verificar');details.append(info);
  const actions=document.createElement('div');actions.className='pg-library-actions';const imp=document.createElement('button');imp.type='button';imp.textContent=say('Import','Importar');imp.onclick=()=>addImport(l.name);
  const a=document.createElement('a');a.href='../docs/libraries/'+l.name+'.html?lang='+lang;a.target='_blank';a.rel='noopener';a.textContent=say('Docs ↗','Docs ↗');actions.append(imp,a);details.append(actions);
  for(const f of matches){const row=document.createElement('div');row.className='pg-library-function';const label=document.createElement('strong');label.textContent=f.signature?.replace(/^func\s+/,'')||l.name+'.'+f.name;const desc=document.createElement('small');desc.textContent=say(f.en,f.es)+(f.native?say(' · Native',' · Nativo'):'');row.append(label,desc);

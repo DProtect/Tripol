@@ -139,7 +139,7 @@
     "Console input",
     "Entrada de consola",
     "name = input(\"Your name: \")\nshow \"Hello\", name",
-    "Your name: Ada\nHello Ada\n",
+    "Your name: \nHello Ada\n",
     "Ada",
     "Basics"
   ],
@@ -611,7 +611,7 @@
     "Two inputs",
     "Dos entradas",
     "name = input(\"Name: \")\ncity = input(\"City: \")\nshow f\"{name} from {city}\"",
-    "Name: Ada\nCity: Bogota\nAda from Bogota\n",
+    "Name: \nCity: \nAda from Bogota\n",
     "Ada\nBogota",
     "Text"
   ],
@@ -795,7 +795,7 @@
     "Simple chatbot",
     "Chatbot simple",
     "question = input(\"You: \")\nif question == \"hello\" {show \"Bot: Hello!\"} else {show \"Bot: Try hello\"}",
-    "You: hello\nBot: Hello!\n",
+    "You: \nBot: Hello!\n",
     "hello",
     "Projects"
   ]
