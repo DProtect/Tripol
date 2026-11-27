@@ -7,6 +7,8 @@ import (
 
 func TestVectorFillProfiles(t *testing.T){
  for _,s:=range []string{
+  "a=ints(67);a[66]=88;for i in range(65){a[i]=-4294967296};show a[0],a[32],a[64],a[65],a[66]",
+  "a=ints(33);for i in range(50){a[i]=8}",
   "a=ints(0);for i in range(0){a[i]=7};show 1",
   "a=ints(5);for i in range(5){a[i]=-4294967296};show a[0],a[3],a[4]",
   "a=ints(5);for i in range(4){a[i]=9};show a[3],a[4]",

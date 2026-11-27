@@ -16,6 +16,8 @@ func TestGenesisTypeRejection(t *testing.T){
  if e:=os.WriteFile(stage,compileParsed(fs,ss,runtime.GOOS,"nano"),0755);e!=nil{t.Fatal(e)}
  for _,src:=range []string{
   "x=true;x=1",
+  "break",
+  "if true {continue}",
   "x=true;x+=1",
   "x=1;if x {show 1}",
   "x=true;show x+1",

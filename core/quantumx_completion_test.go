@@ -72,6 +72,7 @@ func TestGenesisDirectFunctions(t *testing.T){
  dir:=t.TempDir();stage:=filepath.Join(dir,"stage.exe")
  if e:=os.WriteFile(stage,compileParsed(fs,ss,runtime.GOOS,"nano"),0755);e!=nil{t.Fatal(e)}
  for i,tc:=range []struct{source,want string}{
+ {"a=0\nfor i in range(6) {if i==1 {continue};if i==4 {break};a+=i}\nwhile a>0 {a-=1;if a==1 {break};if a==4 {continue};show a}\nshow a\n","3\n2\n1\n"},
  {"func multiply(a:int,b:int)->int {return a*b}\nfor i in range(10) {show multiply(i,5)}","0\n5\n10\n15\n20\n25\n30\n35\n40\n45\n"},
  {"func sum(n:int)->int {if n<=0 {return 0};return n+sum(n-1)}\nshow sum(10)","55\n"},
  {"func twice(x:int)->int {return x*2}\nfunc plus(a:int,b:int)->int {return a+b}\nshow plus(twice(3),twice(4))","14\n"},

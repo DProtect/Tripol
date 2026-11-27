@@ -139,10 +139,10 @@ func gen_expect(src:string,tok:ints,c:ints,want:string)->int {
 func gen_name(src:string,tok:ints,c:ints)->string {
  assert c[0]<len(tok) and tok[c[0]]==1,"Expected identifier"
  name=boot_peek(src,tok,c);assert len(name)<=32 and validate.identifier(name),"Invalid identifier"
- assert name!="if" and name!="else" and name!="while" and name!="for" and name!="return" and name!="show" and name!="func" and name!="range" and name!="in" and name!="true" and name!="false" and name!="not" and name!="and" and name!="or" and name!="int" and name!="bool","Reserved identifier"
+ assert name!="if" and name!="else" and name!="while" and name!="for" and name!="return" and name!="show" and name!="func" and name!="range" and name!="in" and name!="true" and name!="false" and name!="not" and name!="and" and name!="or" and name!="int" and name!="bool" and name!="break" and name!="continue","Reserved identifier"
  c[0]+=3;return name
 }
-func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int,result_type:int)->int {
+func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int,result_type:int,stop=-1,next=-1)->int {
  assert depth<=16,"Statement nesting limit"
  gen_separators(src,tok,c)
  while c[0]<len(tok) and boot_peek(src,tok,c)!="}" {
@@ -155,15 +155,21 @@ func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,de
    c[0]+=3;assert gen_expr(src,tok,c,code,syms,funcs,0)==result_type,"Return type mismatch";gen_bytes(code,"c9c3")
    gen_separators(src,tok,c);assert boot_peek(src,tok,c)=="}","Expected closing brace after return"
    return 1
+  } else if name=="break" or name=="continue" {
+   assert stop>=0 and next>=0,"Loop control outside loop"
+   c[0]+=3;at=gen_jump(code,"e9")
+   if name=="break" {gen_patch(code,at,stop)} else {gen_patch(code,at,next)}
   } else if name=="if" {
-   gen_if(src,tok,c,code,syms,funcs,depth,result_type)
+   gen_if(src,tok,c,code,syms,funcs,depth,result_type,stop,next)
   } else if name=="while" {
-   c[0]+=3;start=buffer.size(code);skip=gen_condition(src,tok,c,code,syms,funcs)
+   c[0]+=3
+   enter=gen_jump(code,"e9");stop_label=buffer.size(code);stop_fix=gen_jump(code,"e9")
+   start=buffer.size(code);gen_patch(code,enter,start);skip=gen_condition(src,tok,c,code,syms,funcs)
    gen_expect(src,tok,c,"{")
-   gen_statements(src,tok,c,code,syms,funcs,depth+1,result_type)
+   gen_statements(src,tok,c,code,syms,funcs,depth+1,result_type,stop_label,start)
    gen_expect(src,tok,c,"}")
    back=gen_jump(code,"e9");gen_patch(code,back,start)
-   gen_patch(code,skip,buffer.size(code))
+   gen_patch(code,skip,buffer.size(code));gen_patch(code,stop_fix,buffer.size(code))
   } else if name=="for" {
    c[0]+=3;counter=gen_name(src,tok,c)
    assert not dictionary.contains(syms,counter),"Range variable already declared"
@@ -177,11 +183,15 @@ func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,de
    hidden="@bound"+text(depth)
    assert dictionary.set(syms,counter,-slot),"Variable limit"
    assert dictionary.set(syms,hidden,slot+1),"Variable limit"
-   start=buffer.size(code);gen_load(code,slot+1);gen_bytes(code,"50");gen_load(code,slot);gen_bytes(code,"594839c8")
+   enter=gen_jump(code,"e9");stop_label=buffer.size(code);stop_fix=gen_jump(code,"e9")
+   next_label=buffer.size(code);next_fix=gen_jump(code,"e9")
+   start=buffer.size(code);gen_patch(code,enter,start)
+   gen_load(code,slot+1);gen_bytes(code,"50");gen_load(code,slot);gen_bytes(code,"594839c8")
    skip=gen_jump(code,"0f8d")
-   gen_statements(src,tok,c,code,syms,funcs,depth+1,result_type);gen_expect(src,tok,c,"}")
+   gen_statements(src,tok,c,code,syms,funcs,depth+1,result_type,stop_label,next_label);gen_expect(src,tok,c,"}")
+   gen_patch(code,next_fix,buffer.size(code))
    gen_load(code,slot);gen_bytes(code,"4883c001");gen_guard(code);gen_store(code,slot)
-   back=gen_jump(code,"e9");gen_patch(code,back,start);gen_patch(code,skip,buffer.size(code))
+   back=gen_jump(code,"e9");gen_patch(code,back,start);gen_patch(code,skip,buffer.size(code));gen_patch(code,stop_fix,buffer.size(code))
    dictionary.remove(syms,counter);dictionary.remove(syms,hidden)
   } else {
    name=gen_name(src,tok,c);op=boot_peek(src,tok,c)
@@ -215,17 +225,17 @@ func gen_statements(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,de
  }
  return 0
 }
-func gen_if(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int,result_type:int)->int {
+func gen_if(src:string,tok:ints,c:ints,code:ints,syms:ints,funcs:ints,depth:int,result_type:int,stop:int,next:int)->int {
  assert depth<=16,"If nesting limit"
  gen_expect(src,tok,c,"if");skip=gen_condition(src,tok,c,code,syms,funcs)
  gen_expect(src,tok,c,"{")
- gen_statements(src,tok,c,code,syms,funcs,depth+1,result_type)
+ gen_statements(src,tok,c,code,syms,funcs,depth+1,result_type,stop,next)
  gen_expect(src,tok,c,"}");gen_separators(src,tok,c)
  if boot_peek(src,tok,c)=="else" {
   done=gen_jump(code,"e9");gen_patch(code,skip,buffer.size(code));c[0]+=3
-  if boot_peek(src,tok,c)=="if" {gen_if(src,tok,c,code,syms,funcs,depth+1,result_type)}
+  if boot_peek(src,tok,c)=="if" {gen_if(src,tok,c,code,syms,funcs,depth+1,result_type,stop,next)}
   else {
-   gen_expect(src,tok,c,"{");gen_statements(src,tok,c,code,syms,funcs,depth+1,result_type);gen_expect(src,tok,c,"}")
+   gen_expect(src,tok,c,"{");gen_statements(src,tok,c,code,syms,funcs,depth+1,result_type,stop,next);gen_expect(src,tok,c,"}")
   }
   gen_patch(code,done,buffer.size(code))
  } else {gen_patch(code,skip,buffer.size(code))}

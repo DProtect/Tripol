@@ -2152,27 +2152,9 @@ discord_post: .short 80,79,83,84,0
  mov rdi,r10
  cmp r8,32
  jb .af_scalar
- push rbx
- xor eax,eax
- cpuid
- cmp eax,7
- jb .af_fallback
- mov eax,1
- cpuid
- and ecx,0x18000000 # AVX + OSXSAVE
- cmp ecx,0x18000000
- jne .af_fallback
- xor ecx,ecx
- xgetbv
- and eax,6
- cmp eax,6
- jne .af_fallback
- mov eax,7
- xor ecx,ecx
- cpuid
- test ebx,32
- jz .af_fallback
- pop rbx
+ call cpu_has_avx2
+ test eax,eax
+ jz .af_scalar
  vmovq xmm0,r9
  vpbroadcastq ymm0,xmm0
  mov rcx,r8
@@ -2219,8 +2201,6 @@ discord_post: .short 80,79,83,84,0
  jz .af_none
  mov rax,r9
  jmp .af_scan
-.af_fallback:
- pop rbx
 .af_scalar:
  mov rax,r9
  mov rcx,r8
@@ -2234,6 +2214,77 @@ discord_post: .short 80,79,83,84,0
  ret
 .af_none:
  mov rax,-1
+ ret
+
+# Returns EAX=1 only when the processor and operating system allow AVX2.
+# Clobbers RAX/RCX/RDX; preserves RBX and R8 through R11.
+.section .text.cpu_has_avx2,"ax"
+ push rbx
+ xor eax,eax
+ cpuid
+ cmp eax,7
+ jb .no_avx2
+ mov eax,1
+ cpuid
+ and ecx,0x18000000 # AVX + OSXSAVE
+ cmp ecx,0x18000000
+ jne .no_avx2
+ xor ecx,ecx
+ xgetbv
+ and eax,6
+ cmp eax,6
+ jne .no_avx2
+ mov eax,7
+ xor ecx,ecx
+ cpuid
+ test ebx,32
+ setnz al
+ movzx eax,al
+ pop rbx
+ ret
+.no_avx2:
+ xor eax,eax
+ pop rbx
+ ret
+
+# Fill exactly RCX int64 elements at RDX with RAX. Preserve the caller's
+# bounds flag in R8. Only enter the AVX2 path for sufficiently long fills.
+.section .text.vector_fill,"ax"
+ cmp rcx,32
+ jb .vf_sse
+ mov r9,rax
+ mov r10,rdx
+ mov r11,rcx
+ call cpu_has_avx2
+ test eax,eax
+ mov rax,r9
+ mov rdx,r10
+ mov rcx,r11
+ jz .vf_sse
+ vmovq xmm0,rax
+ vpbroadcastq ymm0,xmm0
+.vf_avx_loop:
+ vmovdqu [rdx],ymm0
+ add rdx,32
+ sub rcx,4
+ cmp rcx,4
+ jae .vf_avx_loop
+ vzeroupper
+.vf_sse:
+ movq xmm0,rax
+ punpcklqdq xmm0,xmm0
+.vf_sse_loop:
+ cmp rcx,2
+ jb .vf_tail
+ movdqu [rdx],xmm0
+ add rdx,16
+ sub rcx,2
+ jmp .vf_sse_loop
+.vf_tail:
+ test rcx,rcx
+ jz .vf_done
+ mov [rdx],rax
+.vf_done:
  ret
 
 # NEXUS Gateway. Fixed TLS host, no redirects. One synchronous receive worker

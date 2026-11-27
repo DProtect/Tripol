@@ -19,6 +19,7 @@ func TestGenesisWindowsNative(t *testing.T){
  stage:=filepath.Join(t.TempDir(),"stage.exe")
  if e:=os.WriteFile(stage,compileParsed(fs,ss,runtime.GOOS,"nano"),0755);e!=nil{t.Fatal(e)}
  for i,tc:=range []struct{src,want string;status int}{
+ {"a=0\nfor i in range(6) {if i==1 {continue};if i==4 {break};a+=i}\nwhile a>0 {a-=1;if a==1 {break};if a==4 {continue};show a}\nshow a\n","3\n2\n1\n",0},
  {"func multiply(a:int,b:int)->int {return a*b}\nfor i in range(3) {show multiply(i,5)}","0\n5\n10\n",0},
  {"a=9223372036854775807;show -a-1","-9223372036854775808\n",0},
  {"a=7;show a/0","",10},
