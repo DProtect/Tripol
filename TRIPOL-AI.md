@@ -65,6 +65,10 @@ show apply(&greet, "Ada")
 
 `tripol build` en Linux x86-64 empaqueta los programas de red Discord con el lanzador de TRIPOL. Linux admite reconexión acotada, Resume y reutilización de TLS. Windows usa WinHTTP. Consulta la [matriz de validación](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
 
+On Linux x86-64, run `tripol discord studio main.tri --metrics studio.jsonl` for diagnostic samples. The file must be new. Studio writes process usage and Discord transport counters as JSON Lines.
+
+En Linux x86-64, ejecuta `tripol discord studio main.tri --metrics studio.jsonl` para obtener muestras de diagnóstico. El archivo debe ser nuevo. Studio guarda métricas del proceso y del transporte de Discord en JSON Lines.
+
 ## Cómo usar este archivo / How to use this file
 
 Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».
