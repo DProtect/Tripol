@@ -7,12 +7,13 @@ const reserved=new Set([...keywords,...types,...builtins,'true','false']);
 function tokenize(src){const pattern=/(\/\/[^\n]*|#[^\n]*|f?"(?:\\.|[^"\\\n])*"?|\b\d+(?:\.\d+)?\b|[A-Za-z_][A-Za-z_0-9]*|==|!=|<=|>=|=>|->|\+=|-=|\*=|\/=|%=|&&|\|\||[+\-*/%=<>!]|[{}()[\],.:;]|\s+|.)/gu;let out=[];for(const m of src.matchAll(pattern)){const v=m[0];let kind='plain';if(v.startsWith('//')||v.startsWith('#'))kind='comment';else if(v.startsWith('"')||v.startsWith('f"'))kind='string';else if(/^\d/.test(v))kind='number';else if(v==='true'||v==='false')kind='literal';else if(keywords.has(v))kind='keyword';else if(types.has(v))kind='type';else if(builtins.has(v)||/^[A-Za-z_]/.test(v)&&/^\s*\(/.test(src.slice(m.index+v.length)))kind='function';else if(/^[A-Za-z_]/.test(v)&&/^\s*\./.test(src.slice(m.index+v.length)))kind='namespace';else if(/^[+\-*/%=<>!&|]/.test(v))kind='operator';else if(/^[{}()[\],.:;]$/.test(v))kind='punct';out.push({v,kind})}return out}
 function suggestions(src,pos){
  const before=src.slice(0,pos),line=before.split('\n').at(-1),libs=root.TripolLibraries||[];
- if(['comment','string'].includes(tokenize(line).at(-1)?.kind))return {prefix:'',items:[],details:{}};
+ const gatewayArgument=line.match(/^\s*([A-Za-z_]\w*)\.(on|intent)\(\s*"(\w*)$/);
+ if(!gatewayArgument&&['comment','string'].includes(tokenize(line).at(-1)?.kind))return {prefix:'',items:[],details:{}};
  const namespace=line.match(/^\s*import\s+([A-Za-z_0-9]*)$/);
  if(namespace&&'tripol'.startsWith(namespace[1]))return {prefix:namespace[1],items:['tripol.'],details:{},member:true};
  const imp=line.match(/^\s*import\s+tripol\.([A-Za-z_0-9]*)$/);
  if(imp){const prefix=imp[1];return {prefix,items:libs.map(l=>l.name).filter(n=>n.startsWith(prefix)&&n!==prefix).sort().slice(0,12),details:{}}}
- const member=line.match(/\b([A-Za-z_]\w*)\.([A-Za-z_0-9]*)$/);
+ const member=gatewayArgument||line.match(/\b([A-Za-z_]\w*)\.([A-Za-z_0-9]*)$/);
  if(member){
   const [,name,prefix]=member;
   const lib=libs.find(l=>l.name===name);
@@ -29,6 +30,12 @@ function suggestions(src,pos){
     const type=factory?.functions.find(f=>f.name===binding[3])?.signature?.match(/->\s*(\w+)$/)?.[1];
     functions=(factory?.methods||[]).filter(m=>m.receiver===type);
    }
+  }
+  if(gatewayArgument){
+   const [, ,method,choicePrefix]=gatewayArgument;
+   const gateway=functions.some(f=>f.receiver==='GatewayEvents'&&f.name===method);
+   const choices=gateway?libs.find(l=>l.name==='discord')?.gatewayChoices?.[method]:[];
+   return {prefix:choicePrefix,items:(choices||[]).filter(v=>v.startsWith(choicePrefix)&&v!==choicePrefix).slice(0,12),details:{},member:true};
   }
   if(lib||functions.length){
    const matches=functions.filter(f=>f.name.startsWith(prefix)&&f.name!==prefix).slice(0,12);
