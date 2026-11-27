@@ -18,8 +18,13 @@ function suggestions(src,pos){
   const lib=libs.find(l=>l.name===name);
   let functions=lib?.functions||[];
   if(!lib){
+   const annotated=[...before.matchAll(/\b([A-Za-z_]\w*)\s*:\s*(\w+)\.(\w+)\b/g)].reverse().find(m=>m[1]===name);
+   if(annotated){
+    const owner=libs.find(l=>l.name===annotated[2]);
+    functions=(owner?.methods||[]).filter(m=>m.receiver===annotated[3]);
+   }
    const binding=[...before.matchAll(/^\s*(?:let\s+)?([A-Za-z_]\w*)\s*=\s*(\w+)\.(\w+)\s*\(/gm)].reverse().find(m=>m[1]===name);
-   if(binding){
+   if(!functions.length&&binding){
     const factory=libs.find(l=>l.name===binding[2]);
     const type=factory?.functions.find(f=>f.name===binding[3])?.signature?.match(/->\s*(\w+)$/)?.[1];
     functions=(factory?.methods||[]).filter(m=>m.receiver===type);

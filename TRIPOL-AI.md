@@ -4,7 +4,7 @@
 
 Experimental pre-release · Apache-2.0 · Windows and Linux x86-64. Web engine support is a separate subset. Official release: https://github.com/Tripollas/Tripol/releases/tag/v0.27.1 · Docs: https://tripollas.github.io/Tripol/docs/
 
-## Anexo de desarrollo / Development addendum — v0.28 DISCORD NEW
+## Anexo de desarrollo / Development addendum — v0.28 DISCORD REVOLUTION
 
 Use this section for source builds that report `0.28.0`. The reference below describes the published 0.27.1 snapshot. See the [bilingual Discord guide](https://tripollas.github.io/Tripol/docs/discord.html).
 
@@ -18,16 +18,16 @@ bot.command("hola", "¡Hola, compañero!")
 show bot.preview("hola")
 
 embed = discord.embed()
-embed.title("DISCORD NEW")
+embed.title("DISCORD REVOLUTION")
 embed.field("Versión", "0.28.0", true)
 show embed.payload()
 ```
 
 Gateway text commands compare the decoded JSON string to the configured UTF-8 command. The `json.string_equals(raw, value)` helper does the same comparison offline. Los comandos del Gateway comparan el texto UTF-8 una vez interpretados los escapes JSON.
 
-Bot methods are `prefix(value)`, `status(value)`, `activity(value)`, `command(name, response)`, `preview(content)` and `start()`. Embed methods are `title(value)`, `description(value)`, `footer(value)`, `color("#RRGGBB")`, `field(label, value, inline=false)`, `payload()` and `send(channel_id)`. Use `DISCORD_TOKEN` for live calls on Windows. Preview and JSON generation run offline on Linux, Windows and WebAssembly.
+Bot methods are `prefix(value)`, `status(value)`, `activity(value)`, `command(name, response)`, `preview(content)` and `start()`. Embed methods are `title(value)`, `description(value)`, `footer(value)`, `color("#RRGGBB")`, `field(label, value, inline=false)`, `payload()` and `send(channel_id)`. Use `DISCORD_TOKEN` for live calls on Windows and Linux x86-64. Preview and JSON generation run offline on Linux, Windows and WebAssembly.
 
-Los métodos `start()` y `send(channel_id)` usan `DISCORD_TOKEN` en Windows. La vista previa y el JSON funcionan sin conexión en Linux, Windows y WebAssembly.
+Los métodos `start()` y `send(channel_id)` usan `DISCORD_TOKEN` en Windows y Linux x86-64. La vista previa y el JSON funcionan sin conexión en Linux, Windows y WebAssembly.
 
 A method declaration uses a typed first argument. The caller supplies that argument before the dot. Structure aliases refer to the same object, so field assignments in a method are visible through all aliases.
 
@@ -43,9 +43,9 @@ counter = Counter()
 show counter.add(), counter.add(4)
 ```
 
-Use `&function_name` to pass a named callback. Its type has the form `func(ArgumentType)->ResultType`. Call a callback through a local binding and pass all arguments. This syntax is part of the compiler foundation for future Discord handlers.
+Use `&function_name` to pass a named callback. Its type has the form `func(ArgumentType)->ResultType`. Call a callback through a local binding and pass all arguments. Pass `&handler` to `bot.on_message` with signature `func(discord.Message)->string`. `bot.preview_event(event_json)` validates and dispatches the same callback offline.
 
-Usa `&nombre_de_funcion` para pasar un callback con nombre. Su tipo tiene la forma `func(TipoEntrada)->TipoResultado`. Puedes llamar al callback desde una variable local pasando todos los argumentos. Esta sintaxis forma parte de la base del compilador para futuros manejadores de Discord.
+Usa `&nombre_de_funcion` para pasar un callback con nombre. Su tipo tiene la forma `func(TipoEntrada)->TipoResultado`. Puedes llamar al callback desde una variable local pasando todos los argumentos. Pasa `&manejador` a `bot.on_message` con firma `func(discord.Message)->string`. `bot.preview_event(event_json)` valida y ejecuta el callback sin conexión.
 
 ```tripol
 func greet(name:string)->string {return "Hola, " + name}
@@ -54,6 +54,16 @@ func apply(handler:func(string)->string,name:string)->string {
 }
 show apply(&greet, "Ada")
 ```
+
+### Components V2 and Linux transport / Components V2 y transporte Linux
+
+`discord.components()` creates a message builder. Use `text`, `separator`, `link`, `button`, `section`, `gallery` and `container` before calling `payload()`. `send(channel_id)` uses the native REST path. Callbacks for buttons, select menus and forms remain pending.
+
+`discord.components()` crea un constructor de mensajes. Usa `text`, `separator`, `link`, `button`, `section`, `gallery` y `container` antes de llamar a `payload()`. `send(channel_id)` usa el transporte REST nativo. Quedan pendientes los callbacks para botones, selectores y formularios.
+
+`tripol build` on Linux x86-64 packages Discord network programs with the TRIPOL launcher. Linux uses bounded reconnect, Resume and reusable TLS connections. Windows uses WinHTTP. See the [development validation matrix](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
+
+`tripol build` en Linux x86-64 empaqueta los programas de red Discord con el lanzador de TRIPOL. Linux admite reconexión acotada, Resume y reutilización de TLS. Windows usa WinHTTP. Consulta la [matriz de validación](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
 
 ## Cómo usar este archivo / How to use this file
 
