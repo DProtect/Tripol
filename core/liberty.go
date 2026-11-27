@@ -70,7 +70,7 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 		a.emit(0x48, 0x89, 0xc2, 0x59, 0x58)
 		a.call("text_slice")
 		return "string", true
-	case "read_bytes", "write_bytes":
+	case "read_bytes", "write_bytes", "write_new_bytes":
 		return c.byteFileBuiltin(e), true
 	case "read_text", "write_text", "append_text":
 		return c.fileBuiltin(e), true

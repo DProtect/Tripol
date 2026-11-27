@@ -11,4 +11,4 @@ QUANTUM X is a public-preview candidate, not stable v1.0. Goals, not promised ve
 
 ## GENESIS self-hosting
 
-R1: native ELF emission from one constant integer statement. R2: runtime integer assignment and expression emission; direct binary output remains pending; R3 first stage: multiline integer statements, checked division, comparisons and native control-flow branches; typed functions, PE emission and direct binary writes remain pending. Future stages: bootstrap compiler capable of compiling itself, with multi-generation equivalence tests. Preserve the Go compiler until parity is verified.
+R1 emitted native ELF from a constant integer statement. R2 added runtime integer assignments and expressions. R3 emits ELF64 and PE32+ directly for a bounded subset with typed integer and boolean functions, checked arithmetic and structured control flow. The Go compiler remains the bootstrap. Compiling GENESIS with GENESIS and verifying equivalent successive generations are future milestones.

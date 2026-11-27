@@ -83,6 +83,7 @@ func TestGenesisDirectFunctions(t *testing.T){
   t.Run(fmt.Sprintf("case_%02d",i),func(t *testing.T){
    t.Log(tc.source)
    ctx,cancel:=context.WithTimeout(context.Background(),15*time.Second);defer cancel()
+   dir:=t.TempDir()
    source:=filepath.Join(dir,"input.tri");out:=filepath.Join(dir,"output")
    if e:=os.WriteFile(source,[]byte(tc.source),0600);e!=nil{t.Fatal(e)}
    cmd:=exec.CommandContext(ctx,stage);cmd.Stdin=strings.NewReader(source+"\n"+out+"\n")

@@ -1,7 +1,6 @@
 import "runtime.tri"
-import tripol.io
-// Read source path and destination path on separate lines; output PE32+.
+// Read source path and a new output path on separate lines; output PE32+.
 source=read_text(input())
 destination=input()
 image=gen_runtime(source,"windows")
-show io.write(destination,image)
+show write_new_bytes(destination,image)

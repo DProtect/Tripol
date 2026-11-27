@@ -468,6 +468,9 @@
  cmp edx,1
  je 1f
  mov esi,1089 # O_WRONLY|O_CREAT|O_APPEND
+ cmp edx,2
+ je 1f
+ mov esi,193 # O_WRONLY|O_CREAT|O_EXCL
 1: mov edx,438 # 0666, filtered by umask
  mov eax,2
  syscall
@@ -509,6 +512,8 @@
  je 1f
  cmp edx,1
  je 2f
+ cmp edx,3
+ je 4f
  mov edx,4 # FILE_APPEND_DATA
  mov qword ptr [rsp+32],4 # OPEN_ALWAYS
  jmp 3f
@@ -522,6 +527,9 @@
  je file_error
  leave
  ret
+4: mov edx,0x40000000 # GENERIC_WRITE
+ mov qword ptr [rsp+32],1 # CREATE_NEW
+ jmp 3b
 .section .text.file_chunk_read_windows,"ax"
  push rbp
  mov rbp,rsp
@@ -2528,12 +2536,13 @@ discord_post: .short 80,79,83,84,0
 
 
 .section .text.bytes_write,"ax"
-# rax=path, rcx=ints; validate before truncating the file
+# rax=path, rcx=ints, edx=open mode; validate before opening the file
  push rbp
  mov rbp,rsp
  sub rsp,320
  mov [rbp-8],rax
  mov [rbp-16],rcx
+ mov [rbp-64],edx
  mov rdx,[rcx]
  cmp rdx,65536
  ja file_error
@@ -2546,7 +2555,7 @@ discord_post: .short 80,79,83,84,0
  inc r8
  jmp 1b
 2: mov rax,[rbp-8]
- mov edx,1
+ mov edx,[rbp-64]
  call file_open
  mov [rbp-32],rax
  mov qword ptr [rbp-40],0

@@ -11,7 +11,7 @@ chmod +x genesis-demo
 ./genesis-demo
 ```
 
-On Windows build the stage with `--target windows -o genesis-stage.exe` then run it and enter the source and output paths on separate lines. The stage prints bytes written and produces a Linux ELF; execute on Linux x86-64. The direct driver replaces the specified output file, so choose a new path. The existing hex transport (`compiler/file.tri` with `tripol genesis`) remains available and refuses overwrite.
+On Windows build the stage with `--target windows -o genesis-stage.exe` then run it and enter the source and output paths on separate lines. The stage prints bytes written and produces an ELF for Linux x86-64. Choose a new output path. Both the direct driver and the hex transport (`compiler/file.tri` with `tripol genesis`) reject existing destinations, including paths that resolve to the source file.
 
 Expected output of genesis_functions.tri: 0, 5, 10, ..., 45, each on its own line. Full self-compilation and additional language features remain future work.
 
@@ -21,7 +21,7 @@ Expected output of genesis_functions.tri: 0, 5, 10, ..., 45, each on its own lin
 tripol build compiler/windows.tri --target windows -o genesis-win.exe
 genesis-win.exe
 ```
-Enter `examples/projects/genesis_functions.tri` and `genesis-demo.exe` on separate lines. Run `genesis-demo.exe`. Expected ten lines from 0 to 45 in steps of 5. The compiler emits PE32+ directly, with RX code and a RW import table for GetStdHandle, WriteFile and ExitProcess. Linux can host this stage as well. Output paths are replaced; choose a new path. No DLLs beyond kernel32, fixed image base (no relocation directory), no general Windows APIs or full self-hosting.
+Enter `examples/projects/genesis_functions.tri` and a new output path such as `genesis-demo.exe` on separate lines. Run `genesis-demo.exe`. Expected ten lines from 0 to 45 in steps of 5. The compiler emits PE32+ directly, with RX code and a RW import table for GetStdHandle, WriteFile and ExitProcess. Linux can host this stage as well. The generated programs use kernel32 and a fixed image base. General Windows APIs and full self-hosting remain future work.
 
 ### GENESIS R3 additional control flow
 

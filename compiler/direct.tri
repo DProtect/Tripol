@@ -1,8 +1,7 @@
 import "runtime.tri"
-import tripol.io
-// Two input lines: source file path, then output path. Overwrites output.
+// Two input lines: source file path, then a new output path.
 // The complete ELF is emitted and written by TRIPOL, without a Go/Python transport.
 source=read_text(input())
 destination=input()
 image=gen_runtime(source)
-show io.write(destination,image)
+show write_new_bytes(destination,image)

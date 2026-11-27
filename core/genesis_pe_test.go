@@ -35,12 +35,12 @@ func TestGenesisWindowsNative(t *testing.T){
    dir:=t.TempDir();src:=filepath.Join(dir,"input.tri");out:=filepath.Join(dir,"genesis.exe")
    if e:=os.WriteFile(src,[]byte(tc.src),0600);e!=nil{t.Fatal(e)}
    ctx,cancel:=context.WithTimeout(context.Background(),15*time.Second);defer cancel()
-   emit:=func()[]byte{
-    cmd:=exec.CommandContext(ctx,stage);cmd.Stdin=strings.NewReader(src+"\n"+out+"\n")
+   emit:=func(destination string)[]byte{
+    cmd:=exec.CommandContext(ctx,stage);cmd.Stdin=strings.NewReader(src+"\n"+destination+"\n")
     if b,e:=cmd.CombinedOutput();e!=nil{t.Fatalf("stage: %q %v",b,e)}
-    b,e:=os.ReadFile(out);if e!=nil{t.Fatal(e)};return b
+    b,e:=os.ReadFile(destination);if e!=nil{t.Fatal(e)};return b
    }
-   image:=emit();if !bytes.Equal(image,emit()){t.Fatal("non-deterministic PE")}
+   image:=emit(out);if !bytes.Equal(image,emit(filepath.Join(dir,"second.exe"))){t.Fatal("non-deterministic PE")}
    file,e:=pecheck.NewFile(bytes.NewReader(image));if e!=nil{t.Fatal(e)};defer file.Close()
    header,ok:=file.OptionalHeader.(*pecheck.OptionalHeader64);if !ok||file.Machine!=pecheck.IMAGE_FILE_MACHINE_AMD64||header.AddressOfEntryPoint!=4096||len(file.Sections)!=2{t.Fatal("invalid PE")}
    symbols,e:=file.ImportedSymbols();if e!=nil{t.Fatal(e)}
