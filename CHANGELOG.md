@@ -1,6 +1,6 @@
 # v0.27.1 QUANTUM X (development)
 
-- Turbo lowers eligible integer and boolean functions through multi-block SSA with phi nodes, loop backedges and checked arithmetic. Live ranges cross edges, and the register allocator reuses spill slots. Other functions use the existing backend.
+- Turbo lowers eligible integer and boolean functions through multi-block SSA with phi nodes, loop backedges and checked arithmetic. Live ranges cross edges, and the register allocator reuses spill slots. SSA layout uses reverse postorder, lowers power-of-two remainder tests directly, and minimizes phi-edge moves. Other functions use the existing backend.
 - Cached builds reuse parsed local and embedded modules by content across edits. The compiler resolves dependencies and validates the complete changed project before native emission.
 - Turbo recognizes the existing constant integer array fill pattern and dispatches long fills to AVX2 when the CPU and OS support it. Short fills and older systems use SSE2 with a scalar tail.
 - Temporary regions cover locally owned typed scalar lists and outer allocations around nested loops with allocation-free inner iterations.

@@ -188,6 +188,53 @@ func (b *flowBuilder) logical(e *expr, x int) int {
 	return b.read(b.current, result)
 }
 
+// Conditions branch directly to their consumers. The expression form still
+// uses a phi when a short-circuit Boolean is assigned or returned as a value.
+func (b *flowBuilder) condition(e *expr, yes, no int) {
+	if b.failed {
+		return
+	}
+	if e.op == "un" && e.s == "!" {
+		b.condition(e.args[0], no, yes)
+		return
+	}
+	if e.op == "bin" && (e.s == "&&" || e.s == "||") {
+		rhs := b.newBlock()
+		if e.s == "&&" {
+			b.condition(e.args[0], rhs, no)
+		} else {
+			b.condition(e.args[0], yes, rhs)
+		}
+		b.current = rhs
+		b.condition(e.args[1], yes, no)
+		return
+	}
+	// The signed remainder is zero precisely when the low bits are zero
+	// for a positive power-of-two divisor. Preserve evaluation of the input.
+	if e.op == "bin" && (e.s == "==" || e.s == "!=") {
+		left, right := e.args[0], e.args[1]
+		if left.op != "bin" || left.s != "%" {
+			left, right = right, left
+		}
+		if left.op == "bin" && left.s == "%" && right.op == "int" && right.n == 0 {
+			if divisor := left.args[1]; divisor.op == "int" && flowShiftDivisor(divisor.n) {
+				if id := b.expression(left.args[0]); id >= 0 {
+					test := b.emit(flowValue{op: "mask" + e.s, typ: "bool", x: id, y: -1, number: divisor.n - 1})
+					b.terminate("branch-flags", test, yes, no)
+				}
+				return
+			}
+		}
+	}
+	if id := b.expression(e); id >= 0 {
+		kind := "branch"
+		if _, compare := compareCode[b.values[id].op]; e.op == "bin" && compare {
+			kind = "branch-flags"
+		}
+		b.terminate(kind, id, yes, no)
+	}
+}
+
 func (b *flowBuilder) block(body []stmt, loop *flowLoop, nested bool) {
 	// The validated language forbids shadowing, so only newly introduced
 	// bindings need to be removed when a lexical scope closes.
@@ -245,12 +292,8 @@ func (b *flowBuilder) ifStatement(s stmt, loop *flowLoop) {
 		}
 		return
 	}
-	id := b.expression(s.e)
-	if id < 0 {
-		return
-	}
 	yes, no, join := b.newBlock(), b.newBlock(), b.newBlock()
-	b.terminate("branch", id, yes, no)
+	b.condition(s.e, yes, no)
 	b.current = yes
 	b.block(s.yes, loop, true)
 	b.jump(join)
@@ -280,17 +323,13 @@ func (b *flowBuilder) loopStatement(s stmt) {
 	}
 	b.jump(head)
 	b.current = head
-	var cond int
 	if s.op == "for" {
 		x, y := b.read(head, index), b.read(head, bound)
-		cond = b.emit(flowValue{op: "<", typ: "bool", x: x, y: y})
+		cond := b.emit(flowValue{op: "<", typ: "bool", x: x, y: y})
+		b.terminate("branch-flags", cond, body, exit)
 	} else {
-		cond = b.expression(s.e)
-		if cond < 0 {
-			return
-		}
+		b.condition(s.e, body, exit)
 	}
-	b.terminate("branch", cond, body, exit)
 	b.current = body
 	b.block(s.yes, &flowLoop{end: exit, again: again}, true)
 	b.jump(again)

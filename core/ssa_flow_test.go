@@ -106,3 +106,24 @@ func TestFlowSSAParallelCopies(t *testing.T) {
 		t.Fatalf("got %q want %q", got, want)
 	}
 }
+
+func TestFlowSSARemainderCondition(t *testing.T) {
+	const source = `func classify(x:int, enabled:bool)->int {
+		if enabled and x%8==0 {return 1}
+		if 0!=x%8 {return x/8+x%8}
+		return 0
+	}
+	for i in range(-17,18) {show classify(i,true),classify(i,false)}
+	show classify(-9223372036854775807-1,true)
+	`
+	want, failed := hyperRun(t, source, "debug")
+	got, bad := hyperRun(t, source, "turbo")
+	if failed || bad || got != want {
+		t.Fatalf("got %q want %q", got, want)
+	}
+	fs, ss := parse(source)
+	_, report := measuredCompilation(fs, ss, "linux", "turbo")
+	if report.FlowSSAFunctions != 1 {
+		t.Fatalf("lowered %d functions", report.FlowSSAFunctions)
+	}
+}
