@@ -18,7 +18,7 @@ The compiler and standard library source code live in [`main`](https://github.co
 
 ## QUANTUM X — v0.27.1 experimental release
 
-- Official landing page with a monochrome glassmorphism design and the TRIPOL emblem.
+- Official landing page with a monochrome, code-focused design and the TRIPOL emblem.
 - English by default, with Spanish navigation and library overviews. Code examples remain in English.
 - Reference pages for all 64 standard libraries and 383 callable functions.
 - Searchable documentation, benchmark results, install scripts and official GitHub Releases downloads, GENESIS R3, UPDATE R2 and new Bitset/Profiler guides.

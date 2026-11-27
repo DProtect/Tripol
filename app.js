@@ -11,17 +11,5 @@ let timer;function toast(message){const t=$('#toast');t.textContent=message;t.cl
 $$('.copy').forEach(b=>b.addEventListener('click',async()=>{const el=document.getElementById(b.dataset.copy);try{await navigator.clipboard.writeText(el.textContent);toast(english?'Copied':'Copiado')}catch{const range=document.createRange();range.selectNodeContents(el);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);toast(english?'Selected — copy manually':'Seleccionado — copia manualmente')}}));
 function render(){const q=$('#filter').value.toLowerCase().trim();const list=modules.filter(m=>m.name.includes(q));$('#modules').replaceChildren(...list.map(m=>{const b=document.createElement('a');b.className='module';b.textContent=m.name+' / '+m.count;b.href='docs/libraries/'+m.name+'.html';return b}));$('#empty').hidden=!!list.length;localLinks()}$('#filter').addEventListener('input',render);render();
 
-// Reveal sections only when supported; never hide content without JavaScript.
-if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
- const observer = new IntersectionObserver(entries => entries.forEach(entry => {if(entry.isIntersecting){entry.target.classList.add('is-visible');observer.unobserve(entry.target)}}),{threshold:0.08});
- document.querySelectorAll('.reveal').forEach(el=>{if(el.getBoundingClientRect().top > innerHeight){el.classList.add('will-reveal');observer.observe(el)}});
-}
-const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-const hero = document.querySelector('.hero');
-if (matchMedia('(pointer:fine)').matches && !reduced.matches) {
- let pending = false, x=0, y=0;
- hero.addEventListener('pointermove', e=>{const r=hero.getBoundingClientRect();x=(e.clientX-r.left)/r.width-.5;y=(e.clientY-r.top)/r.height-.5;if(!pending){pending=true;requestAnimationFrame(()=>{hero.style.setProperty('--mx', `${x*18}px`);hero.style.setProperty('--my', `${y*12}px`);pending=false})}});
- hero.addEventListener('pointerleave',()=>{hero.style.setProperty('--mx','0px');hero.style.setProperty('--my','0px')});
-}
 $('#menu').addEventListener('keydown', e=>{if(e.key==='Escape'){$('#navlinks').classList.remove('open');$('#menu').setAttribute('aria-expanded','false')}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#navlinks').classList.contains('open')){$('#navlinks').classList.remove('open');$('#menu').setAttribute('aria-expanded','false');$('#menu').focus()}});

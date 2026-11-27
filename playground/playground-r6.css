@@ -175,3 +175,26 @@
 .tripol-preview-stage{display:grid;place-items:center;min-height:90px;background:#080808;border:1px solid #292929;border-radius:8px;overflow:hidden}
 .tripol-preview-stage canvas{display:block;max-width:100%;width:auto;height:auto;min-width:min(100%,240px);max-height:380px;object-fit:contain;image-rendering:pixelated}
 .tripol-preview-status{margin:8px 0 0;font:11px system-ui;color:#999;overflow-wrap:anywhere}
+
+/* Playground workspace */
+.pg-body{background:#090909}
+.pg-body .playground{width:min(1536px,calc(100% - 48px));padding:32px 0 24px}
+.pg-intro{animation:none;gap:24px;margin-bottom:24px}
+.pg-intro h1{font-size:clamp(30px,4vw,44px);font-weight:500;letter-spacing:-.025em;line-height:1.15;margin:8px 0 12px}
+.pg-intro p{font-size:14px}
+.pg-engine{background:transparent;border:0;border-radius:0;padding:0;font:12px/1.5 ui-monospace,monospace;letter-spacing:0;color:#a5a5a5}
+.pg-studio{background:#111;border:1px solid #303030;border-radius:12px;box-shadow:none;backdrop-filter:none;animation:none}
+.pg-pane-head{min-height:52px;padding:8px 12px;background:#151515}
+.pg-pane-head b{font-weight:500}
+.pg-pane-head button{min-height:32px;border-radius:8px;font-size:12px;font-weight:500}
+.pg-pane-head button.pg-run{font-weight:500;background:#efefef;color:#090909;border-color:#efefef}
+.pg-example-list button{min-height:36px;padding:8px;border-radius:6px}
+.pg-example-list button.active{background:#202020}
+.pg-editor-pane,.pg-console-pane{background:#0d0d0d}
+.pg-level-heading{font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;padding:12px 8px 8px}
+.pg-file span{font-size:11px}
+.pg-editor-status{font-size:11px;padding:8px 12px;flex-wrap:wrap}
+.pg-completion,.pg-more-panel{border-radius:8px;background:#171717;box-shadow:0 8px 24px #0006}
+.pg-guide{background:#111;box-shadow:none;border-radius:12px}
+.pg-notes{font-size:13px}
+@media(max-width:650px){.pg-body .playground{width:calc(100% - 24px);padding-top:24px}.pg-intro{margin-bottom:16px}.pg-engine{display:block;margin-top:12px}.pg-intro h1{font-size:32px}}
