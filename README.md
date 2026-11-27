@@ -16,7 +16,7 @@ The `gh-pages` branch hosts the official static website for TRIPOL, a free exper
 
 The compiler and standard library source code live in [`main`](https://github.com/Tripollas/Tripol/tree/main).
 
-## QUANTUM X — v0.27.1 development
+## QUANTUM X — v0.27.1 experimental release
 
 - Official landing page with a monochrome glassmorphism design and the TRIPOL emblem.
 - English by default, with Spanish navigation and library overviews. Code examples remain in English.
@@ -27,14 +27,14 @@ The compiler and standard library source code live in [`main`](https://github.co
 
 | Platform | Distribution |
 | --- | --- |
-| Windows x64 | [Installer ZIP](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/TRIPOL-v0.27-Installer.zip) |
-| Windows x64 | [Setup EXE](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/TRIPOL-v0.27-Setup-x64.exe) |
-| Linux x64 | [Tarball](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/TRIPOL-v0.27-Linux-x64.tar.gz) |
-| Source | [Source ZIP](https://github.com/Tripollas/Tripol/archive/refs/tags/v0.27.0.zip) |
-| VS Code | [VSIX](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/tripol-language-0.27.0.vsix) |
-| Integrity | [SHA-256 checksums](https://github.com/Tripollas/Tripol/releases/download/v0.27.0/SHA256SUMS.txt) |
+| Windows x64 | [Installer ZIP](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Installer.zip) |
+| Windows x64 | [Setup EXE](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Setup-x64.exe) |
+| Linux x64 | [Tarball](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Linux-x64.tar.gz) |
+| Source | [Source ZIP](https://github.com/Tripollas/Tripol/archive/refs/tags/v0.27.1.zip) |
+| VS Code | [VSIX](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/tripol-language-0.27.1.vsix) |
+| Integrity | [SHA-256 checksums](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/SHA256SUMS.txt) |
 
-OVERDRIVE is a pre-release. The previous v0.24 downloads remain archived in downloads/. The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
+QUANTUM X is a pre-release. The previous v0.24 downloads remain archived in downloads/. The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
 
 ## Playground R3 / WEB ENGINE R1 (experimental)
 
