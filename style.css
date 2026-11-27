@@ -96,3 +96,18 @@ body:not(.docs-page):not(.pg-body) .hero{background:#000;text-align:center}
 .hero .hero-doc{margin:12px 0 0}
 @media(max-width:850px){.hero .hero-inner{min-height:calc(100svh - 64px);padding:32px 0 40px}.hero-mark{height:clamp(225px,42vw,380px)}}
 @media(max-width:650px){.hero .hero-inner{padding:32px 0 40px}.hero-mark{width:min(90vw,480px);height:clamp(205px,63vw,340px)}.hero h1#hero-title.hero-name{font-size:38px}.hero .hero-tagline{font-size:16px}.hero .actions{margin:24px 0 12px}}
+
+/* Homepage code highlighting and platform identifiers */
+#features .syntax-comment{color:#909090}
+#features .syntax-variable{color:#c5d8ed}
+#features .syntax-keyword{color:#d3b4f0}
+#features .syntax-function{color:#a9c9fa}
+#features .syntax-string{color:#b9d99e}
+#features .syntax-operator{color:#d8c8e7}
+#download .platform-heading{display:flex;align-items:center;gap:16px;margin:0 0 16px;min-height:56px}
+#download .platform-heading .eyebrow{margin:0 0 4px}
+#download .platform-heading h3{margin:0}
+#download .platform-logo{display:block;flex:none;width:44px;height:44px}
+#download .windows-logo{color:#58aef6}
+#download .linux-logo{width:48px;height:48px}
+@media(max-width:650px){#download .platform-heading{gap:12px}#download .platform-logo{width:36px;height:36px}#download .linux-logo{width:40px;height:40px}}
