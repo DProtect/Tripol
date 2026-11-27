@@ -3,8 +3,9 @@ package core
 // Velocity R3: conservative frame elision and direct memory operand loads.
 func needsFrame(ss []stmt) bool {
 	for _, s := range ss {
-		// A bare assignment might introduce a local. Keep a frame in that case.
-		if s.op == "decl" || s.op == "assign" || s.op == "for" || s.op == "try" || s.op == "scratch" || needsFrame(s.yes) || needsFrame(s.no) || needsFrame(s.final) {
+		// Assignments can introduce locals, and loop bodies can add an
+		// automatic scratch region with stack-resident cleanup state.
+		if s.op == "decl" || s.op == "assign" || s.op == "for" || s.op == "while" || s.op == "try" || s.op == "scratch" || needsFrame(s.yes) || needsFrame(s.no) || needsFrame(s.final) {
 			return true
 		}
 	}
