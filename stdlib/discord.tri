@@ -3,6 +3,7 @@ import tripol.env
 import tripol.json
 import tripol.time
 import tripol.errors
+import tripol.utf8
 // Public Discord API discovery, no bot token or authentication required.
 func gateway()->string {return https.get("discord.com","/api/v10/gateway")}
 func api_host()->string {return "discord.com"}
@@ -237,7 +238,7 @@ func ping()->int {
  scratch {result=errors.int_or(bot_slot_get(37),-1)}
  return result
 }
-func identify_payload()->string {
+func identify_payload(intents=33281)->string {
  secret=bot_slot_get(0)
  state=bot_slot_get(34)
  if state=="" {state="online"}
@@ -245,7 +246,7 @@ func identify_payload()->string {
  activities="[]"
  if len(act)>0 {activities="[{\"name\":"+json.quote(act)+",\"type\":0}]"}
  // GUILDS | GUILD_MESSAGES | MESSAGE_CONTENT (privileged).
- return "{\"op\":2,\"d\":{\"token\":"+json.quote(secret)+",\"intents\":33281,\"properties\":{\"os\":\"windows\",\"browser\":\"TRIPOL\",\"device\":\"TRIPOL\"},\"presence\":{\"since\":null,\"activities\":"+activities+",\"status\":"+json.quote(state)+",\"afk\":false}}}"
+ return "{\"op\":2,\"d\":{\"token\":"+json.quote(secret)+",\"intents\":"+text(intents)+",\"properties\":{\"os\":\"windows\",\"browser\":\"TRIPOL\",\"device\":\"TRIPOL\"},\"presence\":{\"since\":null,\"activities\":"+activities+",\"status\":"+json.quote(state)+",\"afk\":false}}}"
 }
 func heartbeat_payload(sequence:int)->string {
  if sequence<0 {return "{\"op\":1,\"d\":null}"}
@@ -288,7 +289,8 @@ func gateway_reply(event:string)->string {
  if slot_found<0 {return ""}
  return bot_slot_get(slot_found)
 }
-func run()->int {
+func run(intents=33281)->int {
+ assert intents==1 or intents==33281,"Unsupported Discord Gateway intents"
  assert configured(),"Call discord.login first"
  scratch {assert has_channel() or len(bot_slot_get(36))==0,"Welcome requires a selected channel"}
  assert gw_open(),"Gateway TLS/WebSocket open failed (Windows only)"
@@ -308,7 +310,7 @@ func run()->int {
      interval=errors.int_or(json.get_raw_large(d,"heartbeat_interval"),0)
      if interval<1000 or interval>300000 {gw_abort()}
      next_heartbeat=time.now_ms()+time.now_ns()%interval
-     gw_send(identify_payload())
+     gw_send(identify_payload(intents))
     } else if op==0 {
      seq=errors.int_or(json.get_raw_large(event,"s"),-1)
      if seq>=0 {sequence=seq}
@@ -343,4 +345,197 @@ func run()->int {
  }
  gw_close();bot_slot_set(38,"")
  return 1
+}
+
+// SIMPLE API R2. Configuration belongs to the object. The native Gateway
+// currently runs one session at a time, using its existing bounded storage.
+struct Bot {
+ prefix_text:string
+ presence:string
+ activity_text:string
+ command_names:string_list
+ responses:string_list
+}
+
+func bot()->Bot {
+ return Bot("", "online", "", string_list(4), string_list(4))
+}
+
+func Bot.prefix(self:Bot,value:string)->bool {
+ assert len(value)<=32 and utf8.valid(value),"Discord prefix must be UTF-8, up to 32 bytes"
+ self.prefix_text=value
+ return true
+}
+
+func Bot.status(self:Bot,value:string)->bool {
+ assert value=="online" or value=="idle" or value=="dnd" or value=="invisible","Invalid Discord status"
+ self.presence=value
+ return true
+}
+
+func Bot.activity(self:Bot,value:string)->bool {
+ assert len(value)<=128 and utf8.valid(value),"Activity must be UTF-8, up to 128 bytes"
+ self.activity_text=value
+ return true
+}
+
+func Bot.command(self:Bot,name:string,response:string)->bool {
+ assert len(name)>0 and len(name)<=96 and utf8.valid(name),"Discord command must be UTF-8, 1 to 96 bytes"
+ assert len(response)>0 and len(response)<=512 and utf8.valid(response),"Discord response must be UTF-8, 1 to 512 bytes"
+ names=self.command_names
+ replies=self.responses
+ assert names.size()==replies.size() and names.size()<=16,"Invalid Discord command table"
+ for i in range(names.size()) {
+  if names[i]==name {
+   replies.set(i,response)
+   return true
+  }
+ }
+ assert names.size()<16,"Maximum 16 Discord commands"
+ names.add(name)
+ replies.add(response)
+ return true
+}
+
+// Text lookup with no token or network. Prefix changes apply immediately.
+func Bot.preview(self:Bot,content:string)->string {
+ names=self.command_names
+ replies=self.responses
+ assert names.size()==replies.size() and names.size()<=16,"Invalid Discord command table"
+ prefix=self.prefix_text
+ if not has_prefix(content,prefix) {return ""}
+ name=slice(content,len(prefix),len(content))
+ for i in range(names.size()) {
+  if names[i]==name {return replies[i]}
+ }
+ return ""
+}
+
+func Bot.start(self:Bot)->int {
+ assert platform_name()=="windows","Discord Gateway transport requires Windows"
+ names=self.command_names
+ replies=self.responses
+ assert names.size()==replies.size() and names.size()<=16,"Invalid Discord command table"
+ reset()
+ login_env()
+ let prefix=self.prefix_text
+ status(self.presence)
+ activity(self.activity_text)
+ for i in range(names.size()) {
+  name=names[i]
+  response=replies[i]
+  scratch {reply(prefix+name,response)}
+ }
+ // Registering a text command explicitly requests guild message content.
+ if names.size()>0 {return run()}
+ return run(1)
+}
+
+// Embed builder. String limits are in UTF-8 bytes, a conservative subset
+// of Discord's message limits and the native JSON writer's field size.
+struct Embed {
+ title_text:string
+ description_text:string
+ footer_text:string
+ color_value:int
+ labels:string_list
+ values:string_list
+ inline_flags:bool_list
+}
+
+func embed()->Embed {
+ return Embed("", "", "", -1, string_list(4), string_list(4), bool_list(4))
+}
+
+func Embed.title(self:Embed,value:string)->bool {
+ assert len(value)<=256 and utf8.valid(value),"Embed title must be UTF-8, up to 256 bytes"
+ self.title_text=value
+ return true
+}
+
+func Embed.description(self:Embed,value:string)->bool {
+ assert len(value)<=512 and utf8.valid(value),"Embed description must be UTF-8, up to 512 bytes"
+ self.description_text=value
+ return true
+}
+
+func Embed.footer(self:Embed,value:string)->bool {
+ assert len(value)<=512 and utf8.valid(value),"Embed footer must be UTF-8, up to 512 bytes"
+ self.footer_text=value
+ return true
+}
+
+func Embed.color(self:Embed,value:string)->bool {
+ assert len(value)==7 and byte_at(value,0)==35,"Use #RRGGBB for embed color"
+ packed=0
+ for i in range(1,7) {
+  b=byte_at(value,i)
+  assert json.hex(b),"Use #RRGGBB for embed color"
+  digit=0
+  if b<=57 {digit=b-48} else if b<=70 {digit=b-55} else {digit=b-87}
+  packed=packed*16+digit
+ }
+ self.color_value=packed
+ return true
+}
+
+func Embed.field(self:Embed,label:string,value:string,inline=false)->bool {
+ assert len(label)>0 and len(label)<=256 and utf8.valid(label),"Embed field name must be UTF-8, 1 to 256 bytes"
+ assert len(value)>0 and len(value)<=512 and utf8.valid(value),"Embed field value must be UTF-8, 1 to 512 bytes"
+ labels=self.labels
+ values=self.values
+ flags=self.inline_flags
+ assert labels.size()==values.size() and labels.size()==flags.size() and labels.size()<25,"Maximum 25 embed fields"
+ labels.add(label)
+ values.add(value)
+ flags.add(inline)
+ return true
+}
+
+// Complete create-message JSON body with mentions disabled. The public send
+// operation uses the same payload and the existing authenticated transport.
+func Embed.payload(self:Embed)->string {
+ labels=self.labels
+ values=self.values
+ flags=self.inline_flags
+ assert labels.size()==values.size() and labels.size()==flags.size() and labels.size()<=25,"Invalid embed fields"
+ count=len(self.title_text)+len(self.description_text)+len(self.footer_text)
+ for i in range(labels.size()) {count+=len(labels[i])+len(values[i])}
+ assert count>0 and count<=6000,"Embed requires text and accepts at most 6000 text bytes"
+ body="{\"embeds\":[{"
+ separator=""
+ if len(self.title_text)>0 {
+  body+="\"title\":"+json.quote(self.title_text)
+  separator=","
+ }
+ if len(self.description_text)>0 {
+  body+=separator+"\"description\":"+json.quote(self.description_text)
+  separator=","
+ }
+ if len(self.footer_text)>0 {
+  body+=separator+"\"footer\":{\"text\":"+json.quote(self.footer_text)+"}"
+  separator=","
+ }
+ if self.color_value>=0 {
+  body+=separator+"\"color\":"+text(self.color_value)
+  separator=","
+ }
+ if labels.size()>0 {
+  body+=separator+"\"fields\":["
+  for i in range(labels.size()) {
+   if i>0 {body+=","}
+   body+="{\"name\":"+json.quote(labels[i])+",\"value\":"+json.quote(values[i])+",\"inline\":"+json.boolean(flags[i])+"}"
+  }
+  body+="]"
+ }
+ body+="}],\"allowed_mentions\":{\"parse\":[]}}"
+ assert len(body)<=16384,"Discord JSON payload exceeds 16384 bytes"
+ return body
+}
+
+func Embed.send(self:Embed,channel_id:string)->bool {
+ assert platform_name()=="windows","Discord REST transport requires Windows"
+ body=self.payload()
+ result=discord_request(channel_path(channel_id),token(),body)
+ return len(result)>0
 }

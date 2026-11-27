@@ -4,6 +4,18 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
 (async()=>{
  const go=new Go();const {instance}=await WebAssembly.instantiate(fs.readFileSync(path.join(__dirname,'tripol-compiler.wasm')),go.importObject);go.run(instance);
  const cases=[
+ [`struct Counter {value:int=0}
+func Counter.add(self:Counter,step=1)->int {self.value+=step;return self.value}
+c=Counter()
+alias=c
+show alias.add(),c.add(2),Counter(6).add()`, '1 3 7\n'],
+ [`import tripol.discord
+a=discord.bot()
+b=discord.bot()
+a.prefix("!")
+a.command("hola","¡Hola!")
+b.command("hola","Otra respuesta")
+show a.preview("!hola"),b.preview("hola"),a.preview("hola")==""`, '¡Hola! Otra respuesta true\n'],
  ['show input(),input_int()','Ada 42\n','Ada\n42'],
  ['import tripol.process\nshow process.platform()','web\n'],
  ['import tripol.collections\nitems=[1,2]\nvalues=collections.append(items,3)\nshow values\nshow items','[1, 2, 3]\n[1, 2]\n'],
@@ -50,6 +62,24 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
  for(const [s,w,i] of cases)check(s,()=>assert.equal(execute(s,i),w,s));
  check('integer overflow',()=>assert.throws(()=>execute('show 9223372036854775807 + 1'),/overflow/i));
  check('array bounds',()=>assert.throws(()=>execute('a=ints(1)\nshow a[1]'),/bounds/i));
+ check('Discord embed JSON',()=>{
+  const source=`import tripol.discord
+e=discord.embed()
+e.title("¡Hola!")
+e.color("#00A0ff")
+e.field("Perfil","Básico",true)
+show e.payload()`;
+  assert.deepEqual(JSON.parse(execute(source)),{
+   embeds:[{title:'¡Hola!',color:0x00a0ff,fields:[{name:'Perfil',value:'Básico',inline:true}]}],
+   allowed_mentions:{parse:[]},
+  });
+ });
+ check('Discord transport requires native execution',()=>{
+  for(const source of ['b=discord.bot()\nb.start()','e=discord.embed()\ne.title("hello")\ne.send("123")','show discord.token()']){
+   const result=tripolCompileWeb('import tripol.discord\n'+source);
+   assert.equal(result.ok,false,source);
+  }
+ });
  check('unknown identifier',()=>assert.equal(tripolCompileWeb('show missing').ok,false));
  check('virtual file isolation',()=>assert.throws(()=>execute('import tripol.files\nshow files.read("demo.txt")'),/not found/i));
  check('virtual path traversal',()=>assert.throws(()=>execute('import tripol.files\nfiles.write("../escape.txt","x")'),/relative virtual/i));
@@ -80,6 +110,7 @@ require('./wasm_exec.js');const host=require('./host-r3.js');
   // Library probes cover the candidate modules, not every function. Keep the
   // full report even when a module has partial/unsupported browser operations.
   const probes={"math":"show math.square(7)","arrays":"a=arrays.make(4,7)\nshow arrays.total(a)","collections":"a=ints(2)\na[0]=7\nshow collections.append(a,9)","datetime":"show datetime.leap(2024),datetime.leap(1900),datetime.days_in_month(2024,2)","bits":"show bits.set(0,5),bits.count(31)","bitset":"a=bitset.create(100)\nshow bitset.add(a,65),bitset.contains(a,65),bitset.count(a)","binary":"show binary.u16_le(513)","buffer":"b=buffer.create(1)\nb=buffer.push(b,10)\nb=buffer.push(b,20)\nshow buffer.values(b)","checksum":"show checksum.adler32(\"abc\")","colors":"show colors.rgb(255,0,0),colors.invert(0)","compression":"a=ints(3)\na[0]=7\na[1]=7\na[2]=7\nshow compression.rle_decode(compression.rle_encode(a))","console":"show console.line(\"hello\")","convert":"show convert.celsius_to_fahrenheit(20.0)","dictionary":"d=dictionary.create(2)\nshow dictionary.set(d,\"key\",42),dictionary.get(d,\"key\")","encoding":"show encoding.hex_text(\"é\")","geometry":"show geometry.distance(0.0,0.0,3.0,4.0)","json":"show json.quote(\"é😀\"),json.valid(\"{\\\"a\\\":1}\")","matrix":"show matrix.identity(2)","path":"show path.basename(\"a/b.txt\"),path.extension(\"a/b.txt\")","physics":"show physics.integrate(1.0,2.0,3.0)","random":"show random.next(1)","search":"a=ints(2)\na[1]=7\nshow search.linear(a,7)","sequences":"show sequences.fibonacci(8)","simd":"a=ints(2)\nb=ints(2)\nshow simd.equal(a,b)","sort":"a=ints(3)\na[0]=9\na[1]=2\na[2]=1\nshow sort.ascending(a)","stats":"a=ints(2)\na[0]=2\na[1]=4\nshow stats.mean(a),stats.variance(a)","text":"show text.size(\"é😀\"),text.index_of(\"éabc\",\"a\"),text.part(\"é\",0,2),text.to_int(\"-42\")","validate":"show validate.integer(\"-12\"),validate.ascii(\"é\")","vector":"show vector.length2(3.0,4.0)","stack":"s=stack.create(2)\nshow stack.push(s,7),stack.pop(s)","queue":"q=queue.create(2)\nshow queue.push(q,9),queue.pop(q)","animation":"show animation.smoothstep(0.5)","camera":"show camera.screen(12,2,3)","particles":"p=particles.create(2)\nshow particles.burst(p,1,2),particles.step(p)","canvas":"p=canvas.create(3,2)\nshow canvas.clear(p,0),canvas.rectangle(p,3,2,1,0,2,1,255)\nshow p","sprite":"p=sprite.solid(2,2,255)\nshow sprite.rotate90(p,2,2)","testing":"show testing.equal_int(4,4)","errors":"show errors.int_or(\"42\",0),errors.int_or(\"bad\",9)","network":"show network.ipv4(127,0,0,1)","http":"show http.status(\"HTTP/1.0 200 OK\"),http.body(\"HTTP/1.0 200 OK\\r\\n\\r\\nhello\")","image":"p=ints(2)\np[0]=1\np[1]=2\nshow image.flip_x(p,2,1)","time":"show time.seconds(2500),time.now_ms()>=0","profiler":"s=profiler.start()\nshow profiler.elapsed(s)>=0","heap":"h=heap.create(4)\nheap.push(h,8)\nheap.push(h,2)\nshow heap.pop(h)","utf8":"show utf8.count(\"é😀\"),utf8.scalar_at(\"é😀\",2)","csv":"show csv.fields(\"a,b,c\"),csv.escape(\"é\")","stream":"c=stream.create()\na=ints(2)\na[0]=1\na[1]=2\nshow stream.read_u16(c,a)","regex":"show regex.matches(\"a*b\",\"aaab\")","cli":"show cli.integer(\"--n=7\",\"n\",0)","crypto":"show crypto.sha256_text(\"abc\")"};
+  probes.discord='b=discord.bot()\nb.command("hola","¡Hola!")\nshow b.preview("hola")\ne=discord.embed()\ne.title("¡Hola!")\nshow e.payload()';
   const libDir=fs.mkdtempSync(path.join(os.tmpdir(),'tripol-library-'));const libRows=[];
   try{for(const [name,body] of Object.entries(probes)){
    const source='import tripol.'+name+'\n'+body,file=path.join(libDir,'main.tri'),bin=path.join(libDir,'program');fs.writeFileSync(file,source);

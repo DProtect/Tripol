@@ -8,18 +8,29 @@ function activate(context) {
  const diagnostics = vscode.languages.createDiagnosticCollection("tripol");
  const selector = {language:"tripol",scheme:"file"};
  const keyword = "import if else while repeat for in break continue return show assert try catch finally throw scratch func struct let const int bool string float ints list true false and or not".split(" ");
+ const members=(doc,pos,name)=>{
+  if(catalog[name])return catalog[name];
+  const source=doc.getText(new vscode.Range(0,0,pos.line,pos.character));
+  for(const binding of [...source.matchAll(/^\s*(?:let\s+)?([A-Za-z_]\w*)\s*=\s*(\w+)\.(\w+)\s*\(/gm)].reverse()){
+   if(binding[1]!==name)continue;
+   const [, , module, factory]=binding;
+   const result=catalog[module]?.[factory]?.match(/->\s*(\w+)$/)?.[1];
+   return catalog[module+"."+result];
+  }
+ };
  const localNames = doc => [...new Set([...doc.getText().matchAll(/\b(?:func\s+)?([A-Za-z_]\w*)\s*(?:\(|=(?!=))/g)].map(x=>x[1]))];
  context.subscriptions.push(output,diagnostics,vscode.languages.registerCompletionItemProvider(selector,{
   provideCompletionItems(doc,pos){
    const line=doc.lineAt(pos.line).text.slice(0,pos.character);
    const moduleMatch=line.match(/\bimport\s+tripol\.[\w]*$/);
    const member=line.match(/\b(\w+)\.\w*$/);
-   if(moduleMatch)return Object.keys(catalog).map(n=>new vscode.CompletionItem(n,vscode.CompletionItemKind.Module));
-   if(member&&catalog[member[1]])return Object.keys(catalog[member[1]]).map(n=>{const x=new vscode.CompletionItem(n,vscode.CompletionItemKind.Function);x.detail=catalog[member[1]][n];return x;});
+   if(moduleMatch)return Object.keys(catalog).filter(n=>!n.includes(".")).map(n=>new vscode.CompletionItem(n,vscode.CompletionItemKind.Module));
+   const entries=member&&members(doc,pos,member[1]);
+   if(entries)return Object.entries(entries).map(([name,detail])=>{const item=new vscode.CompletionItem(name,vscode.CompletionItemKind.Function);item.detail=detail;return item;});
    return [...keyword.map(n=>new vscode.CompletionItem(n,vscode.CompletionItemKind.Keyword)),...localNames(doc).map(n=>new vscode.CompletionItem(n,vscode.CompletionItemKind.Variable))];
   }
  },"."),vscode.languages.registerHoverProvider(selector,{
-  provideHover(doc,pos){const range=doc.getWordRangeAtPosition(pos,/\w+\.\w+/);if(!range)return;const [m,n]=doc.getText(range).split(".");const signature=catalog[m]?.[n];if(signature){const md=new vscode.MarkdownString();md.appendCodeblock(signature,"tripol");return new vscode.Hover(md,range);}}
+  provideHover(doc,pos){const range=doc.getWordRangeAtPosition(pos,/\w+\.\w+/);if(!range)return;const [m,n]=doc.getText(range).split(".");const signature=members(doc,pos,m)?.[n];if(signature){const md=new vscode.MarkdownString();md.appendCodeblock(signature,"tripol");return new vscode.Hover(md,range);}}
  }),vscode.languages.registerDefinitionProvider(selector,{
   provideDefinition(doc,pos){const r=doc.getWordRangeAtPosition(pos);if(!r)return;const name=doc.getText(r);for(let i=0;i<doc.lineCount;i++){const m=doc.lineAt(i).text.match(/^\s*func\s+(\w+)\s*\(/);if(m&&m[1]===name)return new vscode.Location(doc.uri,new vscode.Position(i,0));}}
  }));

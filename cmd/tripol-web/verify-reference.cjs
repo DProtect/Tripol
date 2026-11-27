@@ -37,6 +37,7 @@ async function main() {
   go.run(instance);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'tripol-reference-'));
   const rows = [];
+  const methods = [];
   const examples = [];
   function web(row, source, input, expected) {
     try {
@@ -64,9 +65,13 @@ async function main() {
       assert.equal(module.status, 0, error(module));
       const names = [...module.stdout.matchAll(/^func\s+(\w+)\s*\(/gm)].map(m => m[1]).sort();
       assert.equal(JSON.stringify(lib.functions.map(f => f.name).sort()), JSON.stringify(names), lib.name);
-      for (const f of lib.functions) {
-        assert.ok(f.en && f.es && f.signature && f.source, `missing documentation: ${lib.name}.${f.name}`);
-        const row = { name: lib.name + '.' + f.name };
+      const methodNames = [...module.stdout.matchAll(/^func\s+(\w+\.\w+)\s*\(/gm)].map(m => m[1]).sort();
+      const documentedMethods = Array.from(lib.methods || [], f => f.receiver + '.' + f.name).sort();
+      assert.deepEqual(documentedMethods, methodNames, lib.name);
+      for (const f of [...lib.functions, ...(lib.methods || [])]) {
+        const name = [lib.name, f.receiver, f.name].filter(Boolean).join('.');
+        assert.ok(f.en && f.es && f.signature && f.source, `missing documentation: ${name}`);
+        const row = { name };
         const caseDir = fs.mkdtempSync(path.join(dir, 'case-'));
         const source = path.join(caseDir, 'example.tri');
         const output = path.join(caseDir, 'program');
@@ -77,7 +82,7 @@ async function main() {
         if (built.status !== 0) row.nativeDiagnostic = error(built);
         if (f.native) row.web = 'native-only';
         else web(row, f.source, f.input, f.expected);
-        rows.push(row);
+        (f.receiver ? methods : rows).push(row);
       }
     }
     for (const [index, example] of (context.TripolExamples || []).entries()) {
@@ -87,7 +92,8 @@ async function main() {
       else web(row, source, input, expected);
       examples.push(row);
     }
-    const summary = rows.reduce((counts, row) => {
+    const allRows = [...rows, ...methods];
+    const summary = allRows.reduce((counts, row) => {
       for (const [kind, status] of Object.entries({ native: row.native, web: row.web })) {
         const key = kind + ' ' + status;
         counts[key] = (counts[key] || 0) + 1;
@@ -95,12 +101,12 @@ async function main() {
       return counts;
     }, {});
     fs.writeFileSync(path.join(__dirname, 'reference-report.json'), JSON.stringify({
-      modules: catalog.length, functions: rows.length, summary, rows, examples,
+      modules: catalog.length, functions: rows.length, methods: methods.length, summary, rows, methodRows: methods, examples,
     }, null, 2));
-    console.log('REFERENCE', summary);
+    console.log('REFERENCE', `${rows.length} functions, ${methods.length} methods`, summary);
     const webOK = row => ['executed', 'native-only'].includes(row.web);
     console.log('PLAYGROUND', examples.filter(webOK).length + '/' + examples.length);
-    return rows.some(row => row.native !== 'compiled' || !webOK(row)) || !examples.every(webOK) ? 1 : 0;
+    return allRows.some(row => row.native !== 'compiled' || !webOK(row)) || !examples.every(webOK) ? 1 : 0;
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

@@ -251,7 +251,7 @@ func arenaCLI(args []string) {
 		die("%v", e)
 	}
 	defer os.RemoveAll(root)
-	fmt.Printf("TRIPOL QUANTUM X Arena | %s/%s | %d runs\nTRIPOL %s (%s) | %s\n", runtime.GOOS, runtime.GOARCH, runs, version, profile, rv)
+	fmt.Printf("TRIPOL %s Arena | %s/%s | %d runs\nTRIPOL %s (%s) | %s\n", releaseName, runtime.GOOS, runtime.GOARCH, runs, version, profile, rv)
 	fmt.Println("Checked i64 arithmetic. Runtime input before timer. Rust: -C opt-level=3 -C overflow-checks=yes -C debuginfo=0 -C strip=symbols.")
 	fmt.Println("Build median: 3 full CLI builds incl. startup/write. Runtime: interleaved after warm-up; every result checked.")
 	ext := ""

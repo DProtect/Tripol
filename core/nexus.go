@@ -93,7 +93,7 @@ func (c *compiler) nexusBuiltin(e *expr) (string, bool) {
 	return "", false
 }
 func learn() {
-	fmt.Print(`TRIPOL 0.27.1 — Learn in five minutes
+	fmt.Print("TRIPOL " + version + ` — Learn in five minutes
 
 1. Show values:
    show "Hello, TRIPOL!"
@@ -161,12 +161,12 @@ func newProjectTemplate(dir, template string) {
 		"game": novaGameExample,
 		"discord": `import tripol.discord
 
-discord.login_env()
-// Optional: discord.channel("YOUR_CHANNEL_ID")
-discord.activity("Programando en TRIPOL")
-discord.reply("!hola", "Hola desde TRIPOL!")
-discord.reply("!ping", "Pong!")
-discord.run()
+bot = discord.bot()
+bot.prefix("!")
+bot.activity("Programando en TRIPOL")
+bot.command("hola", "Hola desde TRIPOL!")
+bot.command("ping", "Pong!")
+bot.start()
 `,
 		"ecosystem": `import tripol.sort
 import tripol.time

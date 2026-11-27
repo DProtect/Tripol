@@ -14,6 +14,10 @@ A free, experimental programming language that turns readable code directly into
 
 </div>
 
+## DISCORD NEW — 0.28 development
+
+Source builds identify as **0.28.0 — DISCORD NEW**. The first development increment adds typed structure methods, per-bot configuration, offline command previews and embeds. The native Windows backend provides Gateway and REST transport. Offline commands and embed JSON also run on Linux and in the WebAssembly Playground. [Discord guide](docs/discord.md) · [Runnable example](examples/discord_new.tri)
+
 ## AI-ready reference / Referencia para IA
 
 [TRIPOL-AI.md](TRIPOL-AI.md) contains the full v0.27.1 documentation snapshot: 64 modules, 383 functions, 18 guides and 14 guided lessons. Download the Markdown and attach it to your preferred AI assistant. [Direct download](https://tripollas.github.io/Tripol/TRIPOL-AI.md).

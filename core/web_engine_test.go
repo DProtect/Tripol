@@ -9,6 +9,9 @@ func TestWebEngineR1(t *testing.T){
  for _,source:=range []string{
   "import tripol.game\nimport tripol.canvas\n\ngame.window(\"Preview\", 2, 2)\np = canvas.create(2, 2)\ncanvas.clear(p, 16711680)\ncanvas.pixel(p, 2, 2, 1, 1, 255)\nshow game.present(p, 2, 2)\ngame.close()",
   "import tripol.game\n\ngame.window(\"Triangle\", 32, 32)\nv = ints(9)\nv[0] = -800\nv[1] = -800\nv[2] = 16711680\nv[3] = 800\nv[4] = -800\nv[5] = 65280\nv[6] = 0\nv[7] = 800\nv[8] = 255\nshow game.gl_frame(v)\ngame.close()",
+  "struct Counter {value:int=0}\nfunc Counter.add(self:Counter,step=1)->int {self.value=self.value+step;return self.value}\nshow Counter().add()",
+  "import tripol.discord\nb=discord.bot()\nb.command(\"hola\",\"Hola!\")\nshow b.preview(\"hola\")",
+  "import tripol.discord\ne=discord.embed()\ne.title(\"Hola\")\nshow e.payload()",
   "show 42",
   "import tripol.collections\nitems=[1,2]\nvalues=collections.append(items,3)\nshow values",
   "import tripol.arrays\nitems=[1,2,3]\nshow arrays.total(items)",

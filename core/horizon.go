@@ -15,6 +15,9 @@ func (c *compiler) validateTypes(fs []fn) {
 	for _, f := range fs {
 		c.source = f.source
 		c.line = f.line
+		if receiver, _, ok := splitMethodName(f.name); ok && (!c.isRecord(receiver) || len(f.args) == 0 || f.args[0].typ != receiver) {
+			c.err("method receiver must be a matching struct: " + receiver)
+		}
 		if !c.validType(f.ret) {
 			c.err(fmt.Sprintf("unknown type %s in %s", f.ret, f.name))
 		}
@@ -83,7 +86,7 @@ func (c *compiler) recordAssign(s stmt) {
 	c.a.u32(off)
 }
 func learnSpanish() {
-	fmt.Print(`TRIPOL 0.27.1 — Aprende en cinco minutos
+	fmt.Print("TRIPOL " + version + ` — Aprende en cinco minutos
 
 1. Mostrar: show "Hola", 10 + 20
 2. Preguntar: nombre = input("Tu nombre?")

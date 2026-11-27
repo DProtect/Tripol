@@ -1,3 +1,11 @@
+# v0.28.0 DISCORD NEW (development)
+
+- SIMPLE R2 adds typed methods on structures, with an explicit receiver, optional arguments and calls on computed receivers. Native profiles and WebAssembly share the parser and type validation.
+- `discord.bot()` creates independent command and presence settings. `bot.preview()` runs offline. On Windows, `bot.start()` reads `DISCORD_TOKEN` and uses the existing Gateway transport. Only bots with prefix commands request Message Content Intent.
+- `discord.embed()` builds embeds with a title, description, footer, RGB color and fields. `embed.payload()` builds JSON offline with mentions disabled. `embed.send()` uses native Windows REST.
+- The Discord project template and VS Code suggestions and snippets use the new API. Existing module-level Discord calls retain their defaults.
+- Added native and browser tests for typed dispatch, independent bot state, UTF-8 embeds, and the native transport boundary.
+
 # v0.27.1 QUANTUM X (development)
 
 - Turbo lowers eligible integer and boolean functions through multi-block SSA with phi nodes, loop backedges and checked arithmetic. Live ranges cross edges, and the register allocator reuses spill slots. SSA layout uses reverse postorder, lowers power-of-two remainder tests directly, and minimizes phi-edge moves. Other functions use the existing backend.

@@ -26,9 +26,21 @@
     "body": [
       "import tripol.discord",
       "",
-      "discord.login_env()",
-      "discord.reply(\"!ping\", \"Pong!\")",
-      "discord.run()"
+      "bot = discord.bot()",
+      "bot.prefix(\"!\")",
+      "bot.command(\"${1:ping}\", \"${2:Pong!}\")",
+      "bot.start()"
+    ]
+  },
+  "Discord embed": {
+    "prefix": "discord-embed",
+    "body": [
+      "import tripol.discord",
+      "",
+      "embed = discord.embed()",
+      "embed.title(\"${1:Welcome}\")",
+      "embed.description(\"${2:Hello!}\")",
+      "show embed.payload()"
     ]
   }
 }

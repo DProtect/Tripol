@@ -12,7 +12,8 @@ import (
 	"strings"
 )
 
-const version = "0.27.1"
+const version = "0.28.0"
+const releaseName = "DISCORD NEW"
 
 type token struct {
 	s, k      string
@@ -373,10 +374,11 @@ func (p *parser) expression(min int) *expr {
 	for p.eat(".") {
 		member := p.name()
 		if p.eat("(") {
-			if e.op != "var" {
-				p.err("qualified call requires module name")
+			if e.op == "var" {
+				e = &expr{op: "call", s: e.s + "." + member}
+			} else {
+				e = &expr{op: "method", s: member, args: []*expr{e}}
 			}
-			e = &expr{op: "call", s: e.s + "." + member}
 			if !p.eat(")") {
 				for {
 					e.args = append(e.args, p.expression(1))
@@ -454,6 +456,11 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 			fs = append(fs, f)
 		} else if p.eat("func") {
 			f := fn{line: p.t().line, name: p.name(), ret: "int", inferRet:true}
+			receiver := ""
+			if p.eat(".") {
+				receiver = f.name
+				f.name = methodName(receiver, p.name())
+			}
 			p.need("(")
 			if !p.eat(")") {
 				for {
@@ -486,6 +493,9 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 			if p.eat("->") {
                 f.inferRet=false
 				f.ret = p.typ()
+			}
+			if receiver != "" && (len(f.args) == 0 || f.args[0].typ != receiver || f.implicit[0]) {
+				p.err("method requires an explicitly typed " + receiver + " receiver as its first parameter")
 			}
 			if p.eat("=>") {
 				f.body = []stmt{{op: "return", line: p.t().line, e: p.expression(1)}}
@@ -722,6 +732,9 @@ func (c *compiler) expression(e *expr) string {
 		a.emit(0x48, 0x8b, 0x80)
 		a.u32(off)
 		return field.typ
+	case "method":
+		receiver := c.expression(e.args[0])
+		return c.emitMethodCall(receiver, e.s, e.args[1:])
 	case "call":
 		if strings.HasPrefix(e.s, "@builtin:") {
 			b := *e
@@ -734,6 +747,12 @@ func (c *compiler) expression(e *expr) string {
 		f, ok := c.fs[e.s]
 		if !ok {
 			if t, handled := c.listMethod(e); handled {return t}
+			if name, method, qualified := strings.Cut(e.s, "."); qualified {
+				if v, exists := c.lookup(name); exists && c.isRecord(v.typ) {
+					c.a.load(v.off)
+					return c.emitMethodCall(v.typ, method, e.args)
+				}
+			}
 			if t, handled := c.builtin(e); handled {
 				return t
 			}
@@ -766,15 +785,7 @@ func (c *compiler) expression(e *expr) string {
 			}
 			a.emit(0x50)
 		}
-		a.call("fn:" + e.s)
-		if len(args) > 0 {
-			if a.opt && len(args) <= 15 {
-				a.emit(0x48, 0x83, 0xc4, byte(8*len(args)))
-			} else {
-				a.emit(0x48, 0x81, 0xc4)
-				a.u32(8 * len(args))
-			}
-		}
+		a.stackCall(f.name, len(args))
 		return f.ret
 	case "un":
 		t := c.expression(e.args[0])
@@ -1651,7 +1662,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL 0.27.1 — QUANTUM X\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol pgo-train FILE.tri -o PROFILE.json\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache|--pgo PROFILE.json]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL " + version + " — " + releaseName + "\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol pgo-train FILE.tri -o PROFILE.json\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache|--pgo PROFILE.json]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {

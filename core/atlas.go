@@ -56,9 +56,25 @@ func (l *stdLoader) add(name string) {
 	l.state[name] = 2
 }
 func (l *stdLoader) qualify(name string, fs []fn) {
-	names := map[string]bool{}
+	names := map[string]string{}
+	records := map[string]string{}
 	for _, f := range fs {
-		names[f.name] = true
+		if f.record {
+			records[f.name] = name + "." + f.name
+		}
+	}
+	qualifyType := func(typ string) string {
+		if qualified, ok := records[typ]; ok {
+			return qualified
+		}
+		return typ
+	}
+	for _, f := range fs {
+		if receiver, method, ok := splitMethodName(f.name); ok {
+			names[f.name] = methodName(qualifyType(receiver), method)
+		} else {
+			names[f.name] = name + "." + f.name
+		}
 	}
 	// Resolve library-local functions and intrinsic calls independently of user symbols.
 	var exprWalk func(*expr)
@@ -67,8 +83,8 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 			return
 		}
 		if e.op == "call" && !strings.Contains(e.s, ".") {
-			if names[e.s] {
-				e.s = name + "." + e.s
+			if qualified, ok := names[e.s]; ok {
+				e.s = qualified
 			} else {
 				e.s = "@builtin:" + e.s
 			}
@@ -79,7 +95,9 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 	}
 	var stmtWalk func([]stmt)
 	stmtWalk = func(ss []stmt) {
-		for _, s := range ss {
+		for i := range ss {
+			s := &ss[i]
+			s.typ = qualifyType(s.typ)
 			exprWalk(s.e)
 			exprWalk(s.bound)
 			stmtWalk(s.yes)
@@ -88,7 +106,11 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 		}
 	}
 	for _, f := range fs {
-		f.name = name + "." + f.name
+		f.name = names[f.name]
+		f.ret = qualifyType(f.ret)
+		for i := range f.args {
+			f.args[i].typ = qualifyType(f.args[i].typ)
+		}
 		stmtWalk(f.body)
 		l.functions = append(l.functions, f)
 	}
@@ -109,7 +131,13 @@ func listLibraries() {
 	fmt.Println("TRIPOL Core — built-in standard libraries")
 	for _, name := range standardNames {
 		_, fs, _ := parseUnit(standardSource(name))
-		fmt.Printf("tripol.%s (%d functions)\n", name, len(fs))
+		count := 0
+		for _, f := range fs {
+			if !f.record && !strings.HasPrefix(f.name, methodPrefix) {
+				count++
+			}
+		}
+		fmt.Printf("tripol.%s (%d functions)\n", name, count)
 	}
 	fmt.Println("Example: import tripol.math\n         show math.square(7)\nDetails: tripol docs math")
 }

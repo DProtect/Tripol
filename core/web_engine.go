@@ -20,14 +20,11 @@ func (b *webCode) section(id byte,p webCode){b.raw(id);b.u(uint32(len(p)));*b=ap
 type webLocal struct { index uint32; typ string }
 type webSig struct { args []byte; results []byte }
 type webFunction struct { f fn; index uint32; typ uint32 }
-type webModule struct { funcs map[string]webFunction; order []webFunction; types []webSig; bodies []webCode; current int; strings []string; stringIDs map[string]int64; records map[string]fn; dictionaries map[string][]param }
+type webModule struct { definitions map[string]fn; funcs map[string]webFunction; order []webFunction; types []webSig; bodies []webCode; current int; strings []string; stringIDs map[string]int64; records map[string]fn; dictionaries map[string][]param }
 type webEmitter struct { module *webModule; code webCode; scopes []map[string]webLocal; locals,params uint32; line int; labels []string; result string }
 func webReject(format string,args ...any){die("Web Engine R3: "+format,args...)}
 func webScalar(t string)bool{return t=="int"||t=="bool"||t=="string"||t=="float"||t=="ints"||isList(t)}
 func (m *webModule) signature(a,r []byte)uint32{m.types=append(m.types,webSig{a,r});return uint32(len(m.types)-1)}
-func (m *webModule) find(name string)webFunction{
- if v,ok:=m.funcs[name];ok{return v};webReject("unsupported function %s",name);return webFunction{}
-}
 func (m *webModule) supported(t string)bool{if webScalar(t){return true};_,ok:=m.records[t];return ok}
 func (m *webModule) fields(t string)[]param{if f,ok:=m.records[t];ok{return f.args};return m.dictionaries[t]}
 func (m *webModule) field(t,n string)(int64,string){for i,f:=range m.fields(t){if f.name==n{return int64(i),f.typ}};webReject("unknown field %s on %s",n,t);return 0,""}
@@ -138,6 +135,9 @@ func (e *webEmitter) expression(x *expr)string{
    }[name];if len(x.args)!=len(spec.args){webReject("invalid graphics arguments for %s",name)}
    z:=e.constant(0);v:=[3]uint32{z,z,z};for i,a:=range x.args{tmp,t:=e.save(a);if t!=spec.args[i]&&!(spec.args[i]=="ints"&&webElem(t)=="int"){webReject("invalid graphics argument for %s",name)};v[i]=tmp};e.val(spec.op,v[0],v[1],v[2]);return "bool"
   }
+  if name=="discord_request"||name=="gw_open"||name=="env_get"{
+   webReject("%s requires a native target",name)
+  }
   if name=="thread_sum"{webReject("native worker threads require a browser concurrency adapter")}
   if name=="audio_play_file"||name=="native_beep"{webReject("audio playback requires a browser user-gesture adapter; WAV generation is available")}
 
@@ -204,17 +204,57 @@ func (e *webEmitter) expression(x *expr)string{
    if len(x.args)>len(f.args){webReject("wrong record argument count")};values:=make([]*expr,len(f.args));for i:=range values{if i<len(x.args){values[i]=x.args[i]}else if i<len(f.defaults){values[i]=f.defaults[i]};if values[i]==nil{webReject("missing field value")}}
    h:=e.aggregate(f.args,values);e.code.inst(0x20,h);return f.name
   }
-  f:=e.module.find(x.s);if len(x.args)>len(f.f.args){webReject("wrong argument count")};for i,a:=range f.f.args{var arg *expr;if i<len(x.args){arg=x.args[i]}else if i<len(f.f.defaults){arg=f.f.defaults[i]};if arg==nil{webReject("missing argument %d (%s) for %s at line %d",i+1,a.name,x.s,e.line)}
-   actual:=e.expression(arg)
-   // Native validation already checked the call. Standard-library read-only
-   // integer-array parameters accept a fixed local array as a borrowed view.
-   // WASM represents both fixed and dynamic arrays as collection handles.
-   borrow:=a.typ=="ints"&&strings.HasPrefix(actual,"array:")&&arg.op=="var"&&isStandardFunction(f.f.name)&&(!mutableArrayFunction(f.f.name)||i>0)
-   if actual!=a.typ&&!borrow{webReject("invalid argument %d (%s) for %s: expected %s, got %s at line %d",i+1,a.name,x.s,a.typ,actual,e.line)}}
-  e.code.inst(0x10,f.index);return f.f.ret
+  if f, ok := e.module.definitions[x.s]; ok {
+   return e.call(f, x.args, 0)
+  }
+  if receiver, member, ok := strings.Cut(x.s, "."); ok {
+   if v, exists := e.get(receiver); exists {
+    return e.method(v.index, v.typ, member, x.args)
+   }
+  }
+  webReject("unsupported function %s", x.s)
+ case "method":
+  receiver, typ := e.save(x.args[0])
+  return e.method(receiver, typ, x.s, x.args[1:])
  }
  webReject("unsupported expression %s (%s) at line %d",x.op,x.s,e.line);return ""
 }
+func (e *webEmitter) method(receiver uint32, typ, member string, args []*expr) string {
+	f, ok := e.module.definitions[methodName(typ, member)]
+	if !ok {
+		webReject("unknown method %s.%s", typ, member)
+	}
+	e.code.inst(0x20, receiver)
+	return e.call(f, args, 1)
+}
+
+func (e *webEmitter) call(f fn, args []*expr, implicit int) string {
+	callee := e.module.declare(f)
+	if len(args)+implicit > len(f.args) {
+		webReject("wrong argument count for %s", f.name)
+	}
+	for i, a := range f.args[implicit:] {
+		var arg *expr
+		if i < len(args) {
+			arg = args[i]
+		} else if i+implicit < len(f.defaults) {
+			arg = f.defaults[i+implicit]
+		}
+		if arg == nil {
+			webReject("missing argument %s for %s at line %d", a.name, f.name, e.line)
+		}
+		actual := e.expression(arg)
+		// Native read-only integer-array parameters can borrow fixed arrays.
+		borrow := a.typ == "ints" && strings.HasPrefix(actual, "array:") && arg.op == "var" &&
+			isStandardFunction(f.name) && (!mutableArrayFunction(f.name) || i > 0)
+		if actual != a.typ && !borrow {
+			webReject("invalid argument %s for %s: expected %s, got %s at line %d", a.name, f.name, a.typ, actual, e.line)
+		}
+	}
+	e.code.inst(0x10, callee.index)
+	return f.ret
+}
+
 func (e *webEmitter) begin(op byte,label string){e.code.raw(op,0x40);e.labels=append(e.labels,label)}
 func (e *webEmitter) end(){e.code.raw(0x0b);e.labels=e.labels[:len(e.labels)-1]}
 func (e *webEmitter) branch(label string){for i:=len(e.labels)-1;i>=0;i--{if e.labels[i]==label{e.code.inst(0x0c,uint32(len(e.labels)-1-i));return}};webReject("invalid %s",label)}
@@ -254,23 +294,35 @@ func (e *webEmitter) body()webCode{var b webCode;n:=e.locals-e.params;if n==0{b.
 func CompileWeb(source string)(out []byte,err error){
  defer func(){if v:=recover();v!=nil{out=nil;err=fmt.Errorf("%v",v)}}()
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
- imports,fs,ss:=parseUnit(source);for _,n:=range imports{switch n{case "@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:process","@std:thread","@std:game","@std:events":default:webReject("library %s requires a browser adapter or native target",n)}}
+ imports,fs,ss:=parseUnit(source);for _,n:=range imports{switch n{case "@std:discord","@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:process","@std:thread","@std:game","@std:events":default:webReject("library %s requires a browser adapter or native target",n)}}
  fs = withStandardImports(imports, fs);validateCode(fs,ss,"linux")
- m:=&webModule{funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{}}
+ m:=&webModule{definitions:map[string]fn{},funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{}}
  m.signature([]byte{0x7f},nil) // tick(line)
  m.signature([]byte{0x7f,0x7e,0x7e,0x7f},[]byte{0x7e}) // checked arithmetic
  m.signature([]byte{0x7e,0x7f,0x7f},nil) // show
  m.signature([]byte{0x7f},nil) // assert failure
  m.signature([]byte{0x7f,0x7e,0x7e,0x7e,0x7f},[]byte{0x7e}) // value operations
- // Register only reachable functions; imported float functions need not be emitted.
- byName:=map[string]fn{};for _,f:=range fs{if f.record{m.records[f.name]=f}else{byName[f.name]=f}}
- seen:=map[string]bool{}
- var walkExpr func(*expr);var walkBlock func([]stmt)
- walkExpr=func(x *expr){if x==nil{return};if x.op=="call"&&!seen[x.s]{seen[x.s]=true;if f,ok:=byName[x.s];ok{m.declare(f);walkBlock(f.body);for _,d:=range f.defaults{walkExpr(d)}}};for _,a:=range x.args{walkExpr(a)}}
- walkBlock=func(ss []stmt){for _,s:=range ss{walkExpr(s.e);walkExpr(s.bound);walkBlock(s.yes);walkBlock(s.no);walkBlock(s.final)}}
- walkBlock(ss)
- for _,f:=range m.order{e:=&webEmitter{module:m,result:f.f.ret};e.push();for _,a:=range f.f.args{e.local(a.name,a.typ)};e.params=e.locals;e.block(f.f.body,false);e.code.raw(0x00);m.bodies=append(m.bodies,e.body())}
- mainType:=m.signature(nil,nil);mainIndex:=uint32(5+len(m.order));e:=&webEmitter{module:m};e.push();e.block(ss,false);m.bodies=append(m.bodies,e.body())
+ // Declare a function when a call is emitted. This resolves record methods
+ // against the actual receiver and leaves unused native-only functions out.
+ for _, f := range fs {
+  if f.record { m.records[f.name] = f } else { m.definitions[f.name] = f }
+ }
+ main := &webEmitter{module:m}
+ main.push()
+ main.block(ss,false)
+ for i := 0; i < len(m.order); i++ {
+  f := m.order[i].f
+  e := &webEmitter{module:m,result:f.ret}
+  e.push()
+  for _, a := range f.args { e.local(a.name,a.typ) }
+  e.params=e.locals
+  e.block(f.body,false)
+  e.code.raw(0x00)
+  m.bodies=append(m.bodies,e.body())
+ }
+ mainType:=m.signature(nil,nil)
+ mainIndex:=uint32(5+len(m.order))
+ m.bodies=append(m.bodies,main.body())
  var module webCode;module.raw(0,97,115,109,1,0,0,0)
  var ts webCode;ts.u(uint32(len(m.types)));for _,s:=range m.types{ts.raw(0x60);ts.u(uint32(len(s.args)));ts.raw(s.args...);ts.u(uint32(len(s.results)));ts.raw(s.results...)};module.section(1,ts)
  var im webCode;im.u(5);for i,n:=range []string{"tick","arithmetic","show","assertFail","value"}{im.name("tripol");im.name(n);im.raw(0);im.u(uint32(i))};module.section(2,im)

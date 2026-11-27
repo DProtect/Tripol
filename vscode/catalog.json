@@ -1,6 +1,281 @@
 {
-  "math": {
-    "square": "func math.square(n:int)->int"
+  "animation": {
+    "clamp01": "func animation.clamp01(t:float)->float",
+    "linear": "func animation.linear(a:float,b:float,t:float)->float",
+    "ease_in": "func animation.ease_in(t:float)->float",
+    "ease_out": "func animation.ease_out(t:float)->float",
+    "smoothstep": "func animation.smoothstep(t:float)->float",
+    "frame": "func animation.frame(elapsed:int,frame_ms:int,count:int)->int"
+  },
+  "arrays": {
+    "make": "func arrays.make(n:int, value:int) -> ints",
+    "total": "func arrays.total(a:ints) -> int",
+    "count": "func arrays.count(a:ints, value:int) -> int",
+    "contains": "func arrays.contains(a:ints, value:int) -> bool",
+    "reversed": "func arrays.reversed(a:ints) -> ints",
+    "copy": "func arrays.copy(a:ints) -> ints",
+    "length": "func arrays.length(a:ints) -> int",
+    "copy_into": "func arrays.copy_into(destination:ints, source:ints) -> bool"
+  },
+  "atomic": {
+    "load": "func atomic.load(data:ints,index:int)->int",
+    "exchange": "func atomic.exchange(data:ints,index:int,value:int)->int",
+    "compare_exchange": "func atomic.compare_exchange(data:ints,index:int,expected:int,value:int)->bool",
+    "add": "func atomic.add(data:ints,index:int,delta:int)->int"
+  },
+  "audio": {
+    "wav_mono": "func audio.wav_mono(samples:ints,rate=22050)->ints",
+    "square_wave": "func audio.square_wave(hz:int,milliseconds:int,rate=22050,amplitude=5000)->ints",
+    "save_wav": "func audio.save_wav(path:string,samples:ints,rate=22050)->int",
+    "playback_supported": "func audio.playback_supported()->bool",
+    "play_file": "func audio.play_file(path:string)->bool",
+    "beep": "func audio.beep(hz:int,milliseconds:int)->bool"
+  },
+  "binary": {
+    "is_byte": "func binary.is_byte(value:int)->bool",
+    "valid": "func binary.valid(data:ints)->bool",
+    "read_u16_le": "func binary.read_u16_le(data:ints,offset:int)->int",
+    "read_u32_le": "func binary.read_u32_le(data:ints,offset:int)->int",
+    "u16_le": "func binary.u16_le(value:int)->ints",
+    "u32_le": "func binary.u32_le(value:int)->ints",
+    "read_u16_be": "func binary.read_u16_be(data:ints,offset:int)->int",
+    "u16_be": "func binary.u16_be(value:int)->ints"
+  },
+  "bits": {
+    "mask": "func bits.mask(index:int)->int",
+    "test": "func bits.test(n:int,index:int)->bool",
+    "set": "func bits.set(n:int,index:int)->int",
+    "clear": "func bits.clear(n:int,index:int)->int",
+    "toggle": "func bits.toggle(n:int,index:int)->int",
+    "count": "func bits.count(n:int)->int"
+  },
+  "bitset": {
+    "create": "func bitset.create(count:int)->ints",
+    "capacity": "func bitset.capacity(a:ints)->int",
+    "contains": "func bitset.contains(a:ints,index:int)->bool",
+    "add": "func bitset.add(a:ints,index:int)->bool",
+    "remove": "func bitset.remove(a:ints,index:int)->bool",
+    "count": "func bitset.count(a:ints)->int"
+  },
+  "buffer": {
+    "create": "func buffer.create(initial=4)->ints",
+    "capacity": "func buffer.capacity(b:ints)->int",
+    "size": "func buffer.size(b:ints)->int",
+    "push": "func buffer.push(b:ints,value:int)->ints",
+    "get": "func buffer.get(b:ints,index:int)->int",
+    "set": "func buffer.set(b:ints,index:int,value:int)->int",
+    "pop": "func buffer.pop(b:ints)->int",
+    "values": "func buffer.values(b:ints)->ints"
+  },
+  "camera": {
+    "screen": "func camera.screen(world:int,origin:int,zoom=1)->int",
+    "world": "func camera.world(screen_pos:int,origin:int,zoom=1)->int",
+    "follow": "func camera.follow(pos:int,view:int,limit:int)->int",
+    "visible": "func camera.visible(x:int,y:int,w:int,h:int,vw:int,vh:int)->bool"
+  },
+  "canvas": {
+    "size": "func canvas.size(w:int,h:int)->int",
+    "create": "func canvas.create(w:int,h:int)->ints",
+    "clear": "func canvas.clear(pixels:ints,color:int)->int",
+    "pixel": "func canvas.pixel(pixels:ints,w:int,h:int,x:int,y:int,color:int)->bool",
+    "get": "func canvas.get(pixels:ints,w:int,h:int,x:int,y:int)->int",
+    "rectangle": "func canvas.rectangle(pixels:ints,w:int,h:int,x:int,y:int,rw:int,rh:int,color:int)->int",
+    "line": "func canvas.line(p:ints,w:int,h:int,x:int,y:int,ex:int,ey:int,color:int)->int",
+    "circle": "func canvas.circle(p:ints,w:int,h:int,x:int,y:int,r:int,color:int)->int",
+    "blend": "func canvas.blend(p:ints,w:int,h:int,x:int,y:int,color:int,opacity:int)->bool",
+    "tile_map": "func canvas.tile_map(dst:ints,w:int,h:int,tiles:ints,cols:int,rows:int,palette:ints,side:int,ox:int,oy:int)->int"
+  },
+  "checksum": {
+    "adler32": "func checksum.adler32(s:string)->int",
+    "sum8": "func checksum.sum8(s:string)->int",
+    "sum16": "func checksum.sum16(s:string)->int"
+  },
+  "cli": {
+    "option_name": "func cli.option_name(name:string)->bool",
+    "find_option": "func cli.find_option(line:string,name:string)->int",
+    "has": "func cli.has(line:string,name:string)->bool",
+    "value": "func cli.value(line:string,name:string,fallback=\"\")->string",
+    "integer": "func cli.integer(line:string,name:string,fallback=0)->int"
+  },
+  "collections": {
+    "append": "func collections.append(a:ints,value:int)->ints",
+    "concat": "func collections.concat(a:ints,b:ints)->ints",
+    "part": "func collections.part(a:ints,start:int,end:int)->ints",
+    "remove_at": "func collections.remove_at(a:ints,index:int)->ints",
+    "insert": "func collections.insert(a:ints,index:int,value:int)->ints",
+    "equal": "func collections.equal(a:ints,b:ints)->bool"
+  },
+  "colors": {
+    "rgb": "func colors.rgb(r:int,g:int,b:int)->int",
+    "valid": "func colors.valid(c:int)->bool",
+    "red": "func colors.red(c:int)->int",
+    "green": "func colors.green(c:int)->int",
+    "blue": "func colors.blue(c:int)->int",
+    "invert": "func colors.invert(c:int)->int",
+    "gray": "func colors.gray(v:int)->int",
+    "mix": "func colors.mix(a:int,b:int,percent:int)->int"
+  },
+  "compression": {
+    "rle_encode": "func compression.rle_encode(a:ints)->ints",
+    "rle_valid": "func compression.rle_valid(a:ints)->bool",
+    "rle_decode": "func compression.rle_decode(a:ints)->ints"
+  },
+  "console": {
+    "ask": "func console.ask(prompt:string) -> string",
+    "ask_int": "func console.ask_int(prompt:string) -> int",
+    "line": "func console.line(message:string) -> int"
+  },
+  "convert": {
+    "celsius_to_fahrenheit": "func convert.celsius_to_fahrenheit(c:float) -> float",
+    "fahrenheit_to_celsius": "func convert.fahrenheit_to_celsius(f:float) -> float",
+    "km_to_miles": "func convert.km_to_miles(k:float) -> float",
+    "miles_to_km": "func convert.miles_to_km(m:float) -> float",
+    "kg_to_lb": "func convert.kg_to_lb(k:float) -> float",
+    "lb_to_kg": "func convert.lb_to_kg(l:float) -> float",
+    "celsius_to_kelvin": "func convert.celsius_to_kelvin(c:float) -> float",
+    "kelvin_to_celsius": "func convert.kelvin_to_celsius(k:float) -> float"
+  },
+  "crypto": {
+    "sha256_bytes": "func crypto.sha256_bytes(data:ints)->ints",
+    "sha256": "func crypto.sha256(data:ints)->string",
+    "sha256_text": "func crypto.sha256_text(value:string)->string"
+  },
+  "csv": {
+    "escape": "func csv.escape(field:string)->string",
+    "fields": "func csv.fields(record:string)->int",
+    "valid": "func csv.valid(record:string)->bool"
+  },
+  "datetime": {
+    "leap": "func datetime.leap(y:int)->bool",
+    "days_in_month": "func datetime.days_in_month(y:int,m:int)->int",
+    "valid": "func datetime.valid(y:int,m:int,d:int)->bool",
+    "day_of_year": "func datetime.day_of_year(y:int,m:int,d:int)->int",
+    "ordinal": "func datetime.ordinal(y:int,m:int,d:int)->int",
+    "weekday": "func datetime.weekday(y:int,m:int,d:int)->int",
+    "days_between": "func datetime.days_between(y1:int,m1:int,d1:int,y2:int,m2:int,d2:int)->int"
+  },
+  "dictionary": {
+    "create": "func dictionary.create(capacity=32)->ints",
+    "capacity": "func dictionary.capacity(d:ints)->int",
+    "locate": "func dictionary.locate(d:ints,key:string)->int",
+    "contains": "func dictionary.contains(d:ints,key:string)->bool",
+    "get": "func dictionary.get(d:ints,key:string,fallback=0)->int",
+    "size": "func dictionary.size(d:ints)->int",
+    "set": "func dictionary.set(d:ints,key:string,value:int)->bool",
+    "remove": "func dictionary.remove(d:ints,key:string)->bool"
+  },
+  "discord": {
+    "gateway": "func discord.gateway()->string",
+    "api_host": "func discord.api_host()->string",
+    "token": "func discord.token()->string",
+    "channel_path": "func discord.channel_path(channel:string)->string",
+    "send": "func discord.send(channel:string,message:string)->bool",
+    "latest": "func discord.latest(channel:string)->string",
+    "message_id": "func discord.message_id(message:string)->int",
+    "matches": "func discord.matches(message:string,command:string)->bool",
+    "listen": "func discord.listen(channel:string,command:string,response:string)->int",
+    "login": "func discord.login(secret:string)->bool",
+    "login_env": "func discord.login_env()->bool",
+    "channel": "func discord.channel(id:string)->bool",
+    "reply": "func discord.reply(command:string,response:string)->bool",
+    "reset": "func discord.reset()->bool",
+    "configured": "func discord.configured()->bool",
+    "preview": "func discord.preview(command:string)->string",
+    "dispatch": "func discord.dispatch(message:string)->string",
+    "send_to": "func discord.send_to(id:string,message:string)->bool",
+    "has_channel": "func discord.has_channel()->bool",
+    "all_channels": "func discord.all_channels()->bool",
+    "say": "func discord.say(message:string)->bool",
+    "parse_latest": "func discord.parse_latest(result:string)->string",
+    "run_rest": "func discord.run_rest()->int",
+    "setup": "func discord.setup(secret:string,id:string)->bool",
+    "status": "func discord.status(value:string)->bool",
+    "activity": "func discord.activity(value:string)->bool",
+    "welcome": "func discord.welcome(value:string)->bool",
+    "connected": "func discord.connected()->bool",
+    "ping": "func discord.ping()->int",
+    "identify_payload": "func discord.identify_payload(intents=33281)->string",
+    "heartbeat_payload": "func discord.heartbeat_payload(sequence:int)->string",
+    "event_channel": "func discord.event_channel(event:string)->string",
+    "gateway_reply": "func discord.gateway_reply(event:string)->string",
+    "run": "func discord.run(intents=33281)->int",
+    "bot": "func discord.bot()->Bot",
+    "embed": "func discord.embed()->Embed"
+  },
+  "discord.Bot": {
+    "prefix": "Bot.prefix(value:string)->bool",
+    "status": "Bot.status(value:string)->bool",
+    "activity": "Bot.activity(value:string)->bool",
+    "command": "Bot.command(name:string,response:string)->bool",
+    "preview": "Bot.preview(content:string)->string",
+    "start": "Bot.start()->int"
+  },
+  "discord.Embed": {
+    "title": "Embed.title(value:string)->bool",
+    "description": "Embed.description(value:string)->bool",
+    "footer": "Embed.footer(value:string)->bool",
+    "color": "Embed.color(value:string)->bool",
+    "field": "Embed.field(label:string,value:string,inline=false)->bool",
+    "payload": "Embed.payload()->string",
+    "send": "Embed.send(channel_id:string)->bool"
+  },
+  "encoding": {
+    "hex_digit": "func encoding.hex_digit(n:int) -> string",
+    "hex_byte": "func encoding.hex_byte(n:int) -> string",
+    "hex_int": "func encoding.hex_int(n:int) -> string",
+    "hex_text": "func encoding.hex_text(s:string) -> string"
+  },
+  "env": {
+    "get": "func env.get(name:string)->string"
+  },
+  "errors": {
+    "is_int": "func errors.is_int(s:string)->bool",
+    "int_or": "func errors.int_or(s:string,fallback:int)->int",
+    "can_divide": "func errors.can_divide(a:int,b:int)->bool",
+    "div_or": "func errors.div_or(a:int,b:int,fallback:int)->int",
+    "get_or": "func errors.get_or(a:ints,index:int,fallback:int)->int",
+    "message": "func errors.message(code:int)->string",
+    "message_es": "func errors.message_es(code:int)->string"
+  },
+  "events": {
+    "pressed": "func events.pressed(key:int)->bool",
+    "left": "func events.left()->int",
+    "right": "func events.right()->int",
+    "up": "func events.up()->int",
+    "down": "func events.down()->int",
+    "escape": "func events.escape()->int",
+    "space": "func events.space()->int",
+    "pad_connected": "func events.pad_connected(controller=0)->bool",
+    "pad_buttons": "func events.pad_buttons(controller=0)->int",
+    "pad_axis": "func events.pad_axis(axis:int,controller=0)->int",
+    "pad_trigger": "func events.pad_trigger(trigger:int,controller=0)->int",
+    "mouse_x": "func events.mouse_x(width:int)->int",
+    "mouse_y": "func events.mouse_y(height:int)->int",
+    "mouse_left": "func events.mouse_left()->bool"
+  },
+  "files": {
+    "read": "func files.read(path:string) -> string",
+    "write": "func files.write(path:string, content:string) -> int",
+    "append": "func files.append(path:string, content:string) -> int",
+    "write_line": "func files.write_line(path:string, content:string) -> int",
+    "append_line": "func files.append_line(path:string, content:string) -> int"
+  },
+  "game": {
+    "window": "func game.window(title:string,w:int,h:int)->bool",
+    "running": "func game.running()->bool",
+    "present": "func game.present(pixels:ints,w:int,h:int)->bool",
+    "key": "func game.key(code:int)->bool",
+    "close": "func game.close()->bool",
+    "wait": "func game.wait(ms:int)->int",
+    "gl_frame": "func game.gl_frame(vertices:ints,background=0)->bool"
+  },
+  "geometry": {
+    "rectangle": "func geometry.rectangle(w:float,h:float)->float",
+    "circle": "func geometry.circle(r:float)->float",
+    "circumference": "func geometry.circumference(r:float)->float",
+    "triangle": "func geometry.triangle(b:float,h:float)->float",
+    "distance": "func geometry.distance(x:float,y:float,u:float,v:float)->float",
+    "lerp": "func geometry.lerp(a:float,b:float,t:float)->float"
   },
   "heap": {
     "create": "func heap.create(limit=32)->ints",
@@ -10,6 +285,226 @@
     "peek": "func heap.peek(h:ints)->int",
     "pop": "func heap.pop(h:ints)->int"
   },
+  "http": {
+    "get_raw": "func http.get_raw(address:int,port:int,host:string,path:string)->string",
+    "status": "func http.status(response:string)->int",
+    "body": "func http.body(response:string)->string"
+  },
+  "https": {
+    "get": "func https.get(host:string,path:string)->string"
+  },
+  "image": {
+    "flip_x": "func image.flip_x(pixels:ints,w:int,h:int)->ints",
+    "flip_y": "func image.flip_y(pixels:ints,w:int,h:int)->ints",
+    "crop": "func image.crop(pixels:ints,w:int,h:int,x:int,y:int,cw:int,ch:int)->ints",
+    "grayscale": "func image.grayscale(pixels:ints)->ints",
+    "ppm": "func image.ppm(pixels:ints,w:int,h:int)->string",
+    "save_ppm": "func image.save_ppm(path:string,pixels:ints,w:int,h:int)->int"
+  },
+  "io": {
+    "read": "func io.read(path:string,limit=65536)->ints",
+    "write": "func io.write(path:string,data:ints)->int"
+  },
+  "json": {
+    "quote": "func json.quote(s:string) -> string",
+    "integer": "func json.integer(n:int) -> string",
+    "boolean": "func json.boolean(b:bool) -> string",
+    "pair": "func json.pair(key:string,value:string) -> string",
+    "integers": "func json.integers(a:ints) -> string",
+    "ws": "func json.ws(s:string,i:int,n:int)->int",
+    "hex": "func json.hex(b:int)->bool",
+    "digit": "func json.digit(b:int)->bool",
+    "quoted": "func json.quoted(s:string,i:int,n:int)->int",
+    "literal": "func json.literal(s:string,i:int,n:int,w:string)->int",
+    "number": "func json.number(s:string,i:int,n:int)->int",
+    "value": "func json.value(s:string,i:int,n:int,depth:int)->int",
+    "valid": "func json.valid(s:string)->bool",
+    "get_raw": "func json.get_raw(s:string,key:string)->string",
+    "get_raw_large": "func json.get_raw_large(s:string,key:string)->string"
+  },
+  "math": {
+    "square": "func math.square(n:int) -> int",
+    "cube": "func math.cube(n:int) -> int",
+    "clamp": "func math.clamp(n:int, low:int, high:int) -> int",
+    "power": "func math.power(base:int, exponent:int) -> int",
+    "gcd": "func math.gcd(a:int, b:int) -> int",
+    "root": "func math.root(x:float) -> float",
+    "pi": "func math.pi() -> float",
+    "percent": "func math.percent(value:float, rate:float) -> float",
+    "sqrt_value": "func math.sqrt_value(x:float) -> float",
+    "absolute": "func math.absolute(n:int) -> int",
+    "minimum": "func math.minimum(a:int,b:int) -> int",
+    "maximum": "func math.maximum(a:int,b:int) -> int"
+  },
+  "matrix": {
+    "size": "func matrix.size(rows:int,cols:int)->int",
+    "zeros": "func matrix.zeros(rows:int,cols:int)->ints",
+    "identity": "func matrix.identity(n:int)->ints",
+    "transpose": "func matrix.transpose(a:ints,rows:int,cols:int)->ints",
+    "add": "func matrix.add(a:ints,b:ints)->ints",
+    "dot": "func matrix.dot(a:ints,b:ints)->int"
+  },
+  "memory": {
+    "capacity": "func memory.capacity()->int",
+    "used": "func memory.used()->int",
+    "committed": "func memory.committed()->int",
+    "available": "func memory.available()->int"
+  },
+  "network": {
+    "ipv4": "func network.ipv4(a:int,b:int,c:int,d:int)->int",
+    "exchange": "func network.exchange(address:int,port:int,request:string)->string",
+    "loopback": "func network.loopback()->int"
+  },
+  "particles": {
+    "create": "func particles.create(n:int)->ints",
+    "count": "func particles.count(p:ints)->int",
+    "step": "func particles.step(p:ints)->int",
+    "alive": "func particles.alive(p:ints)->int",
+    "burst": "func particles.burst(p:ints,x:int,y:int,life=16)->int",
+    "draw": "func particles.draw(p:ints,dst:ints,w:int,h:int,ox:int,oy:int,color:int)->int"
+  },
+  "path": {
+    "separator": "func path.separator(b:int)->bool",
+    "last_separator": "func path.last_separator(s:string)->int",
+    "basename": "func path.basename(s:string)->string",
+    "dirname": "func path.dirname(s:string)->string",
+    "extension": "func path.extension(s:string)->string",
+    "join": "func path.join(a:string,b:string)->string"
+  },
+  "physics": {
+    "overlap": "func physics.overlap(x:int,y:int,w:int,h:int,u:int,v:int,a:int,b:int)->bool",
+    "contains": "func physics.contains(x:int,y:int,w:int,h:int,px:int,py:int)->bool",
+    "clamp_position": "func physics.clamp_position(pos:int,extent:int,limit:int)->int",
+    "integrate": "func physics.integrate(pos:float,velocity:float,dt:float)->float",
+    "gravity": "func physics.gravity(velocity:float,acceleration:float,dt:float)->float"
+  },
+  "process": {
+    "id": "func process.id()->int",
+    "platform": "func process.platform()->string",
+    "exit": "func process.exit(code=0)->int"
+  },
+  "profiler": {
+    "start": "func profiler.start()->int",
+    "elapsed": "func profiler.elapsed(started:int)->int"
+  },
+  "queue": {
+    "create": "func queue.create(limit=32)->ints",
+    "capacity": "func queue.capacity(q:ints)->int",
+    "size": "func queue.size(q:ints)->int",
+    "push": "func queue.push(q:ints,value:int)->bool",
+    "peek": "func queue.peek(q:ints)->int",
+    "pop": "func queue.pop(q:ints)->int",
+    "clear": "func queue.clear(q:ints)->int"
+  },
+  "random": {
+    "next": "func random.next(seed:int) -> int",
+    "unit": "func random.unit(seed:int) -> float",
+    "bounded": "func random.bounded(seed:int,limit:int) -> int"
+  },
+  "regex": {
+    "valid": "func regex.valid(pattern:string)->bool",
+    "matches": "func regex.matches(pattern:string,value:string)->bool"
+  },
+  "search": {
+    "linear": "func search.linear(a:ints, value:int) -> int",
+    "lower_bound": "func search.lower_bound(a:ints, value:int) -> int",
+    "binary": "func search.binary(a:ints, value:int) -> int",
+    "last": "func search.last(a:ints,value:int) -> int"
+  },
+  "sequences": {
+    "arithmetic": "func sequences.arithmetic(n:int,start:int,step:int)->ints",
+    "fibonacci": "func sequences.fibonacci(n:int)->ints",
+    "factorial": "func sequences.factorial(n:int)->int",
+    "triangular": "func sequences.triangular(n:int)->int"
+  },
+  "simd": {
+    "equal": "func simd.equal(a:ints,b:ints)->bool"
+  },
+  "sort": {
+    "sift": "func sort.sift(a:ints, root:int, size:int) -> int",
+    "ascending": "func sort.ascending(a:ints) -> ints",
+    "descending": "func sort.descending(a:ints) -> ints",
+    "sorted": "func sort.sorted(a:ints) -> bool"
+  },
+  "sprite": {
+    "draw_key": "func sprite.draw_key(dst:ints,w:int,h:int,src:ints,sw:int,sh:int,x:int,y:int,key:int)->int",
+    "draw": "func sprite.draw(dst:ints,w:int,h:int,src:ints,sw:int,sh:int,x:int,y:int)->int",
+    "solid": "func sprite.solid(w:int,h:int,color:int)->ints",
+    "rotate90": "func sprite.rotate90(src:ints,w:int,h:int)->ints",
+    "scale_nearest": "func sprite.scale_nearest(src:ints,w:int,h:int,nw:int,nh:int)->ints",
+    "draw_scaled": "func sprite.draw_scaled(dst:ints,w:int,h:int,src:ints,sw:int,sh:int,x:int,y:int,dw:int,dh:int,key=-1,opacity=100)->int"
+  },
+  "stack": {
+    "create": "func stack.create(limit=32)->ints",
+    "capacity": "func stack.capacity(s:ints)->int",
+    "size": "func stack.size(s:ints)->int",
+    "push": "func stack.push(s:ints,value:int)->bool",
+    "peek": "func stack.peek(s:ints)->int",
+    "pop": "func stack.pop(s:ints)->int",
+    "clear": "func stack.clear(s:ints)->int"
+  },
+  "stats": {
+    "mean": "func stats.mean(a:ints) -> float",
+    "minimum": "func stats.minimum(a:ints) -> int",
+    "maximum": "func stats.maximum(a:ints) -> int",
+    "variance": "func stats.variance(a:ints) -> float",
+    "deviation": "func stats.deviation(a:ints) -> float",
+    "total": "func stats.total(a:ints) -> int"
+  },
+  "stream": {
+    "create": "func stream.create()->ints",
+    "position": "func stream.position(cursor:ints)->int",
+    "remaining": "func stream.remaining(cursor:ints,data:ints)->int",
+    "seek": "func stream.seek(cursor:ints,data:ints,offset:int)->int",
+    "read_byte": "func stream.read_byte(cursor:ints,data:ints)->int",
+    "read_u16": "func stream.read_u16(cursor:ints,data:ints)->int"
+  },
+  "system": {
+    "platform": "func system.platform() -> string",
+    "architecture": "func system.architecture() -> string",
+    "compiler": "func system.compiler() -> string",
+    "is_windows": "func system.is_windows() -> bool",
+    "is_linux": "func system.is_linux() -> bool"
+  },
+  "testing": {
+    "equal_int": "func testing.equal_int(actual:int,expected:int)->bool",
+    "equal_text": "func testing.equal_text(actual:string,expected:string)->bool",
+    "equal_bool": "func testing.equal_bool(actual:bool,expected:bool)->bool",
+    "near": "func testing.near(actual:float,expected:float,tolerance:float)->bool"
+  },
+  "text": {
+    "size": "func text.size(s:string) -> int",
+    "empty": "func text.empty(s:string) -> bool",
+    "from_int": "func text.from_int(n:int) -> string",
+    "to_int": "func text.to_int(s:string) -> int",
+    "part": "func text.part(s:string, start:int, end:int) -> string",
+    "starts_with": "func text.starts_with(s:string, prefix:string) -> bool",
+    "ends_with": "func text.ends_with(s:string, suffix:string) -> bool",
+    "index_of": "func text.index_of(s:string,needle:string)->int",
+    "contains": "func text.contains(s:string,needle:string)->bool"
+  },
+  "thread": {
+    "supported": "func thread.supported()->bool",
+    "sum": "func thread.sum(data:ints)->int",
+    "sleep": "func thread.sleep(milliseconds:int)->int"
+  },
+  "time": {
+    "now_ms": "func time.now_ms() -> int",
+    "elapsed": "func time.elapsed(start:int) -> int",
+    "sleep": "func time.sleep(ms:int) -> int",
+    "seconds": "func time.seconds(ms:int) -> float",
+    "now_ns": "func time.now_ns() -> int",
+    "elapsed_ns": "func time.elapsed_ns(start:int) -> int"
+  },
+  "ui": {
+    "message": "func ui.message(title:string, message:string)->bool",
+    "confirm": "func ui.confirm(title:string, message:string)->bool",
+    "form": "func ui.form(title:string,label:string,button:string)->string",
+    "warning": "func ui.warning(title:string,message:string)->bool",
+    "error": "func ui.error(title:string,message:string)->bool",
+    "retry": "func ui.retry(title:string,message:string)->bool",
+    "choose": "func ui.choose(title:string,message:string)->int"
+  },
   "utf8": {
     "continuation": "func utf8.continuation(b:int)->bool",
     "width_at": "func utf8.width_at(s:string,i:int)->int",
@@ -17,60 +512,21 @@
     "count": "func utf8.count(s:string)->int",
     "scalar_at": "func utf8.scalar_at(s:string,i:int)->int"
   },
-  "csv": {
-    "escape": "func csv.escape(field:string)->string",
-    "fields": "func csv.fields(record:string)->int",
-    "valid": "func csv.valid(record:string)->bool"
+  "validate": {
+    "digit": "func validate.digit(n:int) -> bool",
+    "letter": "func validate.letter(n:int) -> bool",
+    "whitespace": "func validate.whitespace(n:int) -> bool",
+    "integer": "func validate.integer(s:string) -> bool",
+    "ascii": "func validate.ascii(s:string) -> bool",
+    "identifier": "func validate.identifier(s:string) -> bool"
   },
-  "animation": {},
-  "arrays": {},
-  "binary": {},
-  "bits": {},
-  "bitset": {},
-  "buffer": {},
-  "camera": {},
-  "canvas": {},
-  "checksum": {},
-  "collections": {},
-  "colors": {},
-  "compression": {},
-  "console": {},
-  "convert": {},
-  "datetime": {},
-  "dictionary": {},
-  "discord": {},
-  "encoding": {},
-  "env": {},
-  "errors": {},
-  "events": {},
-  "files": {},
-  "game": {},
-  "geometry": {},
-  "http": {},
-  "https": {},
-  "image": {},
-  "json": {},
-  "matrix": {},
-  "memory": {},
-  "network": {},
-  "particles": {},
-  "path": {},
-  "physics": {},
-  "profiler": {},
-  "queue": {},
-  "random": {},
-  "search": {},
-  "sequences": {},
-  "simd": {},
-  "sort": {},
-  "sprite": {},
-  "stack": {},
-  "stats": {},
-  "system": {},
-  "testing": {},
-  "text": {},
-  "time": {},
-  "ui": {},
-  "validate": {},
-  "vector": {}
+  "vector": {
+    "dot2": "func vector.dot2(x:float,y:float,u:float,v:float)->float",
+    "cross2": "func vector.cross2(x:float,y:float,u:float,v:float)->float",
+    "length2": "func vector.length2(x:float,y:float)->float",
+    "distance2": "func vector.distance2(x:float,y:float,u:float,v:float)->float",
+    "normalized_x": "func vector.normalized_x(x:float,y:float)->float",
+    "normalized_y": "func vector.normalized_y(x:float,y:float)->float",
+    "scale": "func vector.scale(a:ints,k:int)->ints"
+  }
 }

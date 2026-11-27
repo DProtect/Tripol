@@ -152,15 +152,31 @@ func reachable(fs []fn, ss []stmt) map[string]bool {
 		by[f.name] = f
 	}
 	live := map[string]bool{}
+	methods := methodCandidates(fs)
 	var visit func([]stmt)
+	walkFunction := func(name string) {
+		if !live[name] {
+			live[name] = true
+			visit(by[name].body)
+		}
+	}
 	var ex func(*expr)
 	ex = func(e *expr) {
 		if e == nil {
 			return
 		}
-		if e.op == "call" && !live[e.s] {
-			live[e.s] = true
-			visit(by[e.s].body)
+		if e.op == "call" {
+			if _, ok := by[e.s]; ok {
+				walkFunction(e.s)
+			} else if _, member, ok := strings.Cut(e.s, "."); ok {
+				for _, method := range methods[member] {
+					walkFunction(method)
+				}
+			}
+		} else if e.op == "method" {
+			for _, method := range methods[e.s] {
+				walkFunction(method)
+			}
 		}
 		for _, a := range e.args {
 			ex(a)

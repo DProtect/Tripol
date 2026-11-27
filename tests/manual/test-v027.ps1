@@ -1,5 +1,6 @@
 param(
     [string]$Compiler = 'tripol',
+    [string]$ExpectedVersion = '0.27.1',
     [switch]$Benchmark,
     [switch]$CheckUpdates
 )
@@ -44,7 +45,7 @@ try {
         $os = Get-CimInstance Win32_OperatingSystem
         $hardware = @{cpu=$cpu.Name;ram_bytes=($os.TotalVisibleMemorySize * 1024);os=$os.Caption;arch=$env:PROCESSOR_ARCHITECTURE}
     } catch { $hardware = @{arch=$env:PROCESSOR_ARCHITECTURE} }
-    Test-Case 'Installation' { Assert-Output $version 'TRIPOL 0.27.1'; $version }
+    Test-Case 'Installation' { Assert-Output $version "TRIPOL $ExpectedVersion"; $version }
     $source = Join-Path $root 'main.tri'
     @'
 import tripol.math

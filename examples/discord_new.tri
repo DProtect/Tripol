@@ -1,0 +1,14 @@
+import tripol.discord
+
+bot = discord.bot()
+bot.prefix("!")
+bot.command("hola", "¡Hola, compañero!")
+bot.command("ping", "Pong!")
+show bot.preview("!hola")
+
+embed = discord.embed()
+embed.title("DISCORD NEW")
+embed.description("Un embed de TRIPOL")
+embed.color("#00A0FF")
+embed.field("Versión", "0.28.0", true)
+show embed.payload()
