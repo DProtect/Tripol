@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 424,
-  "methods": 111,
+  "functions": 427,
+  "methods": 116,
   "summary": {
-    "native compiled": 535,
-    "web executed": 453,
-    "web native-only": 82
+    "native compiled": 543,
+    "web executed": 458,
+    "web native-only": 85
   },
   "rows": [
     {
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "1999\n"
+      "output": "2319\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2021507895\n"
+      "output": "2343702201\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2163,6 +2163,24 @@
       "web": "native-only"
     },
     {
+      "name": "discord.rgb_color",
+      "native": "compiled",
+      "web": "executed",
+      "output": "16777215\n"
+    },
+    {
+      "name": "discord.button_style",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1\n"
+    },
+    {
+      "name": "discord.container",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2397,7 +2415,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n36528\n"
+      "output": "4950\n43175\n"
     },
     {
       "name": "simd.equal",
@@ -3135,6 +3153,33 @@
     },
     {
       "name": "discord.Member.dm",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Components.premium",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Buttons.premium",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.edit_followup",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.edit_followup_payload",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.delete_followup",
       "native": "compiled",
       "web": "native-only"
     }
@@ -4999,6 +5044,18 @@
       "name": "RGB color preview",
       "web": "executed",
       "output": ""
+    },
+    {
+      "index": 310,
+      "name": "SIMPLE R2 embed bot",
+      "web": "executed",
+      "output": "{\"type\":4,\"data\":{\"embeds\":[{\"title\":\"TRIPOL\",\"description\":\"Mi lenguaje de programacion\",\"color\":16777215,\"fields\":[{\"name\":\"Version\",\"value\":\"0.28\",\"inline\":false}]}],\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "index": 311,
+      "name": "SIMPLE R2 Components V2 bot",
+      "web": "executed",
+      "output": "{\"type\":4,\"data\":{\"flags\":32768,\"components\":[{\"type\":17,\"accent_color\":16777215,\"components\":[{\"type\":10,\"content\":\"# TRIPOL\"},{\"type\":10,\"content\":\"Mi lenguaje de programacion\"},{\"type\":14,\"divider\":true,\"spacing\":1},{\"type\":1,\"components\":[{\"type\":2,\"style\":1,\"label\":\"Aceptar\",\"custom_id\":\"accept\"}]},{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"GitHub\",\"url\":\"https://github.com/Tripollas/Tripol\"}]}]}],\"allowed_mentions\":{\"parse\":[]}}}\n"
     }
   ]
 }

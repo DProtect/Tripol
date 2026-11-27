@@ -1,76 +1,83 @@
 {
-  "commit": "2556c869036a42f29706a0421445498dcd8a4827",
+  "commit": "d3a66eac9d57d6042014f2c5d309f07b1a005cde",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
-  "total": 147,
+  "total": 149,
   "counts": {
-    "executed": 131,
+    "executed": 133,
     "native-only": 16
   },
   "rows": [
     {
       "file": "docs/discord.html",
       "index": 1,
+      "source": "import tripol.discord\n\nbot = discord.bot()\n\nfunc info(ctx) {\n    panel = discord.container(\"#FFFFFF\")\n    panel.text(\"# TRIPOL\")\n    panel.text(\"Mi lenguaje de programacion\")\n    panel.separator()\n    panel.button(\"Aceptar\", \"accept\", \"primary\")\n    panel.link(\"GitHub\", \"https://github.com/Tripollas/Tripol\")\n    ctx.reply(panel)\n}\n\nbot.slash(\"info\", \"Informacion del bot\", info)\n\nbot.on_button(\"accept\", func(ctx) {\n    ctx.reply(\"Gracias!\", true)\n})\n\nshow bot.preview_interaction(\"{\\\"op\\\":0,\\\"t\\\":\\\"INTERACTION_CREATE\\\",\\\"d\\\":{\\\"type\\\":2,\\\"data\\\":{\\\"type\\\":1,\\\"name\\\":\\\"info\\\"}}}\")",
+      "status": "executed",
+      "output": "{\"type\":4,\"data\":{\"flags\":32768,\"components\":[{\"type\":17,\"accent_color\":16777215,\"components\":[{\"type\":10,\"content\":\"# TRIPOL\"},{\"type\":10,\"content\":\"Mi lenguaje de programacion\"},{\"type\":14,\"divider\":true,\"spacing\":1},{\"type\":1,\"components\":[{\"type\":2,\"style\":1,\"label\":\"Aceptar\",\"custom_id\":\"accept\"}]},{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"GitHub\",\"url\":\"https://github.com/Tripollas/Tripol\"}]}]}],\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 2,
       "source": "import tripol.discord\n\nbot = discord.bot()\nbot.prefix(\"!\")\nbot.command(\"hola\", \"¡Hola, compañero!\")\nbot.command(\"ping\", \"Pong!\")\nshow bot.preview(\"!hola\")\n\nembed = discord.embed()\nembed.title(\"DISCORD REVOLUTION\")\nembed.description(\"Un embed de TRIPOL\")\nembed.color(\"#00A0FF\")\nembed.field(\"Versión\", \"0.28.0\", true)\nshow embed.payload()",
       "status": "executed",
       "output": "¡Hola, compañero!\n{\"embeds\":[{\"title\":\"DISCORD REVOLUTION\",\"description\":\"Un embed de TRIPOL\",\"color\":41215,\"fields\":[{\"name\":\"Versión\",\"value\":\"0.28.0\",\"inline\":true}]}],\"allowed_mentions\":{\"parse\":[]}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 2,
+      "index": 3,
       "source": "import tripol.discord\n\nbot = discord.bot()\nbot.command(\"hola\", \"¡Hola, compañero!\")\nbot.start()",
       "status": "native-only"
     },
     {
       "file": "docs/discord.html",
-      "index": 3,
+      "index": 4,
       "source": "import tripol.discord\n\nfunc answer(m:discord.Message)->string {\n    if m.matches(\"hola\") {return m.reply(\"¡Hola, \" + m.author_id + \"!\")}\n    return \"\"\n}\nbot = discord.bot()\nbot.on_message(&answer)\nshow bot.preview_event(\"{\\\"op\\\":0,\\\"t\\\":\\\"MESSAGE_CREATE\\\",\\\"d\\\":{\\\"channel_id\\\":\\\"123\\\",\\\"content\\\":\\\"hola\\\",\\\"author\\\":{\\\"id\\\":\\\"456\\\"}}}\")",
       "status": "executed",
       "output": "¡Hola, 456!\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 4,
+      "index": 5,
       "source": "import tripol.discord\n\nfunc joined(event:discord.GatewayEvent)->bool {\n    show \"Nuevo miembro\", event.guild_id, event.user_id\n    return true\n}\n\nregistry = discord.events()\nregistry.intent(\"GUILD_MEMBERS\")\nregistry.on(\"member_join\", &joined)\nshow registry.preview(\"{\\\"op\\\":0,\\\"t\\\":\\\"GUILD_MEMBER_ADD\\\",\\\"s\\\":9,\\\"d\\\":{\\\"guild_id\\\":\\\"321\\\",\\\"user\\\":{\\\"id\\\":\\\"567\\\"}}}\")",
       "status": "executed",
       "output": "Nuevo miembro 321 567\ntrue\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 5,
+      "index": 6,
       "source": "import tripol.discord\n\nfunc answer(ctx:discord.Interaction)->string {return ctx.reply(\"Hola, \"+ctx.option_text(\"text\"),true)}\nb=discord.bot()\nb.slash(\"hola\",\"Saluda\",&answer)\nshow b.preview_interaction(\"{\\\"op\\\":0,\\\"t\\\":\\\"INTERACTION_CREATE\\\",\\\"d\\\":{\\\"id\\\":\\\"123\\\",\\\"token\\\":\\\"fixture-token\\\",\\\"type\\\":2,\\\"data\\\":{\\\"type\\\":1,\\\"name\\\":\\\"hola\\\",\\\"options\\\":[{\\\"type\\\":3,\\\"name\\\":\\\"text\\\",\\\"value\\\":\\\"Ana\\\"}]}}}\")",
       "status": "executed",
       "output": "{\"type\":4,\"data\":{\"content\":\"Hola, Ana\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 6,
+      "index": 7,
       "source": "import tripol.discord\n\nfunc report(ctx:discord.Interaction)->string {\n    if ctx.respond(ctx.defer(true)) {\n        if ctx.edit_reply(\"Informe listo\") {\n            ctx.followup(\"Consulta el resultado arriba\", true)\n        }\n    }\n    return \"\"\n}\n\nbot = discord.bot()\nbot.slash(\"informe\", \"Prepara un informe\", &report)\nbot.start()",
       "status": "native-only"
     },
     {
       "file": "docs/discord.html",
-      "index": 7,
+      "index": 8,
       "source": "import tripol.discord\n\nfunc search(ctx:discord.Interaction)->string {\n    return ctx.reply(\"Busca \" + ctx.option_text(\"query\"), true)\n}\n\nfunc suggest(ctx:discord.Interaction)->string {\n    choices = discord.command_choices()\n    if ctx.focused()==\"query\" and ctx.option_text(\"query\")==\"ca\" {\n        choices.add(\"Café\", \"cafe\")\n    }\n    return ctx.autocomplete(choices)\n}\n\narguments = discord.slash_options()\narguments.add(\"query\", \"Qué buscar\", \"string\", true, true)\nlimits = discord.command_choices()\nlimits.integer(\"Diez\", 10)\narguments.choose(\"limit\", \"Resultados máximos\", limits)\ncommands = discord.slash_options()\ncommands.subcommand(\"find\", \"Busca una bebida\", arguments)\nroot = discord.slash_options()\nroot.group(\"drinks\", \"Bebidas\", commands)\nbot = discord.bot()\nbot.slash_with_options(\"order\", \"Haz tu pedido\", &search, root)\nbot.on_autocomplete(\"order\", &suggest)\nshow bot.preview_interaction(\"{\\\"op\\\":0,\\\"t\\\":\\\"INTERACTION_CREATE\\\",\\\"d\\\":{\\\"type\\\":4,\\\"data\\\":{\\\"type\\\":1,\\\"name\\\":\\\"order\\\",\\\"options\\\":[{\\\"type\\\":2,\\\"name\\\":\\\"drinks\\\",\\\"options\\\":[{\\\"type\\\":1,\\\"name\\\":\\\"find\\\",\\\"options\\\":[{\\\"name\\\":\\\"query\\\",\\\"type\\\":3,\\\"value\\\":\\\"ca\\\",\\\"focused\\\":true}]}]}]}}}\")",
       "status": "executed",
       "output": "{\"type\":8,\"data\":{\"choices\":[{\"name\":\"Café\",\"value\":\"cafe\"}]}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 8,
+      "index": 9,
       "source": "import tripol.discord\n\npanel = discord.components()\npanel.text(\"## Bienvenido\")\npanel.separator()\npanel.link(\"Docs\", \"https://example.org/docs\")\nmessage = discord.components()\nmessage.container(panel, 41215)\nshow message.payload()",
       "status": "executed",
       "output": "{\"flags\":32768,\"components\":[{\"type\":17,\"components\":[{\"type\":10,\"content\":\"## Bienvenido\"},{\"type\":14,\"divider\":true,\"spacing\":1},{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"Docs\",\"url\":\"https://example.org/docs\"}]}],\"spoiler\":false,\"accent_color\":41215}],\"allowed_mentions\":{\"parse\":[]}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 9,
+      "index": 10,
       "source": "import tripol.discord\n\nserver = discord.guild(\"123\")\nmember = server.member(\"456\")\nshow member.read()",
       "status": "native-only"
     },
     {
       "file": "docs/discord.html",
-      "index": 10,
+      "index": 11,
       "source": "import tripol.discord\n\ndiscord.login_env()\ndiscord.activity(\"Programming in TRIPOL\")\ndiscord.reply(\"!hello\", \"Hello, friend!\")\ndiscord.reply(\"!ping\", \"Pong!\")\ndiscord.run()\n",
       "status": "native-only"
     },
@@ -195,6 +202,13 @@
       "source": "func greet(name:string)->string {\n    return \"Hola, \" + name\n}\n\nfunc apply(handler:func(string)->string,name:string)->string {\n    return handler(name)\n}\n\nshow apply(&greet, \"Ada\")",
       "status": "executed",
       "output": "Hola, Ada\n"
+    },
+    {
+      "file": "docs/learn-functions.html",
+      "index": 5,
+      "source": "func apply(action:func(int)->int) { action(21) }\nfunc twice(x) { x*2 }\nshow apply(twice)\nshow apply(func(x) { x+1 })",
+      "status": "executed",
+      "output": "42\n22\n"
     },
     {
       "file": "docs/learn-hello.html",
@@ -992,7 +1006,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "6043\n"
+      "output": "5428\n"
     },
     {
       "file": "docs/libraries/ui.html",
