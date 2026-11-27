@@ -26,6 +26,7 @@ type compilationReport struct{
  SourceFiles int `json:"source_files"`
  Functions int `json:"functions"`
  EmittedFunctions int `json:"emitted_functions"`
+ FlowSSAFunctions int `json:"flow_ssa_functions"`
  ValidationBufferBytes int `json:"validation_buffer_capacity_bytes"`
  ImageBytes int `json:"image_bytes"`
  SHA256 string `json:"sha256"`
@@ -53,6 +54,7 @@ func measuredCompilation(fs []fn,ss []stmt,target,profile string)([]byte,compila
  r.ReachabilityNS=time.Since(phase).Nanoseconds()
  phase=time.Now()
  a:=generateCode(fs,ss,target,profile!="debug",live,profile=="turbo",profile=="balanced"||profile=="turbo")
+ r.FlowSSAFunctions=a.flowSSAFunctions
  r.EmissionNS=time.Since(phase).Nanoseconds()
  phase=time.Now()
  bin:=linkCode(a)
@@ -91,5 +93,5 @@ func compileReportCLI(args []string){
  {"Load and parse",r.LoadNS},{"Validation",r.ValidationNS},{"CFG optimization",r.OptimizationNS},{"Reachability",r.ReachabilityNS},{"Native emission",r.EmissionNS},{"Runtime and linking",r.LinkNS},{"Total",r.TotalNS},
  }{fmt.Printf("%-22s %10.3f ms\n",p.name,float64(p.ns)/1e6)}
  fmt.Printf("CFG substitutions: %d; agreed joins: %d; constant branches: %d; loop invariants: %d\n",r.CFGSubstitutions,r.CFGJoins,r.CFGConstantBranches,r.CFGLoopInvariants)
- fmt.Printf("Functions selected: %d / %d\nValidation code buffer: %d bytes (capacity, not RSS)\nImage: %d bytes\nSHA256: %s\n",r.EmittedFunctions,r.Functions,r.ValidationBufferBytes,r.ImageBytes,r.SHA256)
+ fmt.Printf("Functions selected: %d / %d\nFlow SSA functions: %d\nValidation code buffer: %d bytes (capacity, not RSS)\nImage: %d bytes\nSHA256: %s\n",r.EmittedFunctions,r.Functions,r.FlowSSAFunctions,r.ValidationBufferBytes,r.ImageBytes,r.SHA256)
 }

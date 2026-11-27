@@ -9,6 +9,10 @@ import (
 // Local modules share the top-level function namespace; no global statements in libraries.
 // Paths are resolved relative to the importer, and confined to the root project directory.
 func loadProject(source string) ([]fn, []stmt, []string) {
+	return loadProjectCached(source, nil)
+}
+
+func loadProjectCached(source string, cache *moduleCache) ([]fn, []stmt, []string) {
 	abs, e := filepath.Abs(source)
 	if e != nil {
 		die("%v", e)
@@ -20,6 +24,7 @@ func loadProject(source string) ([]fn, []stmt, []string) {
 	root := filepath.Dir(abs)
 	states := map[string]int{}
 	libs := standardLoader()
+	libs.cache = cache
 	packages := newVaultLoader(root, libs)
 	var fs []fn
 	var main []stmt
@@ -56,7 +61,7 @@ func loadProject(source string) ([]fn, []stmt, []string) {
 		if total > 4<<20 {
 			die("project source too large")
 		}
-		imports, local, ss := parseNamed(string(b), path)
+		imports, local, ss := cache.parse(b, path)
 		if !entry && len(ss) != 0 {
 			die("module %s may contain functions only", path)
 		}

@@ -504,6 +504,10 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 }
 func parse(s string) ([]fn, []stmt) {
 	imports, fs, ss := parseUnit(s)
+	return withStandardImports(imports, fs), ss
+}
+
+func withStandardImports(imports []string, fs []fn) []fn {
 	if len(imports) != 0 {
 		libs := standardLoader()
 		for _, name := range imports {
@@ -514,7 +518,7 @@ func parse(s string) ([]fn, []stmt) {
 		}
 		fs = append(libs.functions, fs...)
 	}
-	return fs, ss
+	return fs
 }
 
 // Direct x86-64 assembler with relative relocations. No external toolchain.
@@ -540,6 +544,7 @@ type asm struct {
 	guard                bool
 	trace                bool
 	profileTraining      bool
+	flowSSAFunctions     int
 }
 
 func (a *asm) emit(b ...byte) { a.b = append(a.b, b...) }
@@ -1179,6 +1184,9 @@ func (c *compiler) function(f fn, main bool) {
 			a.emit(0xc3)
 			return
 		}
+		if c.emitNativeFlowSSA(f) {
+			return
+		}
 	}
 	if a.trace && main {
 		a.emit(0x45, 0x31, 0xff)
@@ -1781,12 +1789,20 @@ func cli() {
 	if (cmd == "run" || cmd == "bench") && (target != runtime.GOOS || runtime.GOARCH != "amd64") {
 		die("run requires local x86-64 target")
 	}
-	fs, ss, inputs := loadProject(src)
+	if pgoFile != "" && (useCache || profile == "debug" || diagnosticTrace) {
+		die("--pgo requires an untraced, non-debug build without --cache")
+	}
+	var cache *moduleCache
+	if useCache {
+		cache = newBuildCache(profile)
+	}
+	fs, ss, inputs := loadProjectCached(src, cache)
 	var bin []byte
 	if pgoFile!="" {
-		if useCache||profile=="debug"||diagnosticTrace{die("--pgo requires an untraced, non-debug build without --cache")}
 		bin=compileParsedPGO(fs,ss,target,profile,readPGO(pgoFile,fs,ss,target))
-	} else if useCache { bin = compileWithBuildCache(fs, ss, target, profile) } else { bin = compileParsed(fs, ss, target, profile) }
+	} else {
+		bin = cache.compile(fs, ss, target, profile)
+	}
 	if cmd == "check" {
 		fmt.Println("OK")
 		return

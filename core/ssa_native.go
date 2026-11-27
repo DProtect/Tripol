@@ -73,12 +73,7 @@ func (c *compiler) emitNativeSSA(f fn)bool{
    if rhs.op=="const.i64"&&a.divPowerOfTwo(rhs.literal,remainder){save(i);continue}
    right:=plan.locations[v.args[1]]
    if right.spill!=0{a.loadRCX(right.spill)}else{a.regMove(1,right.reg)}
-   a.emit(0x48,0x85,0xc9);a.j(0x84,"err")
-   ok:=a.fresh()
-   a.emit(0x48,0x83,0xf9,0xff);a.j(0x85,ok)
-   a.emit(0x48,0xba,0,0,0,0,0,0,0,0x80,0x48,0x39,0xd0);a.j(0x84,"err")
-   a.label(ok);a.emit(0x48,0x99,0x48,0xf7,0xf9)
-   if remainder{a.emit(0x48,0x89,0xd0)}
+   a.checkedSSADivision(remainder)
    save(i)
   default:
    // Even a dead checked result is evaluated; error order is unchanged.
@@ -92,6 +87,22 @@ func (c *compiler) emitNativeSSA(f fn)bool{
  }
  load(p.result);a.emit(0xc9,0xc3)
  return true
+}
+
+// Signed division with the dividend in RAX and the divisor in RCX.
+func (a *asm) checkedSSADivision(remainder bool) {
+	a.emit(0x48, 0x85, 0xc9)
+	a.j(0x84, "err")
+	ok := a.fresh()
+	a.emit(0x48, 0x83, 0xf9, 0xff)
+	a.j(0x85, ok)
+	a.emit(0x48, 0xba, 0, 0, 0, 0, 0, 0, 0, 0x80, 0x48, 0x39, 0xd0)
+	a.j(0x84, "err")
+	a.label(ok)
+	a.emit(0x48, 0x99, 0x48, 0xf7, 0xf9)
+	if remainder {
+		a.emit(0x48, 0x89, 0xd0)
+	}
 }
 func ssaLocationReport(p ssaProgram)string{
  a:=allocateSSA(p)

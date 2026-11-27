@@ -13,6 +13,7 @@ var standardNames = []string{"animation", "arrays", "atomic", "audio", "binary",
 type stdLoader struct {
 	state     map[string]int
 	functions []fn
+	cache     *moduleCache
 }
 
 func standardLoader() *stdLoader { return &stdLoader{state: map[string]int{}} }
@@ -41,7 +42,7 @@ func (l *stdLoader) add(name string) {
 		return
 	}
 	l.state[name] = 1
-	imports, fs, ss := parseNamed(standardSource(name), "tripol."+name)
+	imports, fs, ss := l.cache.parse([]byte(standardSource(name)), "tripol."+name)
 	if len(ss) != 0 {
 		die("standard library cannot have executable top-level statements")
 	}

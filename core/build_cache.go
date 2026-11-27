@@ -77,17 +77,22 @@ func cacheCompilerDigest() ([32]byte, bool) {
 	return digest, true
 }
 
-func readBuildCache(path string, target string) []byte {
+func readCachePayload(path string, limit int64) []byte {
 	f, err := os.Open(path)
 	if err != nil { return nil }
 	defer f.Close()
 	st, err := f.Stat()
-	if err != nil || !st.Mode().IsRegular() || st.Size() <= sha256.Size || st.Size() > maxBuildCacheImage+sha256.Size { return nil }
-	data, err := io.ReadAll(io.LimitReader(f, maxBuildCacheImage+sha256.Size+1))
-	if err != nil || len(data) <= sha256.Size || len(data) > maxBuildCacheImage+sha256.Size { return nil }
+	if err != nil || !st.Mode().IsRegular() || st.Size() <= sha256.Size || st.Size() > limit+sha256.Size { return nil }
+	data, err := io.ReadAll(io.LimitReader(f, limit+sha256.Size+1))
+	if err != nil || len(data) <= sha256.Size || int64(len(data)) > limit+sha256.Size { return nil }
 	image := data[sha256.Size:]
 	digest := sha256.Sum256(image)
 	if !bytes.Equal(data[:sha256.Size], digest[:]) { return nil }
+	return image
+}
+
+func readBuildCache(path string, target string) []byte {
+	image := readCachePayload(path, maxBuildCacheImage)
 	switch target {
 	case "linux":
 		if !bytes.HasPrefix(image, []byte("\x7fELF")) { return nil }
@@ -114,15 +119,20 @@ func writeBuildCache(path string, image []byte) {
 
 // Only called for explicit, non-debug build requests. Cache failures are
 // ordinary misses. Never cache compilation errors or diagnostic-trace builds.
-func compileWithBuildCache(fs []fn, ss []stmt, target, profile string) []byte {
-	if diagnosticTrace || profile == "debug" { return compileParsed(fs, ss, target, profile) }
+func newBuildCache(profile string) *moduleCache {
+	if diagnosticTrace || profile == "debug" { return nil }
 	dir, err := os.UserCacheDir()
-	if err != nil { return compileParsed(fs, ss, target, profile) }
+	if err != nil { return nil }
 	digest, ok := cacheCompilerDigest()
+	if !ok { return nil }
+	return &moduleCache{dir: filepath.Join(dir, "TRIPOL", "modules-r1"), compiler: digest}
+}
+
+func (c *moduleCache) compile(fs []fn, ss []stmt, target, profile string) []byte {
+	if c == nil { return compileParsed(fs, ss, target, profile) }
+	key, ok := buildCacheKey(c.compiler, fs, ss, target, profile)
 	if !ok { return compileParsed(fs, ss, target, profile) }
-	key, ok := buildCacheKey(digest, fs, ss, target, profile)
-	if !ok { return compileParsed(fs, ss, target, profile) }
-	path := filepath.Join(dir, "TRIPOL", "compiler-r1", key+".bin")
+	path := filepath.Join(filepath.Dir(c.dir), "compiler-r1", key+".bin")
 	if image := readBuildCache(path, target); image != nil { return image }
 	image := compileParsed(fs, ss, target, profile)
 	writeBuildCache(path, image)
