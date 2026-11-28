@@ -8,19 +8,19 @@
 
 A free, experimental programming language that turns readable code directly into native x86-64 executables.
 
-![Version](https://img.shields.io/badge/version-0.27.1-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
+![Version](https://img.shields.io/badge/version-0.28.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
 
 [Official website](https://tripollas.github.io/Tripol/) · [Online docs](https://tripollas.github.io/Tripol/docs/) · [Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
 
 </div>
 
-## DISCORD REVOLUTION — 0.28 development
+## DISCORD REVOLUTION — v0.28.0 experimental release
 
-Source builds identify as **0.28.0 — DISCORD REVOLUTION**. Windows and Linux builds support Discord Gateway and REST. The development build includes typed message and interaction callbacks, slash registration, modals, offline previews, embeds and Components V2 builders. See the bilingual guide and validation matrix for supported features and open work. [Discord guide](docs/discord.md) · [Status and evidence](docs/discord-status.md)
+**0.28.0 — DISCORD REVOLUTION** introduces SIMPLE R2 contextual inference, inline callbacks and static overloads, alongside slash commands, context menus, modals, embeds, Components V2, emojis, cooldowns, permissions and server administration. Windows and Linux support experimental Discord networking through the shared launcher, including Resume, compression, rate limits and multipart. Prolonged live validation remains pending. [Release and downloads](https://github.com/Tripollas/Tripol/releases/tag/v0.28.0). See the bilingual guide and validation matrix for supported features and open work. [Discord guide](docs/discord.md) · [Status and evidence](docs/discord-status.md)
 
 ## AI-ready reference / Referencia para IA
 
-[TRIPOL-AI.md](TRIPOL-AI.md) contains the full v0.27.1 documentation snapshot: 64 modules, 383 functions, 18 guides and 14 guided lessons. Download the Markdown and attach it to your preferred AI assistant. [Direct download](https://tripollas.github.io/Tripol/TRIPOL-AI.md).
+[TRIPOL-AI.md](TRIPOL-AI.md) includes v0.28 Discord additions and the historical v0.27.1 documentation snapshot. The current online catalog has 64 modules, 449 functions and 196 methods (645 entries). Download the Markdown and attach it to your preferred AI assistant. [Direct download](https://tripollas.github.io/Tripol/TRIPOL-AI.md).
 
 ## Why TRIPOL?
 
@@ -28,7 +28,7 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 | Current release | Built-in modules | Callable library functions* | Hello world (Windows / Linux) |
 |---|---:|---:|---:|
-| **0.27.1 — QUANTUM X (experimental release)** | 64 | 383 (including scanner helpers) | see v0.24 baseline |
+| **0.28.0 — DISCORD REVOLUTION (experimental release)** | 64 | 449 functions + 196 methods (645 catalog entries) | see v0.24 baseline |
 
 *Includes JSON scanner helpers. Sizes are measured for `examples/hello.tri` in nano mode, not a promise for arbitrary programs. TRIPOL is pre-1.0 and is not yet a replacement for mature production languages.*
 
@@ -95,7 +95,7 @@ The small root `main.go` keeps `go build -o tripol .` compatible. Run the comple
 
 ## Quick start
 
-Install the [Windows x64 setup](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Setup-x64.exe), [Linux x64 archive](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Linux-x64.tar.gz), or [build from source](docs/build.md). The Windows installer is unsigned, per-user and configures PATH. See the [experimental v0.27.1 release](https://github.com/Tripollas/Tripol/releases/tag/v0.27.1) for all assets, including the VS Code VSIX and SHA-256 checksums. Physical Ryzen 5 3400G and Radeon Vega 11 / WebGPU validation remains pending.
+Install the [Windows x64 setup](https://github.com/Tripollas/Tripol/releases/download/v0.28.0/TRIPOL-v0.28-Setup-x64.exe), [Linux x64 archive](https://github.com/Tripollas/Tripol/releases/download/v0.28.0/TRIPOL-v0.28-Linux-x64.tar.gz), or [build from source](docs/build.md). The Windows installer is unsigned, per-user and configures PATH. See the [experimental v0.28.0 release](https://github.com/Tripollas/Tripol/releases/tag/v0.28.0) for all assets, including the VS Code VSIX and SHA-256 checksums. Physical Ryzen 5 3400G and Radeon Vega 11 / WebGPU validation remains pending.
 
 ```cmd
 tripol --version
@@ -118,19 +118,21 @@ show "Total:", sum(numbers)
 
 Run `tripol learn es` for the offline Spanish tutorial. See [Inicio rápido en español](docs/inicio.md).
 
-## Discord R5 (Windows)
+## Discord Revolution (Windows and Linux)
 
 ```tripol
 import tripol.discord
 
-discord.login_env()
-discord.activity("Programming in TRIPOL")
-discord.reply("!hola", "Hola desde TRIPOL!")
-discord.reply("!ping", "Pong!")
-discord.run()
+bot = discord.bot()
+
+bot.slash("hola", "Saluda", func(ctx) {
+    ctx.reply("Hola desde TRIPOL!")
+})
+
+bot.start()
 ```
 
-Up to 16 exact command/reply pairs. `discord.login("TOKEN")` also accepts a literal token for private local tests; never distribute that source or binary. ORIGIN replies in the channel that received a command without requiring a channel ID. The native experimental Gateway WebSocket client was introduced in NEXUS. `discord.setup` combines login and channel selection; `discord.welcome` sends after READY. Offline tests and PE imports verified; live Windows Gateway and latency not yet tested. No resume or automatic reconnect. See [Discord R5](docs/discord.md).
+Set `DISCORD_TOKEN` in the process environment and use `tripol run` in an authorized test server. The shared launcher supports automatic reconnect and Resume, REST rate limits, compression and multipart; directly launched Windows PE files use the older WinHTTP path. The Discord catalog contains 98 functions and 196 methods. Live networking remains experimental. See [Discord guide](docs/discord.md), [validation](docs/discord-validation.md) and [SDK benchmarks](benchmarks/discord_sdks/).
 
 ## Language
 
@@ -217,7 +219,7 @@ This is a modal form with a text field and submit/cancel buttons, not a general 
 | UI and geometry | `ui`, `colors`, `geometry`, `canvas`, `game`, `events`, `image`, `animation`, `physics`, `vector`, `sprite`, `camera`, `particles` |
 | Data and testing | `dictionary`, `stack`, `queue`, `testing`, `profiler` |
 
-Use `import tripol.math`, then `math.square(7)`. Run `tripol libs` or `tripol docs json` to inspect exact available functions offline. See [library guide](docs/libraries.md) for supported operations and restrictions. HTTPS and Discord REST are Windows-only. OMEGA adds a bounded, single-channel REST polling bot; see [Discord setup](docs/discord.md). NEXUS adds experimental Gateway reception and initial presence configuration; live Windows validation remains pending.
+Use `import tripol.math`, then `math.square(7)`. Run `tripol libs` or `tripol docs json` to inspect exact available functions offline. See [library guide](docs/libraries.md) for supported operations and restrictions. Discord Gateway and REST support Windows and Linux through the experimental shared launcher; see [Discord setup](docs/discord.md). General HTTPS support is platform-dependent.
 
 ### Vault — local packages
 
