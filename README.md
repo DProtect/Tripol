@@ -24,7 +24,7 @@ A free, experimental programming language that turns readable code directly into
 
 ## AI-ready reference / Referencia para IA
 
-[TRIPOL-AI.md](TRIPOL-AI.md) includes v0.28 Discord additions and the historical v0.27.1 documentation snapshot. The current online catalog has 64 modules, 449 functions and 196 methods (645 entries). Download the Markdown and attach it to your preferred AI assistant. [Direct download](https://tripollas.github.io/Tripol/TRIPOL-AI.md).
+[TRIPOL-AI.md](TRIPOL-AI.md) covers the v0.29 development APIs and retains the earlier language and library reference. The development catalog has 64 modules, 466 public functions and 251 public methods (717 entries). [Direct download](https://tripollas.github.io/Tripol/TRIPOL-AI.md)
 
 ## Why TRIPOL?
 
