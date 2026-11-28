@@ -9,7 +9,7 @@ for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=n
 function localLinks(){for(const a of $$('a[href]')){const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||/^(https?:|mailto:)/i.test(raw)&&a.origin!==location.origin)continue;const u=new URL(raw,location.href);if(!u.pathname.endsWith('.html'))continue;u.searchParams.set('lang',lang);a.href=u.href;}}
 // Shared navigation and current release label on all reference pages.
 const side=document.querySelector('#doc-side');
-side.querySelector('.side-kicker').textContent='QUANTUM X / 0.27.1';
+side.querySelector('.side-kicker').textContent='DISCORD REVOLUTION / 0.28.0';
 const crumb=document.querySelector('.crumb > span:last-child');if(crumb&&/^0\.(24|25)$/.test(crumb.textContent))crumb.textContent='0.26';
 const meta=document.querySelector('.lib-meta > span:first-child');if(meta&&/^(ASCENSION 0\.24|EVOLUTION 0\.25)$/.test(meta.textContent))meta.textContent='OVERDRIVE 0.26';
 const guide=side.querySelector('nav[aria-label="Guides"]');

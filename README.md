@@ -16,25 +16,25 @@ The `gh-pages` branch hosts the official static website for TRIPOL, a free exper
 
 The compiler and standard library source code live in [`main`](https://github.com/Tripollas/Tripol/tree/main).
 
-## QUANTUM X — v0.27.1 experimental release
+## DISCORD REVOLUTION — v0.28.0 experimental release
 
 - Official landing page with a monochrome, code-focused design and the TRIPOL emblem.
 - English by default, with Spanish navigation and library overviews. Code examples remain in English.
-- Reference pages for all 64 standard libraries and 383 callable functions.
+- Reference pages for all 64 standard libraries, 449 functions and 196 methods (645 catalog entries).
 - Searchable documentation, benchmark results, install scripts and official GitHub Releases downloads, GENESIS R3, UPDATE R2 and new Bitset/Profiler guides.
 
 ## Downloads
 
 | Platform | Distribution |
 | --- | --- |
-| Windows x64 | [Installer ZIP](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Installer.zip) |
-| Windows x64 | [Setup EXE](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Setup-x64.exe) |
-| Linux x64 | [Tarball](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Linux-x64.tar.gz) |
-| Source | [Source ZIP](https://github.com/Tripollas/Tripol/archive/refs/tags/v0.27.1.zip) |
-| VS Code | [VSIX](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/tripol-language-0.27.1.vsix) |
-| Integrity | [SHA-256 checksums](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/SHA256SUMS.txt) |
+| Windows x64 | [Installer ZIP](https://github.com/Tripollas/Tripol/releases/download/v0.28.0/TRIPOL-v0.28-Installer.zip) |
+| Windows x64 | [Setup EXE](https://github.com/Tripollas/Tripol/releases/download/v0.28.0/TRIPOL-v0.28-Setup-x64.exe) |
+| Linux x64 | [Tarball](https://github.com/Tripollas/Tripol/releases/download/v0.28.0/TRIPOL-v0.28-Linux-x64.tar.gz) |
+| Source | [Source ZIP](https://github.com/Tripollas/Tripol/archive/refs/tags/v0.28.0.zip) |
+| VS Code | [VSIX](https://github.com/Tripollas/Tripol/releases/download/v0.28.0/tripol-language-0.28.0.vsix) |
+| Integrity | [SHA-256 checksums](https://github.com/Tripollas/Tripol/releases/download/v0.28.0/SHA256SUMS.txt) |
 
-QUANTUM X is a pre-release. The previous v0.24 downloads remain archived in downloads/. The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
+DISCORD REVOLUTION is a pre-release. Live Discord validation remains pending. The previous v0.24 downloads remain archived in downloads/. The Windows installer is unsigned. Review installation scripts and verify the checksums before running downloaded software.
 
 ## Playground R3 / WEB ENGINE R1 (experimental)
 
@@ -71,4 +71,4 @@ The production Go compiler is now in [`core/`](https://github.com/Tripollas/Trip
 
 ## AI-ready reference / Referencia para IA
 
-[Download TRIPOL-AI.md](TRIPOL-AI.md) — complete v0.27.1 reference with 64 modules, 383 functions, 18 guides and 14 lessons. Attach it to an AI assistant to ask questions or write TRIPOL code.
+[Download TRIPOL-AI.md](TRIPOL-AI.md) — reference including the v0.28 Discord additions and the historical v0.27.1 snapshot. Attach it to an AI assistant to ask questions or write TRIPOL code.
