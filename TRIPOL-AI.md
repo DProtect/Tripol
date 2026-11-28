@@ -1,151 +1,32 @@
-# TRIPOL AI Reference — v0.27.1 QUANTUM X
+# TRIPOL AI Reference — v0.28.0 DISCORD REVOLUTION
 
-**Referencia integral oficial para asistentes de IA / Complete reference for AI assistants**
+**Referencia oficial para asistentes de IA / Official reference for AI assistants**
 
-Experimental pre-release · Apache-2.0 · Windows and Linux x86-64. Web engine support is a separate subset. Official release: https://github.com/Tripollas/Tripol/releases/tag/v0.27.1 · Docs: https://tripollas.github.io/Tripol/docs/
-
-## Anexo de desarrollo / Development addendum — v0.28 DISCORD REVOLUTION
-
-Use this section for source builds that report `0.28.0`. The reference below describes the published 0.27.1 snapshot. See the [bilingual Discord guide](https://tripollas.github.io/Tripol/docs/discord.html).
-
-Usa este anexo para compilaciones desde código fuente que indiquen `0.28.0`. La referencia que sigue corresponde a la v0.27.1 publicada. Consulta la [guía bilingüe de Discord](https://tripollas.github.io/Tripol/docs/discord.html).
-
-```tripol
-import tripol.discord
-
-bot = discord.bot()
-bot.command("hola", "¡Hola, compañero!")
-show bot.preview("hola")
-
-embed = discord.embed()
-embed.title("DISCORD REVOLUTION")
-embed.field("Versión", "0.28.0", true)
-show embed.payload()
-```
-
-Gateway text commands compare the decoded JSON string to the configured UTF-8 command. The `json.string_equals(raw, value)` helper does the same comparison offline. Los comandos del Gateway comparan el texto UTF-8 una vez interpretados los escapes JSON.
-
-Bot methods are `prefix(value)`, `status(value)`, `activity(value)`, `command(name, response)`, `preview(content)` and `start()`. Embed methods are `title(value)`, `description(value)`, `footer(value)`, `color("#RRGGBB")`, `field(label, value, inline=false)`, `payload()` and `send(channel_id)`. Use `DISCORD_TOKEN` for live calls on Windows and Linux x86-64. Preview and JSON generation run offline on Linux, Windows and WebAssembly.
-
-Los métodos `start()` y `send(channel_id)` usan `DISCORD_TOKEN` en Windows y Linux x86-64. La vista previa y el JSON funcionan sin conexión en Linux, Windows y WebAssembly.
-
-A method declaration uses a typed first argument. The caller supplies that argument before the dot. Structure aliases refer to the same object, so field assignments in a method are visible through all aliases.
-
-Una declaración de método usa un primer argumento tipado. Al llamar, ese argumento va antes del punto. Los alias apuntan a la misma estructura y observan los cambios de sus campos.
-
-```tripol
-struct Counter {value:int=0}
-func Counter.add(self:Counter,step=1)->int {
-    self.value += step
-    return self.value
-}
-counter = Counter()
-show counter.add(), counter.add(4)
-```
-
-Use `&function_name` to pass a named callback. Its type has the form `func(ArgumentType)->ResultType`. Call a callback through a local binding and pass all arguments. Pass `&handler` to `bot.on_message` with signature `func(discord.Message)->string`. `bot.preview_event(event_json)` validates and dispatches the same callback offline.
-
-Usa `&nombre_de_funcion` para pasar un callback con nombre. Su tipo tiene la forma `func(TipoEntrada)->TipoResultado`. Puedes llamar al callback desde una variable local pasando todos los argumentos. Pasa `&manejador` a `bot.on_message` con firma `func(discord.Message)->string`. `bot.preview_event(event_json)` valida y ejecuta el callback sin conexión.
-
-```tripol
-func greet(name:string)->string {return "Hola, " + name}
-func apply(handler:func(string)->string,name:string)->string {
-    return handler(name)
-}
-show apply(&greet, "Ada")
-```
-
-### Components V2 and Linux transport / Components V2 y transporte Linux
-
-`discord.components()` creates a message builder. Use `text`, `separator`, `link`, `button`, `section`, `gallery` and `container` before calling `payload()`. `send(channel_id)` uses the native REST path. Register button, select and modal callbacks on the bot.
-
-`discord.components()` crea un constructor de mensajes. Usa `text`, `separator`, `link`, `button`, `section`, `gallery` y `container` antes de llamar a `payload()`. `send(channel_id)` usa el transporte REST nativo. Registra los callbacks de botones, selectores y formularios en el bot.
-
-`tripol build` on Linux x86-64 packages Discord network programs with the TRIPOL launcher. Use the same launcher on Windows via `tripol run` or `tripol discord-run FILE.exe`. The launcher handles bounded reconnect, Resume, zlib-stream, HTTPS reuse and global and bucket rate limits. See the [development validation matrix](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
-
-Use `ctx.has_field(id)`, `ctx.field_values(id)` and `ctx.field_attachment(id)` for modal results. In a launcher-backed bot, `ctx.reply_files(content, paths, true)` acknowledges the interaction immediately. `choices.number(label, "0.5")` declares a fractional choice. `ctx.can(permission_name)` checks effective member permissions. Context menus offer `ctx.target_username()` and `ctx.target_content()`. For authorized end-to-end checks, see the [bilingual validation guide](https://github.com/Tripollas/Tripol/blob/main/docs/discord-validation.md).
-
-`tripol build` en Linux x86-64 empaqueta los programas de red Discord con el lanzador de TRIPOL. En Windows usa el mismo lanzador con `tripol run` o `tripol discord-run FILE.exe`. El lanzador admite reconexión acotada, Resume, zlib-stream, reutilización de HTTPS y límites globales y por bucket. Consulta la [matriz de validación](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
-
-On Linux x86-64, run `tripol discord studio main.tri --metrics studio.jsonl` for diagnostic samples. The file must be new. Studio writes process usage and Discord transport counters as JSON Lines.
-
-En Linux x86-64, ejecuta `tripol discord studio main.tri --metrics studio.jsonl` para obtener muestras de diagnóstico. El archivo debe ser nuevo. Studio guarda métricas del proceso y del transporte de Discord en JSON Lines.
-
-### Slash commands and interactions / Comandos slash e interacciones
-
-Use `bot.slash(name, description, &handler, guild_id="")` or `bot.slash_with_options(name, description, &handler, options, guild_id="")`. Handlers use `func(discord.Interaction)->string` and return a response built by the context. Use `ctx.reply(content, true)` for a private reply, `ctx.defer(true)` to acknowledge a delayed private response and `ctx.open_modal(form)` to open a `discord.modal(id,title)`. Invoke `bot.preview_interaction(event_json)` to test a callback offline. Button, select and modal handlers register with `on_button`, `on_select` and `on_modal`.
-
-Usa `bot.slash(nombre, descripción, &manejador, guild_id="")` o `bot.slash_with_options(nombre, descripción, &manejador, opciones, guild_id="")`. La firma es `func(discord.Interaction)->string`. Devuelve una respuesta creada por el contexto. Usa `ctx.reply(texto, true)` para responder en privado, `ctx.defer(true)` para diferir la respuesta y `ctx.open_modal(formulario)` para abrir un formulario. `bot.preview_interaction(event_json)` ejecuta el callback sin conexión. Registra botones, selectores y formularios con `on_button`, `on_select` y `on_modal`.
-
-Within a connected native handler, use `ctx.respond(ctx.defer(true))` to acknowledge a deferred private reply, then `ctx.edit_reply(text)` to fill it. `ctx.edit_response(body)` accepts the Discord edit payload for the original message, including a Components V2 layout. `ctx.followup(text, true)` returns a new private message ID on success. Return `""` after explicitly responding. Global and server commands can share a name with different callbacks.
-
-Dentro de un callback nativo conectado, usa `ctx.respond(ctx.defer(true))` para confirmar una respuesta privada diferida y `ctx.edit_reply(texto)` para completarla. `ctx.edit_response(body)` acepta el payload de edición del mensaje original, incluido un layout Components V2. `ctx.followup(texto, true)` devuelve el ID de un nuevo mensaje privado si se envía correctamente. Devuelve `""` después de responder explícitamente. Los comandos globales y de servidor pueden compartir nombre con callbacks distintos.
-
-Use `options.subcommand(name, description, arguments)` and `options.group(name, description, subcommands)` to declare slash trees. Read `ctx.command_group()` and `ctx.subcommand()` inside a handler. Use `choices=discord.command_choices()` with `choices.add(label, text)` or `choices.integer(label, number)` and pass it to `options.choose(name, description, choices)` for fixed choices. To use autocomplete, pass a fifth `true` argument to `options.add`, register `bot.on_autocomplete(name, &suggest, guild_id="")`, and return `ctx.autocomplete(choices)` from the typed callback. `ctx.focused()` returns the option name.
-
-Usa `options.subcommand(nombre, descripción, argumentos)` y `options.group(nombre, descripción, subcomandos)` para declarar árboles slash. Lee `ctx.command_group()` y `ctx.subcommand()` dentro del callback. Crea `choices=discord.command_choices()` con `choices.add(etiqueta, texto)` o `choices.integer(etiqueta, número)` y pásalo a `options.choose(nombre, descripción, choices)` para definir elecciones fijas. Para autocompletado, pasa `true` como quinto argumento de `options.add`, registra `bot.on_autocomplete(nombre, &sugerir, guild_id="")` y devuelve `ctx.autocomplete(choices)`. `ctx.focused()` devuelve el nombre de la opción.
-
-`discord.slash_options()`, `discord.select(id, kind)`, `discord.button_row()`, `discord.modal(id,title)` and `discord.embeds()` provide typed builders. Text Display has a 4,000-character aggregate limit. Traditional embeds support author, timestamp and batches of up to 10, with 6,000 combined text characters. A `discord-slash` project template demonstrates a complete feedback form flow on Windows and Linux backends.
-
-Modal fields also support `form.radio(label, menu)`, `form.checkbox_group(label, menu)` and `form.checkbox(id, label)`. Use `ctx.field`, `ctx.field_data` and `ctx.checked` to read their submitted values.
-
-Los formularios también admiten `form.radio(etiqueta, selector)`, `form.checkbox_group(etiqueta, selector)` y `form.checkbox(id, etiqueta)`. Lee las respuestas con `ctx.field`, `ctx.field_data` y `ctx.checked`.
-
-Use `registry=discord.events()` to register Gateway dispatches with `registry.on(name, &handler)`, using the handler type `func(discord.GatewayEvent)->bool`. `registry.intent("GUILD_MEMBERS")` explicitly opts into member events. Use `registry.preview(event_json)` to test the handler offline and `bot.start_with_events(registry)` to connect. The context fields include string IDs and `data_json`, and `event.field(name)` returns the property's raw JSON.
-
-Usa `registry=discord.events()` para registrar eventos del Gateway con `registry.on(nombre, &manejador)` y la firma `func(discord.GatewayEvent)->bool`. `registry.intent("GUILD_MEMBERS")` solicita explícitamente los eventos de miembros. Usa `registry.preview(event_json)` para probar sin conexión y `bot.start_with_events(registry)` para conectar. El contexto ofrece IDs de texto y `data_json`, y `event.field(nombre)` devuelve el valor de la propiedad en JSON.
-
-Use `server=discord.guild(guild_id)` and `member=server.member(user_id)` for native member moderation. Call `member.read()`, `kick()`, `ban()`, `unban()`, `nickname(text)`, `timeout(iso_8601)` or `role(role_id, false)`. An empty nickname clears it and `member.timeout()` removes the timeout. `member.dm(text)` returns the message ID. `tripol new Welcome --template discord-welcome` creates a channel welcome bot with explicit server and intent configuration.
-
-Usa `server=discord.guild(guild_id)` y `member=server.member(user_id)` para la moderación nativa de miembros. Llama a `member.read()`, `kick()`, `ban()`, `unban()`, `nickname(texto)`, `timeout(iso_8601)` o `role(role_id, false)`. Un apodo vacío lo elimina y `member.timeout()` retira el aislamiento. `member.dm(texto)` devuelve el ID del mensaje. `tripol new Bienvenida --template discord-welcome` crea un bot de bienvenida a un canal con configuración explícita de servidor e intent.
-
-### SIMPLE R2
-
-Use `func info(ctx) { ctx.reply("Hola") }` with `bot.slash("info", "Informacion", info)`. TRIPOL infers the callback signature and returns the final expression. `&info` and explicit types remain valid. Inline callbacks use `func(ctx) { ctx.reply("Gracias", true) }` and can capture constants declared with scalar literals. `ctx.reply` dispatches statically on strings, embeds, embed batches and Components V2. Use `discord.container("#FFFFFF")` and `panel.button("Aceptar", "accept", "primary")` for an accented panel. Use `ctx.edit_followup(id, text)` and `ctx.delete_followup(id)` within an acknowledged native callback.
-
-Usa `func info(ctx) { ctx.reply("Hola") }` con `bot.slash("info", "Informacion", info)`. TRIPOL infiere la firma del callback y devuelve la expresión final. `&info` y los tipos explícitos siguen siendo válidos. Escribe callbacks inline con `func(ctx) { ctx.reply("Gracias", true) }`; pueden capturar constantes declaradas con literales escalares. `ctx.reply` elige la implementación de texto, embed, lote de embeds o Components V2 durante la compilación. Usa `discord.container("#FFFFFF")` y `panel.button("Aceptar", "accept", "primary")` para un panel con color. Usa `ctx.edit_followup(id, texto)` y `ctx.delete_followup(id)` dentro de un callback nativo confirmado.
-
-Use `room=discord.channel_ref(id)` for channel moderation. `room.read()` fetches channel JSON, `room.slowmode(seconds)` sets or clears the delay, `room.pin(id,false)` unpins a message, and `room.react(id,emoji,false)` removes the bot's reaction. `room.purge(ids)` performs bulk deletion of 2–100 distinct message IDs. Discord enforces permissions and age limits.
-
-Usa `room=discord.channel_ref(id)` para moderar un canal. `room.read()` consulta el JSON del canal, `room.slowmode(segundos)` ajusta o retira la espera, `room.pin(id,false)` desfija un mensaje y `room.react(id,emoji,false)` retira la reacción del bot. `room.purge(ids)` ejecuta un borrado masivo de entre 2 y 100 IDs distintos. Discord aplica los permisos y límites de antigüedad.
-
-Use `panel.button("Aceptar", "accept", "success", "✅")` or pass an empty label for an emoji-only button. Custom emoji use an ID, `"<:name:id>"` or `"<a:name:id>"`. Keep the disabled flag before the emoji when calling `row.button`. Use `form.file(id, label, list(["image", ".pdf"]))` for file filters. On Linux use `panel.file(filename)` with `panel.send_files(channel_id, paths)`, or `embed.image(discord.attachment_url(filename))` with `embed.send_files(channel_id, paths)`. Register context menus with `bot.user_menu(name, handler)` and `bot.message_menu(name, handler)`. Read `ctx.target_id()` and `ctx.target()` inside the callback. Create and manage channels with `server.create_channel` and `discord.channel_ref(id)`. Use `server.audit()` for audit logs.
-
-Usa `panel.button("Aceptar", "accept", "success", "✅")` o una etiqueta vacía para un botón de solo emoji. Los emoji personalizados admiten un ID, `"<:nombre:id>"` o `"<a:nombre:id>"`. En `row.button` el argumento de deshabilitación precede al emoji. Usa `form.file(id, etiqueta, list(["image", ".pdf"]))` para filtrar archivos. En Linux usa `panel.file(nombre)` con `panel.send_files(channel_id, rutas)` o `embed.image(discord.attachment_url(nombre))` con `embed.send_files(channel_id, rutas)`. Registra menús contextuales con `bot.user_menu(nombre, manejador)` y `bot.message_menu(nombre, manejador)`. Lee `ctx.target_id()` y `ctx.target()` en el callback. Crea y administra canales con `server.create_channel` y `discord.channel_ref(id)`. Consulta auditoría con `server.audit()`.
-
-Create roles with `server.create_role(name, permissions, color)` and use `server.role_ref(id)` with `read`, `edit`, `permissions` and `delete`. Permission bitsets are decimal strings.
-
-Crea roles con `server.create_role(nombre, permisos, color)` y usa `server.role_ref(id)` con `read`, `edit`, `permissions` y `delete`. Los permisos se expresan como cadenas decimales.
-
-Linux Discord Studio can report event types, interaction types and names of commands admitted to the Gateway queue. Use the counts to inspect traffic.
-
-Discord Studio en Linux registra los tipos de evento, los tipos de interacción y los nombres de comandos admitidos en la cola del Gateway. Usa los contadores para inspeccionar el tráfico.
-
-Use `tripol new Moderator --template discord-moderation` for a bot restricted to `DISCORD_GUILD_ID` and `DISCORD_OPERATOR_ID`. It registers /kick, /ban and /unban with Discord permissions.
-
-Usa `tripol new Moderador --template discord-moderation` para un bot restringido a `DISCORD_GUILD_ID` y `DISCORD_OPERATOR_ID`. Registra /kick, /ban y /unban con los permisos de Discord.
-
-
-Use `bot.cooldown(name, seconds, scope="user", message="", guild_id="")` after registering a slash command. Persistent cooldowns use `bot.persist_cooldowns(path)`, and a specific record can be inspected or reset with `discord.cooldown_bucket`. Use `bot.permission(name, permission, target_option="", guild_id="")` for effective member and bot permissions and optional role hierarchy. For kick, ban and timeout, a single top-level user option is inferred. Use `bot.restrict(name, "role", role_id)` or the user, channel or guild scope for an allow list. `channel.lock()` and `channel.unlock()` preserve the @everyone overwrite within the same launcher.
-
-Registra primero el comando slash y usa `bot.cooldown(name, seconds, scope="user", message="", guild_id="")`. Para persistencia usa `bot.persist_cooldowns(path)`. Consulta y restablece un registro con `discord.cooldown_bucket`. `bot.permission(name, permission, target_option="", guild_id="")` comprueba permisos efectivos del miembro y del bot y admite verificación de jerarquía. Para expulsar, banear y aislar se infiere una única opción de usuario de primer nivel. Usa `bot.restrict(nombre, "role", id_rol)` o el ámbito de usuario, canal o servidor para restringir el comando. `channel.lock()` y `channel.unlock()` conservan el permiso de @everyone en el mismo lanzador.
-
-Manage invitations using `channel.invite`, webhooks with `channel.create_webhook`, threads with `channel.thread` and forums with `channel.post` and `discord.forum_tags`. These APIs are verified with local fixtures. See the [bilingual live validation guide](https://github.com/Tripollas/Tripol/blob/main/docs/discord-validation.md) for real authorized tests.
+Experimental public release · Apache-2.0 · Windows and Linux x86-64. Browser support is a separate subset. [Release and downloads](https://github.com/Tripollas/Tripol/releases/tag/v0.28.0) · [Documentation](https://tripollas.github.io/Tripol/docs/)
 
 ## Cómo usar este archivo / How to use this file
 
-Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».
+Usa TRIPOL v0.28.0. Prioriza SIMPLE R2, la guía de Discord de esta versión y las firmas del catálogo actual frente a explicaciones de versiones anteriores. No inventes módulos, sintaxis, métodos, sobrecargas ni capacidades. Escribe ejemplos sencillos y legibles, con tipos explícitos cuando el compilador los necesite. Indica qué requiere el compilador nativo, qué funciona sin conexión y qué necesita una aplicación y un servidor de Discord autorizados.
 
-Use exact documented syntax, signatures, imports, types, and platform restrictions. Do not invent Python/Rust/JavaScript syntax, modules or APIs. Distinguish native Windows/Linux, browser engine and experimental GENESIS. If uncertain, verify against the compiler. Expected outputs are documented examples, not evidence of a local test. Prefer the current function catalog and version-specific notes over historical claims. This is a documentation snapshot, not a guarantee of compatibility or a substitute for compiler tests.
+Use TRIPOL v0.28.0. Prefer the SIMPLE R2 section, the current Discord guide and exact catalog signatures over historical descriptions. Do not invent modules, syntax, methods, overloads or capabilities. Prefer readable code; add annotations when inference is insufficient. Distinguish native, browser and offline execution from connected validation. Test with the actual compiler before claiming that a program works.
 
-Sources: main `ad41ca60704675fb68a100dfa79e2a2e8210c5be`, gh-pages `279b0e2b4c4e5ab7c002a3ef79f21c082031a8d4`. Repository: https://github.com/Tripollas/Tripol
+**Current catalog / Catálogo actual:** 64 libraries, 449 functions and 196 methods (645 entries). Discord: 98 functions and 196 methods (294 entries across 15 categories).
 
-## Index
+**Version precedence / Prioridad de versión:** SIMPLE R2 extends older SIMPLE R1, Infinity and Quantum rules: contextual monomorphic inference, implicit final-expression returns, named and inline callbacks, scalar literal constant captures and static overloads are supported in their documented scope. Dynamic captures, general polymorphism and arbitrary named arguments are not established. Earlier limitations in historical sections describe earlier versions.
 
-- Project overview
-- Native language and toolchain guides
-- Complete standard library: 64 modules / 383 functions
-- Additional guides and 14 guided lessons
+**Discord:** A returned interaction payload or an explicit `ctx.respond(payload)` sends the initial response; a discarded `ctx.reply(...)` expression does not send it. Use the shared launcher on Windows and Linux for advanced networking; directly executed Windows PE uses the older WinHTTP path. Keep DISCORD_TOKEN in the process environment, never in source, logs or shared binaries. Long live validation, connected-bot comparisons and channel lock recovery after launcher restart remain pending. No production-readiness claim follows from local tests.
+
+Sources: release source `e635e7d26e6b347cb216e1476bffc193179c6236` (language, library and Discord guides); public README `9390b7f360bbff820878fb1836a6216595a452a1`; web catalog and categories `de3b2448bad3bcefd718ea8e1a786937bc6b0b18`. Remaining guide excerpts and 14 lessons retain their earlier snapshot from `ad41ca60704675fb68a100dfa79e2a2e8210c5be` and `279b0e2b4c4e5ab7c002a3ef79f21c082031a8d4`. Older version-specific instructions are historical, not current release requirements.
+
+## Index / Índice
+
+- Project overview and downloads
+- Native language and toolchain guides (including SIMPLE R2)
+- Discord Revolution guide
+- Complete standard library catalog (645 entries)
+- Additional official guides and 14 lessons
+
+---
 
 # Project overview
 
@@ -159,11 +40,19 @@ Sources: main `ad41ca60704675fb68a100dfa79e2a2e8210c5be`, gh-pages `279b0e2b4c4e
 
 A free, experimental programming language that turns readable code directly into native x86-64 executables.
 
-![Version](https://img.shields.io/badge/version-0.27.1-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
+![Version](https://img.shields.io/badge/version-0.28.0-111827) ![License](https://img.shields.io/badge/license-Apache%202.0-2563eb) ![Targets](https://img.shields.io/badge/targets-Windows%20%7C%20Linux-64748b) ![Status](https://img.shields.io/badge/status-experimental-orange)
 
 [Official website](https://tripollas.github.io/Tripol/) · [Online docs](https://tripollas.github.io/Tripol/docs/) · [Quick start](#quick-start) · [Language](#language) · [Libraries](#standard-library) · [Performance](#performance) · [Documentation](#documentation)
 
 </div>
+
+## DISCORD REVOLUTION — v0.28.0 experimental release
+
+**0.28.0 — DISCORD REVOLUTION** introduces SIMPLE R2 contextual inference, inline callbacks and static overloads, alongside slash commands, context menus, modals, embeds, Components V2, emojis, cooldowns, permissions and server administration. Windows and Linux support experimental Discord networking through the shared launcher, including Resume, compression, rate limits and multipart. Prolonged live validation remains pending. [Release and downloads](https://github.com/Tripollas/Tripol/releases/tag/v0.28.0). See the bilingual guide and validation matrix for supported features and open work. [Discord guide](docs/discord.md) · [Status and evidence](docs/discord-status.md)
+
+## AI-ready reference / Referencia para IA
+
+[TRIPOL-AI.md](TRIPOL-AI.md) includes v0.28 Discord additions and the historical v0.27.1 documentation snapshot. The current online catalog has 64 modules, 449 functions and 196 methods (645 entries). Download the Markdown and attach it to your preferred AI assistant. [Direct download](https://tripollas.github.io/Tripol/TRIPOL-AI.md).
 
 ## Why TRIPOL?
 
@@ -171,7 +60,7 @@ TRIPOL aims to combine approachable syntax, static type checking, fast compilati
 
 | Current release | Built-in modules | Callable library functions* | Hello world (Windows / Linux) |
 |---|---:|---:|---:|
-| **0.27.1 — QUANTUM X (experimental release)** | 64 | 383 (including scanner helpers) | see v0.24 baseline |
+| **0.28.0 — DISCORD REVOLUTION (experimental release)** | 64 | 449 functions + 196 methods (645 catalog entries) | see v0.24 baseline |
 
 *Includes JSON scanner helpers. Sizes are measured for `examples/hello.tri` in nano mode, not a promise for arbitrary programs. TRIPOL is pre-1.0 and is not yet a replacement for mature production languages.*
 
@@ -238,7 +127,7 @@ The small root `main.go` keeps `go build -o tripol .` compatible. Run the comple
 
 ## Quick start
 
-Install the [Windows x64 setup](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Setup-x64.exe), [Linux x64 archive](https://github.com/Tripollas/Tripol/releases/download/v0.27.1/TRIPOL-v0.27-Linux-x64.tar.gz), or [build from source](docs/build.md). The Windows installer is unsigned, per-user and configures PATH. See the [experimental v0.27.1 release](https://github.com/Tripollas/Tripol/releases/tag/v0.27.1) for all assets, including the VS Code VSIX and SHA-256 checksums. Physical Ryzen 5 3400G and Radeon Vega 11 / WebGPU validation remains pending.
+Install the [Windows x64 setup](https://github.com/Tripollas/Tripol/releases/download/v0.28.0/TRIPOL-v0.28-Setup-x64.exe), [Linux x64 archive](https://github.com/Tripollas/Tripol/releases/download/v0.28.0/TRIPOL-v0.28-Linux-x64.tar.gz), or [build from source](docs/build.md). The Windows installer is unsigned, per-user and configures PATH. See the [experimental v0.28.0 release](https://github.com/Tripollas/Tripol/releases/tag/v0.28.0) for all assets, including the VS Code VSIX and SHA-256 checksums. Physical Ryzen 5 3400G and Radeon Vega 11 / WebGPU validation remains pending.
 
 ```cmd
 tripol --version
@@ -261,19 +150,21 @@ show "Total:", sum(numbers)
 
 Run `tripol learn es` for the offline Spanish tutorial. See [Inicio rápido en español](docs/inicio.md).
 
-## Discord R5 (Windows)
+## Discord Revolution (Windows and Linux)
 
 ```tripol
 import tripol.discord
 
-discord.login_env()
-discord.activity("Programming in TRIPOL")
-discord.reply("!hola", "Hola desde TRIPOL!")
-discord.reply("!ping", "Pong!")
-discord.run()
+bot = discord.bot()
+
+bot.slash("hola", "Saluda", func(ctx) {
+    ctx.reply("Hola desde TRIPOL!")
+})
+
+bot.start()
 ```
 
-Up to 16 exact command/reply pairs. `discord.login("TOKEN")` also accepts a literal token for private local tests; never distribute that source or binary. ORIGIN replies in the channel that received a command without requiring a channel ID. The native experimental Gateway WebSocket client was introduced in NEXUS. `discord.setup` combines login and channel selection; `discord.welcome` sends after READY. Offline tests and PE imports verified; live Windows Gateway and latency not yet tested. Use the launcher for Resume and automatic reconnect. See [Discord R5](docs/discord.md).
+Set `DISCORD_TOKEN` in the process environment and use `tripol run` in an authorized test server. The shared launcher supports automatic reconnect and Resume, REST rate limits, compression and multipart; directly launched Windows PE files use the older WinHTTP path. The Discord catalog contains 98 functions and 196 methods. Live networking remains experimental. See [Discord guide](docs/discord.md), [validation](docs/discord-validation.md) and [SDK benchmarks](benchmarks/discord_sdks/).
 
 ## Language
 
@@ -360,7 +251,7 @@ This is a modal form with a text field and submit/cancel buttons, not a general 
 | UI and geometry | `ui`, `colors`, `geometry`, `canvas`, `game`, `events`, `image`, `animation`, `physics`, `vector`, `sprite`, `camera`, `particles` |
 | Data and testing | `dictionary`, `stack`, `queue`, `testing`, `profiler` |
 
-Use `import tripol.math`, then `math.square(7)`. Run `tripol libs` or `tripol docs json` to inspect exact available functions offline. See [library guide](docs/libraries.md) for supported operations and restrictions. HTTPS and Discord REST are Windows-only. OMEGA adds a bounded, single-channel REST polling bot; see [Discord setup](docs/discord.md). NEXUS adds experimental Gateway reception and initial presence configuration; live Windows validation remains pending.
+Use `import tripol.math`, then `math.square(7)`. Run `tripol libs` or `tripol docs json` to inspect exact available functions offline. See [library guide](docs/libraries.md) for supported operations and restrictions. Discord Gateway and REST support Windows and Linux through the experimental shared launcher; see [Discord setup](docs/discord.md). General HTTPS support is platform-dependent.
 
 ### Vault — local packages
 
@@ -453,6 +344,28 @@ The complete buildable compiler, standard library, examples and tests in this re
 ## Source: docs/language.md
 
 # Language reference — QUANTUM X 0.27.1
+
+## DISCORD REVOLUTION 0.28 development
+
+A named function can be stored as a typed callback. `&format_name` takes a reference to the function. Declare the corresponding parameter or field as `func(string)->string` and call a local callback as a regular function.
+
+```tripol
+func format_name(name:string)->string {
+    return "Hola, " + name
+}
+
+func welcome(render:func(string)->string,name:string)->string {
+    return render(name)
+}
+
+show welcome(&format_name, "Ada")
+```
+
+Callback signatures must match the argument and result types. Pass all arguments when invoking a callback, including arguments whose defaults apply to direct calls. References work in native builds and WebAssembly. The current implementation takes references to named functions with ordinary parameter and result types.
+
+Use `list([&callback_a, &callback_b])` to create a list with a single callback signature. Annotate fields and parameters with `list[func(string)->string]` when they store or receive such a list. A scratch block can call `get`, `size` and `capacity` on a surrounding list. These operations expose immutable values and measurements. Mutations of surrounding lists remain outside scratch blocks.
+
+## QUANTUM X 0.27.1 reference
 
 Source files are `.tri`. Imports must precede declarations and statements; use `import tripol.math`, `import vault.name`, or a quoted project-local `.tri` path. `//` and `#` start comments; newline or semicolon separates statements. Blocks use braces. Strings use JSON-style quoting and escape sequences (no embedded NUL). Identifiers are ASCII; text is byte-oriented. `let` declares mutable bindings, `const` immutable bindings; bare assignment creates or updates a mutable local. No shadowing. Types: signed checked int64 (`int`), `bool`, IEEE binary64 (`float`), immutable `string`, runtime-length `ints`, named `struct`. Integer and float operations require matching types. `float(n)` converts integers; `show` prints floats with six decimals. Struct fields support scalar, string and `ints` types, not nested records. Struct and dynamic array assignments alias references, and const is not deep immutability.
 
@@ -571,6 +484,26 @@ A function with a single return expression and no explicit return annotation can
 Integer, boolean and string lists support `contains(value)`, `remove(value)` (first match, returns bool) and `sort()` (in-place, stable, returns size; maximum 4096 items). Strings sort lexicographically by UTF-8 bytes, not locale collation. Float lists retain indexed access, add/remove_at and iteration; value-search and sorting are not included for floats in R1.
 
 Compatibility note: a single-return function with no explicit `->int` can now infer a non-integer return type. Write `->int` if an integer return contract is required, including for exported Vault functions. Explicit mismatches remain compile errors even in unused functions.
+
+
+## SIMPLE R2
+
+TRIPOL infers a single signature for each function across a project. Calls and typed callback parameters supply context. For example, `apply(twice)` gives `twice` the signature required by `apply`. A function name is a function reference when a local variable does not shadow it. `&twice` remains valid.
+
+```tripol
+func apply(action:func(int)->int) { action(21) }
+func twice(x) { x*2 }
+
+show apply(twice)
+show apply(func(x) { x+1 })
+```
+
+An inferred function returns the value of its last expression when it reaches the end. Final `if/else` branches can each yield a value. Explicit `return` remains available. An anonymous function can capture a scalar literal declared with `const`. The compiler copies that value into the function. Mutable captures, runtime values and aggregate captures require explicit arguments. Method overloads use distinct parameter types. The compiler selects one signature from the provided arguments and available defaults. Conflicting evidence requires a type annotation or separate functions.
+
+TRIPOL infiere una firma por función en todo el proyecto. Las llamadas y los parámetros de callback tipados aportan contexto. En el ejemplo, `apply(twice)` aporta a `twice` la firma requerida por `apply`. El nombre de una función actúa como referencia si ninguna variable local lo oculta. `&twice` sigue siendo válido.
+
+Las funciones con retorno inferido devuelven el valor de la última expresión al llegar al final. Las ramas terminales de un `if/else` pueden aportar un valor cada una. También puedes escribir `return`. Una función anónima puede capturar un literal escalar declarado con `const`. El compilador copia ese valor a la función. Pasa como argumentos explícitos las variables mutables, los valores de ejecución y las estructuras. Las sobrecargas de un método se distinguen por los tipos de sus parámetros. El compilador elige una firma a partir de los argumentos y los valores predeterminados. Si hay conflicto, anota el tipo o escribe funciones separadas.
+
 
 ---
 
@@ -905,6 +838,7 @@ See `examples/projects/quantum_x_libraries.tri` and `memory_stress.tri`.
 - `thread`: `supported()`, `sum(data)`, `sleep(milliseconds)`. Windows starts and joins an OS thread for an ordered checked integer reduction; caller waits, callback cannot allocate or mutate the input. Linux reports unsupported for the worker. No general thread callbacks or claims of parallel speedup.
 
 QUANTUM R3 additionally extends game/events/canvas/sprite/particles/audio with OpenGL triangles, XInput, focused mouse coordinates, software tile maps and transformations, reusable particle bursts and drawing, and optional system tones. See [graphics](graphics-r3.md) for contracts and platform limits.
+
 
 ---
 
@@ -1297,11 +1231,373 @@ Allowlisted is not equivalent to fully compatible. Required smoke tests for date
 
 ## Source: docs/discord.md
 
-# Discord R5 — ORIGIN Gateway preview (Windows x64)
+# DISCORD REVOLUTION — TRIPOL 0.28 experimental release
+
+## SIMPLE R2 bots / Bots con SIMPLE R2
+
+Use `bot.slash("info", "Informacion del bot", info)` to infer the signature of `func info(ctx)`. End the callback with `ctx.reply(value)` to return the payload. The accepted values are strings, a single embed, an embed batch and Components V2. Only a returned payload or an explicit `ctx.respond(payload)` sends the initial response. An earlier expression whose result is discarded builds a payload without sending it.
+
+Usa `bot.slash("info", "Informacion del bot", info)` para inferir la firma de `func info(ctx)`. Termina el callback con `ctx.reply(valor)` para devolver el payload. Puedes pasar texto, un embed, un lote de embeds o un panel de Components V2. El envío inicial ocurre al devolver el payload o llamar explícitamente a `ctx.respond(payload)`. Una expresión anterior cuyo resultado se descarta solo construye el payload.
+
+- [Bot con un embed / Embed bot](../examples/discord_simple_embeds.tri)
+- [Bot con panel y botón inline / Components V2 bot](../examples/discord_simple_components.tri)
+
+`discord.container("#FFFFFF")` wraps the layout in an accented container. Use button styles `"primary"`, `"secondary"`, `"success"` and `"danger"` or their numeric equivalents. `panel.premium(sku_id)` adds a purchase button for an application SKU. Discord handles the purchase. Use the typed button callback for ordinary buttons.
+
+`discord.container("#FFFFFF")` envuelve el panel en un contenedor con color. Usa los estilos `"primary"`, `"secondary"`, `"success"` y `"danger"` o sus equivalentes numéricos. `panel.premium(sku_id)` añade un botón de compra de un SKU de la aplicación. Discord gestiona la compra. Los botones comunes admiten los callbacks tipados.
+
+## Run an offline example / Prueba un ejemplo sin conexión
+
+```tripol
+import tripol.discord
+
+bot = discord.bot()
+bot.command("hola", "¡Hola, compañero!")
+show bot.preview("hola")
+
+embed = discord.embed()
+embed.title("Hola")
+embed.description("Creado con TRIPOL")
+embed.color("#00A0FF")
+embed.field("Versión", "0.28.0", true)
+show embed.payload()
+```
+
+Run `tripol run examples/discord_new.tri` on Linux or Windows, or open the Discord library examples in the Playground. Neither offline operation uses credentials. On a new bot the prefix is empty. Set `bot.prefix("!")` to match `!hola`. Duplicate command names replace their previous response.
+
+Ejecuta `tripol run examples/discord_new.tri` en Linux o Windows, o abre los ejemplos de la biblioteca Discord en el Playground. Ambas operaciones funcionan sin credenciales. El prefijo inicial es vacío. Usa `bot.prefix("!")` para responder a `!hola`. Un comando repetido sustituye la respuesta anterior.
+
+## Permissions and decimal choices / Permisos y elecciones decimales
+
+Specify a permission name such as `"manage_messages"` when registering a command. Use `ctx.can("manage_messages")` in the callback to check the effective member permissions Discord supplied, including Administrator. Numeric bitsets still work for registration. This check does not inspect a target’s role hierarchy.
+
+Puedes indicar un permiso como `"manage_messages"` al registrar un comando. Usa `ctx.can("manage_messages")` en el callback para comprobar los permisos efectivos del miembro informados por Discord, incluido Administrador. El registro también admite máscaras numéricas. Para actuar sobre un objetivo, la jerarquía de sus roles se comprueba por separado.
+
+Build fixed decimal choices with `choices.number("Half", "0.5")`. The decimal text becomes a JSON number. `ctx.target_username()` and `ctx.target_content()` read the resolved selection in context menus. `server.move_role(role_id, position)` reorders a role above @everyone.
+
+Añade elecciones decimales con `choices.number("Mitad", "0.5")`. El texto decimal se convierte en un número JSON. `ctx.target_username()` y `ctx.target_content()` leen la selección de un menú contextual. `server.move_role(role_id, position)` reordena un rol por encima de @everyone.
+
+## Connect / Conecta
+
+Set `DISCORD_TOKEN` before starting a bot in an authorized private server. For text commands and message callbacks, enable Message Content Intent. Use `tripol new MiBot --template discord` and `tripol run` on Windows or Linux x86-64.
+
+Configura `DISCORD_TOKEN` antes de iniciar el bot en un servidor privado autorizado. Para comandos de texto y callbacks de mensajes, activa Message Content Intent. Usa `tripol new MiBot --template discord` y `tripol run` en Windows o Linux x86-64.
+
+On Linux x86-64, `tripol build` packages the native program together with the TRIPOL launcher when it uses Discord networking. The launcher extracts the inner ELF into a private temporary directory and uses two inherited pipes for transport. It uses system trust roots for TLS. A raw Linux ELF cross-compiled from Windows can be launched on Linux with `tripol discord-run FILE`. A Linux bundle includes the compiler launcher, so it is larger than the inner ELF.
+
+En Linux x86-64, `tripol build` empaqueta el programa nativo con el lanzador de TRIPOL si usa la red de Discord. El lanzador extrae el ELF a un directorio temporal privado y usa dos tuberías heredadas para el transporte. TLS usa los certificados de confianza del sistema. Un ELF generado desde Windows se ejecuta en Linux con `tripol discord-run FILE`. El paquete de Linux incluye el lanzador del compilador y ocupa más que el ELF interior.
+
+On Windows x64, `tripol run` and `tripol discord-run FILE.exe` use the same TLS launcher as Linux. It negotiates zlib-stream, resumes sessions, checks heartbeat acknowledgements, reuses HTTPS connections and handles global and per-bucket rate limits. The directly launched PE uses the standalone WinHTTP fallback. See the [live validation guide](discord-validation.md).
+
+En Windows x64, `tripol run` y `tripol discord-run FILE.exe` usan el mismo lanzador TLS que Linux. Negocia zlib-stream, reanuda sesiones, verifica las confirmaciones de heartbeat, reutiliza HTTPS y controla los límites globales y por bucket. El PE iniciado directamente usa WinHTTP. Consulta la [guía de validación conectada](discord-validation.md).
+
+## Message callbacks / Callbacks de mensajes
+
+```tripol
+import tripol.discord
+
+func answer(message:discord.Message)->string {
+    if message.matches("hola") {
+        return message.reply("¡Hola!")
+    }
+    return ""
+}
+
+bot = discord.bot()
+bot.on_message(&answer)
+show bot.preview_event("{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"hola\",\"author\":{\"id\":\"456\"}}}")
+```
+
+Use `bot.start()` for the Gateway. Fixed text commands have precedence over the callback. Returning an empty string skips the reply. The context exposes `author_id`, `channel_id`, `content_json` and `event_json`. Bot and webhook messages are ignored.
+
+Usa `bot.start()` para conectarte al Gateway. Los comandos de texto fijos tienen prioridad. Devuelve un texto vacío para omitir la respuesta. El contexto expone `author_id`, `channel_id`, `content_json` y `event_json`. Se omiten los mensajes de bots y webhooks.
+
+## Gateway events / Eventos del Gateway
+
+```tripol
+import tripol.discord
+
+func joined(event:discord.GatewayEvent)->bool {
+    show "Nuevo miembro", event.guild_id, event.user_id
+    return true
+}
+
+registry = discord.events()
+registry.intent("GUILD_MEMBERS")
+registry.on("member_join", &joined)
+show registry.preview("{\"op\":0,\"t\":\"GUILD_MEMBER_ADD\",\"s\":9,\"d\":{\"guild_id\":\"321\",\"user\":{\"id\":\"567\"}}}")
+```
+
+Call `bot.start_with_events(registry)` to connect with the same callbacks while keeping existing text and slash commands. Each event uses a `func(discord.GatewayEvent)->bool` handler. The context exposes `name`, `sequence`, `guild_id`, `channel_id`, `user_id` and `data_json`. Use `event.field(name)` to read any event property as JSON. Callbacks execute in arrival order and `registry.preview(event_json)` returns the handler's boolean result for testing.
+
+Usa `bot.start_with_events(registry)` para conectar los mismos callbacks y conservar los comandos de texto y slash. Cada evento usa un manejador `func(discord.GatewayEvent)->bool`. El contexto expone `name`, `sequence`, `guild_id`, `channel_id`, `user_id` y `data_json`. Usa `event.field(nombre)` para leer cualquier propiedad como JSON. Los callbacks se ejecutan en orden de llegada y `registry.preview(event_json)` devuelve el booleano del manejador durante las pruebas.
+
+Register official dispatch names such as `READY`, `GUILD_ROLE_UPDATE`, `MESSAGE_DELETE`, `MESSAGE_REACTION_ADD`, `VOICE_STATE_UPDATE` and `RESUMED`. The three member aliases are `member_join`, `member_leave` and `member_update`. The registry requests `GUILDS` by default. Use `registry.intent("GUILD_MESSAGE_REACTIONS")` for guild reactions and enable `GUILD_MEMBERS` or `GUILD_PRESENCES` in the registry and Developer Portal before registering privileged callbacks. The dedicated slash, button, select and modal methods handle interactions. Voice server credentials remain reserved for voice transport.
+
+Registra nombres oficiales como `READY`, `GUILD_ROLE_UPDATE`, `MESSAGE_DELETE`, `MESSAGE_REACTION_ADD`, `VOICE_STATE_UPDATE` y `RESUMED`. Los alias de miembros son `member_join`, `member_leave` y `member_update`. El registro solicita `GUILDS` de forma predeterminada. Usa `registry.intent("GUILD_MESSAGE_REACTIONS")` para las reacciones del servidor y activa `GUILD_MEMBERS` o `GUILD_PRESENCES` en el registro y en el portal de desarrolladores antes de registrar callbacks privilegiados. Los métodos slash, de botones, selectores y formularios manejan las interacciones. Las credenciales del servidor de voz quedan reservadas para el transporte de voz.
+
+## Slash commands and interactions / Comandos slash e interacciones
+
+```tripol
+import tripol.discord
+
+func hello(ctx:discord.Interaction)->string {
+    return ctx.reply("Hola, " + ctx.option_text("name"), true)
+}
+
+options=discord.slash_options()
+options.add("name", "Tu nombre", "string", true)
+bot=discord.bot()
+bot.slash_with_options("hello", "Saluda", &hello, options, "123")
+show bot.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":2,\"data\":{\"type\":1,\"name\":\"hello\",\"guild_id\":\"123\",\"options\":[{\"type\":3,\"name\":\"name\",\"value\":\"Ana\"}]}}}")
+```
+
+Use `bot.slash(name, description, &handler, guild_id="")` for a command without options. An empty guild ID registers globally. A guild ID limits registration to one server. The same name can have a different callback in each registered scope. At startup the bot reads its application ID, compares remote commands with the local definitions and creates or updates the changed ones. Registration leaves unrelated commands in place. This version supports ASCII lowercase command names and string, integer, boolean, user, channel, role, mentionable, number and attachment options.
+
+Usa `bot.slash(nombre, descripción, &manejador, guild_id="")` para un comando sin opciones. Un ID de servidor vacío hace el registro global. Con un ID, el registro se limita a ese servidor. Un mismo nombre puede tener un callback diferente en cada ámbito. Al iniciar, el bot consulta su aplicación, compara los comandos y crea o actualiza los que cambiaron. El registro conserva los demás comandos. Se admiten nombres ASCII en minúsculas y opciones de texto, entero, booleano, usuario, canal, rol, mencionable, número y adjunto.
+
+Register component and modal callbacks with `bot.on_button(id, &handler)`, `bot.on_select(id, &handler)` and `bot.on_modal(id, &handler)`. The handler can return an initial response such as `ctx.reply(text, true)`, `ctx.defer(true)`, `ctx.ack()`, `ctx.reply_components(layout)`, `ctx.update_components(layout)`, `ctx.reply_embeds(batch)` or `ctx.open_modal(form)`. Discord requires an initial response within three seconds.
+
+Registra callbacks con `bot.on_button(id, &manejador)`, `bot.on_select(id, &manejador)` y `bot.on_modal(id, &manejador)`. El manejador puede devolver la respuesta inicial. `ctx.reply(texto, true)` responde en privado, `ctx.defer(true)` difiere la respuesta privada, y `ctx.ack()` confirma una interacción sobre un mensaje. Los métodos de componentes, embeds y formularios devuelven sus respectivos payloads. Discord exige una respuesta inicial en tres segundos.
+
+```tripol
+import tripol.discord
+
+func report(ctx:discord.Interaction)->string {
+    if ctx.respond(ctx.defer(true)) {
+        if ctx.edit_reply("Informe listo") {
+            ctx.followup("Consulta el resultado arriba", true)
+        }
+    }
+    return ""
+}
+
+bot = discord.bot()
+bot.slash("informe", "Prepara un informe", &report)
+bot.start()
+```
+
+Connected native handlers can use `ctx.respond(payload)` to send the initial response before doing more work. It attempts delivery once and reports whether Discord acknowledged it. Use `ctx.edit_reply(text)` to fill a deferred response or edit its original message. `ctx.edit_response(body)` accepts a Discord edit payload, including `layout.payload()` for an original Components V2 message. `ctx.followup(text, true)` sends a private follow-up and returns its message ID, or an empty string if the request fails. For a response deferred with `ctx.defer()`, edit the original before posting a separate follow-up. The interaction token stays internal. Linux end-to-end tests use a local TLS server. Windows builds use WinHTTP and still need live validation.
+
+Los callbacks nativos conectados pueden usar `ctx.respond(payload)` para enviar la respuesta inicial antes de continuar. Intenta entregarla una vez e indica si Discord la confirmó. Usa `ctx.edit_reply(texto)` para completar una respuesta diferida o editar su mensaje original. `ctx.edit_response(body)` acepta un payload de edición de Discord, incluido `layout.payload()` para un mensaje original Components V2. `ctx.followup(texto, true)` envía un seguimiento privado y devuelve el ID del mensaje, o una cadena vacía si falla la solicitud. Para una respuesta diferida con `ctx.defer()`, edita el original antes de enviar un seguimiento separado. El token de interacción queda en el contexto interno. Las pruebas de extremo a extremo de Linux usan un servidor TLS local. Las compilaciones de Windows usan WinHTTP y siguen pendientes de validación en vivo.
+
+`ctx.option(name)` returns raw JSON, `ctx.option_text(name)` decodes a JSON string, `ctx.values()` returns selected values and `ctx.field(id)` reads a submitted text input. `ctx.field_data(id)` returns the JSON array for select and file-upload inputs. The original interaction data is available as `ctx.data_json`, including resolved attachment metadata.
+
+`ctx.option(nombre)` devuelve JSON, `ctx.option_text(nombre)` decodifica una cadena, `ctx.values()` devuelve los valores seleccionados y `ctx.field(id)` lee un texto enviado. `ctx.field_data(id)` devuelve el arreglo JSON de los selectores y campos de archivos. `ctx.data_json` contiene los datos originales de la interacción y los metadatos resueltos de adjuntos.
+
+After `id = ctx.followup(text)`, use `ctx.edit_followup(id, text)` or `ctx.delete_followup(id)`. Use `ctx.edit_followup_payload(id, layout.payload())` to update an existing Components V2 follow-up. These methods return false on a failed request and require a successful initial response in the same handler.
+
+Después de `id = ctx.followup(texto)`, usa `ctx.edit_followup(id, texto)` o `ctx.delete_followup(id)`. Usa `ctx.edit_followup_payload(id, layout.payload())` para actualizar un seguimiento existente de Components V2. Estos métodos devuelven false si falla la solicitud y requieren una respuesta inicial confirmada dentro del mismo callback.
+
+Use `tripol new Feedback --template discord-slash` for a runnable example. Set `DISCORD_TOKEN`, optionally set `DISCORD_GUILD_ID`, and install the bot application with the `applications.commands` scope on a private test server.
+
+Usa `tripol new Feedback --template discord-slash` para generar un ejemplo ejecutable. Configura `DISCORD_TOKEN`, opcionalmente `DISCORD_GUILD_ID`, e instala la aplicación con el alcance `applications.commands` en un servidor privado.
+
+### Context menus / Menús contextuales
+
+```tripol
+import tripol.discord
+
+func inspect(ctx) {
+    ctx.reply("ID: " + ctx.target_id(), true)
+}
+
+bot = discord.bot()
+bot.user_menu("Ver perfil", inspect, "123")
+bot.message_menu("Ver mensaje", inspect, "123")
+bot.start()
+```
+
+User and message menus can share a name because Discord assigns them different command types. `ctx.target_id()` returns the selected ID, and `ctx.target()` returns the user or message object from Discord's resolved data. Use the last argument of `user_menu`, `message_menu`, `slash` or `slash_with_options` for default permissions. For example, `"8192"` requires Manage Messages, `"0"` disables the command by default except for administrators, and `"everyone"` clears that default requirement. An empty value omits the permission field.
+
+Los menús de usuario y mensaje pueden compartir nombre porque Discord les asigna tipos distintos. `ctx.target_id()` devuelve el ID seleccionado y `ctx.target()` devuelve el objeto de usuario o mensaje que resolvió Discord. Usa el último argumento de `user_menu`, `message_menu`, `slash` o `slash_with_options` para configurar los permisos predeterminados. Por ejemplo, `"8192"` requiere Manage Messages, `"0"` desactiva el comando de forma predeterminada salvo para administradores y `"everyone"` elimina ese requisito predeterminado. Una cadena vacía omite el campo.
+
+### Subcommands, choices and autocomplete / Subcomandos, elecciones y autocompletado
+
+```tripol
+import tripol.discord
+
+func search(ctx:discord.Interaction)->string {
+    return ctx.reply("Busca " + ctx.option_text("query"), true)
+}
+
+func suggest(ctx:discord.Interaction)->string {
+    choices = discord.command_choices()
+    if ctx.focused()=="query" and ctx.option_text("query")=="ca" {
+        choices.add("Café", "cafe")
+    }
+    return ctx.autocomplete(choices)
+}
+
+arguments = discord.slash_options()
+arguments.add("query", "Qué buscar", "string", true, true)
+limits = discord.command_choices()
+limits.integer("Diez", 10)
+arguments.choose("limit", "Resultados máximos", limits)
+commands = discord.slash_options()
+commands.subcommand("find", "Busca una bebida", arguments)
+root = discord.slash_options()
+root.group("drinks", "Bebidas", commands)
+bot = discord.bot()
+bot.slash_with_options("order", "Haz tu pedido", &search, root)
+bot.on_autocomplete("order", &suggest)
+bot.start()
+```
+
+The example registers `/order drinks find`. `subcommand(name, description, options)` creates a branch and `group(name, description, subcommands)` collects one or more subcommands. Each command or subcommand accepts up to 25 options at its level. Keep required arguments first. The callback reads `ctx.command_group()` and `ctx.subcommand()` when it needs to select a branch. Pass `true` as the fifth argument of `options.add` to enable autocomplete. Use `ctx.focused()` to find the active option and `ctx.option(name)` to read a raw numeric value. Return `ctx.autocomplete(choices)` even when the list is empty. `options.choose` defines a fixed choice list. The builder supports up to 25 text or integer choices, including integer suggestions for number options. Fractional choice values are pending.
+
+El ejemplo registra `/order drinks find`. `subcommand(nombre, descripción, opciones)` crea un subcomando y `group(nombre, descripción, subcomandos)` agrupa uno o más. Cada comando o subcomando admite hasta 25 opciones por nivel. Coloca primero los argumentos obligatorios. El callback lee `ctx.command_group()` y `ctx.subcommand()` para identificar la rama elegida. Pasa `true` como quinto argumento de `options.add` para activar el autocompletado. Usa `ctx.focused()` para identificar la opción activa y `ctx.option(nombre)` para leer un valor numérico en JSON. Devuelve `ctx.autocomplete(elecciones)` aunque la lista esté vacía. `options.choose` define una lista de elecciones fijas. El constructor admite hasta 25 elecciones de texto o enteras, con sugerencias enteras para opciones de tipo número. Quedan pendientes los valores fraccionarios.
+
+## Components V2
+
+```tripol
+import tripol.discord
+
+panel = discord.components()
+panel.text("## Bienvenido")
+panel.separator()
+panel.link("Documentación", "https://tripollas.github.io/Tripol/docs/")
+message = discord.components()
+message.container(panel, 41215)
+show message.payload()
+```
+
+The payload includes flag 32768 and disables mentions. The builder also has `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` and `gallery(urls)`. It validates the 40-component limit, duplicate button IDs, container nesting and field lengths. Text Display content can total 4,000 characters across the message. The encoded body must fit in the TRIPOL string capacity of 65,535 bytes. Use `message.send(channel_id)` on Windows or Linux. Use `discord.button_row()` to group up to five buttons. `discord.select(id, kind)` supports string, user, role, mentionable and channel menus. `discord.modal(id, title)` supports text inputs, selects, help text, file-upload inputs, radio groups, checkbox groups and individual checkboxes. The Linux launcher can send multipart attachments with `send_files`.
+
+El JSON incluye la bandera 32768 y desactiva las menciones. El constructor también ofrece `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` y `gallery(urls)`. Valida el límite de 40 componentes, los IDs de botones duplicados, el anidamiento y las longitudes de los campos. El contenido de Text Display admite 4.000 caracteres por mensaje. El JSON debe caber en la capacidad de cadena de TRIPOL de 65.535 bytes. Usa `message.send(channel_id)` en Windows o Linux. Usa `discord.button_row()` para agrupar hasta cinco botones. `discord.select(id, tipo)` admite texto, usuario, rol, mencionable y canal. `discord.modal(id, título)` admite texto, selectores, ayuda, campos de archivos, grupos de opción única, grupos de casillas y casillas individuales. Los lanzadores de Windows y Linux envían adjuntos multipart con `send_files`.
+
+For modal choices, create a String Select with the options and pass it to `form.radio(label, menu)` or `form.checkbox_group(label, menu)`. Use `form.checkbox(id, label)` for a single checkbox. Read a radio selection with `ctx.field(id)`, a group or selector with `ctx.field_values(id)` and a checkbox with `ctx.checked(id)`.
+
+Para los campos de opciones, crea un selector de texto con las opciones y pásalo a `form.radio(etiqueta, selector)` o `form.checkbox_group(etiqueta, selector)`. Usa `form.checkbox(id, etiqueta)` para una casilla individual. Lee la selección única con `ctx.field(id)`, el grupo o selector con `ctx.field_values(id)` y la casilla con `ctx.checked(id)`.
+
+#Use `ctx.has_field(id)` to distinguish a submitted empty field from an absent one. `ctx.field_attachment(id, index=0)` returns the selected file’s `id`, `filename`, `url`, `size` and `content_type`. An unresolved file has an empty ID. The method reads the submission without opening or downloading the file.
+
+Usa `ctx.has_field(id)` para distinguir un campo enviado vacío de uno ausente. `ctx.field_attachment(id, index=0)` devuelve `id`, `filename`, `url`, `size` y `content_type`. Un archivo sin resolver tiene ID vacío. El método lee la respuesta del formulario sin abrir ni descargar el archivo.
+
+## Button and select customization / Personalización de botones y selectores
+
+`panel.button("Aceptar", "accept", "success", "✅")` combines text and emoji. Use an empty label for an emoji-only button. Add `true` after the emoji to disable it. For a row, the existing disabled argument comes first, as in `row.button("Aceptar", "accept", "success", false, "✅")`. `row.disable("accept")` disables that button before the row is added to a new layout, and `row.disable("accept", false)` enables it. To update a sent Components V2 message, build the new layout and use `ctx.update_components(panel)` or `room.edit_components(message_id, panel)`.
+
+`panel.button("Aceptar", "accept", "success", "✅")` combina texto y emoji. Usa una etiqueta vacía para mostrar solo el emoji. Añade `true` después del emoji para deshabilitarlo. En una fila se conserva primero el argumento de deshabilitación, como en `row.button("Aceptar", "accept", "success", false, "✅")`. `row.disable("accept")` deshabilita ese botón antes de añadir la fila a un panel nuevo. Usa `row.disable("accept", false)` para habilitarlo. Para actualizar un mensaje Components V2 ya enviado, crea el nuevo panel y usa `ctx.update_components(panel)` o `room.edit_components(message_id, panel)`.
+
+Use Unicode, a custom emoji ID, `"<:check:123>"` or `"<a:party:123>"` for an animated custom emoji. Pass it as the last argument of `menu.option(label, value, description, selected, emoji)`. `menu.disable()` applies to a select in a message. Discord handles link and premium buttons directly. See the executable example for all six styles. [Buttons example](../examples/discord_buttons.tri)
+
+Usa Unicode, un ID de emoji personalizado, `"<:check:123>"` o `"<a:party:123>"` para un emoji personalizado animado. Pásalo como último argumento de `menu.option(etiqueta, valor, descripción, seleccionado, emoji)`. `menu.disable()` se aplica a los selectores de mensajes. Discord gestiona los botones de enlace y de compra. El ejemplo ejecutable reúne los seis estilos. [Ejemplo de botones](../examples/discord_buttons.tri)
+
+### Attachments / Adjuntos
+
+```tripol
+import tripol.discord
+
+panel = discord.container()
+panel.file("report.txt")
+message_id = panel.send_files("123", list(["./report.txt"]))
+show message_id
+```
+
+With the Linux or Windows launcher, `send_files` streams 1–10 local files into a multipart channel message and returns its ID or an empty string on failure. `ctx.reply_files(content, paths, true)` sends a private initial response immediately and returns whether it was accepted. It accepts text, an embed, a batch or Components V2. Use distinct ASCII filenames and use the exact basename in `discord.attachment_url("photo.png")` or `panel.file("report.txt")`. Follow-up uploads and replacement of existing attachments remain pending.
+
+Con el lanzador de Linux o Windows, `send_files` adjunta entre 1 y 10 archivos locales a un canal y devuelve el ID o una cadena vacía si falla. `ctx.reply_files(contenido, rutas, true)` envía de inmediato la respuesta inicial privada e indica si se aceptó. Admite texto, un embed, un lote o Components V2. Usa nombres ASCII distintos y el nombre exacto del archivo en `discord.attachment_url("photo.png")` o `panel.file("report.txt")`. Quedan pendientes los adjuntos en seguimientos y la sustitución de archivos.
+
+For uploads submitted by users, call `form.file("files", "Upload", list(["image", ".pdf"]), 0, 2, false)`. Discord applies up to ten extension filters. Check the actual contents before trusting an upload.
+
+Para archivos enviados por usuarios, llama a `form.file("files", "Adjuntar", list(["image", ".pdf"]), 0, 2, false)`. Discord aplica hasta diez filtros por extensión. Comprueba el contenido del archivo antes de confiar en él.
+
+## Discord Studio
+
+```sh
+tripol discord studio main.tri --metrics studio.jsonl
+```
+
+On Linux x86-64, Studio runs the bot and samples its RSS, CPU ticks, connection state, heartbeat latency, uptime, guild count at READY, queued dispatches, REST requests, errors and rate limits. The launcher and bot process are reported separately. The output file must be new. Without `--metrics`, snapshots are sent to standard error. The export contains counters and process measurements. Live command and interaction metrics, log filtering and Windows monitoring are pending.
+
+En Linux x86-64, Studio ejecuta el bot y toma muestras de RSS, ticks de CPU, conexión, latencia de heartbeat, tiempo activo, servidores en READY, cola de eventos, peticiones REST, errores y límites. El lanzador y el bot se miden por separado. Usa un archivo de salida nuevo. Sin `--metrics`, las muestras se escriben en la salida de error. Quedan pendientes las métricas por comando e interacción, el filtrado de logs y el monitoreo en Windows.
+
+Studio adds `events_by_type`, `interactions_by_type` and `commands_by_name` to its Linux samples. They count events admitted to the Gateway queue, not callback results. Command keys include their type, such as `user/Ver perfil`. The counters contain neither interaction tokens nor component IDs. Names beyond the tracked set are counted under `other`.
+
+Studio añade `events_by_type`, `interactions_by_type` y `commands_by_name` a sus muestras de Linux. Cuentan los eventos admitidos en la cola del Gateway. Los resultados de los callbacks se registran por separado si el programa los mide. Las claves incluyen el tipo del comando, como `user/Ver perfil`. Los contadores mantienen fuera los tokens de interacción y los IDs de componentes. Los nombres que exceden el conjunto registrado se agrupan en `other`.
+
+## Member moderation and welcome bot / Moderación de miembros y bienvenida
+
+```tripol
+import tripol.discord
+
+server = discord.guild("123")
+member = server.member("456")
+show member.read()
+```
+
+Use the numeric IDs from an authorized server. `member.kick()`, `member.ban(delete_message_seconds=0)` and `member.unban()` remove a member, ban them with optional removal of up to seven days of messages, or revoke a ban. `member.nickname(text)` sets a nickname, and an empty string clears it. `member.timeout(until)` sets an ISO 8601 deadline, and `member.timeout()` clears it. Discord enforces the 28-day maximum. `member.role(id, false)` removes a role and `member.role(id)` adds it. These methods report success as a boolean so the bot can continue after a failed request. Discord enforces bot permissions and role hierarchy. `member.dm(text)` and `discord.post_message(channel_id, text)` return the sent message ID or an empty string if delivery fails.
+
+Usa los IDs numéricos de un servidor autorizado. `member.kick()`, `member.ban(delete_message_seconds=0)` y `member.unban()` expulsan, banean con borrado opcional de hasta siete días de mensajes o revocan el baneo. `member.nickname(texto)` cambia el apodo y una cadena vacía lo elimina. `member.timeout(hasta)` recibe una fecha ISO 8601 y `member.timeout()` retira el aislamiento. Discord aplica el máximo de 28 días. `member.role(id, false)` quita un rol y `member.role(id)` lo añade. Estos métodos devuelven un booleano para que el bot pueda continuar si falla la solicitud. Discord aplica los permisos y la jerarquía de roles del bot. `member.dm(texto)` y `discord.post_message(channel_id, texto)` devuelven el ID del mensaje o una cadena vacía si falla el envío.
+
+Use `tripol new Welcome --template discord-welcome` to send a welcome to a channel when a human joins the configured server. The generated README covers the required environment variables, Server Members Intent and channel permissions. The template skips bots and other servers, and continues receiving events if a send fails.
+
+Usa `tripol new Bienvenida --template discord-welcome` para enviar un saludo a un canal cuando se une una persona al servidor configurado. El README generado indica las variables de entorno, Server Members Intent y los permisos del canal. La plantilla omite bots y otros servidores y continúa recibiendo eventos si falla un envío.
+
+Create a restricted bot with `tripol new Moderator --template discord-moderation`. Set `DISCORD_TOKEN`, `DISCORD_GUILD_ID` and `DISCORD_OPERATOR_ID`. The `/kick`, `/ban`, `/unban`, `/timeout` and `/warn` commands check the operator, guild and effective permissions returned by Discord. Verified callers receive a private acknowledgment. `/warn` appends a JSON line to `discord-warnings.jsonl` or the path in `DISCORD_WARNINGS_PATH`. Keep it in a directory writable only by the bot account.
+
+Crea un bot restringido con `tripol new Moderador --template discord-moderation`. Configura `DISCORD_TOKEN`, `DISCORD_GUILD_ID` y `DISCORD_OPERATOR_ID`. Los comandos `/kick`, `/ban`, `/unban`, `/timeout` y `/warn` comprueban operador, servidor y permisos efectivos devueltos por Discord. Se confirma en privado a los usuarios autorizados. `/warn` guarda una línea JSON en `discord-warnings.jsonl` o en la ruta de `DISCORD_WARNINGS_PATH`. Usa un directorio donde solo pueda escribir la cuenta del bot.
+
+## Channel moderation / Moderación de canales
+
+```tripol
+import tripol.discord
+
+room = discord.channel_ref("123")
+show room.read()
+```
+
+`room.slowmode(15)` sets a 15-second delay and `room.slowmode(0)` clears it. Use `room.pin(message_id)` to pin and `room.pin(message_id, false)` to unpin. `room.delete_message(id)` removes one message. `room.purge(ids)` requires a list of 2–100 distinct message IDs. Discord enforces bulk deletion eligibility, including the 14-day age limit. `room.react(id, "🔥")` adds the bot's reaction. Use `false` as the last argument to remove it. Unicode emoji and custom `name:id` values are percent-encoded automatically.
+
+`room.slowmode(15)` fija una espera de 15 segundos y `room.slowmode(0)` la retira. Usa `room.pin(message_id)` para fijar un mensaje y `room.pin(message_id, false)` para desfijarlo. `room.delete_message(id)` borra un mensaje. `room.purge(ids)` requiere entre 2 y 100 IDs distintos. Discord aplica los requisitos del borrado masivo, incluido el límite de 14 días de antigüedad. `room.react(id, "🔥")` añade la reacción del bot. Usa `false` como último argumento para retirarla. Los emoji Unicode y los valores personalizados `nombre:id` se codifican automáticamente.
+
+Configure the token of an authorized bot. Discord checks the required permissions. These methods return a boolean on mutations and keep the native program running if the request fails.
+
+Configura el token de un bot autorizado. Discord comprueba los permisos requeridos. Los métodos que modifican el canal o un mensaje devuelven un booleano y permiten que el programa siga ejecutándose si falla la solicitud.
+
+### Channels, categories and audit / Canales, categorías y auditoría
+
+Use `server.create_channel(name, kind, parent_id, topic)` with `"text"`, `"voice"`, `"category"` or `"announcement"`. The result is the new ID or an empty string on failure. `server.channels()` returns the REST response as JSON. Read the audit log with `server.audit(limit, before, action)`. On a channel, use `rename`, `topic`, `move` and `delete`. An empty parent in `move()` detaches the channel from its category. `edit_message` and `edit_components` update messages owned by the bot.
+
+Usa `server.create_channel(nombre, tipo, parent_id, tema)` con `"text"`, `"voice"`, `"category"` o `"announcement"`. Devuelve el ID nuevo o una cadena vacía si falla. `server.channels()` devuelve la respuesta REST como JSON. Consulta auditoría con `server.audit(límite, antes, acción)`. En un canal están disponibles `rename`, `topic`, `move` y `delete`. Un padre vacío en `move()` saca el canal de su categoría. `edit_message` y `edit_components` actualizan mensajes del propio bot.
+
+### Guild roles / Roles de servidor
+
+Use `server.create_role("Reviewer", "0", "#FFFFFF")` to create a role with no permissions of its own. The method returns its ID. `server.roles()` lists the roles. Use `role = server.role_ref(id)` with `role.read()`, `role.edit(name, permissions, color)` and `role.delete()`. Empty edit arguments leave those properties as they are. `role.permissions()` reads the combined guild permissions of the role and @everyone as a decimal string. Effective permissions for a member in a channel also depend on other roles and overrides.
+
+Usa `server.create_role("Revisor", "0", "#FFFFFF")` para crear un rol sin permisos propios. El método devuelve su ID. `server.roles()` lista los roles. Usa `role = server.role_ref(id)` con `role.read()`, `role.edit(nombre, permisos, color)` y `role.delete()`. Los argumentos vacíos de edición conservan esas propiedades. `role.permissions()` devuelve como cadena decimal los permisos combinados del rol y @everyone en el servidor. Los permisos efectivos de un miembro en un canal también dependen de los demás roles y las excepciones.
+
+## API
+
+| Method / Método | Behavior / Comportamiento |
+| --- | --- |
+| `discord.bot()` | Create a bot configuration / Crea una configuración de bot |
+| `bot.prefix(value)` | Set a prefix of up to 32 UTF-8 bytes / Define un prefijo de hasta 32 bytes UTF-8 |
+| `bot.status(value)` | Set `online`, `idle`, `dnd` or `invisible` / Define el estado indicado |
+| `bot.activity(value)` | Set the activity text, up to 128 UTF-8 bytes / Define una actividad de hasta 128 bytes UTF-8 |
+| `bot.command(name, response)` | Set one of up to 16 exact text commands / Configura uno de hasta 16 comandos de texto exactos |
+| `bot.preview(content)` | Return the exact reply or an empty string / Devuelve la respuesta exacta o texto vacío |
+| `bot.start()` | Open a blocking Gateway session / Abre una sesión Gateway bloqueante |
+| `discord.embed()` | Create an empty embed / Crea un embed vacío |
+| `embed.title(value)` | Set the title / Define el título |
+| `embed.description(value)` | Set the description / Define la descripción |
+| `embed.footer(value)` | Set the footer text / Define el pie |
+| `embed.url(value)`, `embed.image(value)`, `embed.thumbnail(value)` | Set the title link, image or thumbnail / Define el enlace, la imagen o la miniatura |
+| `embed.color(value)` | Set an RGB color as `#RRGGBB` / Define un color RGB como `#RRGGBB` |
+| `embed.field(label, value, inline=false)` | Append one of up to 25 fields / Añade uno de hasta 25 campos |
+| `embed.payload()` | Build JSON including disabled mentions / Genera el JSON con las menciones desactivadas |
+| `embed.send(channel_id)` | Send the embed over Discord REST from Windows or Linux / Envía el embed por Discord REST desde Windows o Linux |
+
+Text commands accept names of 1–96 bytes and replies of 1–512 bytes, both UTF-8. Use `embed.author(name, url="", icon_url="")` and `embed.timestamp(rfc3339)` for authors and timestamps. `discord.embeds()` groups up to 10 embeds with 6,000 characters of combined text. Individual limits are 256 for title, author and field name, 4,096 for description, 2,048 for footer, and 1,024 for field value. The optional `intents` parameter on legacy `discord.run()` accepts `33281` (default for guild prefix commands) or `1` (GUILDS only).
+
+Los comandos aceptan nombres de 1–96 bytes y respuestas de 1–512 bytes, ambos en UTF-8. Usa `embed.author(nombre, url="", icon_url="")` y `embed.timestamp(rfc3339)` para autor y fecha. `discord.embeds()` agrupa hasta 10 embeds con 6.000 caracteres de texto combinado. Los límites son 256 para título, autor y nombre de campo, 4.096 para descripción, 2.048 para pie y 1.024 para valor de campo. El parámetro opcional `intents` de `discord.run()` acepta `33281` (predeterminado para comandos de texto) o `1` (solo GUILDS).
+
+## Discord R5 — Windows WinHTTP backend
 
 `discord.run()` now uses a persistent TLS WebSocket to `gateway.discord.gg/?v=10&encoding=json`, not REST polling. The native WinHTTP upgrade, send and receive calls are compiled directly into the executable. A native receiver thread reads one complete UTF-8 message (including fragments) into bounded private storage. The main thread waits locally, wakes on message arrival and schedules Gateway heartbeats; no 2.5-second network polling. Sending messages still uses Discord HTTPS REST POST. No Python, Node.js or external Discord SDK is required by the generated executable.
 
-## Create a bot
+### Create a legacy bot
 
 Create a bot at https://discord.com/developers/applications, enable Message Content Intent for prefix commands, install it on a small private test server and give it View Channel and Send Messages permissions. Read Message History is needed for the explicit REST fallback. A channel ID is optional: only select one if you want to restrict replies or send a greeting before any command. Use a bot token, not a user token.
 
@@ -1315,7 +1611,7 @@ discord.reply("!ping", "Pong!")
 discord.run()
 ```
 
-`setup` simply combines `login` and `channel`. These older methods continue to work. The optional `welcome` sends a greeting once on READY; `say` sends immediately by REST. `status("online")` is optional (default online); `idle`, `dnd`, `invisible` also supported in the initial Identify payload. `activity` sets a playing activity, up to 128 UTF-8 bytes. Up to 16 exact commands across accessible guild channels (or one selected channel); duplicate registration replaces the response. Bots and webhooks are ignored. Prefix command matching uses exact JSON string spelling; ASCII commands recommended.
+`setup` simply combines `login` and `channel`. These older methods continue to work. The optional `welcome` sends a greeting once on READY; `say` sends immediately by REST. `status("online")` is optional (default online); `idle`, `dnd`, `invisible` also supported in the initial Identify payload. `activity` sets a playing activity, up to 128 UTF-8 bytes. Up to 16 exact commands across accessible guild channels (or one selected channel); duplicate registration replaces the response. Bots and webhooks are ignored. Prefix commands match decoded text exactly, including UTF-8 characters represented with JSON escapes.
 
 For sharing code or binaries, do not embed a token. Instead use:
 
@@ -1330,32 +1626,74 @@ tripol run
 
 The generated template does not need a channel ID. `login_env()` reads `DISCORD_TOKEN`; optional `channel(...)` restricts replies. Never publish or share the token; a literal is extractable from both source and compiled binary. Reset a leaked token in the developer portal. Remove the environment variable after stopping: `Remove-Item Env:DISCORD_TOKEN`.
 
-## Protocol and limitations
+### Protocol and limitations
 
 Initial Hello (10), Identify (2), Dispatch (0), sequence tracking, periodic Heartbeat (1) with null before the first sequence, Heartbeat ACK (11), server heartbeat requests, READY and MESSAGE_CREATE are implemented. `connected()` reports local READY state; `ping()` reports last heartbeat round trip in milliseconds or -1 before ACK, not message latency. Both are primarily diagnostics while running; the simple `run` API blocks. `preview` and `gateway_reply` support offline matching tests. `identify_payload` is a protocol helper containing the secret; do not print or log it.
 
-The experimental Windows Gateway uses the official host and OS certificate validation. A single worker receives uncompressed text frames up to 65,535 bytes and dispatches callbacks in order. The JSON nesting limit is 32. Oversized or unsupported frames stop reception. Windows support for compression, sharding, Resume, and automatic reconnect is pending. Reconnect (7), Invalid Session (9) and failed receives stop the connection. A missed ACK, READY timeout or send failure stops the process to avoid closing a handle while a receive is pending. WinHTTP creates a separate session per REST request. Legacy authenticated requests stop the bot on failure. Member moderation, welcome messages and interaction requests return failures to their callers. Measured presence, round-trip latency and live execution against Discord on Windows are pending. Ctrl+C exits.
+The standalone Windows PE uses WinHTTP and the system certificate store. It accepts uncompressed text frames up to 65,535 bytes and dispatches callbacks in order. Use the TRIPOL launcher on Windows for Resume, transport compression, HTTPS reuse, rate-limit handling and multipart uploads.
 
-Explicit fallback: `discord.run_rest()` restores ECLIPSE's 2.5-second REST polling, which may miss messages. Legacy `listen`, `send`, `latest`, `matches`, `message_id`, `gateway` and token/URL helpers remain available. `discord.run()` on Linux cannot open the native Windows Gateway. See `tripol docs discord` for all 34 callable functions (including protocol helpers, not 30 independent bot features).
+Explicit fallback: `discord.run_rest()` restores ECLIPSE's 2.5-second REST polling, which may miss messages. Legacy `listen`, `send`, `latest`, `matches`, `message_id`, `gateway` and token/URL helpers remain available. See `tripol docs discord` for the complete module, including the protocol helpers.
 
 Official protocol: https://discord.com/developers/docs/events/gateway ; WinHTTP WebSocket API: https://learn.microsoft.com/windows/win32/api/winhttp/nf-winhttp-winhttpwebsocketcompleteupgrade ; rate limits: https://discord.com/developers/docs/topics/rate-limits .
 
-## ORIGIN routing
+### ORIGIN routing
 
 `configured()` now means a token is configured, rather than a token and channel. `has_channel()` checks whether a channel filter exists. `all_channels()` clears the filter. `send_to(channel, message)` uses the configured bot token; `say()` and a nonempty `welcome()` require a selected channel. `run_rest()` still requires a channel. `event_channel(event)` validates the numeric channel ID and optional filter; `gateway_reply(event)` ignores bot/webhook authors as before. Guild message intents are unchanged; DMs are not enabled. Tests verify routing on Linux in all four profiles, but live Windows Gateway is not validated here.
+
+## Cooldowns and command permissions / Cooldowns y permisos de comandos
+
+Register the slash command before configuring it. `bot.cooldown("work", 60)` reserves one execution per user every 60 seconds. Choose `"channel"`, `"guild"` or `"global"` for a shared cooldown within the command’s registration scope. An optional message is followed by the remaining seconds. Use zero seconds to disable the rule. A command that needs a channel, server or user ID is denied when that context is absent.
+
+Registra el comando slash antes de configurarlo. `bot.cooldown("work", 60)` reserva una ejecución por usuario cada 60 segundos. Elige `"channel"`, `"guild"` o `"global"` para compartir el cooldown dentro del ámbito de registro del comando. Un mensaje opcional precede a los segundos restantes. Usa cero segundos para desactivar la regla. Si falta el ID requerido por el ámbito, el comando se rechaza.
+
+```tripol
+import tripol.discord
+
+bot=discord.bot()
+bot.slash("work","Earn points",func(ctx) {ctx.reply("Done",true)})
+show bot.cooldown("work",60,"user","Try again in")
+```
+
+`ctx.cooldown_remaining()` returns rounded-up seconds, or `-1` when unavailable. Use `ctx.reset_cooldown()` for the current bucket. For administrative tools, use `discord.cooldown_bucket("work","user",user_id,guild_id)` with `.remaining()` and `.reset()`. A reservation is made before the handler and remains after an error unless the handler resets it. `bot.persist_cooldowns("cooldowns.json")` keeps active cooldowns across restarts. Use a separate file per app in a directory writable by its account. In persistent mode each successful reservation or reset saves a snapshot. A file lock prevents two launchers from writing the same file. In-memory entries expire automatically.
+
+`ctx.cooldown_remaining()` devuelve los segundos redondeados hacia arriba o `-1` cuando la consulta no está disponible. Usa `ctx.reset_cooldown()` para restablecer el registro actual. Para herramientas administrativas, usa `discord.cooldown_bucket("work","user",user_id,guild_id)` con `.remaining()` y `.reset()`. La reserva se hace antes del callback y se mantiene si ocurre un error. El callback puede restablecerla. `bot.persist_cooldowns("cooldowns.json")` conserva los cooldowns activos al reiniciar. Usa un archivo distinto por aplicación en un directorio donde pueda escribir su cuenta. Cuando la persistencia está activa, cada reserva o restablecimiento guarda una instantánea. Un candado impide la escritura por dos lanzadores. Los registros en memoria caducan automáticamente.
+
+`bot.permission("ban","BAN_MEMBERS")` sets the registration default and checks the effective permissions Discord sends for the invoking member and bot in the current channel. For kick, ban and timeout, a single top-level user option is inferred as the member to protect. Specify the option as the third argument when the target cannot be inferred. Pass the registration guild ID as the fourth argument to `permission` and the fifth to `cooldown`. Run protected moderation and cooldowns through `tripol run` or `tripol discord-run`.
+
+`bot.permission("ban","BAN_MEMBERS")` configura el permiso predeterminado y comprueba los permisos efectivos del miembro y del bot que Discord comunica para el canal. Para expulsar, banear y aislar se infiere el objetivo cuando hay una sola opción de usuario en el nivel superior. Indica la opción como tercer argumento si el objetivo no se puede deducir. El ID de servidor de registro es el cuarto argumento de `permission` y el quinto de `cooldown`. Ejecuta la moderación protegida y los cooldowns con `tripol run` o `tripol discord-run`.
+
+The hierarchy check protects the owner, the operator and the bot itself. It verifies the highest roles for the member, target and bot, and denies timeout of an administrator. `ctx.can()`, `ctx.bot_can()` and `ctx.can_moderate()` are available for explicit checks. Lower-level REST methods use the bot’s authorization on Discord. Use a protected callback when accepting administrative requests from users.
+
+La comprobación de jerarquía protege al propietario, al operador y al propio bot. Verifica los roles superiores del miembro, el objetivo y el bot, y rechaza el aislamiento de un administrador. `ctx.can()`, `ctx.bot_can()` y `ctx.can_moderate()` permiten comprobaciones explícitas. Los métodos REST de bajo nivel usan la autorización del bot en Discord. Usa un callback protegido para aceptar solicitudes administrativas de usuarios.
+
+Use `bot.restrict("ban","role",role_id)` to restrict a command to a role. Use `"user"`, `"channel"` or `"guild"` for those scopes. IDs within a scope are alternatives. A command that configures several scopes must satisfy each of them. `ctx.has_role(role_id)` supports an explicit role check. The launcher evaluates restrictions before reserving a cooldown or starting a hierarchy check.
+
+Usa `bot.restrict("ban","role",role_id)` para restringir un comando a un rol. Usa `"user"`, `"channel"` o `"guild"` para esos ámbitos. Los IDs de un mismo ámbito son alternativas. Un comando con varios ámbitos configurados debe satisfacer cada uno. `ctx.has_role(role_id)` permite comprobar un rol expresamente. El lanzador evalúa las restricciones antes de reservar el cooldown o verificar la jerarquía.
+
+## Channel and resource management / Gestión de canales y recursos
+
+`channel.lock()` saves the @everyone overwrite and denies Send Messages for that role. Explicit user and role overrides continue to apply. `channel.unlock()` restores exactly the saved overwrite in the same launcher, or removes the temporary overwrite if the channel did not have one. If the overwrite has changed externally, the operation returns false and preserves the external edit. Use `overwrite(id, allow, deny, "user")` or `overwrite(id, allow, deny, "role")` for explicit changes, and `clear_overwrite(id)` to remove one. `guild.private_channel(name, user_id)` creates a text channel that grants that member access and denies viewing to @everyone. `guild.move_channel(id, position)` updates the channel order.
+
+`channel.lock()` guarda el permiso de @everyone y le deniega Enviar mensajes. Los permisos explícitos de otros roles y usuarios siguen aplicándose. `channel.unlock()` restaura la configuración guardada dentro del mismo lanzador o quita el permiso temporal si antes no existía. Si el permiso cambió externamente, devuelve false y conserva el cambio. Usa `overwrite(id, allow, deny, "user")` o `overwrite(id, allow, deny, "role")` para cambios explícitos, y `clear_overwrite(id)` para eliminar uno. `guild.private_channel(name, user_id)` crea un canal de texto que permite el acceso a ese miembro y deniega la vista a @everyone. `guild.move_channel(id, position)` actualiza el orden.
+
+`channel.create_webhook(name)` returns a typed webhook. Use `.read()`, `.edit(name)` and `.delete()` to administer it. The returned read information omits credentials. `.send()` accepts text, embeds or Components V2. `.send_files()` streams local attachments through the launcher. Discord controls which components each webhook can use. `channel.invite(max_age, max_uses)` returns the code; list invitations with `.invites()`, inspect one with `discord.invite_info(code)` and remove it with `discord.revoke_invite(code)`.
+
+`channel.create_webhook(name)` devuelve un webhook tipado. Usa `.read()`, `.edit(name)` y `.delete()` para administrarlo. La información devuelta al consultar omite las credenciales. `.send()` recibe texto, embeds o Components V2. `.send_files()` transmite adjuntos locales mediante el lanzador. Discord controla qué componentes puede usar cada webhook. `channel.invite(max_age, max_uses)` devuelve el código. Enumera invitaciones con `.invites()`, consulta una con `discord.invite_info(code)` y elimínala con `discord.revoke_invite(code)`.
+
+Create a thread with `channel.thread(name)` or `channel.thread_from(message_id, name)`. Use `thread.thread_member(id)`, `thread.archive()` and `thread.lock_thread()`. For forums, use `guild.create_channel(name, "forum")`, `forum.post(title, text, tags)` and `post.apply_tags(tags)`. Use `discord.forum_tags()` to build the full set supplied to `forum.set_forum_tags(tags)`, including the IDs of existing labels that should stay. The [live validation guide](discord-validation.md) lists the required permissions and expected results.
+
+Crea un hilo con `channel.thread(name)` o `channel.thread_from(message_id, name)`. Usa `thread.thread_member(id)`, `thread.archive()` y `thread.lock_thread()`. Para foros, usa `guild.create_channel(name, "forum")`, `forum.post(title, text, tags)` y `post.apply_tags(tags)`. Usa `discord.forum_tags()` para construir el conjunto completo que recibe `forum.set_forum_tags(tags)), incluidos los IDs de las etiquetas que quieras conservar. La [guía de validación conectada](discord-validation.md) recoge los permisos y resultados esperados.
+
 
 ---
 
 # Complete standard library reference / Biblioteca estándar completa
 
-Source: `playground/library-catalog-r6.1.js` (gh-pages). 64 modules, 383 functions. Native example flag is the catalog's flag, not a blanket guarantee of browser compatibility. Missing expected output means no documented output. All function examples preserve the catalog code.
+Source: `playground/library-catalog-r6.1.js` at gh-pages `de3b2448bad3bcefd718ea8e1a786937bc6b0b18`. 64 modules, 449 functions and 196 object methods (645 catalog entries). Native flags, targets, examples and expected output are copied from the catalog; they are not proof of live execution or full browser support. Signatures identify documented entries, not necessarily every overload.
 
-Module index: `arrays` (8), `cli` (5), `collections` (6), `console` (3), `convert` (8), `csv` (3), `datetime` (7), `errors` (7), `files` (5), `math` (12), `path` (6), `random` (3), `search` (4), `sort` (4), `text` (9), `validate` (6), `animation` (6), `buffer` (8), `camera` (4), `canvas` (10), `colors` (8), `dictionary` (8), `geometry` (6), `heap` (6), `image` (6), `io` (2), `json` (15), `matrix` (6), `particles` (6), `physics` (5), `queue` (7), `regex` (2), `sequences` (4), `sprite` (6), `stack` (7), `stats` (6), `stream` (6), `testing` (4), `time` (6), `utf8` (5), `vector` (7), `atomic` (4), `audio` (6), `binary` (8), `bits` (6), `bitset` (6), `checksum` (3), `compression` (3), `crypto` (3), `discord` (34), `encoding` (4), `env` (1), `events` (14), `game` (7), `http` (3), `https` (1), `memory` (4), `network` (3), `process` (3), `profiler` (2), `simd` (1), `system` (5), `thread` (3), `ui` (7).
-
----
+Module index: `arrays` (8), `cli` (5), `collections` (6), `console` (3), `convert` (8), `csv` (3), `datetime` (7), `errors` (7), `files` (5), `math` (12), `path` (6), `random` (3), `search` (4), `sort` (4), `text` (9), `validate` (6), `animation` (6), `buffer` (8), `camera` (4), `canvas` (10), `colors` (8), `dictionary` (8), `geometry` (6), `heap` (6), `image` (6), `io` (2), `json` (17), `matrix` (6), `particles` (6), `physics` (5), `queue` (7), `regex` (2), `sequences` (4), `sprite` (6), `stack` (7), `stats` (6), `stream` (6), `testing` (4), `time` (6), `utf8` (5), `vector` (7), `atomic` (4), `audio` (6), `binary` (8), `bits` (6), `bitset` (6), `checksum` (3), `compression` (3), `crypto` (3), `discord` (98 functions + 196 methods), `encoding` (4), `env` (1), `events` (14), `game` (7), `http` (3), `https` (1), `memory` (4), `network` (3), `process` (3), `profiler` (2), `simd` (1), `system` (5), `thread` (3), `ui` (7).
 
 ## tripol.arrays — 8 functions
-
 
 Import: `import tripol.arrays`
 
@@ -1551,13 +1889,9 @@ true
 [4, 7]
 ```
 
-
 ---
 
 ## tripol.cli — 5 functions
-
-Read simple options from explicit input text.
-Lee opciones sencillas de un texto de entrada.
 
 Import: `import tripol.cli`
 
@@ -1671,11 +2005,9 @@ Documented expected output:
 3
 ```
 
-
 ---
 
 ## tripol.collections — 6 functions
-
 
 Import: `import tripol.collections`
 
@@ -1823,11 +2155,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.console — 3 functions
-
 
 Import: `import tripol.console`
 
@@ -1852,6 +2182,12 @@ name = console.ask("Name:")
 show name
 ```
 
+Documented input:
+
+```text
+Ada
+```
+
 ### console.ask_int
 
 `func console.ask_int(prompt:string) -> int`
@@ -1871,6 +2207,12 @@ import tripol.console
 
 age = console.ask_int("Age:")
 show age + 1
+```
+
+Documented input:
+
+```text
+16
 ```
 
 ### console.line
@@ -1895,11 +2237,9 @@ Documented expected output:
 Hola TRIPOL
 ```
 
-
 ---
 
 ## tripol.convert — 8 functions
-
 
 Import: `import tripol.convert`
 
@@ -2079,13 +2419,9 @@ Documented expected output:
 0.000000
 ```
 
-
 ---
 
 ## tripol.csv — 3 functions
-
-Quoted fields and validation for one comma-separated record.
-Campos entrecomillados y validación de un registro separado por comas.
 
 Import: `import tripol.csv`
 
@@ -2155,11 +2491,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.datetime — 7 functions
-
 
 Import: `import tripol.datetime`
 
@@ -2323,11 +2657,9 @@ Documented expected output:
 2
 ```
 
-
 ---
 
 ## tripol.errors — 7 functions
-
 
 Import: `import tripol.errors`
 
@@ -2488,11 +2820,9 @@ Documented expected output:
 Indice fuera de rango
 ```
 
-
 ---
 
 ## tripol.files — 5 functions
-
 
 Import: `import tripol.files`
 
@@ -2613,11 +2943,9 @@ Documented expected output:
 8
 ```
 
-
 ---
 
 ## tripol.math — 12 functions
-
 
 Import: `import tripol.math`
 
@@ -2889,11 +3217,9 @@ Documented expected output:
 8
 ```
 
-
 ---
 
 ## tripol.path — 6 functions
-
 
 Import: `import tripol.path`
 
@@ -3035,11 +3361,9 @@ Documented expected output:
 docs/main.tri
 ```
 
-
 ---
 
 ## tripol.random — 3 functions
-
 
 Import: `import tripol.random`
 
@@ -3113,11 +3437,9 @@ Documented expected output:
 0
 ```
 
-
 ---
 
 ## tripol.search — 4 functions
-
 
 Import: `import tripol.search`
 
@@ -3213,11 +3535,9 @@ Documented expected output:
 2
 ```
 
-
 ---
 
 ## tripol.sort — 4 functions
-
 
 Import: `import tripol.sort`
 
@@ -3321,11 +3641,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.text — 9 functions
-
 
 Import: `import tripol.text`
 
@@ -3531,11 +3849,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.validate — 6 functions
-
 
 Import: `import tripol.validate`
 
@@ -3685,11 +4001,9 @@ true
 false
 ```
 
-
 ---
 
 ## tripol.animation — 6 functions
-
 
 Import: `import tripol.animation`
 
@@ -3829,11 +4143,9 @@ Documented expected output:
 2
 ```
 
-
 ---
 
 ## tripol.buffer — 8 functions
-
 
 Import: `import tripol.buffer`
 
@@ -4036,11 +4348,9 @@ Documented expected output:
 [5]
 ```
 
-
 ---
 
 ## tripol.camera — 4 functions
-
 
 Import: `import tripol.camera`
 
@@ -4132,11 +4442,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.canvas — 10 functions
-
 
 Import: `import tripol.canvas`
 
@@ -4381,11 +4689,9 @@ Documented expected output:
 [0, 255]
 ```
 
-
 ---
 
 ## tripol.colors — 8 functions
-
 
 Import: `import tripol.colors`
 
@@ -4565,11 +4871,9 @@ Documented expected output:
 127
 ```
 
-
 ---
 
 ## tripol.dictionary — 8 functions
-
 
 Import: `import tripol.dictionary`
 
@@ -4772,11 +5076,9 @@ true
 0
 ```
 
-
 ---
 
 ## tripol.geometry — 6 functions
-
 
 Import: `import tripol.geometry`
 
@@ -4916,13 +5218,9 @@ Documented expected output:
 15.000000
 ```
 
-
 ---
 
 ## tripol.heap — 6 functions
-
-A bounded minimum priority queue for integers.
-Una cola de prioridad mínima y acotada para enteros.
 
 Import: `import tripol.heap`
 
@@ -5069,11 +5367,9 @@ Documented expected output:
 4 7
 ```
 
-
 ---
 
 ## tripol.image — 6 functions
-
 
 Import: `import tripol.image`
 
@@ -5217,13 +5513,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.io — 2 functions
-
-Read and write bounded byte arrays.
-Lee y escribe arreglos de bytes acotados.
 
 Import: `import tripol.io`
 
@@ -5276,11 +5568,9 @@ Documented expected output:
 2
 ```
 
-
 ---
 
-## tripol.json — 15 functions
-
+## tripol.json — 17 functions
 
 Import: `import tripol.json`
 
@@ -5294,9 +5584,9 @@ ES: Escapa un texto y lo rodea de comillas JSON.
 
 Native example flag: false.
 
-Note: Input must be valid UTF-8, at most 512 bytes.
+Note: The native encoder allocates one output string. The encoded result respects the TRIPOL string capacity.
 
-Nota: La entrada debe ser UTF-8 válido, de hasta 512 bytes.
+Nota: El codificador nativo reserva una cadena de salida. El resultado respeta la capacidad de cadena de TRIPOL.
 
 ```tripol
 import tripol.json
@@ -5686,11 +5976,60 @@ Documented expected output:
 {"score":100}
 ```
 
+### json.string_equals
+
+`func json.string_equals(raw:string, value:string) -> bool`
+
+EN: Compare a quoted JSON string to UTF-8 text after interpreting JSON escapes.
+
+ES: Compara una cadena JSON entre comillas con texto UTF-8 después de interpretar sus escapes.
+
+Native example flag: false.
+
+Note: The comparison accepts up to 512 decoded UTF-8 bytes and returns false for invalid escape sequences or unpaired surrogates.
+
+Nota: La comparación acepta hasta 512 bytes UTF-8 decodificados y devuelve false para escapes inválidos o pares sustitutos incompletos.
+
+```tripol
+import tripol.json
+
+raw = "\"caf\\u00e9\\/\\ud83d\\ude00\""
+show json.string_equals(raw, "café/😀")
+show json.string_equals(raw, "cafe/😀")
+```
+
+Documented expected output:
+
+```text
+true
+false
+```
+
+### json.unquote
+
+`func json.unquote(raw:string) -> string`
+
+EN: Decode JSON escapes and Unicode surrogate pairs.
+
+ES: Decodifica escapes JSON y pares de sustitutos Unicode.
+
+Native example flag: false.
+
+```tripol
+import tripol.json
+
+show json.unquote("\"caf\\u00e9 \\ud83d\\ude00\"")
+```
+
+Documented expected output:
+
+```text
+café 😀
+```
 
 ---
 
 ## tripol.matrix — 6 functions
-
 
 Import: `import tripol.matrix`
 
@@ -5831,11 +6170,9 @@ Documented expected output:
 11
 ```
 
-
 ---
 
 ## tripol.particles — 6 functions
-
 
 Import: `import tripol.particles`
 
@@ -5983,11 +6320,9 @@ Documented expected output:
 1
 ```
 
-
 ---
 
 ## tripol.physics — 5 functions
-
 
 Import: `import tripol.physics`
 
@@ -6101,11 +6436,9 @@ Documented expected output:
 9.800000
 ```
 
-
 ---
 
 ## tripol.queue — 7 functions
-
 
 Import: `import tripol.queue`
 
@@ -6287,13 +6620,9 @@ Documented expected output:
 0
 ```
 
-
 ---
 
 ## tripol.regex — 2 functions
-
-Bounded pattern matching on bytes.
-Coincidencia acotada de patrones sobre bytes.
 
 Import: `import tripol.regex`
 
@@ -6341,11 +6670,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.sequences — 4 functions
-
 
 Import: `import tripol.sequences`
 
@@ -6437,11 +6764,9 @@ Documented expected output:
 15
 ```
 
-
 ---
 
 ## tripol.sprite — 6 functions
-
 
 Import: `import tripol.sprite`
 
@@ -6591,11 +6916,9 @@ Documented expected output:
 [255, 255]
 ```
 
-
 ---
 
 ## tripol.stack — 7 functions
-
 
 Import: `import tripol.stack`
 
@@ -6777,11 +7100,9 @@ Documented expected output:
 0
 ```
 
-
 ---
 
 ## tripol.stats — 6 functions
-
 
 Import: `import tripol.stats`
 
@@ -6923,13 +7244,9 @@ Documented expected output:
 12
 ```
 
-
 ---
 
 ## tripol.stream — 6 functions
-
-Read binary data with a bounded cursor.
-Lee datos binarios con un cursor acotado.
 
 Import: `import tripol.stream`
 
@@ -7078,11 +7395,9 @@ Documented expected output:
 4660
 ```
 
-
 ---
 
 ## tripol.testing — 4 functions
-
 
 Import: `import tripol.testing`
 
@@ -7178,11 +7493,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.time — 6 functions
-
 
 Import: `import tripol.time`
 
@@ -7321,13 +7634,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.utf8 — 5 functions
-
-Validate and decode Unicode scalar values.
-Valida y decodifica valores escalares Unicode.
 
 Import: `import tripol.utf8`
 
@@ -7441,11 +7750,9 @@ Documented expected output:
 233
 ```
 
-
 ---
 
 ## tripol.vector — 7 functions
-
 
 Import: `import tripol.vector`
 
@@ -7604,13 +7911,9 @@ Documented expected output:
 [2, 4, 6]
 ```
 
-
 ---
 
 ## tripol.atomic — 4 functions
-
-Checked operations on aligned integer array elements.
-Operaciones comprobadas sobre elementos alineados de arreglos enteros.
 
 Import: `import tripol.atomic`
 
@@ -7708,13 +8011,9 @@ Documented expected output:
 4
 ```
 
-
 ---
 
 ## tripol.audio — 6 functions
-
-PCM WAV generation and native Windows playback.
-Generación de PCM WAV y reproducción nativa en Windows.
 
 Import: `import tripol.audio`
 
@@ -7818,6 +8117,8 @@ ES: Reproduce un archivo WAV por su ruta en Windows compatible.
 
 Native example flag: true.
 
+Target: "windows".
+
 Note: Requires native Windows.
 
 Nota: Requiere Windows nativo.
@@ -7840,6 +8141,8 @@ ES: Reproduce un tono breve con la frecuencia y duración indicadas.
 
 Native example flag: true.
 
+Target: "windows".
+
 Note: Requires native Windows.
 
 Nota: Requiere Windows nativo.
@@ -7850,11 +8153,9 @@ import tripol.audio
 show audio.beep(440,100)
 ```
 
-
 ---
 
 ## tripol.binary — 8 functions
-
 
 Import: `import tripol.binary`
 
@@ -8040,11 +8341,9 @@ Documented expected output:
 [2, 1]
 ```
 
-
 ---
 
 ## tripol.bits — 6 functions
-
 
 Import: `import tripol.bits`
 
@@ -8180,11 +8479,9 @@ Documented expected output:
 3
 ```
 
-
 ---
 
 ## tripol.bitset — 6 functions
-
 
 Import: `import tripol.bitset`
 
@@ -8332,11 +8629,9 @@ Documented expected output:
 2
 ```
 
-
 ---
 
 ## tripol.checksum — 3 functions
-
 
 Import: `import tripol.checksum`
 
@@ -8406,11 +8701,9 @@ Documented expected output:
 294
 ```
 
-
 ---
 
 ## tripol.compression — 3 functions
-
 
 Import: `import tripol.compression`
 
@@ -8487,13 +8780,9 @@ Documented expected output:
 [7, 7, 7, 2]
 ```
 
-
 ---
 
 ## tripol.crypto — 3 functions
-
-SHA-256 digests for bytes and UTF-8 text.
-Resúmenes SHA-256 para bytes y texto UTF-8.
 
 Import: `import tripol.crypto`
 
@@ -8567,15 +8856,47 @@ Documented expected output:
 ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 ```
 
-
 ---
 
-## tripol.discord — 34 functions
-
+## tripol.discord — 98 functions + 196 methods
 
 Import: `import tripol.discord`
 
-### discord.gateway
+[Categorized web reference](https://tripollas.github.io/Tripol/docs/libraries/discord.html#functions). The current catalog and native guide take precedence over historical Discord R5 descriptions. Live networking remains experimental.
+
+### Getting started & connection / Primeros pasos y conexión (19)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-start)
+
+#### discord.bot
+
+`func discord.bot() -> Bot`
+
+EN: Create a bot with its own command table and presence settings.
+
+ES: Crea un bot con su propia tabla de comandos y configuración de presencia.
+
+Native example flag: false.
+
+Note: Runs offline on native TRIPOL and Web Engine R3.
+
+Nota: Funciona sin conexión en TRIPOL nativo y Web Engine R3.
+
+```tripol
+import tripol.discord
+
+bot = discord.bot()
+bot.command("hola", "¡Hola!")
+show bot.preview("hola")
+```
+
+Documented expected output:
+
+```text
+¡Hola!
+```
+
+#### discord.gateway
 
 `func discord.gateway() -> string`
 
@@ -8589,13 +8910,15 @@ Note: Requires an Internet connection and native HTTPS support. The response is 
 
 Nota: Requiere conexión a Internet y HTTPS nativo. La respuesta es JSON.
 
+Return metadata: ["JSON returned by Discord.","JSON devuelto por Discord."]
+
 ```tripol
 import tripol.discord
 
 show discord.gateway()
 ```
 
-### discord.api_host
+#### discord.api_host
 
 `func discord.api_host() -> string`
 
@@ -8617,7 +8940,7 @@ Documented expected output:
 discord.com
 ```
 
-### discord.token
+#### discord.token
 
 `func discord.token() -> string`
 
@@ -8630,6 +8953,8 @@ Native example flag: true.
 Note: Set DISCORD_TOKEN locally. This example checks that a token exists without revealing it. Never print the token itself.
 
 Nota: Configura DISCORD_TOKEN localmente. El ejemplo comprueba que existe sin revelarlo. Nunca imprimas el token.
+
+Return metadata: ["Secret token; do not display it.","Token secreto; no lo muestres."]
 
 ```tripol
 import tripol.discord
@@ -8644,146 +8969,7 @@ Documented expected output:
 true
 ```
 
-### discord.channel_path
-
-`func discord.channel_path(channel:string) -> string`
-
-EN: Build the API path used to access messages in a channel.
-
-ES: Construye la ruta de la API que permite acceder a los mensajes de un canal.
-
-Native example flag: true.
-
-Note: The channel ID must contain 1–20 digits. This example does not contact Discord.
-
-Nota: El ID debe contener entre 1 y 20 dígitos. Este ejemplo no contacta con Discord.
-
-```tripol
-import tripol.discord
-
-show discord.channel_path("123")
-```
-
-Documented expected output:
-
-```text
-/api/v10/channels/123/messages
-```
-
-### discord.send
-
-`func discord.send(channel:string,message:string) -> bool`
-
-EN: Send a message using the token stored in the local environment.
-
-ES: Envía un mensaje usando el token configurado en el entorno local.
-
-Native example flag: true.
-
-Note: Replace the channel ID and set DISCORD_TOKEN. Requires permission to send messages. Message: 1–512 UTF-8 bytes.
-
-Nota: Sustituye el ID y configura DISCORD_TOKEN. Requiere permiso para enviar mensajes. Mensaje: 1–512 bytes UTF-8.
-
-```tripol
-import tripol.discord
-
-show discord.send("YOUR_CHANNEL_ID", "Hola!")
-```
-
-### discord.latest
-
-`func discord.latest(channel:string) -> string`
-
-EN: Fetch the newest message in a channel as JSON.
-
-ES: Obtiene el mensaje más reciente de un canal como JSON.
-
-Native example flag: true.
-
-Note: Set DISCORD_TOKEN and replace the ID. The bot needs access to the channel and message history.
-
-Nota: Configura DISCORD_TOKEN y sustituye el ID. El bot necesita acceso al canal y al historial.
-
-```tripol
-import tripol.discord
-
-message = discord.latest("YOUR_CHANNEL_ID")
-show len(message) > 0
-```
-
-### discord.message_id
-
-`func discord.message_id(message:string) -> int`
-
-EN: Extract a numeric ID from a message JSON object.
-
-ES: Extrae el ID numérico de un mensaje JSON.
-
-Native example flag: true.
-
-Note: Returns zero if the ID is absent, invalid or outside the integer range.
-
-Nota: Devuelve cero si el ID falta, no es válido o está fuera del rango entero.
-
-```tripol
-import tripol.discord
-
-message = "{\"id\":\"123\"}"
-show discord.message_id(message)
-```
-
-Documented expected output:
-
-```text
-123
-```
-
-### discord.matches
-
-`func discord.matches(message:string,command:string) -> bool`
-
-EN: Check whether a message is an exact command from a non-bot, non-webhook author.
-
-ES: Comprueba si un mensaje coincide exactamente con un comando y no procede de un bot ni webhook.
-
-Native example flag: true.
-
-```tripol
-import tripol.discord
-
-message = "{\"id\":\"123\",\"content\":\"!hola\",\"author\":{\"bot\":false}}"
-show discord.matches(message, "!hola")
-show discord.matches(message, "!adios")
-```
-
-Documented expected output:
-
-```text
-true
-false
-```
-
-### discord.listen
-
-`func discord.listen(channel:string,command:string,response:string) -> int`
-
-EN: Start a legacy bot loop for one command in one channel.
-
-ES: Inicia un bot antiguo que escucha un único comando en un canal.
-
-Native example flag: true.
-
-Note: Native Windows REST polling; needs DISCORD_TOKEN and channel permissions. Polls the latest message every 2500 ms; use run() for Gateway bots. Stop with Ctrl+C.
-
-Nota: Sondeo REST en Windows nativo; requiere DISCORD_TOKEN y permisos. Consulta el último mensaje cada 2500 ms; usa run() para bots Gateway. Detén con Ctrl+C.
-
-```tripol
-import tripol.discord
-
-discord.listen("YOUR_CHANNEL_ID", "!hola", "Hola!")
-```
-
-### discord.login
+#### discord.login
 
 `func discord.login(secret:string) -> bool`
 
@@ -8810,7 +8996,7 @@ Documented expected output:
 true
 ```
 
-### discord.login_env
+#### discord.login_env
 
 `func discord.login_env() -> bool`
 
@@ -8836,62 +9022,7 @@ Documented expected output:
 true
 ```
 
-### discord.channel
-
-`func discord.channel(id:string) -> bool`
-
-EN: Select the channel filter for incoming Gateway commands and the destination for say().
-
-ES: Selecciona el filtro de canal para comandos Gateway y el destino de say().
-
-Native example flag: true.
-
-Note: The example only configures a numeric ID; use a real channel ID when connecting.
-
-Nota: El ejemplo solo configura un ID numérico; usa un ID real al conectarte.
-
-```tripol
-import tripol.discord
-
-show discord.channel("123")
-show discord.has_channel()
-```
-
-Documented expected output:
-
-```text
-true
-true
-```
-
-### discord.reply
-
-`func discord.reply(command:string,response:string) -> bool`
-
-EN: Register or replace the response to an exact command.
-
-ES: Registra o reemplaza la respuesta de un comando exacto.
-
-Native example flag: true.
-
-Note: Maximum 16 commands; command 1–128 bytes, response 1–512 bytes.
-
-Nota: Máximo 16 comandos; comando de 1–128 bytes, respuesta de 1–512 bytes.
-
-```tripol
-import tripol.discord
-
-discord.reply("!hola", "Hola!")
-show discord.preview("!hola")
-```
-
-Documented expected output:
-
-```text
-Hola!
-```
-
-### discord.reset
+#### discord.reset
 
 `func discord.reset() -> bool`
 
@@ -8920,7 +9051,7 @@ true
 true
 ```
 
-### discord.configured
+#### discord.configured
 
 `func discord.configured() -> bool`
 
@@ -8947,15 +9078,6548 @@ Documented expected output:
 false
 ```
 
-### discord.preview
+#### discord.setup
 
-`func discord.preview(command:string) -> string`
+`func discord.setup(secret:string,id:string) -> bool`
 
-EN: Look up a registered command response without sending a message.
+EN: Configure the token and channel in one call.
 
-ES: Consulta una respuesta registrada sin enviar un mensaje.
+ES: Configura el token y el canal en una sola llamada.
 
 Native example flag: true.
+
+Note: Configure DISCORD_TOKEN locally; replace 123 with the real ID for live use. No network connection is opened.
+
+Nota: Configura DISCORD_TOKEN localmente; sustituye 123 por el ID real para conectarte. No abre una conexión.
+
+```tripol
+import tripol.discord
+
+secret = discord.token()
+show discord.setup(secret, "123")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.status
+
+`func discord.status(value:string) -> bool`
+
+EN: Choose the presence status sent when the bot identifies itself to Discord.
+
+ES: Elige el estado de presencia que se envía al identificarse el bot.
+
+Native example flag: true.
+
+Note: Allowed: online, idle, dnd, invisible. Configure before run().
+
+Nota: Permitidos: online, idle, dnd, invisible. Configura antes de run().
+
+```tripol
+import tripol.discord
+
+show discord.status("idle")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.activity
+
+`func discord.activity(value:string) -> bool`
+
+EN: Choose the activity text displayed by the bot when connecting.
+
+ES: Elige el texto de actividad que muestra el bot al conectarse.
+
+Native example flag: true.
+
+Note: Maximum 128 UTF-8 bytes; empty text clears the activity.
+
+Nota: Máximo 128 bytes UTF-8; el texto vacío elimina la actividad.
+
+```tripol
+import tripol.discord
+
+show discord.activity("Programando con TRIPOL")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.connected
+
+`func discord.connected() -> bool`
+
+EN: Check the local Gateway ready state.
+
+ES: Comprueba si el Gateway está listo según su estado local.
+
+Native example flag: true.
+
+Note: This is a local state check, not a fresh network test.
+
+Nota: Comprueba el estado local, no realiza una prueba de red nueva.
+
+```tripol
+import tripol.discord
+
+discord.reset()
+show discord.connected()
+```
+
+Documented expected output:
+
+```text
+false
+```
+
+#### discord.ping
+
+`func discord.ping() -> int`
+
+EN: Get the most recent Gateway heartbeat round-trip time in milliseconds.
+
+ES: Obtiene la última latencia de heartbeat del Gateway en milisegundos.
+
+Native example flag: true.
+
+Note: Returns -1 until a heartbeat acknowledgement is recorded.
+
+Nota: Devuelve -1 hasta que se registra una confirmación de heartbeat.
+
+```tripol
+import tripol.discord
+
+discord.reset()
+show discord.ping()
+```
+
+Documented expected output:
+
+```text
+-1
+```
+
+#### discord.run
+
+`func discord.run(intents=33281) -> int`
+
+EN: Start the bot and keep it connected to Discord to answer registered commands.
+
+ES: Inicia el bot y lo mantiene conectado a Discord para responder comandos registrados.
+
+Native example flag: true.
+
+Note: Windows and Linux x86-64. Set DISCORD_TOKEN and enable Message Content Intent for text commands. Linux supports bounded reconnect and Resume.
+
+Nota: Windows y Linux x86-64. Configura DISCORD_TOKEN y activa Message Content Intent para comandos de texto. Linux admite reconexión acotada y Resume.
+
+Return metadata: ["Returns 1 after the Gateway loop closes normally; failures may stop execution.","Devuelve 1 cuando el bucle Gateway termina normalmente; los fallos pueden detener la ejecución."]
+
+```tripol
+import tripol.discord
+
+discord.login_env()
+discord.status("online")
+discord.activity("TRIPOL")
+discord.reply("!hola", "Hola!")
+discord.run()
+```
+
+#### discord.run_session
+
+`func discord.run_session(handler:func(Message)->string,intents:int,keys:string_list,handlers:list[func(Interaction)->string]) -> int`
+
+EN: Run a configured Gateway with a message and interaction registry.
+
+ES: Ejecuta un Gateway con sus manejadores de mensajes e interacciones.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord bot and a native run on Linux or Windows.
+
+Nota: Requiere un bot autorizado de Discord y ejecución nativa en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+discord.login_env()
+discord.run_session(&discord.ignore_message,1,string_list(),discord.empty_interactions())
+```
+
+#### discord.Bot.prefix
+
+`func discord.Bot.prefix(value:string) -> bool`
+
+EN: Set the command prefix. The initial prefix is empty.
+
+ES: Define el prefijo del comando. El prefijo inicial está vacío.
+
+Native example flag: false.
+
+Note: Up to 32 UTF-8 bytes.
+
+Nota: Hasta 32 bytes UTF-8.
+
+```tripol
+import tripol.discord
+
+bot = discord.bot()
+bot.command("hola", "¡Hola!")
+bot.prefix("!")
+show bot.preview("!hola")
+```
+
+Documented expected output:
+
+```text
+¡Hola!
+```
+
+#### discord.Bot.status
+
+`func discord.Bot.status(value:string) -> bool`
+
+EN: Set the initial presence to online, idle, dnd or invisible.
+
+ES: Define la presencia inicial como online, idle, dnd o invisible.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+bot = discord.bot()
+show bot.status("idle")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Bot.activity
+
+`func discord.Bot.activity(value:string) -> bool`
+
+EN: Set the activity text shown in the initial presence.
+
+ES: Define el texto de actividad de la presencia inicial.
+
+Native example flag: false.
+
+Note: Up to 128 UTF-8 bytes.
+
+Nota: Hasta 128 bytes UTF-8.
+
+```tripol
+import tripol.discord
+
+bot = discord.bot()
+show bot.activity("Programando en TRIPOL")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Bot.start
+
+`func discord.Bot.start() -> int`
+
+EN: Start a blocking Gateway session. Set Message Content Intent when using text commands.
+
+ES: Inicia una sesión Gateway bloqueante. Activa Message Content Intent al usar comandos de texto.
+
+Native example flag: true.
+
+Note: Run on Windows or Linux x86-64 with DISCORD_TOKEN configured.
+
+Nota: Ejecuta en Windows o Linux x86-64 con DISCORD_TOKEN configurado.
+
+```tripol
+import tripol.discord
+
+bot = discord.bot()
+bot.command("hola", "¡Hola!")
+bot.start()
+```
+
+### Commands & context menus / Comandos y menús contextuales (55)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-commands)
+
+#### discord.empty_interactions
+
+`func discord.empty_interactions() -> list[func(Interaction)->string]`
+
+EN: Create an empty typed list for interaction handlers.
+
+ES: Crea una lista tipada vacía para callbacks de interacción.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+handlers=discord.empty_interactions()
+show handlers.size()
+```
+
+Documented expected output:
+
+```text
+0
+```
+
+#### discord.interaction_selector
+
+`func discord.interaction_selector(event:string) -> string`
+
+EN: Read the dispatch key from an interaction event.
+
+ES: Lee la clave de despacho de un evento de interacción.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.interaction_selector("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"id\":\"123\",\"token\":\"fixture-token\",\"type\":2,\"data\":{\"type\":1,\"name\":\"hola\",\"options\":[{\"type\":3,\"name\":\"text\",\"value\":\"Ana\"}]}}}")
+```
+
+Documented expected output:
+
+```text
+s"hola"/
+```
+
+#### discord.interaction_matches
+
+`func discord.interaction_matches(key:string,selector:string) -> bool`
+
+EN: Compare a registered key with a Discord interaction selector.
+
+ES: Compara una clave registrada con el selector de un evento.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.interaction_matches("shola", "s\"hola\"")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.dispatch_interaction
+
+`func discord.dispatch_interaction(event:string,key:string,handler:func(Interaction)->string) -> string`
+
+EN: Invoke a typed callback and build its initial response.
+
+ES: Ejecuta el callback tipado y construye su respuesta inicial.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+show discord.dispatch_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"id\":\"123\",\"token\":\"fixture-token\",\"type\":2,\"data\":{\"type\":1,\"name\":\"hola\",\"options\":[{\"type\":3,\"name\":\"text\",\"value\":\"Ana\"}]}}}","shola",&answer)
+```
+
+Documented expected output:
+
+```text
+{"type":4,"data":{"content":"Hola, Ana","flags":64,"allowed_mentions":{"parse":[]}}}
+```
+
+#### discord.deliver_interaction
+
+`func discord.deliver_interaction(event:string,key:string,handler:func(Interaction)->string) -> bool`
+
+EN: Send the returned response to the interaction callback endpoint.
+
+ES: Envía la respuesta devuelta al endpoint de la interacción.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord bot and a native run on Linux or Windows.
+
+Nota: Requiere un bot autorizado de Discord y ejecución nativa en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+discord.deliver_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"id\":\"123\",\"token\":\"fixture-token\",\"type\":2,\"data\":{\"type\":1,\"name\":\"hola\",\"options\":[{\"type\":3,\"name\":\"text\",\"value\":\"Ana\"}]}}}","shola",&answer)
+```
+
+#### discord.slash_name
+
+`func discord.slash_name(name:string) -> bool`
+
+EN: Validate the supported slash name syntax.
+
+ES: Valida la sintaxis admitida para un nombre slash.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.slash_name("hola-2")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.slash_is_current
+
+`func discord.slash_is_current(remote:string,definition:string) -> bool`
+
+EN: Compare a local slash definition with the remote command array.
+
+ES: Compara una definición slash local con el arreglo remoto.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.slash_is_current("[{\"name\":\"hola\",\"description\":\"Saluda\",\"type\":1}]","{\"name\":\"hola\",\"description\":\"Saluda\",\"type\":1}")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.sync_slash_commands
+
+`func discord.sync_slash_commands(specs:string_list,guilds:string_list) -> bool`
+
+EN: Synchronize application commands in the specified scopes.
+
+ES: Sincroniza comandos de aplicación en los ámbitos indicados.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord bot and a native run on Linux or Windows.
+
+Nota: Requiere un bot autorizado de Discord y ejecución nativa en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+discord.login_env()
+specs=string_list(["{\"name\":\"hola\",\"description\":\"Saluda\",\"type\":1}"])
+show discord.sync_slash_commands(specs,string_list([""]))
+```
+
+#### discord.slash_options
+
+`func discord.slash_options() -> SlashOptions`
+
+EN: Create a builder for flat application command options.
+
+ES: Crea un constructor de opciones planas para comandos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+opts=discord.slash_options()
+show opts.payload()
+```
+
+Documented expected output:
+
+```text
+[]
+```
+
+#### discord.slash_option_signature
+
+`func discord.slash_option_signature(options:string,depth=0) -> string`
+
+EN: Normalize supported slash option fields for comparison.
+
+ES: Normaliza los campos de opciones slash para compararlos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+opts=discord.slash_options()
+opts.add("text","Nombre","string",true)
+show len(discord.slash_option_signature(opts.payload()))>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.interaction_message
+
+`func discord.interaction_message(content:string,ephemeral=false) -> string`
+
+EN: Build a text message for edits or follow-ups, with mentions disabled.
+
+ES: Prepara un mensaje de texto para edición o seguimiento con las menciones desactivadas.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.interaction_message("Hola", true)
+```
+
+Documented expected output:
+
+```text
+{"content":"Hola","flags":64,"allowed_mentions":{"parse":[]}}
+```
+
+#### discord.interaction_context
+
+`func discord.interaction_context(payload:string,key:string) -> Interaction`
+
+EN: Build an offline interaction context from the event data and a dispatch key.
+
+ES: Crea un contexto de interacción sin conexión a partir de los datos del evento y una clave de despacho.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":2,\"id\":\"123\"}","shola")
+show ctx.id,ctx.name
+```
+
+Documented expected output:
+
+```text
+123 hola
+```
+
+#### discord.interaction_option
+
+`func discord.interaction_option(data:string,name:string,focused=false) -> string`
+
+EN: Read the JSON object for a named or focused option, including within a subcommand.
+
+ES: Lee el objeto JSON de una opción o del campo activo, incluso dentro de un subcomando.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.interaction_option("{\"type\":1,\"name\":\"order\",\"options\":[{\"type\":2,\"name\":\"drinks\",\"options\":[{\"type\":1,\"name\":\"find\",\"options\":[{\"name\":\"query\",\"type\":3,\"value\":\"ca\",\"focused\":true}]}]}]}","",true)
+```
+
+Documented expected output:
+
+```text
+{"name":"query","type":3,"value":"ca","focused":true}
+```
+
+#### discord.first_command_option
+
+`func discord.first_command_option(data:string) -> string`
+
+EN: Read the first option object in interaction or subcommand data.
+
+ES: Lee el primer objeto de opción en los datos de una interacción o subcomando.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.first_command_option("{\"type\":1,\"name\":\"order\",\"options\":[{\"type\":2,\"name\":\"drinks\",\"options\":[{\"type\":1,\"name\":\"find\",\"options\":[{\"name\":\"query\",\"type\":3,\"value\":\"ca\",\"focused\":true}]}]}]}")
+```
+
+Documented expected output:
+
+```text
+{"type":2,"name":"drinks","options":[{"type":1,"name":"find","options":[{"name":"query","type":3,"value":"ca","focused":true}]}]}
+```
+
+#### discord.command_choices
+
+`func discord.command_choices() -> CommandChoices`
+
+EN: Create a typed choice list for a command or autocomplete callback.
+
+ES: Crea una lista tipada de elecciones para un comando o autocompletado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+choices=discord.command_choices()
+show choices.payload()
+```
+
+Documented expected output:
+
+```text
+[]
+```
+
+#### discord.slash_choice_signature
+
+`func discord.slash_choice_signature(choices:string) -> string`
+
+EN: Normalize a Discord choice list for comparison when syncing commands.
+
+ES: Normaliza una lista de elecciones para compararla al sincronizar comandos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.slash_choice_signature("[{\"value\":10,\"name\":\"D\\u00edez\"}]")
+```
+
+Documented expected output:
+
+```text
+"Díez":1e1;
+```
+
+#### discord.slash_number_signature
+
+`func discord.slash_number_signature(value:string) -> string`
+
+EN: Normalize equivalent Discord number spellings for command sync.
+
+ES: Normaliza representaciones equivalentes de números para sincronizar comandos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.slash_number_signature("1.250")==discord.slash_number_signature("125e-2")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Bot.command
+
+`func discord.Bot.command(name:string, response:string) -> bool`
+
+EN: Register an exact text command or replace its reply.
+
+ES: Registra un comando de texto exacto o sustituye su respuesta.
+
+Native example flag: false.
+
+Note: Up to 16 names. Names and replies accept 1–96 and 1–512 UTF-8 bytes, respectively.
+
+Nota: Hasta 16 nombres. Los nombres y las respuestas aceptan 1–96 y 1–512 bytes UTF-8, respectivamente.
+
+```tripol
+import tripol.discord
+
+bot = discord.bot()
+bot.command("ping", "Pong!")
+show bot.preview("ping")
+```
+
+Documented expected output:
+
+```text
+Pong!
+```
+
+#### discord.Bot.preview
+
+`func discord.Bot.preview(content:string) -> string`
+
+EN: Look up an exact reply locally, with the configured prefix.
+
+ES: Busca la respuesta exacta localmente con el prefijo configurado.
+
+Native example flag: false.
+
+Note: Runs offline on native TRIPOL and Web Engine R3.
+
+Nota: Funciona sin conexión en TRIPOL nativo y Web Engine R3.
+
+```tripol
+import tripol.discord
+
+bot = discord.bot()
+bot.command("ping", "Pong!")
+show bot.preview("ping"), bot.preview("other") == ""
+```
+
+Documented expected output:
+
+```text
+Pong! true
+```
+
+#### discord.Bot.bind_interaction
+
+`func discord.Bot.bind_interaction(key:string,handler:func(Interaction)->string,definition="",guild_id="") -> bool`
+
+EN: Bind a callback to a protocol-prefixed route key.
+
+ES: Asocia un callback a una clave con prefijo de protocolo.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+b=discord.bot()
+show b.bind_interaction("shola",&answer)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Bot.slash
+
+`func discord.Bot.slash(name:string,description:string,handler:func(Interaction)->string,guild_id="",default_permissions="") -> bool`
+
+EN: Register a typed slash command in a global or guild scope.
+
+ES: Registra un comando slash tipado global o por servidor.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+b=discord.bot()
+b.slash("hola","Saluda",&answer)
+show b.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"id\":\"123\",\"token\":\"fixture-token\",\"type\":2,\"data\":{\"type\":1,\"name\":\"hola\",\"options\":[{\"type\":3,\"name\":\"text\",\"value\":\"Ana\"}]}}}")
+```
+
+Documented expected output:
+
+```text
+{"type":4,"data":{"content":"Hola, Ana","flags":64,"allowed_mentions":{"parse":[]}}}
+```
+
+#### discord.Bot.slash_with_options
+
+`func discord.Bot.slash_with_options(name:string,description:string,handler:func(Interaction)->string,options:SlashOptions,guild_id="",default_permissions="") -> bool`
+
+EN: Register a slash command with a typed option schema.
+
+ES: Registra un comando slash con opciones tipadas.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+b=discord.bot()
+opts=discord.slash_options()
+opts.add("text","Nombre","string",true)
+b.slash_with_options("hola","Saluda",&answer,opts,"123")
+show b.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"id\":\"123\",\"token\":\"fixture-token\",\"type\":2,\"data\":{\"type\":1,\"name\":\"hola\",\"guild_id\":\"123\",\"options\":[{\"type\":3,\"name\":\"text\",\"value\":\"Ana\"}]}}}")
+```
+
+Documented expected output:
+
+```text
+{"type":4,"data":{"content":"Hola, Ana","flags":64,"allowed_mentions":{"parse":[]}}}
+```
+
+#### discord.Bot.preview_interaction
+
+`func discord.Bot.preview_interaction(event:string) -> string`
+
+EN: Execute a typed interaction callback without connecting.
+
+ES: Ejecuta un callback tipado de interacción sin conexión.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+b=discord.bot()
+b.slash("hola","Saluda",&answer)
+show b.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"id\":\"123\",\"token\":\"fixture-token\",\"type\":2,\"data\":{\"type\":1,\"name\":\"hola\",\"options\":[{\"type\":3,\"name\":\"text\",\"value\":\"Ana\"}]}}}")
+```
+
+Documented expected output:
+
+```text
+{"type":4,"data":{"content":"Hola, Ana","flags":64,"allowed_mentions":{"parse":[]}}}
+```
+
+#### discord.Interaction.reply
+
+`func discord.Interaction.reply(content:string,ephemeral=false) -> string
+func discord.Interaction.reply(embed:Embed,ephemeral=false) -> string
+func discord.Interaction.reply(batch:Embeds,ephemeral=false) -> string
+func discord.Interaction.reply(layout:Components,ephemeral=false) -> string`
+
+EN: Build an initial text, embed, embed batch or Components V2 reply.
+
+ES: Construye una respuesta inicial de texto, embed, lote de embeds o Components V2.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+b=discord.bot()
+b.slash("hola","Saluda",&answer)
+show b.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"id\":\"123\",\"token\":\"fixture-token\",\"type\":2,\"data\":{\"type\":1,\"name\":\"hola\",\"options\":[{\"type\":3,\"name\":\"text\",\"value\":\"Ana\"}]}}}")
+```
+
+Documented expected output:
+
+```text
+{"type":4,"data":{"content":"Hola, Ana","flags":64,"allowed_mentions":{"parse":[]}}}
+```
+
+#### discord.Interaction.defer
+
+`func discord.Interaction.defer(ephemeral=false) -> string`
+
+EN: Acknowledge an interaction for a later response.
+
+ES: Confirma una interacción para responder más tarde.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(3,"hola","123","456","789","123","567","{\"values\":[\"42\",\"43\"]}",true)
+show ctx.defer(true)
+```
+
+Documented expected output:
+
+```text
+{"type":5,"data":{"flags":64}}
+```
+
+#### discord.Interaction.ack
+
+`func discord.Interaction.ack() -> string`
+
+EN: Acknowledge a component interaction on its existing message.
+
+ES: Confirma la interacción de un componente sobre su mensaje.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(3,"hola","123","456","789","123","567","{\"values\":[\"42\",\"43\"]}",true)
+show ctx.ack()
+```
+
+Documented expected output:
+
+```text
+{"type":6}
+```
+
+#### discord.Interaction.option
+
+`func discord.Interaction.option(name:string) -> string`
+
+EN: Read a raw JSON command option, including inside a selected subcommand.
+
+ES: Lee una opción como JSON, incluso dentro del subcomando seleccionado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(2,"hola","123","456","789","123","567","{\"options\":[{\"name\":\"text\",\"value\":\"Ana\"}]}",false)
+show ctx.option("text")
+```
+
+Documented expected output:
+
+```text
+"Ana"
+```
+
+#### discord.Interaction.option_text
+
+`func discord.Interaction.option_text(name:string) -> string`
+
+EN: Decode a string option from the interaction.
+
+ES: Decodifica una opción de texto de la interacción.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(2,"hola","123","456","789","123","567","{\"options\":[{\"name\":\"text\",\"value\":\"Ana\"}]}",false)
+show ctx.option_text("text")
+```
+
+Documented expected output:
+
+```text
+Ana
+```
+
+#### discord.SlashOptions.add
+
+`func discord.SlashOptions.add(name:string,description:string,kind="string",required=false,autocomplete=false) -> bool`
+
+EN: Add a typed flat slash option with optional requiredness.
+
+ES: Añade una opción slash tipada y permite marcarla requerida.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+opts=discord.slash_options()
+show opts.add("text","Nombre","string",true)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.SlashOptions.payload
+
+`func discord.SlashOptions.payload() -> string`
+
+EN: Serialize the declared command options.
+
+ES: Serializa las opciones declaradas del comando.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+opts=discord.slash_options()
+opts.add("text","Nombre","string",true)
+show len(opts.payload())>2
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.respond
+
+`func discord.Interaction.respond(body:string) -> bool`
+
+EN: Send the initial response once before continuing in a connected handler.
+
+ES: Envía la respuesta inicial una sola vez antes de continuar en un callback conectado.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+func report(ctx:discord.Interaction)->string {
+    if ctx.respond(ctx.defer(true)) {
+        ctx.edit_reply("Informe listo")
+    }
+    return ""
+}
+bot=discord.bot()
+bot.slash("informe","Prepara un informe",&report)
+bot.start()
+```
+
+#### discord.Interaction.edit_response
+
+`func discord.Interaction.edit_response(body:string) -> bool`
+
+EN: Edit the original interaction reply with a Discord message payload.
+
+ES: Edita la respuesta original de la interacción con un payload de mensaje de Discord.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+func report(ctx:discord.Interaction)->string {
+    if ctx.respond(ctx.defer(true)) {
+        ctx.edit_response(discord.interaction_message("Informe listo"))
+    }
+    return ""
+}
+bot=discord.bot()
+bot.slash("informe","Prepara un informe",&report)
+bot.start()
+```
+
+#### discord.Interaction.edit_reply
+
+`func discord.Interaction.edit_reply(content:string) -> bool`
+
+EN: Fill a deferred response or update the text of the original reply.
+
+ES: Completa una respuesta diferida o actualiza el texto de la respuesta original.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+func report(ctx:discord.Interaction)->string {
+    if ctx.respond(ctx.defer(true)) {
+        ctx.edit_reply("Informe listo")
+    }
+    return ""
+}
+bot=discord.bot()
+bot.slash("informe","Prepara un informe",&report)
+bot.start()
+```
+
+#### discord.Interaction.followup
+
+`func discord.Interaction.followup(content:string,ephemeral=false) -> string`
+
+EN: Send a text follow-up and return its message ID, or empty text on failure.
+
+ES: Envía un seguimiento de texto y devuelve el ID del mensaje, o una cadena vacía si falla.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+func report(ctx:discord.Interaction)->string {
+    if ctx.respond(ctx.reply("Procesado",true)) {
+        show ctx.followup("Informe listo", true)
+    }
+    return ""
+}
+bot=discord.bot()
+bot.slash("informe","Prepara un informe",&report)
+bot.start()
+```
+
+#### discord.Interaction.command_group
+
+`func discord.Interaction.command_group() -> string`
+
+EN: Read the selected slash subcommand group name.
+
+ES: Lee el nombre del grupo de subcomandos seleccionado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":4,\"data\":{\"type\":1,\"name\":\"order\",\"options\":[{\"type\":2,\"name\":\"drinks\",\"options\":[{\"type\":1,\"name\":\"find\",\"options\":[{\"name\":\"query\",\"type\":3,\"value\":\"ca\",\"focused\":true}]}]}]}}","aorder")
+show ctx.command_group()
+```
+
+Documented expected output:
+
+```text
+drinks
+```
+
+#### discord.Interaction.subcommand
+
+`func discord.Interaction.subcommand() -> string`
+
+EN: Read a selected slash subcommand, including a grouped subcommand.
+
+ES: Lee el subcomando slash seleccionado, incluso dentro de un grupo.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":4,\"data\":{\"type\":1,\"name\":\"order\",\"options\":[{\"type\":2,\"name\":\"drinks\",\"options\":[{\"type\":1,\"name\":\"find\",\"options\":[{\"name\":\"query\",\"type\":3,\"value\":\"ca\",\"focused\":true}]}]}]}}","aorder")
+show ctx.subcommand()
+```
+
+Documented expected output:
+
+```text
+find
+```
+
+#### discord.Interaction.focused
+
+`func discord.Interaction.focused() -> string`
+
+EN: Read the option name currently being filled during autocomplete.
+
+ES: Lee el nombre de la opción que se está rellenando.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":4,\"data\":{\"type\":1,\"name\":\"order\",\"options\":[{\"type\":2,\"name\":\"drinks\",\"options\":[{\"type\":1,\"name\":\"find\",\"options\":[{\"name\":\"query\",\"type\":3,\"value\":\"ca\",\"focused\":true}]}]}]}}","aorder")
+show ctx.focused()
+```
+
+Documented expected output:
+
+```text
+query
+```
+
+#### discord.Bot.on_autocomplete
+
+`func discord.Bot.on_autocomplete(name:string,handler:func(Interaction)->string,guild_id="") -> bool`
+
+EN: Register an autocomplete handler for a global or server command.
+
+ES: Registra un callback de autocompletado global o por servidor.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func suggest(ctx:discord.Interaction)->string {
+    choices=discord.command_choices()
+    choices.add("Café","cafe")
+    return ctx.autocomplete(choices)
+}
+b=discord.bot()
+b.on_autocomplete("order",&suggest)
+show b.preview_interaction("{\"op\":0,\"t\":\"INTERACTION_CREATE\",\"d\":{\"type\":4,\"data\":{\"type\":1,\"name\":\"order\",\"options\":[{\"type\":2,\"name\":\"drinks\",\"options\":[{\"type\":1,\"name\":\"find\",\"options\":[{\"name\":\"query\",\"type\":3,\"value\":\"ca\",\"focused\":true}]}]}]}}}")
+```
+
+Documented expected output:
+
+```text
+{"type":8,"data":{"choices":[{"name":"Café","value":"cafe"}]}}
+```
+
+#### discord.SlashOptions.subcommand
+
+`func discord.SlashOptions.subcommand(name:string,description:string,options:SlashOptions) -> bool`
+
+EN: Add a subcommand with its argument schema.
+
+ES: Añade un subcomando con su esquema de argumentos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+arguments=discord.slash_options()
+arguments.add("query","Qué buscar","string",true,true)
+commands=discord.slash_options()
+show commands.subcommand("find","Busca",arguments)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.SlashOptions.group
+
+`func discord.SlashOptions.group(name:string,description:string,subcommands:SlashOptions) -> bool`
+
+EN: Add a group containing one or more subcommands.
+
+ES: Añade un grupo con uno o más subcomandos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+arguments=discord.slash_options()
+arguments.add("query","Qué buscar","string",true,true)
+commands=discord.slash_options()
+commands.subcommand("find","Busca",arguments)
+root=discord.slash_options()
+show root.group("drinks","Bebidas",commands)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.SlashOptions.choose
+
+`func discord.SlashOptions.choose(name:string,description:string,choices:CommandChoices,required=false) -> bool`
+
+EN: Add a fixed text or integer choice option.
+
+ES: Añade una opción con elecciones fijas de texto o de entero.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+choices=discord.command_choices()
+choices.integer("Diez",10)
+arguments=discord.slash_options()
+show arguments.choose("limit","Límite",choices)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.CommandChoices.add
+
+`func discord.CommandChoices.add(label:string,value:string) -> bool`
+
+EN: Add a text value and its displayed label.
+
+ES: Añade un valor de texto con su etiqueta visible.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+choices=discord.command_choices()
+show choices.add("Café","cafe")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.CommandChoices.integer
+
+`func discord.CommandChoices.integer(label:string,value:int) -> bool`
+
+EN: Add an integer value and its displayed label.
+
+ES: Añade un valor entero con su etiqueta visible.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+choices=discord.command_choices()
+show choices.integer("Diez",10)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.CommandChoices.payload
+
+`func discord.CommandChoices.payload() -> string`
+
+EN: Serialize a list of choices as Discord JSON.
+
+ES: Serializa una lista de elecciones en el JSON de Discord.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+choices=discord.command_choices()
+choices.integer("Diez",10)
+show choices.payload()
+```
+
+Documented expected output:
+
+```text
+[{"name":"Diez","value":10}]
+```
+
+#### discord.Interaction.autocomplete
+
+`func discord.Interaction.autocomplete(choices:CommandChoices) -> string`
+
+EN: Build the type-8 callback response from matching choices.
+
+ES: Genera una respuesta de autocompletado tipo 8 con elecciones compatibles.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":4,\"data\":{\"type\":1,\"name\":\"order\",\"options\":[{\"type\":2,\"name\":\"drinks\",\"options\":[{\"type\":1,\"name\":\"find\",\"options\":[{\"name\":\"query\",\"type\":3,\"value\":\"ca\",\"focused\":true}]}]}]}}","aorder")
+choices=discord.command_choices()
+choices.add("Café","cafe")
+show ctx.autocomplete(choices)
+```
+
+Documented expected output:
+
+```text
+{"type":8,"data":{"choices":[{"name":"Café","value":"cafe"}]}}
+```
+
+#### discord.Interaction.edit_followup
+
+`func discord.Interaction.edit_followup(message_id:string,content:string) -> bool`
+
+EN: Edit the text of an interaction follow-up.
+
+ES: Edita el texto de un seguimiento de interacción.
+
+Native example flag: true.
+
+Note: Run in a native callback with an authorized Discord app.
+
+Nota: Ejecuta en un callback nativo con una aplicación Discord autorizada.
+
+```tripol
+import tripol.discord
+
+func reply(ctx) {
+    if ctx.respond(ctx.reply("Hola", true)) {
+        id=ctx.followup("Mensaje")
+        if id!="" {
+            ctx.edit_followup(id,"Actualizado")
+        }
+    }
+    return ""
+}
+bot=discord.bot()
+bot.slash("hola","Saluda",reply)
+bot.start()
+```
+
+#### discord.Interaction.edit_followup_payload
+
+`func discord.Interaction.edit_followup_payload(message_id:string,body:string) -> bool`
+
+EN: Edit a follow-up with a message payload.
+
+ES: Edita un seguimiento con un payload de mensaje.
+
+Native example flag: true.
+
+Note: Run in a native callback with an authorized Discord app.
+
+Nota: Ejecuta en un callback nativo con una aplicación Discord autorizada.
+
+```tripol
+import tripol.discord
+
+func reply(ctx) {
+    if ctx.respond(ctx.reply("Hola", true)) {
+        id=ctx.followup("Mensaje")
+        if id!="" {
+            ctx.edit_followup_payload(id,discord.interaction_message("Actualizado"))
+        }
+    }
+    return ""
+}
+bot=discord.bot()
+bot.slash("hola","Saluda",reply)
+bot.start()
+```
+
+#### discord.Interaction.delete_followup
+
+`func discord.Interaction.delete_followup(message_id:string) -> bool`
+
+EN: Delete a follow-up by its message ID.
+
+ES: Borra un seguimiento por ID de mensaje.
+
+Native example flag: true.
+
+Note: Run in a native callback with an authorized Discord app.
+
+Nota: Ejecuta en un callback nativo con una aplicación Discord autorizada.
+
+```tripol
+import tripol.discord
+
+func reply(ctx) {
+    if ctx.respond(ctx.reply("Hola", true)) {
+        id=ctx.followup("Mensaje")
+        if id!="" {
+            ctx.delete_followup(id)
+        }
+    }
+    return ""
+}
+bot=discord.bot()
+bot.slash("hola","Saluda",reply)
+bot.start()
+```
+
+#### discord.Bot.user_menu
+
+`func discord.Bot.user_menu(name:string,handler:func(Interaction)->string,guild_id="",default_permissions="") -> bool`
+
+EN: Register a typed user context menu.
+
+ES: Registra un menú contextual de usuario tipado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func selected(ctx) { ctx.reply("ID: "+ctx.target_id(),true) }
+bot=discord.bot()
+show bot.user_menu("Ver perfil",selected,"123","8192")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Bot.message_menu
+
+`func discord.Bot.message_menu(name:string,handler:func(Interaction)->string,guild_id="",default_permissions="") -> bool`
+
+EN: Register a typed message context menu.
+
+ES: Registra un menú contextual de mensaje tipado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func selected(ctx) { ctx.reply("ID: "+ctx.target_id(),true) }
+bot=discord.bot()
+show bot.message_menu("Ver mensaje",selected)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.target_id
+
+`func discord.Interaction.target_id() -> string`
+
+EN: Return the selected Discord user or message ID.
+
+ES: Devuelve el ID del usuario o mensaje seleccionado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":2,\"data\":{\"type\":2,\"target_id\":\"42\",\"resolved\":{\"users\":{\"42\":{\"id\":\"42\",\"username\":\"Ada\"}}}}}","uPerfil/")
+show ctx.target_id()
+```
+
+Documented expected output:
+
+```text
+42
+```
+
+#### discord.Interaction.target
+
+`func discord.Interaction.target() -> string`
+
+EN: Read the selected user or message from the resolved interaction data.
+
+ES: Lee el usuario o mensaje seleccionado de los datos resueltos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":2,\"data\":{\"type\":2,\"target_id\":\"42\",\"resolved\":{\"users\":{\"42\":{\"id\":\"42\",\"username\":\"Ada\"}}}}}","uPerfil/")
+show ctx.target()
+```
+
+Documented expected output:
+
+```text
+{"id":"42","username":"Ada"}
+```
+
+#### discord.Interaction.target_username
+
+`func discord.Interaction.target_username() -> string`
+
+EN: Read the username selected by a user context menu.
+
+ES: Lee el nombre de usuario seleccionado en un menú de usuario.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":2,\"guild_id\":\"123\",\"member\":{\"permissions\":\"8192\"},\"data\":{\"type\":2,\"target_id\":\"42\",\"resolved\":{\"users\":{\"42\":{\"id\":\"42\",\"username\":\"Ada\"}}}}}","uProfile")
+show ctx.target_username()
+```
+
+Documented expected output:
+
+```text
+Ada
+```
+
+#### discord.Interaction.target_content
+
+`func discord.Interaction.target_content() -> string`
+
+EN: Read the text selected by a message context menu.
+
+ES: Lee el texto seleccionado en un menú de mensaje.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":2,\"data\":{\"type\":3,\"target_id\":\"42\",\"resolved\":{\"messages\":{\"42\":{\"id\":\"42\",\"content\":\"Hola\"}}}}}","pQuote")
+show ctx.target_content()
+```
+
+Documented expected output:
+
+```text
+Hola
+```
+
+#### discord.CommandChoices.number
+
+`func discord.CommandChoices.number(label:string,value:string) -> bool`
+
+EN: Add a fractional choice from decimal text.
+
+ES: Añade una elección fraccionaria a partir de texto decimal.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+choices=discord.command_choices()
+choices.number("Half","0.5")
+show choices.payload()
+```
+
+Documented expected output:
+
+```text
+[{"name":"Half","value":0.5}]
+```
+
+### Events & messages / Eventos y mensajes (22)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-events)
+
+#### discord.event_channel
+
+`func discord.event_channel(event:string) -> string`
+
+EN: Extract the channel ID of a MESSAGE_CREATE Gateway event and apply the channel filter.
+
+ES: Extrae el ID de canal de un evento Gateway MESSAGE_CREATE y aplica el filtro de canal.
+
+Native example flag: true.
+
+Return metadata: ["Channel ID text or empty text if the event is rejected.","ID de canal como texto o texto vacío si el evento se rechaza."]
+
+```tripol
+import tripol.discord
+
+event = "{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"!hola\",\"author\":{\"bot\":false}}}"
+show discord.event_channel(event)
+```
+
+Documented expected output:
+
+```text
+123
+```
+
+#### discord.gateway_reply
+
+`func discord.gateway_reply(event:string) -> string`
+
+EN: Resolve a registered reply from a Gateway event without opening a connection.
+
+ES: Busca la respuesta registrada para un evento Gateway sin abrir una conexión.
+
+Native example flag: true.
+
+Note: Ignores bots, webhooks and events outside the configured channel filter.
+
+Nota: Ignora bots, webhooks y eventos fuera del filtro de canal.
+
+```tripol
+import tripol.discord
+
+discord.reply("!hola", "Hola!")
+event = "{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"!hola\",\"author\":{\"bot\":false}}}"
+show discord.gateway_reply(event)
+```
+
+Documented expected output:
+
+```text
+Hola!
+```
+
+#### discord.ignore_message
+
+`func discord.ignore_message(message:Message) -> string`
+
+EN: Return an empty response for the default message handler.
+
+ES: Devuelve texto vacío para el manejador predeterminado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+m = discord.Message("","","123","456")
+show discord.ignore_message(m) == ""
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.event_id
+
+`func discord.event_id(raw:string) -> string`
+
+EN: Extract a numeric Discord ID from a quoted JSON value.
+
+ES: Extrae un ID numérico de Discord a partir de un valor JSON entre comillas.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.event_id("\"123\"")
+```
+
+Documented expected output:
+
+```text
+123
+```
+
+#### discord.dispatch_message
+
+`func discord.dispatch_message(event:string,handler:func(Message)->string) -> string`
+
+EN: Validate a MESSAGE_CREATE event and invoke a typed message callback.
+
+ES: Valida un evento MESSAGE_CREATE y ejecuta un callback tipado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(m:discord.Message)->string {
+    if m.matches("hola") {return m.reply("¡Hola, " + m.author_id + "!")}
+    return ""
+}
+show discord.dispatch_message("{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"hola\",\"author\":{\"id\":\"456\"}}}", &answer)
+```
+
+Documented expected output:
+
+```text
+¡Hola, 456!
+```
+
+#### discord.run_handler
+
+`func discord.run_handler(handler:func(Message)->string,intents=33281) -> int`
+
+EN: Run the configured Gateway with a typed message handler.
+
+ES: Ejecuta el Gateway configurado con un manejador de mensajes tipado.
+
+Native example flag: true.
+
+Note: Run on Windows or Linux x86-64 with DISCORD_TOKEN configured.
+
+Nota: Ejecuta en Windows o Linux x86-64 con DISCORD_TOKEN configurado.
+
+```tripol
+import tripol.discord
+
+func answer(m:discord.Message)->string {
+    if m.matches("hola") {return m.reply("¡Hola, " + m.author_id + "!")}
+    return ""
+}
+discord.login_env()
+discord.run_handler(&answer)
+```
+
+#### discord.ignore_gateway_event
+
+`func discord.ignore_gateway_event(event:GatewayEvent) -> bool`
+
+EN: Return false for an event without an active handler.
+
+ES: Devuelve false si un evento carece de manejador activo.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+event=discord.GatewayEvent("MESSAGE_DELETE",8,"321","123","","{\"id\":\"999\"}")
+show discord.ignore_gateway_event(event)
+```
+
+Documented expected output:
+
+```text
+false
+```
+
+#### discord.events
+
+`func discord.events() -> GatewayEvents`
+
+EN: Create an independent registry for Gateway events and intents.
+
+ES: Crea un registro independiente para eventos e intents del Gateway.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+registry=discord.events()
+show registry.intent_mask()
+```
+
+Documented expected output:
+
+```text
+1
+```
+
+#### discord.gateway_intent
+
+`func discord.gateway_intent(name:string) -> int`
+
+EN: Look up the bit index of an official Gateway intent.
+
+ES: Consulta la posición del bit de un intent oficial del Gateway.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.gateway_intent("GUILD_MEMBERS")
+```
+
+Documented expected output:
+
+```text
+1
+```
+
+#### discord.gateway_event_name
+
+`func discord.gateway_event_name(name:string) -> string`
+
+EN: Translate a member alias or validate an uppercase dispatch name.
+
+ES: Traduce un alias de miembros o valida un nombre de evento en mayúsculas.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.gateway_event_name("member_join")
+```
+
+Documented expected output:
+
+```text
+GUILD_MEMBER_ADD
+```
+
+#### discord.deliver_gateway_event
+
+`func discord.deliver_gateway_event(event:string,name:string,handler:func(GatewayEvent)->bool) -> bool`
+
+EN: Invoke a typed handler for a matching Gateway dispatch.
+
+ES: Ejecuta un callback tipado para un evento del Gateway que coincide.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func ready(event:discord.GatewayEvent)->bool {return event.name=="READY"}
+show discord.deliver_gateway_event("{\"op\":0,\"t\":\"READY\",\"s\":1,\"d\":{}}","READY",&ready)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.post_message
+
+`func discord.post_message(channel_id:string,content:string) -> string`
+
+EN: Post a text message with mentions disabled and return its ID.
+
+ES: Envía un mensaje con las menciones desactivadas y devuelve su ID.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+show discord.post_message("123","Hola")
+```
+
+#### discord.Message.matches
+
+`func discord.Message.matches(content:string) -> bool`
+
+EN: Compare the decoded message content with exact UTF-8 text.
+
+ES: Compara el contenido decodificado del mensaje con texto UTF-8 exacto.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(m:discord.Message)->string {
+    if m.matches("hola") {return m.reply("¡Hola, " + m.author_id + "!")}
+    return ""
+}
+bot = discord.bot()
+bot.on_message(&answer)
+show bot.preview_event("{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"hola\",\"author\":{\"id\":\"456\"}}}")
+```
+
+Documented expected output:
+
+```text
+¡Hola, 456!
+```
+
+#### discord.Message.reply
+
+`func discord.Message.reply(content:string) -> string`
+
+EN: Validate and return the message a handler wants to send.
+
+ES: Valida y devuelve el mensaje que quiere enviar el manejador.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(m:discord.Message)->string {
+    if m.matches("hola") {return m.reply("¡Hola, " + m.author_id + "!")}
+    return ""
+}
+bot = discord.bot()
+bot.on_message(&answer)
+show bot.preview_event("{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"hola\",\"author\":{\"id\":\"456\"}}}")
+```
+
+Documented expected output:
+
+```text
+¡Hola, 456!
+```
+
+#### discord.Bot.on_message
+
+`func discord.Bot.on_message(handler:func(Message)->string) -> bool`
+
+EN: Register a typed callback for messages that do not match fixed commands.
+
+ES: Registra un callback tipado para mensajes que no coinciden con comandos fijos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(m:discord.Message)->string {
+    if m.matches("hola") {return m.reply("¡Hola, " + m.author_id + "!")}
+    return ""
+}
+bot = discord.bot()
+bot.on_message(&answer)
+show bot.preview_event("{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"hola\",\"author\":{\"id\":\"456\"}}}")
+```
+
+Documented expected output:
+
+```text
+¡Hola, 456!
+```
+
+#### discord.Bot.preview_event
+
+`func discord.Bot.preview_event(event:string) -> string`
+
+EN: Dispatch an example Gateway event offline.
+
+ES: Procesa sin conexión un evento de ejemplo del Gateway.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(m:discord.Message)->string {
+    if m.matches("hola") {return m.reply("¡Hola, " + m.author_id + "!")}
+    return ""
+}
+bot = discord.bot()
+bot.on_message(&answer)
+show bot.preview_event("{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"hola\",\"author\":{\"id\":\"456\"}}}")
+```
+
+Documented expected output:
+
+```text
+¡Hola, 456!
+```
+
+#### discord.GatewayEvent.field
+
+`func discord.GatewayEvent.field(name:string) -> string`
+
+EN: Read a property of the event body as raw JSON.
+
+ES: Lee una propiedad del cuerpo del evento como JSON.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+event=discord.GatewayEvent("MESSAGE_DELETE",8,"321","123","","{\"id\":\"999\"}")
+show event.field("id")
+```
+
+Documented expected output:
+
+```text
+"999"
+```
+
+#### discord.GatewayEvents.intent
+
+`func discord.GatewayEvents.intent(name:string) -> bool`
+
+EN: Enable a named Gateway intent in the registry.
+
+ES: Activa un intent del Gateway por nombre.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+registry=discord.events()
+show registry.intent("GUILD_MESSAGE_REACTIONS")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.GatewayEvents.intent_mask
+
+`func discord.GatewayEvents.intent_mask() -> int`
+
+EN: Read the bit mask to identify with the registry intents.
+
+ES: Lee la máscara de bits configurada en el registro.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+registry=discord.events()
+registry.intent("GUILD_MEMBERS")
+show registry.intent_mask()
+```
+
+Documented expected output:
+
+```text
+3
+```
+
+#### discord.GatewayEvents.on
+
+`func discord.GatewayEvents.on(name:string,handler:func(GatewayEvent)->bool) -> bool`
+
+EN: Register or replace the typed callback for a Gateway event.
+
+ES: Registra o reemplaza el callback tipado de un evento del Gateway.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func ready(event:discord.GatewayEvent)->bool {return event.name=="READY"}
+registry=discord.events()
+show registry.on("READY",&ready)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.GatewayEvents.preview
+
+`func discord.GatewayEvents.preview(event:string) -> bool`
+
+EN: Dispatch a fixture through the registry without live credentials.
+
+ES: Despacha un evento de prueba en el registro sin credenciales.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func ready(event:discord.GatewayEvent)->bool {return event.name=="READY"}
+registry=discord.events()
+registry.on("READY",&ready)
+show registry.preview("{\"op\":0,\"t\":\"READY\",\"s\":1,\"d\":{}}")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Bot.start_with_events
+
+`func discord.Bot.start_with_events(registry:GatewayEvents) -> int`
+
+EN: Start a native bot and its Gateway event registry.
+
+ES: Inicia un bot nativo y su registro de eventos del Gateway.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+func ready(event:discord.GatewayEvent)->bool {return event.name=="READY"}
+registry=discord.events()
+registry.on("READY",&ready)
+bot=discord.bot()
+bot.start_with_events(registry)
+```
+
+### Embeds / Embeds (23)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-embeds)
+
+#### discord.embed
+
+`func discord.embed() -> Embed`
+
+EN: Create an empty Discord embed builder.
+
+ES: Crea un constructor de embeds de Discord vacío.
+
+Native example flag: false.
+
+Note: Runs offline on native TRIPOL and Web Engine R3.
+
+Nota: Funciona sin conexión en TRIPOL nativo y Web Engine R3.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+embed.title("Bienvenido")
+show embed.payload()
+```
+
+Documented expected output:
+
+```text
+{"embeds":[{"title":"Bienvenido"}],"allowed_mentions":{"parse":[]}}
+```
+
+#### discord.media_url
+
+`func discord.media_url(value:string) -> bool`
+
+EN: Validate the HTTP and HTTPS URL format supported by Discord builders.
+
+ES: Valida el formato HTTP y HTTPS admitido por los constructores de Discord.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.media_url("https://example.org/image.png")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.timestamp_valid
+
+`func discord.timestamp_valid(value:string) -> bool`
+
+EN: Validate a calendar date and time with an RFC 3339 offset.
+
+ES: Valida una fecha con zona horaria RFC 3339.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.timestamp_valid("2028-02-29T10:15:30Z")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.embeds
+
+`func discord.embeds() -> Embeds`
+
+EN: Create a batch of up to ten traditional embeds.
+
+ES: Crea un lote de hasta diez embeds tradicionales.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+e=discord.embed()
+e.title("Hola")
+batch=discord.embeds()
+batch.add(e)
+show len(batch.payload())>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.rgb_color
+
+`func discord.rgb_color(value:string) -> int`
+
+EN: Convert a #RRGGBB color into its RGB integer.
+
+ES: Convierte un color #RRGGBB a su entero RGB.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.rgb_color("#FFFFFF")
+```
+
+Documented expected output:
+
+```text
+16777215
+```
+
+#### discord.Embed.title
+
+`func discord.Embed.title(value:string) -> bool`
+
+EN: Set an embed title of up to 256 UTF-8 bytes.
+
+ES: Define un título de hasta 256 bytes UTF-8.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+show embed.title("Ayuda")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.description
+
+`func discord.Embed.description(value:string) -> bool`
+
+EN: Set an embed description of up to 512 UTF-8 bytes.
+
+ES: Define una descripción de hasta 512 bytes UTF-8.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+show embed.description("Escribe !hola")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.footer
+
+`func discord.Embed.footer(value:string,icon_url="") -> bool`
+
+EN: Set a footer of up to 512 UTF-8 bytes.
+
+ES: Define un pie de hasta 512 bytes UTF-8.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+show embed.footer("DISCORD REVOLUTION")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.color
+
+`func discord.Embed.color(value:string) -> bool`
+
+EN: Set the RGB accent as six hex digits preceded by #.
+
+ES: Define el color RGB con seis dígitos hexadecimales precedidos por #.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+show embed.color("#00A0FF")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.field
+
+`func discord.Embed.field(label:string, value:string, inline=false) -> bool`
+
+EN: Add one of up to 25 fields. Set inline to true for a compact field.
+
+ES: Añade uno de hasta 25 campos. Usa inline en true para un campo compacto.
+
+Native example flag: false.
+
+Note: Labels accept 1–256 UTF-8 bytes. Values accept 1–512.
+
+Nota: Las etiquetas aceptan 1–256 bytes UTF-8. Los valores aceptan 1–512.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+show embed.field("Versión", "0.28.0", true)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.payload
+
+`func discord.Embed.payload() -> string`
+
+EN: Generate Discord create-message JSON with mentions disabled.
+
+ES: Genera el JSON de creación de mensajes de Discord con menciones desactivadas.
+
+Native example flag: false.
+
+Note: Requires text or media. A message can include up to 6,000 text characters across embeds.
+
+Nota: Requiere texto o medios. Un mensaje admite hasta 6.000 caracteres de texto entre todos sus embeds.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+embed.title("Hola")
+show embed.payload()
+```
+
+Documented expected output:
+
+```text
+{"embeds":[{"title":"Hola"}],"allowed_mentions":{"parse":[]}}
+```
+
+#### discord.Embed.send
+
+`func discord.Embed.send(channel_id:string) -> bool`
+
+EN: Send the embed to a Discord channel over REST.
+
+ES: Envía el embed a un canal de Discord por REST.
+
+Native example flag: true.
+
+Note: Replace 123 with a channel ID. Windows or Linux x86-64, DISCORD_TOKEN and Embed Links permission required.
+
+Nota: Sustituye 123 por el ID. Requiere Windows o Linux x86-64, DISCORD_TOKEN y permiso para insertar enlaces.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+embed.title("Hola")
+embed.send("123")
+```
+
+#### discord.Embed.url
+
+`func discord.Embed.url(value:string) -> bool`
+
+EN: Set the link associated with the title.
+
+ES: Define el enlace del título.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+show embed.url("https://example.org/")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.image
+
+`func discord.Embed.image(value:string) -> bool`
+
+EN: Set the main image.
+
+ES: Define la imagen principal.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+show embed.image("https://example.org/main.png")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.thumbnail
+
+`func discord.Embed.thumbnail(value:string) -> bool`
+
+EN: Set the thumbnail image.
+
+ES: Define la miniatura.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+embed = discord.embed()
+show embed.thumbnail("https://example.org/thumb.png")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.reply_embeds
+
+`func discord.Interaction.reply_embeds(batch:Embeds,ephemeral=false) -> string`
+
+EN: Build an initial reply containing a traditional embed batch.
+
+ES: Construye una respuesta inicial con un lote de embeds tradicionales.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(3,"hola","123","456","789","123","567","{\"values\":[\"42\",\"43\"]}",true)
+e=discord.embed()
+e.title("Hola")
+batch=discord.embeds()
+batch.add(e)
+show len(ctx.reply_embeds(batch,true))>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.text_size
+
+`func discord.Embed.text_size() -> int`
+
+EN: Count characters subject to the combined embed limit.
+
+ES: Cuenta los caracteres sujetos al límite combinado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+e=discord.embed()
+e.title("Hola")
+show e.text_size()
+```
+
+Documented expected output:
+
+```text
+4
+```
+
+#### discord.Embed.entry
+
+`func discord.Embed.entry() -> string`
+
+EN: Build a single embed object for a message.
+
+ES: Genera la estructura de un embed para un mensaje.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+e=discord.embed()
+e.title("Hola")
+show len(e.entry())>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.author
+
+`func discord.Embed.author(name:string,url="",icon_url="") -> bool`
+
+EN: Set an author name, link and icon.
+
+ES: Define el nombre, el enlace y el icono del autor.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+e=discord.embed()
+e.title("Hola")
+show e.author("Ada","https://example.org","https://example.org/icon.png")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embed.timestamp
+
+`func discord.Embed.timestamp(value:string) -> bool`
+
+EN: Set an RFC 3339 embed timestamp.
+
+ES: Define la fecha del embed mediante RFC 3339.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+e=discord.embed()
+e.title("Hola")
+show e.timestamp("2028-02-29T10:15:30Z")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embeds.add
+
+`func discord.Embeds.add(embed:Embed) -> bool`
+
+EN: Append an embed and enforce the combined text budget.
+
+ES: Añade un embed y valida el límite de texto combinado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+e=discord.embed()
+e.title("Hola")
+batch=discord.embeds()
+show batch.add(e)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embeds.payload
+
+`func discord.Embeds.payload() -> string`
+
+EN: Build the message payload for multiple traditional embeds.
+
+ES: Genera el JSON de un mensaje con varios embeds.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+e=discord.embed()
+e.title("Hola")
+batch=discord.embeds()
+batch.add(e)
+show len(batch.payload())>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Embeds.send
+
+`func discord.Embeds.send(channel_id:string) -> bool`
+
+EN: Send a batch of embeds to a channel.
+
+ES: Envía un lote de embeds a un canal.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord bot and a native run on Linux or Windows.
+
+Nota: Requiere un bot autorizado de Discord y ejecución nativa en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+e=discord.embed()
+e.title("Hola")
+batch=discord.embeds()
+batch.add(e)
+batch.send("123")
+```
+
+### Components V2 / Components V2 (16)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-components)
+
+#### discord.components
+
+`func discord.components() -> Components`
+
+EN: Create a Components V2 message builder.
+
+ES: Crea un constructor de mensajes Components V2.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+layout.text("Hola")
+show layout.payload()
+```
+
+Documented expected output:
+
+```text
+{"flags":32768,"components":[{"type":10,"content":"Hola"}],"allowed_mentions":{"parse":[]}}
+```
+
+#### discord.container
+
+`func discord.container(color="#FFFFFF") -> Components`
+
+EN: Create a Components V2 panel with an accent color.
+
+ES: Crea un panel Components V2 con color de acento.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+panel=discord.container("#FFFFFF")
+show panel.text("Hola")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.append_entry
+
+`func discord.Components.append_entry(entry:string,weight:int) -> bool`
+
+EN: Append a pre-serialized entry with a component count.
+
+ES: Añade un componente serializado y su recuento.
+
+Native example flag: false.
+
+Note: Low-level method. Prefer the typed builders for shape validation.
+
+Nota: Método de bajo nivel. Usa los constructores tipados para validar la estructura.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+show layout.append_entry("{\"type\":10,\"content\":\"Hola\"}",1)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.entries_json
+
+`func discord.Components.entries_json() -> string`
+
+EN: Encode the component array for a message or container.
+
+ES: Serializa el arreglo de componentes para un mensaje o contenedor.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+layout.text("Hola")
+show layout.entries_json()
+```
+
+Documented expected output:
+
+```text
+[{"type":10,"content":"Hola"}]
+```
+
+#### discord.Components.text
+
+`func discord.Components.text(content:string) -> bool`
+
+EN: Add a Text Display within the aggregate 4,000-character budget.
+
+ES: Añade texto dentro del límite total de 4.000 caracteres.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+show layout.text("Bienvenido")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.separator
+
+`func discord.Components.separator(spacing=1,divider=true) -> bool`
+
+EN: Add a separator with small or large spacing.
+
+ES: Añade un separador con espacio pequeño o grande.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+show layout.separator(2,false)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.section
+
+`func discord.Components.section(content:string,thumbnail_url:string,description="") -> bool`
+
+EN: Add a section with a text display and thumbnail accessory.
+
+ES: Añade una sección con texto y una miniatura.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+show layout.section("Bienvenido","https://example.org/image.png","Foto")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.gallery
+
+`func discord.Components.gallery(urls:string_list) -> bool`
+
+EN: Add a Media Gallery with 1 to 10 public URLs.
+
+ES: Añade una galería multimedia con 1 a 10 URLs públicas.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+show layout.gallery(string_list(["https://example.org/image.png"]))
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.container
+
+`func discord.Components.container(children:Components,accent=-1,spoiler=false) -> bool`
+
+EN: Wrap a component array in a container with an optional RGB accent.
+
+ES: Agrupa componentes en un contenedor con color RGB opcional.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+layout.text("Hola")
+message=discord.components()
+show message.container(layout,41215)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.payload
+
+`func discord.Components.payload() -> string`
+
+EN: Build a message body with the Components V2 flag and mentions disabled.
+
+ES: Genera el mensaje con la bandera Components V2 y menciones desactivadas.
+
+Native example flag: false.
+
+Note: Encoded text must fit in the TRIPOL string capacity of 65,535 bytes.
+
+Nota: El JSON debe caber en la capacidad de cadena de TRIPOL de 65.535 bytes.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+layout.text("Hola")
+show layout.payload()
+```
+
+Documented expected output:
+
+```text
+{"flags":32768,"components":[{"type":10,"content":"Hola"}],"allowed_mentions":{"parse":[]}}
+```
+
+#### discord.Components.send
+
+`func discord.Components.send(channel_id:string) -> bool`
+
+EN: Send a Components V2 message to a channel.
+
+ES: Envía un mensaje Components V2 a un canal.
+
+Native example flag: true.
+
+Note: Run on Windows or Linux x86-64 with DISCORD_TOKEN configured.
+
+Nota: Ejecuta en Windows o Linux x86-64 con DISCORD_TOKEN configurado.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+layout.text("Hola")
+layout.send("123")
+```
+
+#### discord.Components.append_text
+
+`func discord.Components.append_text(entry:string,weight:int,characters:int) -> bool`
+
+EN: Append a serialized entry and account for its Text Display characters.
+
+ES: Inserta un componente serializado y contabiliza su texto.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+layout=discord.components()
+show layout.append_text("{\"type\":10,\"content\":\"Hola\"}",1,4)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.row
+
+`func discord.Components.row(buttons:Buttons) -> bool`
+
+EN: Add a group of buttons and validate its custom IDs.
+
+ES: Añade un grupo de botones y valida sus IDs.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+buttons=discord.button_row()
+buttons.button("Aceptar","confirm",1)
+layout=discord.components()
+show layout.row(buttons)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.reply_components
+
+`func discord.Interaction.reply_components(layout:Components,ephemeral=false) -> string`
+
+EN: Build an initial reply containing a V2 layout.
+
+ES: Construye una respuesta inicial con componentes V2.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(3,"hola","123","456","789","123","567","{\"values\":[\"42\",\"43\"]}",true)
+layout=discord.components()
+layout.text("Hola")
+show len(ctx.reply_components(layout,true))>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.update_components
+
+`func discord.Interaction.update_components(layout:Components) -> string`
+
+EN: Update the source message with a V2 layout.
+
+ES: Actualiza el mensaje de origen con componentes V2.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(3,"hola","123","456","789","123","567","{\"values\":[\"42\",\"43\"]}",true)
+layout=discord.components()
+layout.text("Hola")
+show len(ctx.update_components(layout))>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Channel.edit_components
+
+`func discord.Channel.edit_components(message_id:string,layout:Components) -> bool`
+
+EN: Replace the layout of a Components V2 message owned by the bot.
+
+ES: Sustituye el panel de un mensaje Components V2 del propio bot.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+panel=discord.container()
+panel.button("Done","done","success","✅",true)
+show room.edit_components("456",panel)
+```
+
+### Buttons & emojis / Botones y emojis (11)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-buttons)
+
+#### discord.button_row
+
+`func discord.button_row() -> Buttons`
+
+EN: Create a row of up to five buttons.
+
+ES: Crea una fila de hasta cinco botones.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+buttons=discord.button_row()
+buttons.button("Aceptar","confirm",1)
+layout=discord.components()
+show layout.row(buttons)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.button_style
+
+`func discord.button_style(name:string) -> int`
+
+EN: Look up a custom button style by name.
+
+ES: Consulta un estilo de botón por nombre.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.button_style("primary")
+```
+
+Documented expected output:
+
+```text
+1
+```
+
+#### discord.emoji_payload
+
+`func discord.emoji_payload(emoji:string) -> string`
+
+EN: Serialize a Unicode, custom or animated Discord emoji.
+
+ES: Serializa un emoji Unicode, personalizado o animado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.emoji_payload("✅")
+```
+
+Documented expected output:
+
+```text
+{"name":"✅"}
+```
+
+#### discord.Components.link
+
+`func discord.Components.link(label:string,url:string,emoji="",disabled=false) -> bool`
+
+EN: Add a link button inside an action row.
+
+ES: Añade un botón de enlace dentro de una fila.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+show layout.link("Docs", "https://example.org/docs")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.button
+
+`func discord.Components.button(label:string,custom_id:string,style=1,emoji="",disabled=false) -> bool
+func discord.Components.button(label:string,custom_id:string,style:string,emoji="",disabled=false) -> bool`
+
+EN: Add a button with a unique custom ID inside an action row.
+
+ES: Añade un botón con un ID único dentro de una fila.
+
+Native example flag: false.
+
+Note: Register a callback for the same custom ID with bot.on_button.
+
+Nota: Registra un callback para el mismo ID con bot.on_button.
+
+```tripol
+import tripol.discord
+
+layout = discord.components()
+show layout.button("OK","accept",3)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Bot.on_button
+
+`func discord.Bot.on_button(id:string,handler:func(Interaction)->string) -> bool`
+
+EN: Register a handler for a custom button ID.
+
+ES: Registra un manejador para el ID de un botón.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+b=discord.bot()
+show b.on_button("confirm",&answer)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Buttons.button
+
+`func discord.Buttons.button(label:string,id:string,style=1,disabled=false,emoji="") -> bool
+func discord.Buttons.button(label:string,id:string,style:string,disabled=false,emoji="") -> bool`
+
+EN: Add a custom button to a multi-button row.
+
+ES: Añade un botón personalizado a una fila.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+buttons=discord.button_row()
+show buttons.button("Aceptar","confirm",3)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Buttons.link
+
+`func discord.Buttons.link(label:string,url:string,disabled=false,emoji="") -> bool`
+
+EN: Add a link button to a multi-button row.
+
+ES: Añade un botón de enlace a una fila.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+buttons=discord.button_row()
+show buttons.link("Docs","https://example.org/docs")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Components.premium
+
+`func discord.Components.premium(sku_id:string,disabled=false) -> bool`
+
+EN: Add a purchase button for an application SKU.
+
+ES: Añade un botón de compra para un SKU de la aplicación.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+panel=discord.container()
+show panel.premium("123456")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Buttons.premium
+
+`func discord.Buttons.premium(sku_id:string,disabled=false) -> bool`
+
+EN: Add an SKU button to a row without a custom ID.
+
+ES: Añade a una fila un botón de SKU sin ID personalizado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+row=discord.button_row()
+show row.premium("123456")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Buttons.disable
+
+`func discord.Buttons.disable(id:string,disabled=true) -> bool`
+
+EN: Disable or enable a button in a row by its custom ID.
+
+ES: Deshabilita o habilita un botón de la fila por su ID.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+row=discord.button_row()
+row.button("Done","done","success",false,"✅")
+show row.disable("done")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+### Select menus / Selectores (11)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-selects)
+
+#### discord.select
+
+`func discord.select(id:string,kind="string",minimum=1,maximum=1) -> Select`
+
+EN: Create a String, User, Role, Mentionable or Channel Select.
+
+ES: Crea un selector de texto, usuario, rol, mencionable o canal.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+menu=discord.select("choice","string",0,1)
+menu.option("Azul","b")
+show len(menu.payload())>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.interaction_values
+
+`func discord.interaction_values(values:string) -> string_list`
+
+EN: Decode a list of selected string values.
+
+ES: Decodifica una lista de valores de texto seleccionados.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+values=discord.interaction_values("[\"Ada\"]")
+show values[0]
+```
+
+Documented expected output:
+
+```text
+Ada
+```
+
+#### discord.Components.select
+
+`func discord.Components.select(menu:Select) -> bool`
+
+EN: Add a select menu as one action row.
+
+ES: Añade un selector en una fila.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+menu=discord.select("choice","string",0,1)
+menu.option("Azul","b")
+layout=discord.components()
+show layout.select(menu)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Bot.on_select
+
+`func discord.Bot.on_select(id:string,handler:func(Interaction)->string) -> bool`
+
+EN: Register a handler for a custom select ID.
+
+ES: Registra un manejador para el ID de un selector.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+b=discord.bot()
+show b.on_select("choice",&answer)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.values
+
+`func discord.Interaction.values() -> string_list`
+
+EN: Return submitted select values or entity IDs.
+
+ES: Devuelve los valores o IDs seleccionados.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(3,"hola","123","456","789","123","567","{\"values\":[\"42\",\"43\"]}",true)
+values=ctx.values()
+show values[0],values[1]
+```
+
+Documented expected output:
+
+```text
+42 43
+```
+
+#### discord.Select.placeholder
+
+`func discord.Select.placeholder(value:string) -> bool`
+
+EN: Set the empty-state text of a select menu.
+
+ES: Define el texto inicial de un selector.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+menu=discord.select("choice","string",0,1)
+show menu.placeholder("Elige un color")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Select.option
+
+`func discord.Select.option(label:string,value:string,description="",selected=false,emoji="") -> bool`
+
+EN: Add a label and value to a String Select.
+
+ES: Añade una etiqueta y un valor a un selector de texto.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+menu=discord.select("choice","string",0,1)
+show menu.option("Azul","b","Un color")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Select.default_id
+
+`func discord.Select.default_id(id:string,kind:string) -> bool`
+
+EN: Add a default entity to an auto-populated select.
+
+ES: Añade una entidad predeterminada a un selector automático.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+menu=discord.select("people","user")
+show menu.default_id("123","user")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Select.channels
+
+`func discord.Select.channels(kinds:ints) -> bool`
+
+EN: Limit the channel types shown in a Channel Select.
+
+ES: Limita los tipos de canal de un selector de canales.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+menu=discord.select("room","channel")
+allowed=ints(1)
+allowed[0]=2
+show menu.channels(allowed)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Select.payload
+
+`func discord.Select.payload() -> string`
+
+EN: Build the complete JSON for a select component.
+
+ES: Genera el JSON completo de un selector.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+menu=discord.select("choice","string",0,1)
+menu.option("Azul","b")
+show len(menu.payload())>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Select.disable
+
+`func discord.Select.disable(disabled=true) -> bool`
+
+EN: Disable or enable a select menu in a message.
+
+ES: Deshabilita o habilita un selector en un mensaje.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+menu=discord.select("status")
+menu.option("Ready","ready","",false,"✅")
+show menu.disable()
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+### Forms & modals / Formularios (21)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-forms)
+
+#### discord.modal_field_value
+
+`func discord.modal_field_value(node:string,id:string,property:string,depth:int) -> string`
+
+EN: Find a property in a submitted modal component by custom ID.
+
+ES: Busca una propiedad de un campo entregado por su ID.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(5,"hola","123","456","789","123","567","{\"components\":[{\"type\":18,\"component\":{\"custom_id\":\"topic\",\"value\":\"Hola\"}},{\"type\":18,\"component\":{\"custom_id\":\"file\",\"values\":[\"42\"]}}]}",false)
+show discord.modal_field_value(ctx.data_json,"topic","value",0)
+```
+
+Documented expected output:
+
+```text
+"Hola"
+```
+
+#### discord.modal
+
+`func discord.modal(id:string,title:string) -> Modal`
+
+EN: Create a modal with a custom ID and a title.
+
+ES: Crea un formulario con ID y título.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("sample","Cuéntanos")
+form.text("topic","Tema")
+show len(form.payload())>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.file_types_payload
+
+`func discord.file_types_payload(types:string_list) -> string`
+
+EN: Serialize attachment extension filters.
+
+ES: Serializa filtros por extensión de adjuntos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.file_types_payload(list(["image",".pdf"]))
+```
+
+Documented expected output:
+
+```text
+["image",".pdf"]
+```
+
+#### discord.Bot.on_modal
+
+`func discord.Bot.on_modal(id:string,handler:func(Interaction)->string) -> bool`
+
+EN: Register a handler for a submitted modal ID.
+
+ES: Registra un manejador para el ID de un formulario enviado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+func answer(ctx:discord.Interaction)->string {return ctx.reply("Hola, "+ctx.option_text("text"),true)}
+b=discord.bot()
+show b.on_modal("sample",&answer)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.field
+
+`func discord.Interaction.field(id:string) -> string`
+
+EN: Read the decoded text of a submitted input.
+
+ES: Lee el texto decodificado de un campo enviado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(5,"hola","123","456","789","123","567","{\"components\":[{\"type\":18,\"component\":{\"custom_id\":\"topic\",\"value\":\"Hola\"}},{\"type\":18,\"component\":{\"custom_id\":\"file\",\"values\":[\"42\"]}}]}",false)
+show ctx.field("topic")
+```
+
+Documented expected output:
+
+```text
+Hola
+```
+
+#### discord.Interaction.field_data
+
+`func discord.Interaction.field_data(id:string) -> string`
+
+EN: Read the submitted value array of a select or file upload.
+
+ES: Lee el arreglo enviado por un selector o un campo de archivos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(5,"hola","123","456","789","123","567","{\"components\":[{\"type\":18,\"component\":{\"custom_id\":\"topic\",\"value\":\"Hola\"}},{\"type\":18,\"component\":{\"custom_id\":\"file\",\"values\":[\"42\"]}}]}",false)
+show ctx.field_data("file")
+```
+
+Documented expected output:
+
+```text
+["42"]
+```
+
+#### discord.Interaction.open_modal
+
+`func discord.Interaction.open_modal(form:Modal) -> string`
+
+EN: Build the response that displays a modal.
+
+ES: Construye la respuesta que abre un formulario.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(3,"hola","123","456","789","123","567","{\"values\":[\"42\",\"43\"]}",true)
+form=discord.modal("sample","Cuéntanos")
+form.text("topic","Tema")
+show len(ctx.open_modal(form))>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.add_label
+
+`func discord.Modal.add_label(id:string,label:string,component:string,description="") -> bool`
+
+EN: Wrap a serialized form field in a Label component.
+
+ES: Envuelve un campo serializado en un componente Label.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("sample","Cuéntanos")
+show form.add_label("topic","Tema","{\"type\":4,\"custom_id\":\"topic\",\"style\":1}")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.text
+
+`func discord.Modal.text(id:string,label:string,style=1,required=true,min_length=0,max_length=4000,placeholder="",value="",description="") -> bool`
+
+EN: Add a single-line or paragraph text input.
+
+ES: Añade un campo de texto de una línea o de párrafo.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("sample","Cuéntanos")
+show form.text("topic","Tema",2,true,2,4000)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.payload
+
+`func discord.Modal.payload() -> string`
+
+EN: Build the modal JSON payload.
+
+ES: Genera el JSON del formulario.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("sample","Cuéntanos")
+form.text("topic","Tema")
+show len(form.payload())>0
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.select
+
+`func discord.Modal.select(label:string,menu:Select,required=true,description="") -> bool`
+
+EN: Add a select menu to a form label.
+
+ES: Añade un selector a una etiqueta de formulario.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+menu=discord.select("choice","string",0,1)
+menu.option("Azul","b")
+form=discord.modal("sample","Cuéntanos")
+show form.select("Color",menu,false)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.help_text
+
+`func discord.Modal.help_text(content:string) -> bool`
+
+EN: Add explanatory Text Display content to a form.
+
+ES: Añade texto de ayuda a un formulario.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("sample","Cuéntanos")
+show form.help_text("Cuéntanos más")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.file
+
+`func discord.Modal.file(id:string,label:string,minimum=1,maximum=1,required=true,description="") -> bool
+func discord.Modal.file(id:string,label:string,types:string_list,minimum=1,maximum=1,required=true,description="") -> bool`
+
+EN: Add an input for files submitted by the user.
+
+ES: Añade un campo para archivos enviados por el usuario.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("sample","Cuéntanos")
+show form.file("file","Adjunto",0,2,false)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.choice_group
+
+`func discord.Modal.choice_group(label:string,menu:Select,radio:bool,required:bool,description="") -> bool`
+
+EN: Build a radio or checkbox group from manually specified options.
+
+ES: Construye un grupo de opción única o de casillas con opciones definidas.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("colors","Colores")
+menu=discord.select("color")
+menu.option("Azul","blue")
+menu.option("Rojo","red")
+show form.choice_group("Color",menu,true,true)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.radio
+
+`func discord.Modal.radio(label:string,menu:Select,required=true,description="") -> bool`
+
+EN: Add a Radio Group with one selected option.
+
+ES: Añade un grupo de opción única.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("colors","Colores")
+menu=discord.select("color")
+menu.option("Azul","blue")
+menu.option("Rojo","red")
+show form.radio("Color",menu)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.checkbox_group
+
+`func discord.Modal.checkbox_group(label:string,menu:Select,required=true,description="") -> bool`
+
+EN: Add a Checkbox Group with multiple options.
+
+ES: Añade un grupo de casillas con varias opciones.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("colors","Colores")
+menu=discord.select("color")
+menu.option("Azul","blue")
+menu.option("Rojo","red")
+show form.checkbox_group("Colores",menu)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Modal.checkbox
+
+`func discord.Modal.checkbox(id:string,label:string,checked=false,description="") -> bool`
+
+EN: Add a single checkbox with an optional default.
+
+ES: Añade una casilla individual con un valor predeterminado opcional.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+form=discord.modal("colors","Colores")
+show form.checkbox("agree","Acepto",true)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.checked
+
+`func discord.Interaction.checked(id:string) -> bool`
+
+EN: Read the submitted value of a checkbox.
+
+ES: Lee el valor enviado de una casilla.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.Interaction(5,"form","","","","","","{\"components\":[{\"type\":18,\"component\":{\"type\":23,\"custom_id\":\"agree\",\"value\":true}}]}",false)
+show ctx.checked("agree")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.has_field
+
+`func discord.Interaction.has_field(id:string) -> bool`
+
+EN: Check whether a field was submitted, including when empty.
+
+ES: Comprueba si se envió un campo, incluso vacío.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":5,\"data\":{\"components\":[{\"type\":18,\"component\":{\"type\":4,\"custom_id\":\"name\",\"value\":\"\"}},{\"type\":18,\"component\":{\"type\":6,\"custom_id\":\"roles\",\"values\":[\"100\",\"200\"]}},{\"type\":18,\"component\":{\"type\":19,\"custom_id\":\"file\",\"values\":[\"42\"]}}],\"resolved\":{\"attachments\":{\"42\":{\"id\":\"42\",\"filename\":\"report.pdf\",\"url\":\"https://example.com/report.pdf\",\"size\":42,\"content_type\":\"application/pdf\"}}}}}","mFeedback")
+show ctx.has_field("name"),ctx.has_field("missing")
+```
+
+Documented expected output:
+
+```text
+true false
+```
+
+#### discord.Interaction.field_values
+
+`func discord.Interaction.field_values(id:string) -> string_list`
+
+EN: Read the selected values as a string list.
+
+ES: Lee los valores seleccionados como una lista de cadenas.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":5,\"data\":{\"components\":[{\"type\":18,\"component\":{\"type\":4,\"custom_id\":\"name\",\"value\":\"\"}},{\"type\":18,\"component\":{\"type\":6,\"custom_id\":\"roles\",\"values\":[\"100\",\"200\"]}},{\"type\":18,\"component\":{\"type\":19,\"custom_id\":\"file\",\"values\":[\"42\"]}}],\"resolved\":{\"attachments\":{\"42\":{\"id\":\"42\",\"filename\":\"report.pdf\",\"url\":\"https://example.com/report.pdf\",\"size\":42,\"content_type\":\"application/pdf\"}}}}}","mFeedback")
+roles=ctx.field_values("roles")
+show roles[0],roles[1]
+```
+
+Documented expected output:
+
+```text
+100 200
+```
+
+#### discord.Interaction.field_attachment
+
+`func discord.Interaction.field_attachment(id:string,index=0) -> UploadedFile`
+
+EN: Read the metadata of an uploaded file by field and index.
+
+ES: Lee los metadatos de un archivo subido por campo e índice.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":5,\"data\":{\"components\":[{\"type\":18,\"component\":{\"type\":4,\"custom_id\":\"name\",\"value\":\"\"}},{\"type\":18,\"component\":{\"type\":6,\"custom_id\":\"roles\",\"values\":[\"100\",\"200\"]}},{\"type\":18,\"component\":{\"type\":19,\"custom_id\":\"file\",\"values\":[\"42\"]}}],\"resolved\":{\"attachments\":{\"42\":{\"id\":\"42\",\"filename\":\"report.pdf\",\"url\":\"https://example.com/report.pdf\",\"size\":42,\"content_type\":\"application/pdf\"}}}}}","mFeedback")
+file=ctx.field_attachment("file")
+show file.filename,file.size
+```
+
+Documented expected output:
+
+```text
+report.pdf 42
+```
+
+### Files & attachments / Archivos y adjuntos (10)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-files)
+
+#### discord.attachment_name_valid
+
+`func discord.attachment_name_valid(filename:string) -> bool`
+
+EN: Check the filename used by a Discord attachment reference.
+
+ES: Valida el nombre utilizado en una referencia a un adjunto de Discord.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.attachment_name_valid("report.txt")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.attachment_url
+
+`func discord.attachment_url(filename:string) -> string`
+
+EN: Build a reference to a file uploaded in the same message.
+
+ES: Crea una referencia a un archivo adjunto al mismo mensaje.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.attachment_url("report.txt")
+```
+
+Documented expected output:
+
+```text
+attachment://report.txt
+```
+
+#### discord.attachment_media_url
+
+`func discord.attachment_media_url(value:string) -> bool`
+
+EN: Accept an HTTP URL or a valid message attachment reference.
+
+ES: Valida una URL HTTP o una referencia a un archivo adjunto.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.attachment_media_url("attachment://report.txt")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.send_attachments
+
+`func discord.send_attachments(channel_id:string,payload:string,paths:string_list) -> string`
+
+EN: Stream files and a Discord message payload to a channel.
+
+ES: Envía archivos y el payload de un mensaje a un canal.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Multipart uploads use the native Windows or Linux launcher.
+
+Nota: Los envíos multipart usan el lanzador nativo de Windows o Linux.
+
+```tripol
+import tripol.discord
+
+show discord.send_attachments("123",discord.interaction_message("Informe"),list(["report.txt"]))
+```
+
+#### discord.upload_envelope
+
+`func discord.upload_envelope(payload:string,paths:string_list) -> string`
+
+EN: Serialize a payload and a list of paths for the launcher.
+
+ES: Serializa un payload y una lista de rutas para el lanzador.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.upload_envelope("{}",list(["report.txt"]))
+```
+
+Documented expected output:
+
+```text
+{"payload":{},"files":["report.txt"]}
+```
+
+#### discord.Components.send_files
+
+`func discord.Components.send_files(channel_id:string,paths:string_list) -> string`
+
+EN: Publish a V2 layout with files and return the new message ID.
+
+ES: Publica un panel V2 con archivos y devuelve el ID del mensaje.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Multipart uploads use the native Windows or Linux launcher.
+
+Nota: Los envíos multipart usan el lanzador nativo de Windows o Linux.
+
+```tripol
+import tripol.discord
+
+panel=discord.container()
+panel.file("report.txt")
+show panel.send_files("123",list(["report.txt"]))
+```
+
+#### discord.Embed.send_files
+
+`func discord.Embed.send_files(channel_id:string,paths:string_list) -> string`
+
+EN: Publish an embed with its referenced files.
+
+ES: Publica un embed con los archivos a los que hace referencia.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Multipart uploads use the native Windows or Linux launcher.
+
+Nota: Los envíos multipart usan el lanzador nativo de Windows o Linux.
+
+```tripol
+import tripol.discord
+
+embed=discord.embed()
+embed.image(discord.attachment_url("photo.png"))
+show embed.send_files("123",list(["photo.png"]))
+```
+
+#### discord.Embeds.send_files
+
+`func discord.Embeds.send_files(channel_id:string,paths:string_list) -> string`
+
+EN: Publish an embed batch and attached files.
+
+ES: Publica un lote de embeds y sus archivos adjuntos.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Multipart uploads use the native Windows or Linux launcher.
+
+Nota: Los envíos multipart usan el lanzador nativo de Windows o Linux.
+
+```tripol
+import tripol.discord
+
+embed=discord.embed()
+embed.image(discord.attachment_url("photo.png"))
+batch=discord.embeds()
+batch.add(embed)
+show batch.send_files("123",list(["photo.png"]))
+```
+
+#### discord.Components.file
+
+`func discord.Components.file(filename:string,spoiler=false) -> bool`
+
+EN: Display a file attached to the same V2 message.
+
+ES: Muestra un archivo adjunto al mismo mensaje V2.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+panel=discord.container()
+show panel.file("report.txt",true)
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.reply_files
+
+`func discord.Interaction.reply_files(content:string,paths:string_list,ephemeral=false) -> bool
+func discord.Interaction.reply_files(embed:Embed,paths:string_list,ephemeral=false) -> bool
+func discord.Interaction.reply_files(batch:Embeds,paths:string_list,ephemeral=false) -> bool
+func discord.Interaction.reply_files(layout:Components,paths:string_list,ephemeral=false) -> bool`
+
+EN: Send the initial interaction response immediately with local files.
+
+ES: Envía de inmediato la respuesta inicial a la interacción con archivos locales.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Run through the Windows or Linux launcher with an authorized Discord application.
+
+Nota: Ejecuta mediante el lanzador de Windows o Linux con una aplicación de Discord autorizada.
+
+```tripol
+import tripol.discord
+
+func report(ctx) {
+ panel=discord.components()
+ panel.file("report.txt")
+ show ctx.reply_files(panel,list(["report.txt"]),true)
+ ""
+}
+bot=discord.bot()
+bot.slash("report","Send a test file",report)
+bot.start()
+```
+
+### Moderation & permissions / Moderación y permisos (25)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-moderation)
+
+#### discord.permissions_bitset_valid
+
+`func discord.permissions_bitset_valid(value:string) -> bool`
+
+EN: Check the canonical decimal format of a permission bitset.
+
+ES: Comprueba el formato decimal canónico de una máscara de permisos.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.permissions_bitset_valid("8192")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.command_permission_payload
+
+`func discord.command_permission_payload(default_permissions:string) -> string`
+
+EN: Serialize default application command permissions.
+
+ES: Serializa los permisos predeterminados de un comando de aplicación.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.command_permission_payload("8192")
+```
+
+Documented expected output:
+
+```text
+,"default_member_permissions":"8192"
+```
+
+#### discord.permission_index
+
+`func discord.permission_index(name:string) -> int`
+
+EN: Find the bit index of a named Discord permission.
+
+ES: Obtén el índice del bit de un permiso de Discord.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.permission_index("manage_messages")
+```
+
+Documented expected output:
+
+```text
+13
+```
+
+#### discord.Member.kick
+
+`func discord.Member.kick() -> bool`
+
+EN: Remove the member from the guild.
+
+ES: Expulsa al miembro del servidor.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.kick()
+```
+
+#### discord.Member.ban
+
+`func discord.Member.ban(delete_message_seconds=0) -> bool`
+
+EN: Ban the member with optional deletion of recent messages.
+
+ES: Banea al miembro con borrado opcional de mensajes recientes.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.ban(3600)
+```
+
+#### discord.Member.unban
+
+`func discord.Member.unban() -> bool`
+
+EN: Revoke a ban for the stored user ID.
+
+ES: Revoca un baneo para el ID de usuario asociado.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.unban()
+```
+
+#### discord.Member.nickname
+
+`func discord.Member.nickname(value:string) -> bool`
+
+EN: Set or clear the member’s nickname.
+
+ES: Cambia o limpia el apodo del miembro.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.nickname("Ada")
+```
+
+#### discord.Member.timeout
+
+`func discord.Member.timeout(until="") -> bool`
+
+EN: Set an ISO 8601 timeout deadline or clear the existing timeout.
+
+ES: Establece una fecha ISO 8601 para el aislamiento o retíralo.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.timeout()
+```
+
+#### discord.Member.role
+
+`func discord.Member.role(role_id:string,enabled=true) -> bool`
+
+EN: Add or remove an existing server role for the member.
+
+ES: Añade o retira al miembro un rol existente en el servidor.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.role("789",false)
+```
+
+#### discord.Channel.slowmode
+
+`func discord.Channel.slowmode(seconds:int) -> bool`
+
+EN: Set the channel delay in seconds.
+
+ES: Fija la espera entre mensajes en segundos.
+
+Native example flag: true.
+
+Note: Requires a native run and an authorized bot in the target channel.
+
+Nota: Requiere ejecución nativa y un bot autorizado en el canal.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.slowmode(15)
+```
+
+#### discord.Channel.pin
+
+`func discord.Channel.pin(message_id:string,pinned=true) -> bool`
+
+EN: Pin or unpin a message in the channel.
+
+ES: Fija o desfija un mensaje del canal.
+
+Native example flag: true.
+
+Note: Requires a native run and an authorized bot in the target channel.
+
+Nota: Requiere ejecución nativa y un bot autorizado en el canal.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.pin("456",true)
+```
+
+#### discord.Channel.delete_message
+
+`func discord.Channel.delete_message(message_id:string) -> bool`
+
+EN: Delete a single message by ID.
+
+ES: Borra un mensaje por ID.
+
+Native example flag: true.
+
+Note: Requires a native run and an authorized bot in the target channel.
+
+Nota: Requiere ejecución nativa y un bot autorizado en el canal.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.delete_message("456")
+```
+
+#### discord.Channel.purge
+
+`func discord.Channel.purge(message_ids:string_list) -> bool`
+
+EN: Bulk-delete 2–100 distinct message IDs.
+
+ES: Borra en bloque entre 2 y 100 IDs distintos.
+
+Native example flag: true.
+
+Note: Requires a native run and an authorized bot in the target channel.
+
+Nota: Requiere ejecución nativa y un bot autorizado en el canal.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.purge(list(["456","789"]))
+```
+
+#### discord.Channel.react
+
+`func discord.Channel.react(message_id:string,emoji:string,enabled=true) -> bool`
+
+EN: Add or remove the bot’s own reaction on a message.
+
+ES: Añade o retira la reacción del bot a un mensaje.
+
+Native example flag: true.
+
+Note: Requires a native run and an authorized bot in the target channel.
+
+Nota: Requiere ejecución nativa y un bot autorizado en el canal.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.react("456","🔥")
+```
+
+#### discord.Role.permissions
+
+`func discord.Role.permissions() -> string`
+
+EN: Fetch the role and @everyone combined guild permissions.
+
+ES: Consulta los permisos combinados del rol y @everyone en el servidor.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+role=server.role_ref("42")
+show role.permissions()
+```
+
+#### discord.Interaction.can
+
+`func discord.Interaction.can(permission:string) -> bool`
+
+EN: Check the effective member permissions supplied by Discord.
+
+ES: Comprueba los permisos efectivos del miembro informados por Discord.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":2,\"guild_id\":\"123\",\"member\":{\"permissions\":\"8192\"},\"data\":{\"type\":2,\"target_id\":\"42\",\"resolved\":{\"users\":{\"42\":{\"id\":\"42\",\"username\":\"Ada\"}}}}}","uProfile")
+show ctx.can("manage_messages"),ctx.can("kick_members")
+```
+
+Documented expected output:
+
+```text
+true false
+```
+
+#### discord.Bot.permission
+
+`func discord.Bot.permission(name:string,permission:string,target_option="",guild_id="") -> bool`
+
+EN: Require effective permissions and check a moderation target when applicable.
+
+ES: Exige permisos efectivos y comprueba el objetivo cuando corresponde.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+bot=discord.bot()
+bot.slash("work","Earn points",func(ctx) {ctx.reply("Done",true)})
+show bot.permission("work","MANAGE_MESSAGES")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.bot_can
+
+`func discord.Interaction.bot_can(permission:string) -> bool`
+
+EN: Check the bot’s effective permission in the interaction’s channel.
+
+ES: Comprueba el permiso efectivo del bot en el canal de la interacción.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":2,\"guild_id\":\"321\",\"app_permissions\":\"8192\"}","swork/")
+show ctx.bot_can("MANAGE_MESSAGES")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.can_moderate
+
+`func discord.Interaction.can_moderate(target:string,permission:string) -> bool`
+
+EN: Check effective permissions, the owner and member role hierarchy against a target.
+
+ES: Comprueba permisos efectivos, propietario y jerarquía frente a un objetivo.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+bot=discord.bot()
+bot.slash("check","Verify role order",func(ctx) {ctx.reply(text_status(ctx.can_moderate("456","BAN_MEMBERS")),true)})
+func text_status(allowed:bool)->string {if allowed {return "Allowed"};return "Denied"}
+bot.start()
+```
+
+#### discord.Channel.lock
+
+`func discord.Channel.lock() -> bool`
+
+EN: Save the @everyone overwrite and deny Send Messages.
+
+ES: Guarda el permiso de @everyone y deniega Enviar mensajes.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.lock()
+show room.unlock()
+```
+
+#### discord.Channel.unlock
+
+`func discord.Channel.unlock() -> bool`
+
+EN: Restore the saved overwrite in the same launcher.
+
+ES: Restaura el permiso guardado en el mismo lanzador.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.lock()
+show room.unlock()
+```
+
+#### discord.Channel.overwrite
+
+`func discord.Channel.overwrite(id:string,allow="0",deny="0",kind="role") -> bool`
+
+EN: Set allow and deny permission masks for a user or role.
+
+ES: Establece las máscaras de permisos permitidos y denegados para un usuario o rol.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.overwrite("456","1024","0","user")
+```
+
+#### discord.Channel.clear_overwrite
+
+`func discord.Channel.clear_overwrite(id:string) -> bool`
+
+EN: Remove a user or role permission overwrite.
+
+ES: Elimina el permiso explícito de un usuario o rol.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.clear_overwrite("456")
+```
+
+#### discord.Bot.restrict
+
+`func discord.Bot.restrict(name:string,scope:string,id:string,guild_id="") -> bool`
+
+EN: Allow specific users, roles, channels or guilds to invoke a registered slash command.
+
+ES: Permite que ciertos usuarios, roles, canales o servidores invoquen un comando slash registrado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+bot=discord.bot()
+bot.slash("work","Earn points",func(ctx) {ctx.reply("Done")})
+show bot.restrict("work","channel","456")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.has_role
+
+`func discord.Interaction.has_role(id:string) -> bool`
+
+EN: Check whether the invoking member has a specified role.
+
+ES: Comprueba si el miembro que invoca tiene un rol determinado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+ctx=discord.interaction_context("{\"type\":2,\"guild_id\":\"321\",\"member\":{\"roles\":[\"456\"]}}","swork/")
+show ctx.has_role("456")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+### Cooldowns & economy / Cooldowns y economía (7)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-economy)
+
+#### discord.cooldown_bucket
+
+`func discord.cooldown_bucket(command:string,scope:string,subject="",guild_id="") -> CooldownBucket`
+
+EN: Select a cooldown record by command, scope and subject.
+
+ES: Selecciona un cooldown por comando, ámbito y sujeto.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+bucket=discord.cooldown_bucket("work","user","456")
+show bucket.remaining()
+```
+
+#### discord.Bot.cooldown
+
+`func discord.Bot.cooldown(name:string,seconds:int,scope="user",message="",guild_id="") -> bool`
+
+EN: Require a minimum interval between executions of a registered slash command.
+
+ES: Exige un intervalo mínimo entre ejecuciones de un comando slash registrado.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+bot=discord.bot()
+bot.slash("work","Earn points",func(ctx) {ctx.reply("Done",true)})
+show bot.cooldown("work",60,"user","Try again in")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Bot.persist_cooldowns
+
+`func discord.Bot.persist_cooldowns(path:string) -> bool`
+
+EN: Save active cooldown reservations across restarts.
+
+ES: Guarda las reservas de cooldown activas al reiniciar.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+bot=discord.bot()
+bot.slash("work","Earn points",func(ctx) {ctx.reply("Done",true)})
+show bot.persist_cooldowns("cooldowns.json")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.Interaction.cooldown_remaining
+
+`func discord.Interaction.cooldown_remaining() -> int`
+
+EN: Return the remaining time for the reserved bucket in seconds.
+
+ES: Devuelve los segundos restantes de la reserva actual.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+bot=discord.bot()
+bot.slash("work","Earn points",func(ctx) {ctx.reply(text(ctx.cooldown_remaining()))})
+bot.cooldown("work",60)
+bot.start()
+```
+
+#### discord.Interaction.reset_cooldown
+
+`func discord.Interaction.reset_cooldown() -> bool`
+
+EN: Reset the current interaction’s cooldown bucket.
+
+ES: Restablece el cooldown de la interacción actual.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+bot=discord.bot()
+bot.slash("work","Earn points",func(ctx) {show ctx.reset_cooldown();ctx.reply("Done")})
+bot.cooldown("work",60)
+bot.start()
+```
+
+#### discord.CooldownBucket.remaining
+
+`func discord.CooldownBucket.remaining() -> int`
+
+EN: Query the seconds remaining for a specific cooldown bucket.
+
+ES: Consulta los segundos restantes para un cooldown específico.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+bucket=discord.cooldown_bucket("work","user","456")
+show bucket.remaining()
+```
+
+#### discord.CooldownBucket.reset
+
+`func discord.CooldownBucket.reset() -> bool`
+
+EN: Reset a cooldown for a specific scope and subject.
+
+ES: Restablece un cooldown para un ámbito y sujeto específicos.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+bucket=discord.cooldown_bucket("work","user","456")
+show bucket.reset()
+```
+
+### Servers, channels & roles / Servidores, canales y roles (27)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-servers)
+
+#### discord.guild
+
+`func discord.guild(id:string) -> Guild`
+
+EN: Build a typed server reference from its ID.
+
+ES: Crea una referencia tipada a un servidor por su ID.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+show server.id
+```
+
+Documented expected output:
+
+```text
+123
+```
+
+#### discord.channel_ref
+
+`func discord.channel_ref(id:string) -> Channel`
+
+EN: Create a typed reference to a Discord channel by ID.
+
+ES: Crea una referencia tipada a un canal de Discord por ID.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.id()
+```
+
+Documented expected output:
+
+```text
+123
+```
+
+#### discord.role_payload
+
+`func discord.role_payload(name:string,permissions:string,color:string) -> string`
+
+EN: Build a role update with only the supplied fields.
+
+ES: Genera una actualización de rol con los campos indicados.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.role_payload("Reviewer","0","#FFFFFF")
+```
+
+Documented expected output:
+
+```text
+{"name":"Reviewer","permissions":"0","colors":{"primary_color":16777215}}
+```
+
+#### discord.Guild.member
+
+`func discord.Guild.member(id:string) -> Member`
+
+EN: Build a typed member reference from a user ID within the server.
+
+ES: Crea una referencia tipada a un miembro a partir de su ID de usuario.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.id()
+```
+
+Documented expected output:
+
+```text
+456
+```
+
+#### discord.Member.id
+
+`func discord.Member.id() -> string`
+
+EN: Return a member’s user ID as text.
+
+ES: Devuelve como texto el ID de usuario del miembro.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.id()
+```
+
+Documented expected output:
+
+```text
+456
+```
+
+#### discord.Member.read
+
+`func discord.Member.read() -> string`
+
+EN: Fetch the member’s Discord JSON data.
+
+ES: Consulta los datos JSON del miembro en Discord.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.read()
+```
+
+#### discord.Member.dm
+
+`func discord.Member.dm(content:string) -> string`
+
+EN: Send a direct message and return its message ID.
+
+ES: Envía un mensaje directo y devuelve su ID.
+
+Native example flag: true.
+
+Note: Run with an authorized Discord application on Linux or Windows.
+
+Nota: Ejecuta con una aplicación de Discord autorizada en Linux o Windows.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+member=server.member("456")
+show member.dm("Hola")
+```
+
+#### discord.Channel.id
+
+`func discord.Channel.id() -> string`
+
+EN: Return the channel ID as text.
+
+ES: Devuelve el ID del canal como texto.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.id()
+```
+
+Documented expected output:
+
+```text
+123
+```
+
+#### discord.Channel.read
+
+`func discord.Channel.read() -> string`
+
+EN: Fetch the channel JSON from Discord.
+
+ES: Consulta el JSON del canal en Discord.
+
+Native example flag: true.
+
+Note: Requires a native run and an authorized bot in the target channel.
+
+Nota: Requiere ejecución nativa y un bot autorizado en el canal.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.read()
+```
+
+#### discord.Guild.channels
+
+`func discord.Guild.channels() -> string`
+
+EN: Fetch the guild’s channel list as JSON.
+
+ES: Consulta la lista de canales del servidor como JSON.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+show server.channels()
+```
+
+#### discord.Guild.create_channel
+
+`func discord.Guild.create_channel(name:string,kind="text",parent_id="",topic="") -> string`
+
+EN: Create a text, voice, category or announcement channel.
+
+ES: Crea un canal de texto, voz, categoría o anuncios.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+show server.create_channel("help","text","456","Support")
+```
+
+#### discord.Guild.audit
+
+`func discord.Guild.audit(limit=25,before="",action=0) -> string`
+
+EN: Fetch a page of audit logs with optional filters.
+
+ES: Consulta una página del registro de auditoría con filtros opcionales.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+show server.audit(25,"",10)
+```
+
+#### discord.Guild.roles
+
+`func discord.Guild.roles() -> string`
+
+EN: Fetch the server’s roles as JSON.
+
+ES: Consulta los roles del servidor como JSON.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+show server.roles()
+```
+
+#### discord.Guild.create_role
+
+`func discord.Guild.create_role(name:string,permissions="0",color="") -> string`
+
+EN: Create a role with decimal permissions and an optional hex color.
+
+ES: Crea un rol con permisos decimales y un color HEX opcional.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+show server.create_role("Reviewer","0","#FFFFFF")
+```
+
+#### discord.Guild.role_ref
+
+`func discord.Guild.role_ref(id:string) -> Role`
+
+EN: Create a typed role reference within a server.
+
+ES: Crea una referencia tipada a un rol de un servidor.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+role=server.role_ref("42")
+show role.id()
+```
+
+Documented expected output:
+
+```text
+42
+```
+
+#### discord.Role.id
+
+`func discord.Role.id() -> string`
+
+EN: Return the role ID as text.
+
+ES: Devuelve el ID del rol como texto.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+role=server.role_ref("42")
+show role.id()
+```
+
+Documented expected output:
+
+```text
+42
+```
+
+#### discord.Role.read
+
+`func discord.Role.read() -> string`
+
+EN: Fetch the Discord JSON for the role.
+
+ES: Consulta los datos JSON del rol en Discord.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+role=server.role_ref("42")
+show role.read()
+```
+
+#### discord.Role.edit
+
+`func discord.Role.edit(name="",permissions="",color="") -> bool`
+
+EN: Update the supplied role name, permissions or primary color.
+
+ES: Actualiza el nombre, los permisos o el color principal indicados.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+role=server.role_ref("42")
+show role.edit("Review","8192")
+```
+
+#### discord.Role.delete
+
+`func discord.Role.delete() -> bool`
+
+EN: Delete the selected role.
+
+ES: Elimina el rol seleccionado.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+role=server.role_ref("42")
+show role.delete()
+```
+
+#### discord.Channel.rename
+
+`func discord.Channel.rename(name:string) -> bool`
+
+EN: Rename a Discord channel.
+
+ES: Cambia el nombre de un canal de Discord.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.rename("support")
+```
+
+#### discord.Channel.topic
+
+`func discord.Channel.topic(topic:string) -> bool`
+
+EN: Change the topic of a channel that supports it.
+
+ES: Cambia el tema de un canal compatible.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.topic("Updates")
+```
+
+#### discord.Channel.move
+
+`func discord.Channel.move(parent_id="") -> bool`
+
+EN: Move a channel to a category or unset its parent.
+
+ES: Mueve un canal a una categoría o retira la categoría actual.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.move("456")
+```
+
+#### discord.Channel.delete
+
+`func discord.Channel.delete() -> bool`
+
+EN: Delete the selected Discord channel.
+
+ES: Elimina el canal de Discord seleccionado.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.delete()
+```
+
+#### discord.Channel.edit_message
+
+`func discord.Channel.edit_message(message_id:string,content:string) -> bool`
+
+EN: Edit the text of a message owned by the bot.
+
+ES: Edita el texto de un mensaje del propio bot.
+
+Native example flag: true.
+
+Note: Requires an authorized Discord application and native runtime.
+
+Nota: Requiere una aplicación de Discord autorizada y ejecución nativa.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.edit_message("456","Listo")
+```
+
+#### discord.Guild.move_role
+
+`func discord.Guild.move_role(role_id:string,position:int) -> bool`
+
+EN: Move a role to a position above @everyone.
+
+ES: Mueve un rol a una posición por encima de @everyone.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Run through the Windows or Linux launcher with an authorized Discord application.
+
+Nota: Ejecuta mediante el lanzador de Windows o Linux con una aplicación de Discord autorizada.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("123")
+show server.move_role("456",2)
+```
+
+#### discord.Guild.move_channel
+
+`func discord.Guild.move_channel(channel_id:string,position:int) -> bool`
+
+EN: Move a channel to a numeric position in the server.
+
+ES: Mueve un canal a una posición numérica del servidor.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+show server.move_channel("123",2)
+```
+
+#### discord.Guild.private_channel
+
+`func discord.Guild.private_channel(name:string,user_id:string,parent_id="") -> string`
+
+EN: Create a text channel for a member with @everyone denied view access.
+
+ES: Crea un canal de texto para un miembro y deniega la vista a @everyone.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+show server.private_channel("support","456")
+```
+
+### Webhooks & invitations / Webhooks e invitaciones (14)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-webhooks)
+
+#### discord.invite_path
+
+`func discord.invite_path(code:string) -> string`
+
+EN: Build a Discord API path from a validated invitation code.
+
+ES: Construye una ruta de Discord a partir de un código de invitación válido.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.invite_path("sample")
+```
+
+Documented expected output:
+
+```text
+/api/v10/invites/sample
+```
+
+#### discord.invite_info
+
+`func discord.invite_info(code:string,counts=false) -> string`
+
+EN: Read information and expiration for an invitation.
+
+ES: Consulta los datos y la caducidad de una invitación.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+show discord.invite_info("sample",true)
+```
+
+#### discord.revoke_invite
+
+`func discord.revoke_invite(code:string) -> bool`
+
+EN: Delete a Discord invitation code.
+
+ES: Elimina un código de invitación de Discord.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+show discord.revoke_invite("sample")
+```
+
+#### discord.webhook_ref
+
+`func discord.webhook_ref(id:string,credential="") -> Webhook`
+
+EN: Create a typed webhook reference without contacting Discord.
+
+ES: Crea una referencia tipada de webhook sin contactar con Discord.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+hook=discord.webhook_ref("901")
+show hook.id()
+```
+
+Documented expected output:
+
+```text
+901
+```
+
+#### discord.Guild.invites
+
+`func discord.Guild.invites() -> string`
+
+EN: List the invitations in a server.
+
+ES: Enumera las invitaciones de un servidor.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+server=discord.guild("321")
+show server.invites()
+```
+
+#### discord.Channel.create_webhook
+
+`func discord.Channel.create_webhook(name:string) -> Webhook`
+
+EN: Create a typed incoming webhook in a channel.
+
+ES: Crea un acceso webhook entrante tipado en un canal.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+hook=room.create_webhook("Updates")
+show hook.id()
+```
+
+#### discord.Channel.invite
+
+`func discord.Channel.invite(max_age=86400,max_uses=0,temporary=false,unique=true) -> string`
+
+EN: Create an invitation with an expiration and optional use limit.
+
+ES: Crea una invitación con caducidad y límite de usos opcional.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.invite(600,1)
+```
+
+#### discord.Channel.invites
+
+`func discord.Channel.invites() -> string`
+
+EN: List the invitations in a channel.
+
+ES: Enumera las invitaciones de un canal.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.invites()
+```
+
+#### discord.Webhook.id
+
+`func discord.Webhook.id() -> string`
+
+EN: Return the webhook identifier without exposing its credentials.
+
+ES: Devuelve el ID del webhook sin exponer sus credenciales.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+hook=discord.webhook_ref("901")
+show hook.id()
+```
+
+Documented expected output:
+
+```text
+901
+```
+
+#### discord.Webhook.read
+
+`func discord.Webhook.read() -> WebhookInfo`
+
+EN: Fetch webhook metadata while omitting the credential.
+
+ES: Consulta los metadatos del webhook y omite sus credenciales.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+hook=discord.webhook_ref("901")
+info=hook.read()
+show info.name
+```
+
+#### discord.Webhook.edit
+
+`func discord.Webhook.edit(name:string,channel_id="") -> bool`
+
+EN: Update the name of a webhook and optionally its channel.
+
+ES: Actualiza el nombre de un webhook y, opcionalmente, su canal.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+hook=discord.webhook_ref("901")
+show hook.edit("News")
+```
+
+#### discord.Webhook.delete
+
+`func discord.Webhook.delete() -> bool`
+
+EN: Delete an incoming webhook with bot authorization.
+
+ES: Elimina un webhook entrante con autorización del bot.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+hook=discord.webhook_ref("901")
+show hook.delete()
+```
+
+#### discord.Webhook.send
+
+`func discord.Webhook.send(content:string) -> string
+func discord.Webhook.send(embed:Embed) -> string
+func discord.Webhook.send(batch:Embeds) -> string
+func discord.Webhook.send(layout:Components) -> string`
+
+EN: Send text, an embed, an embed batch or a supported Components V2 layout.
+
+ES: Envía texto, un embed, un lote de embeds o un diseño compatible de Components V2.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+hook=discord.channel_ref("123").create_webhook("Updates")
+show hook.send("Release notes")
+```
+
+#### discord.Webhook.send_files
+
+`func discord.Webhook.send_files(layout:Components,paths:string_list) -> string
+func discord.Webhook.send_files(embed:Embed,paths:string_list) -> string
+func discord.Webhook.send_files(content:string,paths:string_list) -> string`
+
+EN: Send a message with local attachments through the native launcher.
+
+ES: Envía un mensaje con archivos locales mediante el lanzador nativo.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+hook=discord.channel_ref("123").create_webhook("Updates")
+show hook.send_files("Report",list(["report.txt"]))
+```
+
+### Threads & forums / Hilos y foros (12)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-threads)
+
+#### discord.archive_minutes
+
+`func discord.archive_minutes(duration:string) -> int`
+
+EN: Convert a named Discord thread archive period to minutes.
+
+ES: Convierte en minutos un periodo de archivado con nombre.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+show discord.archive_minutes("day")
+```
+
+Documented expected output:
+
+```text
+1440
+```
+
+#### discord.forum_tags
+
+`func discord.forum_tags() -> ForumTags`
+
+EN: Construct the replacement set for available forum labels.
+
+ES: Construye el conjunto de sustitución de las etiquetas disponibles.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+tags=discord.forum_tags()
+tags.tag("Ideas","",false,"✅")
+show tags.payload()
+```
+
+Documented expected output:
+
+```text
+[{"name":"Ideas","moderated":false,"emoji_name":"✅"}]
+```
+
+#### discord.Channel.thread
+
+`func discord.Channel.thread(name:string,archive="day",private=false) -> string`
+
+EN: Start a public or private thread with a named archive period.
+
+ES: Inicia un hilo público o privado con un periodo de archivado por nombre.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.thread("Planning","hour",true)
+```
+
+#### discord.Channel.thread_from
+
+`func discord.Channel.thread_from(message_id:string,name:string,archive="day") -> string`
+
+EN: Start a thread under an existing message.
+
+ES: Inicia un hilo a partir de un mensaje existente.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.thread_from("456","Planning")
+```
+
+#### discord.Channel.archive
+
+`func discord.Channel.archive(enabled=true) -> bool`
+
+EN: Archive or unarchive a thread or forum publication.
+
+ES: Archiva o desarchiva un hilo o publicación de foro.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.archive()
+```
+
+#### discord.Channel.lock_thread
+
+`func discord.Channel.lock_thread(enabled=true) -> bool`
+
+EN: Change the locked state of a thread or forum publication.
+
+ES: Cambia el estado de bloqueo de un hilo o publicación de foro.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.lock_thread()
+```
+
+#### discord.Channel.thread_member
+
+`func discord.Channel.thread_member(user_id="@me",enabled=true) -> bool`
+
+EN: Add or remove a member, or join or leave as the bot.
+
+ES: Añade o retira un miembro o entra y sal como bot.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.thread_member()
+```
+
+#### discord.Channel.post
+
+`func discord.Channel.post(title:string,content:string,archive="day") -> string
+func discord.Channel.post(title:string,content:string,tags:string_list,archive="day") -> string`
+
+EN: Create a forum post with optional tag IDs and archive period.
+
+ES: Crea una publicación de foro con IDs de etiquetas y archivado opcionales.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.post("Planning","First post",list(["456"]))
+```
+
+#### discord.Channel.apply_tags
+
+`func discord.Channel.apply_tags(tags:string_list) -> bool`
+
+EN: Set up to five tag IDs on a forum publication.
+
+ES: Aplica hasta cinco IDs de etiquetas a una publicación de foro.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+show room.apply_tags(list(["456"]))
+```
+
+#### discord.ForumTags.tag
+
+`func discord.ForumTags.tag(name:string,id="",moderated=false,emoji="") -> bool`
+
+EN: Add a new or existing label and optional emoji to the set.
+
+ES: Añade una etiqueta nueva o existente y un emoji opcional al conjunto.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+tags=discord.forum_tags()
+show tags.tag("Ideas","",false,"✅")
+```
+
+Documented expected output:
+
+```text
+true
+```
+
+#### discord.ForumTags.payload
+
+`func discord.ForumTags.payload() -> string`
+
+EN: Serialize the configured set of forum tags.
+
+ES: Serializa el conjunto configurado de etiquetas del foro.
+
+Native example flag: false.
+
+```tripol
+import tripol.discord
+
+tags=discord.forum_tags()
+tags.tag("Ideas","",false,"✅")
+show tags.payload()
+```
+
+Documented expected output:
+
+```text
+[{"name":"Ideas","moderated":false,"emoji_name":"✅"}]
+```
+
+#### discord.Channel.set_forum_tags
+
+`func discord.Channel.set_forum_tags(tags:ForumTags) -> bool`
+
+EN: Replace the full set of available forum labels.
+
+ES: Sustituye el conjunto completo de etiquetas disponibles en el foro.
+
+Native example flag: true.
+
+Target: "native".
+
+Note: Use the Windows or Linux launcher and an authorized Discord app for network operations.
+
+Nota: Usa el lanzador de Windows o Linux y una aplicación de Discord autorizada para las operaciones de red.
+
+```tripol
+import tripol.discord
+
+room=discord.channel_ref("123")
+tags=discord.forum_tags()
+tags.tag("Ideas","",false,"✅")
+show room.set_forum_tags(tags)
+```
+
+### Low-level helpers & legacy API / Utilidades de bajo nivel y API clásica (21)
+
+[Web category](https://tripollas.github.io/Tripol/docs/libraries/discord.html#api-helpers)
+
+#### discord.channel_path
+
+`func discord.channel_path(channel:string) -> string`
+
+EN: Build the API path used to access messages in a channel.
+
+ES: Construye la ruta de la API que permite acceder a los mensajes de un canal.
+
+Native example flag: true.
+
+Note: The channel ID must contain 1–20 digits. This example does not contact Discord.
+
+Nota: El ID debe contener entre 1 y 20 dígitos. Este ejemplo no contacta con Discord.
+
+```tripol
+import tripol.discord
+
+show discord.channel_path("123")
+```
+
+Documented expected output:
+
+```text
+/api/v10/channels/123/messages
+```
+
+#### discord.send
+
+`func discord.send(channel:string,message:string) -> bool`
+
+EN: Send a message using the token stored in the local environment.
+
+ES: Envía un mensaje usando el token configurado en el entorno local.
+
+Native example flag: true.
+
+Note: Replace the channel ID and set DISCORD_TOKEN. Requires permission to send messages. Message: 1–512 UTF-8 bytes.
+
+Nota: Sustituye el ID y configura DISCORD_TOKEN. Requiere permiso para enviar mensajes. Mensaje: 1–512 bytes UTF-8.
+
+Return metadata: ["True if the request returns a nonempty response; network errors may stop execution.","true si la petición devuelve una respuesta no vacía; los fallos de red pueden detener el programa."]
+
+```tripol
+import tripol.discord
+
+show discord.send("YOUR_CHANNEL_ID", "Hola!")
+```
+
+#### discord.latest
+
+`func discord.latest(channel:string) -> string`
+
+EN: Fetch the newest message in a channel as JSON.
+
+ES: Obtiene el mensaje más reciente de un canal como JSON.
+
+Native example flag: true.
+
+Note: Set DISCORD_TOKEN and replace the ID. The bot needs access to the channel and message history.
+
+Nota: Configura DISCORD_TOKEN y sustituye el ID. El bot necesita acceso al canal y al historial.
+
+Return metadata: ["Message JSON or empty text if no usable message is found.","JSON del mensaje o texto vacío si no se encuentra un mensaje utilizable."]
+
+```tripol
+import tripol.discord
+
+message = discord.latest("YOUR_CHANNEL_ID")
+show len(message) > 0
+```
+
+#### discord.message_id
+
+`func discord.message_id(message:string) -> int`
+
+EN: Extract a numeric ID from a message JSON object.
+
+ES: Extrae el ID numérico de un mensaje JSON.
+
+Native example flag: true.
+
+Note: Returns zero if the ID is absent, invalid or outside the integer range.
+
+Nota: Devuelve cero si el ID falta, no es válido o está fuera del rango entero.
+
+```tripol
+import tripol.discord
+
+message = "{\"id\":\"123\"}"
+show discord.message_id(message)
+```
+
+Documented expected output:
+
+```text
+123
+```
+
+#### discord.matches
+
+`func discord.matches(message:string,command:string) -> bool`
+
+EN: Check whether a message is an exact command from a non-bot, non-webhook author.
+
+ES: Comprueba si un mensaje coincide exactamente con un comando y no procede de un bot ni webhook.
+
+Native example flag: false.
+
+Note: Compares the decoded message text.
+
+Nota: Compara el texto del mensaje después de interpretar los escapes JSON.
+
+```tripol
+import tripol.discord
+
+message = "{\"content\":\"!caf\\u00e9\",\"author\":{\"bot\":false}}"
+show discord.matches(message, "!café")
+show discord.matches(message, "!adios")
+```
+
+Documented expected output:
+
+```text
+true
+false
+```
+
+#### discord.listen
+
+`func discord.listen(channel:string,command:string,response:string) -> int`
+
+EN: Start a legacy bot loop for one command in one channel.
+
+ES: Inicia un bot antiguo que escucha un único comando en un canal.
+
+Native example flag: true.
+
+Note: Native Windows REST polling; needs DISCORD_TOKEN and channel permissions. Polls the latest message every 2500 ms; use run() for Gateway bots. Stop with Ctrl+C.
+
+Nota: Sondeo REST en Windows nativo; requiere DISCORD_TOKEN y permisos. Consulta el último mensaje cada 2500 ms; usa run() para bots Gateway. Detén con Ctrl+C.
+
+```tripol
+import tripol.discord
+
+discord.listen("YOUR_CHANNEL_ID", "!hola", "Hola!")
+```
+
+#### discord.channel
+
+`func discord.channel(id:string) -> bool`
+
+EN: Select the channel filter for incoming Gateway commands and the destination for say().
+
+ES: Selecciona el filtro de canal para comandos Gateway y el destino de say().
+
+Native example flag: true.
+
+Note: The example only configures a numeric ID; use a real channel ID when connecting.
+
+Nota: El ejemplo solo configura un ID numérico; usa un ID real al conectarte.
+
+```tripol
+import tripol.discord
+
+show discord.channel("123")
+show discord.has_channel()
+```
+
+Documented expected output:
+
+```text
+true
+true
+```
+
+#### discord.reply
+
+`func discord.reply(command:string,response:string) -> bool`
+
+EN: Register or replace the response to an exact command.
+
+ES: Registra o reemplaza la respuesta de un comando exacto.
+
+Native example flag: true.
+
+Note: Maximum 16 commands; command 1–128 bytes, response 1–512 bytes.
+
+Nota: Máximo 16 comandos; comando de 1–128 bytes, respuesta de 1–512 bytes.
 
 ```tripol
 import tripol.discord
@@ -8970,7 +15634,32 @@ Documented expected output:
 Hola!
 ```
 
-### discord.dispatch
+#### discord.preview
+
+`func discord.preview(command:string) -> string`
+
+EN: Look up a registered command response without sending a message.
+
+ES: Consulta una respuesta registrada sin enviar un mensaje.
+
+Native example flag: true.
+
+Return metadata: ["Response text or empty text if no command matches.","Texto de respuesta o texto vacío si ningún comando coincide."]
+
+```tripol
+import tripol.discord
+
+discord.reply("!hola", "Hola!")
+show discord.preview("!hola")
+```
+
+Documented expected output:
+
+```text
+Hola!
+```
+
+#### discord.dispatch
 
 `func discord.dispatch(message:string) -> string`
 
@@ -8998,7 +15687,7 @@ Documented expected output:
 Hola!
 ```
 
-### discord.send_to
+#### discord.send_to
 
 `func discord.send_to(id:string,message:string) -> bool`
 
@@ -9019,7 +15708,7 @@ discord.login_env()
 show discord.send_to("YOUR_CHANNEL_ID", "Hola!")
 ```
 
-### discord.has_channel
+#### discord.has_channel
 
 `func discord.has_channel() -> bool`
 
@@ -9042,7 +15731,7 @@ Documented expected output:
 true
 ```
 
-### discord.all_channels
+#### discord.all_channels
 
 `func discord.all_channels() -> bool`
 
@@ -9071,7 +15760,7 @@ true
 false
 ```
 
-### discord.say
+#### discord.say
 
 `func discord.say(message:string) -> bool`
 
@@ -9093,7 +15782,7 @@ discord.channel("YOUR_CHANNEL_ID")
 show discord.say("Hola!")
 ```
 
-### discord.parse_latest
+#### discord.parse_latest
 
 `func discord.parse_latest(result:string) -> string`
 
@@ -9102,6 +15791,8 @@ EN: Extract the first message object from a JSON array returned by REST.
 ES: Extrae el primer objeto de mensaje de un arreglo JSON devuelto por REST.
 
 Native example flag: true.
+
+Return metadata: ["First object as JSON or empty text on invalid input.","Primer objeto como JSON o texto vacío si la entrada no es válida."]
 
 ```tripol
 import tripol.discord
@@ -9116,7 +15807,7 @@ Documented expected output:
 {"id":"123"}
 ```
 
-### discord.run_rest
+#### discord.run_rest
 
 `func discord.run_rest() -> int`
 
@@ -9139,86 +15830,7 @@ discord.reply("!hola", "Hola!")
 discord.run_rest()
 ```
 
-### discord.setup
-
-`func discord.setup(secret:string,id:string) -> bool`
-
-EN: Configure the token and channel in one call.
-
-ES: Configura el token y el canal en una sola llamada.
-
-Native example flag: true.
-
-Note: Configure DISCORD_TOKEN locally; replace 123 with the real ID for live use. No network connection is opened.
-
-Nota: Configura DISCORD_TOKEN localmente; sustituye 123 por el ID real para conectarte. No abre una conexión.
-
-```tripol
-import tripol.discord
-
-secret = discord.token()
-show discord.setup(secret, "123")
-```
-
-Documented expected output:
-
-```text
-true
-```
-
-### discord.status
-
-`func discord.status(value:string) -> bool`
-
-EN: Choose the presence status sent when the bot identifies itself to Discord.
-
-ES: Elige el estado de presencia que se envía al identificarse el bot.
-
-Native example flag: true.
-
-Note: Allowed: online, idle, dnd, invisible. Configure before run().
-
-Nota: Permitidos: online, idle, dnd, invisible. Configura antes de run().
-
-```tripol
-import tripol.discord
-
-show discord.status("idle")
-```
-
-Documented expected output:
-
-```text
-true
-```
-
-### discord.activity
-
-`func discord.activity(value:string) -> bool`
-
-EN: Choose the activity text displayed by the bot when connecting.
-
-ES: Elige el texto de actividad que muestra el bot al conectarse.
-
-Native example flag: true.
-
-Note: Maximum 128 UTF-8 bytes; empty text clears the activity.
-
-Nota: Máximo 128 bytes UTF-8; el texto vacío elimina la actividad.
-
-```tripol
-import tripol.discord
-
-show discord.activity("Programando con TRIPOL")
-```
-
-Documented expected output:
-
-```text
-true
-```
-
-### discord.welcome
+#### discord.welcome
 
 `func discord.welcome(value:string) -> bool`
 
@@ -9245,63 +15857,9 @@ Documented expected output:
 true
 ```
 
-### discord.connected
+#### discord.identify_payload
 
-`func discord.connected() -> bool`
-
-EN: Check the local Gateway ready state.
-
-ES: Comprueba si el Gateway está listo según su estado local.
-
-Native example flag: true.
-
-Note: This is a local state check, not a fresh network test.
-
-Nota: Comprueba el estado local, no realiza una prueba de red nueva.
-
-```tripol
-import tripol.discord
-
-discord.reset()
-show discord.connected()
-```
-
-Documented expected output:
-
-```text
-false
-```
-
-### discord.ping
-
-`func discord.ping() -> int`
-
-EN: Get the most recent Gateway heartbeat round-trip time in milliseconds.
-
-ES: Obtiene la última latencia de heartbeat del Gateway en milisegundos.
-
-Native example flag: true.
-
-Note: Returns -1 until a heartbeat acknowledgement is recorded.
-
-Nota: Devuelve -1 hasta que se registra una confirmación de heartbeat.
-
-```tripol
-import tripol.discord
-
-discord.reset()
-show discord.ping()
-```
-
-Documented expected output:
-
-```text
--1
-```
-
-### discord.identify_payload
-
-`func discord.identify_payload() -> string`
+`func discord.identify_payload(intents=33281) -> string`
 
 EN: Build the Gateway identification JSON, including the private token.
 
@@ -9309,9 +15867,9 @@ ES: Construye el JSON de identificación del Gateway, que incluye el token priva
 
 Native example flag: true.
 
-Note: Advanced helper. The payload contains the token: never print, log or share it. run() calls this internally.
+Note: Advanced helper. The payload contains the token: never print, log or share it. run() calls this internally. Supported intent sets are 33281 for guild text commands and 1 for GUILDS only.
 
-Nota: Función avanzada. El resultado contiene el token: nunca lo imprimas, registres ni compartas. run() lo utiliza internamente.
+Nota: Función avanzada. El resultado contiene el token: nunca lo imprimas, registres ni compartas. run() lo utiliza internamente. Admite 33281 para comandos de texto y 1 para solo GUILDS.
 
 ```tripol
 import tripol.discord
@@ -9327,7 +15885,7 @@ Documented expected output:
 true
 ```
 
-### discord.heartbeat_payload
+#### discord.heartbeat_payload
 
 `func discord.heartbeat_payload(sequence:int) -> string`
 
@@ -9355,86 +15913,54 @@ Documented expected output:
 {"op":1,"d":null}
 ```
 
-### discord.event_channel
+#### discord.ignore_interaction
 
-`func discord.event_channel(event:string) -> string`
+`func discord.ignore_interaction(context:Interaction) -> string`
 
-EN: Extract the channel ID of a MESSAGE_CREATE Gateway event and apply the channel filter.
+EN: Return an empty response for an unused callback.
 
-ES: Extrae el ID de canal de un evento Gateway MESSAGE_CREATE y aplica el filtro de canal.
+ES: Devuelve texto vacío para un callback sin respuesta.
 
-Native example flag: true.
+Native example flag: false.
 
 ```tripol
 import tripol.discord
 
-event = "{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"!hola\",\"author\":{\"bot\":false}}}"
-show discord.event_channel(event)
+ctx=discord.Interaction(3,"hola","123","456","789","123","567","{\"values\":[\"42\",\"43\"]}",true)
+show discord.ignore_interaction(ctx)==""
 ```
 
 Documented expected output:
 
 ```text
-123
+true
 ```
 
-### discord.gateway_reply
+#### discord.interaction_key_end
 
-`func discord.gateway_reply(event:string) -> string`
+`func discord.interaction_key_end(key:string) -> int`
 
-EN: Resolve a registered reply from a Gateway event without opening a connection.
+EN: Locate the start of a command route’s guild suffix.
 
-ES: Busca la respuesta registrada para un evento Gateway sin abrir una conexión.
+ES: Localiza dónde comienza el sufijo de servidor en una ruta de comando.
 
-Native example flag: true.
-
-Note: Ignores bots, webhooks and events outside the configured channel filter.
-
-Nota: Ignora bots, webhooks y eventos fuera del filtro de canal.
+Native example flag: false.
 
 ```tripol
 import tripol.discord
 
-discord.reply("!hola", "Hola!")
-event = "{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\":\"123\",\"content\":\"!hola\",\"author\":{\"bot\":false}}}"
-show discord.gateway_reply(event)
+show discord.interaction_key_end("ushow/321")
 ```
 
 Documented expected output:
 
 ```text
-Hola!
+5
 ```
-
-### discord.run
-
-`func discord.run() -> int`
-
-EN: Start the bot and keep it connected to Discord to answer registered commands.
-
-ES: Inicia el bot y lo mantiene conectado a Discord para responder comandos registrados.
-
-Native example flag: true.
-
-Note: Native Windows. Set DISCORD_TOKEN, enable Message Content Intent, invite the bot and grant permissions. Type !hola in a permitted channel. Stop with Ctrl+C; automatic reconnect is not supported.
-
-Nota: Windows nativo. Configura DISCORD_TOKEN, activa Message Content Intent, invita al bot y concede permisos. Escribe !hola en un canal permitido. Detén con Ctrl+C; no hay reconexión automática.
-
-```tripol
-import tripol.discord
-
-discord.login_env()
-discord.status("online")
-discord.activity("TRIPOL")
-discord.reply("!hola", "Hola!")
-discord.run()
-```
-
 
 ---
 
 ## tripol.encoding — 4 functions
-
 
 Import: `import tripol.encoding`
 
@@ -9530,11 +16056,9 @@ Documented expected output:
 4869
 ```
 
-
 ---
 
 ## tripol.env — 1 functions
-
 
 Import: `import tripol.env`
 
@@ -9548,9 +16072,9 @@ ES: Lee una variable del entorno del proceso local.
 
 Native example flag: true.
 
-Note: Native Windows. Set TRIPOL_DEMO locally first; do not print secrets. Missing or oversized values return empty text.
+Note: Native Windows or Linux x86-64. Set TRIPOL_DEMO locally. Missing or oversized values return empty text.
 
-Nota: Windows nativo. Configura TRIPOL_DEMO localmente; no imprimas secretos. Si falta o supera el límite, devuelve texto vacío.
+Nota: Windows o Linux x86-64 nativos. Configura TRIPOL_DEMO localmente. Si falta o supera el límite, devuelve texto vacío.
 
 ```tripol
 import tripol.env
@@ -9558,11 +16082,9 @@ import tripol.env
 show len(env.get("TRIPOL_DEMO")) > 0
 ```
 
-
 ---
 
 ## tripol.events — 14 functions
-
 
 Import: `import tripol.events`
 
@@ -9874,11 +16396,9 @@ show events.mouse_left()
 game.close()
 ```
 
-
 ---
 
 ## tripol.game — 7 functions
-
 
 Import: `import tripol.game`
 
@@ -10070,11 +16590,9 @@ game.gl_frame(v)
 game.close()
 ```
 
-
 ---
 
 ## tripol.http — 3 functions
-
 
 Import: `import tripol.http`
 
@@ -10150,11 +16668,9 @@ Documented expected output:
 Hola
 ```
 
-
 ---
 
 ## tripol.https — 1 functions
-
 
 Import: `import tripol.https`
 
@@ -10179,11 +16695,9 @@ response = https.get("example.com", "/")
 show len(response) > 0
 ```
 
-
 ---
 
 ## tripol.memory — 4 functions
-
 
 Import: `import tripol.memory`
 
@@ -10260,11 +16774,9 @@ import tripol.memory
 show memory.available()
 ```
 
-
 ---
 
 ## tripol.network — 3 functions
-
 
 Import: `import tripol.network`
 
@@ -10333,13 +16845,9 @@ Documented expected output:
 2130706433
 ```
 
-
 ---
 
 ## tripol.process — 3 functions
-
-Target metadata and native process operations.
-Metadatos del destino y operaciones de procesos nativos.
 
 Import: `import tripol.process`
 
@@ -10352,6 +16860,8 @@ EN: Read the operating system identifier of the current native process.
 ES: Lee el identificador que el sistema operativo asignó al proceso nativo actual.
 
 Native example flag: true.
+
+Target: "native".
 
 Note: Requires a native executable.
 
@@ -10395,6 +16905,8 @@ ES: Termina el proceso nativo actual con el código indicado.
 
 Native example flag: true.
 
+Target: "native".
+
 Note: Requires a native executable.
 
 Nota: Requiere un ejecutable nativo.
@@ -10406,11 +16918,9 @@ show "Done"
 process.exit(0)
 ```
 
-
 ---
 
 ## tripol.profiler — 2 functions
-
 
 Import: `import tripol.profiler`
 
@@ -10465,11 +16975,9 @@ show total
 show profiler.elapsed(start)
 ```
 
-
 ---
 
 ## tripol.simd — 1 functions
-
 
 Import: `import tripol.simd`
 
@@ -10497,11 +17005,9 @@ Documented expected output:
 true
 ```
 
-
 ---
 
 ## tripol.system — 5 functions
-
 
 Import: `import tripol.system`
 
@@ -10593,13 +17099,9 @@ import tripol.system
 show system.is_linux()
 ```
 
-
 ---
 
 ## tripol.thread — 3 functions
-
-Windows worker reduction and bounded sleep.
-Reducción con un trabajador de Windows y espera acotada.
 
 Import: `import tripol.thread`
 
@@ -10634,6 +17136,8 @@ EN: Sum integers with checked arithmetic in a joined Windows worker.
 ES: Suma enteros con aritmética comprobada en un trabajador de Windows al que se espera antes de continuar.
 
 Native example flag: true.
+
+Target: "windows".
 
 Note: Requires native Windows.
 
@@ -10670,11 +17174,9 @@ Documented expected output:
 0
 ```
 
-
 ---
 
 ## tripol.ui — 7 functions
-
 
 Import: `import tripol.ui`
 
@@ -10819,7 +17321,6 @@ import tripol.ui
 choice = ui.choose("Save", "Save changes?")
 show choice
 ```
-
 
 ---
 
@@ -11935,4 +18436,4 @@ Build and package reference (ES: Referencia de compilación y paquetes)
 
 ---
 
-End of TRIPOL v0.27.1 AI reference.
+End of TRIPOL v0.28.0 AI reference.
