@@ -218,3 +218,24 @@
 .doc-ai-title{font-weight:500;letter-spacing:0}
 .doc-ai-download{font-weight:500;border-radius:8px}
 @media(max-width:700px){.doc-ai-reference{right:12px;bottom:12px}.docs-page article.docs-article{padding-top:32px}}
+
+/* Library category navigation R1 */
+.docs-sidebar .side-library-group{width:100%;min-width:0}
+.docs-sidebar .side-library-group[hidden]{display:none!important}
+.docs-sidebar .side-library-group>summary{display:flex;align-items:center;gap:8px;min-height:34px;padding:8px 12px;border-radius:6px;cursor:pointer;color:#bbb;list-style:none;font-size:13px}
+.docs-sidebar .side-library-group>summary::-webkit-details-marker{display:none}
+.docs-sidebar .side-library-group>summary::after{content:"";width:6px;height:6px;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(-45deg);margin-left:3px}
+.docs-sidebar .side-library-group[open]>summary::after{transform:rotate(45deg)}
+.docs-sidebar .side-library-group>summary span{flex:1}
+.docs-sidebar .side-library-group>summary:hover,.docs-sidebar .side-library-group>summary.current-library{color:#fff;background:#202020}
+.docs-sidebar .side-library-group>summary:focus-visible{outline:2px solid #fff;outline-offset:-2px}
+.docs-sidebar .side-library-categories{margin:3px 0 8px 16px;padding-left:7px;border-left:1px solid #353535}
+.docs-page .docs-sidebar nav .side-library-categories a{font-size:12px;min-height:30px;padding:6px 8px;line-height:1.45;overflow-wrap:anywhere}
+.library-category-index{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px;margin:16px 0 28px}
+.docs-article .library-category-index a{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#eee;text-decoration:none;border:1px solid #303030;background:#111;padding:10px 12px;border-radius:7px;font-size:13px;min-height:42px}
+.docs-article .library-category-index a:hover{background:#202020;border-color:#666}
+.library-category-index small,.category-meta{color:#aaa;font-size:12px}
+.library-api-category{margin:42px 0 0}
+.library-api-category h2,#methods{scroll-margin-top:112px}
+.library-api-category .function-index{margin-bottom:16px}
+@media(max-width:600px){.library-category-index{grid-template-columns:1fr}}
