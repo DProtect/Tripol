@@ -1,5 +1,5 @@
 {
-  "commit": "506c2bb793f6d815e42e75b2412d23626a54eb31",
+  "commit": "08063b3d37581668636992d4b733fd73ecf105e2",
   "pagesRef": "origin/v0.29-dipo-http-2-pages",
   "pages": 93,
   "total": 154,
@@ -1038,7 +1038,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "8088\n"
+      "output": "6189\n"
     },
     {
       "file": "docs/libraries/ui.html",
