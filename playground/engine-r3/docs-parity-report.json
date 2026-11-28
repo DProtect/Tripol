@@ -1,10 +1,10 @@
 {
-  "commit": "e635e7d26e6b347cb216e1476bffc193179c6236",
-  "pagesRef": "origin/gh-pages",
+  "commit": "506c2bb793f6d815e42e75b2412d23626a54eb31",
+  "pagesRef": "origin/v0.29-dipo-http-2-pages",
   "pages": 93,
-  "total": 155,
+  "total": 154,
   "counts": {
-    "executed": 136,
+    "executed": 135,
     "native-only": 19
   },
   "rows": [
@@ -755,13 +755,6 @@
       "output": "0\n"
     },
     {
-      "file": "docs/libraries/http.html",
-      "index": 1,
-      "source": "import tripol.http\n\nresponse = \"HTTP/1.0 200 OK\\r\\n\\r\\nHello\"\nshow http.status(response)\nshow http.body(response)",
-      "status": "executed",
-      "output": "200\nHello\n"
-    },
-    {
       "file": "docs/libraries/https.html",
       "index": 1,
       "source": "import tripol.https\n\nshow https.get(\"example.com\", \"/\")",
@@ -1017,7 +1010,7 @@
       "index": 1,
       "source": "import tripol.system\n\nshow system.platform()\nshow system.compiler()",
       "status": "executed",
-      "output": "web\n0.28.0\n"
+      "output": "web\n0.29.0\n"
     },
     {
       "file": "docs/libraries/testing.html",
@@ -1045,7 +1038,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "6268\n"
+      "output": "8088\n"
     },
     {
       "file": "docs/libraries/ui.html",

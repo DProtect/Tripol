@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 449,
-  "methods": 196,
+  "functions": 465,
+  "methods": 243,
   "summary": {
-    "native compiled": 645,
-    "web executed": 502,
-    "web native-only": 143
+    "native compiled": 708,
+    "web executed": 535,
+    "web native-only": 173
   },
   "rows": [
     {
@@ -1070,6 +1070,12 @@
       "output": "café 😀\n"
     },
     {
+      "name": "json.object",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{}\n"
+    },
+    {
       "name": "matrix.size",
       "native": "compiled",
       "web": "executed",
@@ -1427,7 +1433,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "1760\n"
+      "output": "2578\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1456,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "1777572621\n"
+      "output": "2603123724\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2469,10 +2475,90 @@
       "name": "http.body",
       "native": "compiled",
       "web": "executed",
-      "output": "Hola\n"
+      "output": "Hello\n"
+    },
+    {
+      "name": "http.request",
+      "native": "compiled",
+      "web": "executed",
+      "output": "GET\n"
+    },
+    {
+      "name": "http.secure_request",
+      "native": "compiled",
+      "web": "executed",
+      "output": "https://example.com/\n"
+    },
+    {
+      "name": "http.parse_response",
+      "native": "compiled",
+      "web": "executed",
+      "output": "200\n"
+    },
+    {
+      "name": "http.secure_client",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.client",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.get",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.head",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.options",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.delete",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.post",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.put",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.patch",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.download",
+      "native": "compiled",
+      "web": "native-only"
     },
     {
       "name": "https.get",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "https.request",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "https.client",
       "native": "compiled",
       "web": "native-only"
     },
@@ -2543,7 +2629,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n25911\n"
+      "output": "4950\n42799\n"
     },
     {
       "name": "simd.equal",
@@ -2567,7 +2653,7 @@
       "name": "system.compiler",
       "native": "compiled",
       "web": "executed",
-      "output": "0.28.0\n"
+      "output": "0.29.0\n"
     },
     {
       "name": "system.is_windows",
@@ -2635,6 +2721,24 @@
     }
   ],
   "methodRows": [
+    {
+      "name": "json.Object.set",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "json.Object.with",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"status\":true}\n"
+    },
+    {
+      "name": "json.Object.encode",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"n\":42}\n"
+    },
     {
       "name": "discord.Bot.prefix",
       "native": "compiled",
@@ -3736,6 +3840,250 @@
       "native": "compiled",
       "web": "executed",
       "output": "true\n"
+    },
+    {
+      "name": "discord.GatewayEvents.on_http",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.defer_http",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.GatewayEvent.http_response",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.GatewayEvent.complete_http",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Client.get",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Client.head",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Client.options",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Client.delete",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Client.post",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Client.put",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Client.patch",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Request.header",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.query",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.form",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.file",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.bearer",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.basic",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.api_key",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.timeout",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.redirects",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.retries",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.text",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.json",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.download_to",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Request.send",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Request.start",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Task.id",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Task.poll",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Task.await",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Task.cancel",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Task.progress",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Response.ok",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Response.json",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"ok\":true}\n"
+    },
+    {
+      "name": "http.Response.header",
+      "native": "compiled",
+      "web": "executed",
+      "output": "ready\n"
+    },
+    {
+      "name": "http.Client.base_url",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Client.cookies",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Client.timeout",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Client.bearer",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Client.basic",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Client.api_key",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Client.redirects",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Client.retries",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Client.request",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Client.close",
+      "native": "compiled",
+      "web": "native-only"
     }
   ],
   "examples": [
@@ -5665,6 +6013,27 @@
     {
       "index": 321,
       "name": "Discord resource management",
+      "web": "native-only"
+    },
+    {
+      "index": 322,
+      "name": "HTTP request builder",
+      "web": "executed",
+      "output": "GET\n"
+    },
+    {
+      "index": 323,
+      "name": "HTTP local requests",
+      "web": "native-only"
+    },
+    {
+      "index": 324,
+      "name": "Discord deferred HTTP",
+      "web": "native-only"
+    },
+    {
+      "index": 325,
+      "name": "Discord HTTP services",
       "web": "native-only"
     }
   ]
