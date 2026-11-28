@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 465,
-  "methods": 243,
+  "functions": 466,
+  "methods": 251,
   "summary": {
-    "native compiled": 708,
-    "web executed": 535,
-    "web native-only": 173
+    "native compiled": 717,
+    "web executed": 539,
+    "web native-only": 178
   },
   "rows": [
     {
@@ -1433,7 +1433,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2590\n"
+      "output": "2660\n"
     },
     {
       "name": "time.elapsed",
@@ -1456,7 +1456,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2615369968\n"
+      "output": "2686199089\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2315,6 +2315,11 @@
       "output": "901\n"
     },
     {
+      "name": "discord.cancel_http",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2629,7 +2634,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n28563\n"
+      "output": "4950\n24897\n"
     },
     {
       "name": "simd.equal",
@@ -3862,6 +3867,39 @@
       "web": "native-only"
     },
     {
+      "name": "discord.GatewayEvent.http_receipt",
+      "native": "compiled",
+      "web": "executed",
+      "output": "7\n"
+    },
+    {
+      "name": "discord.GatewayEvent.http_delivered",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.GatewayEvent.queue_http",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.GatewayEvents.on_http_delivery",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.defer_http_task",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.defer_http_update",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
       "name": "http.Client.get",
       "native": "compiled",
       "web": "native-only"
@@ -4082,6 +4120,17 @@
     },
     {
       "name": "http.Client.close",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.Client.cookie_file",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "http.Client.metrics",
       "native": "compiled",
       "web": "native-only"
     }
@@ -6035,6 +6084,12 @@
       "index": 325,
       "name": "Discord HTTP services",
       "web": "native-only"
+    },
+    {
+      "index": 326,
+      "name": "Decode a typed report",
+      "web": "executed",
+      "output": "Temperatura 20 21\n"
     }
   ]
 }
