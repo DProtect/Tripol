@@ -1,10 +1,10 @@
 {
   "modules": 64,
   "functions": 449,
-  "methods": 194,
+  "methods": 196,
   "summary": {
-    "native compiled": 643,
-    "web executed": 500,
+    "native compiled": 645,
+    "web executed": 502,
     "web native-only": 143
   },
   "rows": [
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2303\n"
+      "output": "1760\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2325578960\n"
+      "output": "1777572621\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2543,7 +2543,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n36755\n"
+      "output": "4950\n25911\n"
     },
     {
       "name": "simd.equal",
@@ -3724,6 +3724,18 @@
       "name": "discord.Webhook.send_files",
       "native": "compiled",
       "web": "native-only"
+    },
+    {
+      "name": "discord.Bot.restrict",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.has_role",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
     }
   ],
   "examples": [
