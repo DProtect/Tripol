@@ -5,7 +5,7 @@ let lang='en';try{if(localStorage.getItem('tripol-language')==='es')lang='es'}ca
 const chosen=new URLSearchParams(location.search).get('lang');if(chosen==='en'||chosen==='es')lang=chosen;
 const root=document.body.dataset.docRoot||'./';
 // A freshly loaded script must also load its matching stylesheet.
-for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='library-categories-r3'){u.searchParams.set('v','library-categories-r3');link.href=u.href}}
+for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='library-categories-r4'){u.searchParams.set('v','library-categories-r4');link.href=u.href}}
 function localLinks(){for(const a of $$('a[href]')){const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||/^(https?:|mailto:)/i.test(raw)&&a.origin!==location.origin)continue;const u=new URL(raw,location.href);if(!u.pathname.endsWith('.html'))continue;u.searchParams.set('lang',lang);a.href=u.href;}}
 // Shared navigation and current release label on all reference pages.
 const side=document.querySelector('#doc-side');
@@ -82,7 +82,7 @@ function installLibraryCategories(){
 }
 installLibraryCategories();
 
-/* Keep the current category visible in the shared sidebar without changing the URL on scroll. */
+/* Stable anchor navigation and scroll tracking for categorized libraries. */
 function installLibraryCategoryTracking(){
  const group=[...libs.querySelectorAll('.side-library-group')].find(g=>[...g.querySelectorAll('.side-library-categories a')].some(a=>new URL(a.href,location.href).pathname===location.pathname));
  if(!group)return;
@@ -90,37 +90,67 @@ function installLibraryCategoryTracking(){
  const overview=links.find(a=>!new URL(a.href,location.href).hash);
  const sections=links.map(a=>({a,id:new URL(a.href,location.href).hash.slice(1)})).filter(x=>x.id).map(x=>({...x,heading:document.getElementById(x.id)})).filter(x=>x.heading);
  if(!overview||!sections.length)return;
- let selected=null,scheduled=false;
+ document.documentElement.classList.add('categorized-doc');
+ let selected=null,scheduled=false,lockedY=null;
+ const header=document.querySelector('.docs-header');
+ const anchorOffset=()=>Math.ceil((header?.getBoundingClientRect().bottom||0)+24);
  function mark(link){
-  if(!link)return;
-  if(selected===link&&link.hasAttribute('aria-current'))return;
+  if(!link||selected===link)return;
   for(const a of links){a.removeAttribute('aria-current');a.classList.remove('category-active')}
-  link.setAttribute('aria-current',link===overview?'page':'location');link.classList.add('category-active');
-  selected=link;
+  link.setAttribute('aria-current',link===overview?'page':'location');
+  link.classList.add('category-active');selected=link;
  }
- function markHash(){
-  const id=location.hash.slice(1);
-  let target=document.getElementById(id);
-  if(!target&&id){try{target=document.getElementById(decodeURIComponent(id))}catch{}}
+ function resolve(hash){
+  if(!hash)return null;
+  try{return document.getElementById(decodeURIComponent(hash.slice(1)))}catch{return null}
+ }
+ function linkFor(target){
   const category=target?.closest('.library-api-category')?.querySelector('h2[id]')?.id||target?.id;
-  mark(sections.find(x=>x.id===category)?.a||overview);
+  return sections.find(x=>x.id===category)?.a||overview;
+ }
+ function jump(target){
+  mark(linkFor(target));
+  const y=target?Math.max(0,window.scrollY+target.getBoundingClientRect().top-anchorOffset()):0;
+  window.scrollTo({top:y,left:0,behavior:'instant'});
+  // Capture the clamped position after the synchronous jump. No scrollspy
+  // updates may replace the clicked category until the viewport really moves.
+  lockedY=window.scrollY;
  }
  function track(){
   scheduled=false;
-  const header=document.querySelector('.docs-header');
-  const offset=(header?.getBoundingClientRect().bottom||0)+64;
+  if(lockedY!==null){
+   if(Math.abs(window.scrollY-lockedY)<=2)return;
+   lockedY=null;
+  }
+  const offset=anchorOffset()+3;
   let current=overview;
   for(const x of sections){if(x.heading.getBoundingClientRect().top<=offset)current=x.a;else break}
   if(window.scrollY>0&&window.scrollY+window.innerHeight>=document.documentElement.scrollHeight-4)current=sections.at(-1).a;
   mark(current);
  }
  function schedule(){if(!scheduled){scheduled=true;window.requestAnimationFrame(track)}}
- for(const x of sections)x.a.addEventListener('click',()=>mark(x.a));
- window.addEventListener('hashchange',()=>{markHash();schedule()});
+ document.addEventListener('click',event=>{
+  if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+  const a=event.target.closest?.('a[href]');
+  if(!a||a.hasAttribute('download')||(a.target&&a.target!=='_self'))return;
+  const url=new URL(a.href,location.href);
+  if(url.origin!==location.origin||url.pathname!==location.pathname)return;
+  const target=resolve(url.hash);
+  if(!target&&a!==overview)return;
+  if(target&&!target.closest('.docs-article'))return;
+  event.preventDefault();
+  if(location.hash!==url.hash){history.pushState(null,'',location.pathname+location.search+url.hash)}
+  if(side.classList.contains('open')){side.classList.remove('open');$('#doc-menu').setAttribute('aria-expanded','false')}
+  jump(target);
+  // Keyboard activation moves focus to the destination without scrolling again.
+  if(event.detail===0&&target){if(!target.hasAttribute('tabindex'))target.setAttribute('tabindex','-1');target.focus({preventScroll:true})}
+ });
+ window.addEventListener('hashchange',()=>{const target=resolve(location.hash);if(target)jump(target);else{lockedY=null;schedule()}});
  window.addEventListener('scroll',schedule,{passive:true});
- window.addEventListener('resize',schedule,{passive:true});
- window.addEventListener('pageshow',schedule);
- markHash();schedule();
+ window.addEventListener('resize',()=>{lockedY=null;schedule()},{passive:true});
+ window.addEventListener('pageshow',event=>{if(event.persisted){lockedY=null;schedule()}});
+ const initial=resolve(location.hash);
+ if(initial)jump(initial);else{mark(overview);schedule()}
 }
 
 function filterLibraryNavigation(q){

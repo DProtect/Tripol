@@ -251,3 +251,8 @@
 .docs-page .docs-sidebar nav .side-library-categories a.category-active{
  color:#fff;background:#202020;box-shadow:inset 2px 0 #efefef;font-weight:500;
 }
+
+/* Categorized docs use one anchor offset, never the landing page's animated scroll. */
+html.categorized-doc{scroll-behavior:auto!important;scroll-padding-top:0!important}
+html.categorized-doc .docs-article [id]{scroll-margin-top:calc(var(--docs-header-height,76px) + 24px)}
+html.categorized-doc .side-library-categories a{transition:none}
