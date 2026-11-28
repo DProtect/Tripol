@@ -16212,9 +16212,9 @@ import tripol.discord
 show discord.cancel_http(0)
 ```
 
-Run offline.
+Use the native launcher for a real receipt. Calling with 0 returns false.
 
-Funciona sin conexión.
+Usa el lanzador nativo para un recibo real. Con 0 devuelve false.
 
 ### discord.GatewayEvent.http_receipt
 

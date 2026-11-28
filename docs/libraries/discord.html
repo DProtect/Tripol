@@ -1352,9 +1352,9 @@ show ev.http_delivered()</code></pre><p><span data-es="Resultado esperado: true"
 
 ev=discord.GatewayEvent(&quot;TRIPOL_HTTP:status&quot;,0,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;{\&quot;receipt\&quot;:7}&quot;)
 show ev.http_receipt()</code></pre><p><span data-es="Resultado esperado: 7">Expected: 7</span></p><p><span data-es="Funciona sin conexión.">Run offline.</span></p></section>
-<section class="function-card" id="cancel_http"><h3>discord.cancel_http <a href="#cancel_http" aria-label="Permalink">#</a></h3><p><span data-es="Cancela la petición de una respuesta diferida de Discord.">Cancel an upstream request owned by a deferred Discord reply.</span></p><pre class="signature"><code>func discord.cancel_http(receipt:int) -&gt; bool</code></pre><pre><code class="language-tripol">import tripol.discord
+<section class="function-card" id="cancel_http"><h3>discord.cancel_http <a href="#cancel_http" aria-label="Permalink">#</a></h3><p><span data-es="Cancela la petición de una respuesta diferida de Discord.">Cancel an upstream request owned by a deferred Discord reply.</span></p><pre class="signature"><code>func discord.cancel_http(receipt:int) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
 
-show discord.cancel_http(0)</code></pre><p><span data-es="Resultado esperado: false">Expected: false</span></p><p><span data-es="Funciona sin conexión.">Run offline.</span></p></section>
+show discord.cancel_http(0)</code></pre><p><span data-es="Resultado esperado: false">Expected: false</span></p><p><span data-es="Usa el lanzador nativo para un recibo real. Con 0 devuelve false.">Use the native launcher for a real receipt. Calling with 0 returns false.</span></p></section>
 
 <section class="function-card" id="GatewayEvents.on_http"><h3>discord.GatewayEvents.on_http <a href="#GatewayEvents.on_http" aria-label="Permalink">#</a></h3><p><span data-es="Registra un callback para una respuesta HTTP en segundo plano.">Register a callback for a background HTTP response.</span></p>
 <pre class="signature"><code>func discord.GatewayEvents.on_http(name:string,handler:func(GatewayEvent)-&gt;bool) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
