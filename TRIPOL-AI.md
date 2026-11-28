@@ -61,9 +61,11 @@ show apply(&greet, "Ada")
 
 `discord.components()` crea un constructor de mensajes. Usa `text`, `separator`, `link`, `button`, `section`, `gallery` y `container` antes de llamar a `payload()`. `send(channel_id)` usa el transporte REST nativo. Registra los callbacks de botones, selectores y formularios en el bot.
 
-`tripol build` on Linux x86-64 packages Discord network programs with the TRIPOL launcher. Linux uses bounded reconnect, Resume and reusable TLS connections. Windows uses WinHTTP. See the [development validation matrix](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
+`tripol build` on Linux x86-64 packages Discord network programs with the TRIPOL launcher. Use the same launcher on Windows via `tripol run` or `tripol discord-run FILE.exe`. The launcher handles bounded reconnect, Resume, zlib-stream, HTTPS reuse and global and bucket rate limits. See the [development validation matrix](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
 
-`tripol build` en Linux x86-64 empaqueta los programas de red Discord con el lanzador de TRIPOL. Linux admite reconexión acotada, Resume y reutilización de TLS. Windows usa WinHTTP. Consulta la [matriz de validación](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
+Use `ctx.has_field(id)`, `ctx.field_values(id)` and `ctx.field_attachment(id)` for modal results. In a launcher-backed bot, `ctx.reply_files(content, paths, true)` acknowledges the interaction immediately. `choices.number(label, "0.5")` declares a fractional choice. `ctx.can(permission_name)` checks effective member permissions. Context menus offer `ctx.target_username()` and `ctx.target_content()`. For authorized end-to-end checks, see the [bilingual validation guide](https://github.com/Tripollas/Tripol/blob/main/docs/discord-validation.md).
+
+`tripol build` en Linux x86-64 empaqueta los programas de red Discord con el lanzador de TRIPOL. En Windows usa el mismo lanzador con `tripol run` o `tripol discord-run FILE.exe`. El lanzador admite reconexión acotada, Resume, zlib-stream, reutilización de HTTPS y límites globales y por bucket. Consulta la [matriz de validación](https://github.com/Tripollas/Tripol/blob/main/docs/discord-status.md).
 
 On Linux x86-64, run `tripol discord studio main.tri --metrics studio.jsonl` for diagnostic samples. The file must be new. Studio writes process usage and Discord transport counters as JSON Lines.
 
@@ -264,7 +266,7 @@ discord.reply("!ping", "Pong!")
 discord.run()
 ```
 
-Up to 16 exact command/reply pairs. `discord.login("TOKEN")` also accepts a literal token for private local tests; never distribute that source or binary. ORIGIN replies in the channel that received a command without requiring a channel ID. The native experimental Gateway WebSocket client was introduced in NEXUS. `discord.setup` combines login and channel selection; `discord.welcome` sends after READY. Offline tests and PE imports verified; live Windows Gateway and latency not yet tested. No resume or automatic reconnect. See [Discord R5](docs/discord.md).
+Up to 16 exact command/reply pairs. `discord.login("TOKEN")` also accepts a literal token for private local tests; never distribute that source or binary. ORIGIN replies in the channel that received a command without requiring a channel ID. The native experimental Gateway WebSocket client was introduced in NEXUS. `discord.setup` combines login and channel selection; `discord.welcome` sends after READY. Offline tests and PE imports verified; live Windows Gateway and latency not yet tested. Use the launcher for Resume and automatic reconnect. See [Discord R5](docs/discord.md).
 
 ## Language
 
