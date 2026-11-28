@@ -212,6 +212,10 @@
     "deliver_gateway_event": "func discord.deliver_gateway_event(event:string,name:string,handler:func(GatewayEvent)->bool)->bool",
     "embed": "func discord.embed()->Embed",
     "rgb_color": "func discord.rgb_color(value:string)->int",
+    "attachment_name_valid": "func discord.attachment_name_valid(filename:string)->bool",
+    "attachment_url": "func discord.attachment_url(filename:string)->string",
+    "attachment_media_url": "func discord.attachment_media_url(value:string)->bool",
+    "send_attachments": "func discord.send_attachments(channel_id:string,payload:string,paths:string_list)->string",
     "media_url": "func discord.media_url(value:string)->bool",
     "components": "func discord.components()->Components",
     "container": "func discord.container(color=\"#FFFFFF\")->Components",
@@ -221,11 +225,14 @@
     "ignore_interaction": "func discord.ignore_interaction(context:Interaction)->string",
     "empty_interactions": "func discord.empty_interactions()->list[func(Interaction)->string]",
     "interaction_selector": "func discord.interaction_selector(event:string)->string",
+    "interaction_key_end": "func discord.interaction_key_end(key:string)->int",
     "interaction_matches": "func discord.interaction_matches(key:string,selector:string)->bool",
     "interaction_context": "func discord.interaction_context(payload:string,key:string)->Interaction",
     "dispatch_interaction": "func discord.dispatch_interaction(event:string,key:string,handler:func(Interaction)->string)->string",
     "deliver_interaction": "func discord.deliver_interaction(event:string,key:string,handler:func(Interaction)->string)->bool",
     "slash_name": "func discord.slash_name(name:string)->bool",
+    "permissions_bitset_valid": "func discord.permissions_bitset_valid(value:string)->bool",
+    "command_permission_payload": "func discord.command_permission_payload(default_permissions:string)->string",
     "slash_is_current": "func discord.slash_is_current(remote:string,definition:string)->bool",
     "sync_slash_commands": "func discord.sync_slash_commands(specs:string_list,guilds:string_list)->bool",
     "modal_field_value": "func discord.modal_field_value(node:string,id:string,property:string,depth:int)->string",
@@ -237,9 +244,12 @@
     "command_choices": "func discord.command_choices()->CommandChoices",
     "slash_choice_signature": "func discord.slash_choice_signature(choices:string)->string",
     "slash_option_signature": "func discord.slash_option_signature(options:string,depth=0)->string",
+    "file_types_payload": "func discord.file_types_payload(types:string_list)->string",
+    "emoji_payload": "func discord.emoji_payload(emoji:string)->string",
     "button_row": "func discord.button_row()->Buttons",
     "button_style": "func discord.button_style(name:string)->int",
     "guild": "func discord.guild(id:string)->Guild",
+    "role_payload": "func discord.role_payload(name:string,permissions:string,color:string)->string",
     "post_message": "func discord.post_message(channel_id:string,content:string)->string",
     "channel_ref": "func discord.channel_ref(id:string)->Channel"
   },
@@ -258,8 +268,10 @@
     "start": "Bot.start()->int",
     "start_with_events": "Bot.start_with_events(registry:GatewayEvents)->int",
     "bind_interaction": "Bot.bind_interaction(key:string,handler:func(Interaction)->string,definition=\"\",guild_id=\"\")->bool",
-    "slash": "Bot.slash(name:string,description:string,handler:func(Interaction)->string,guild_id=\"\")->bool",
-    "slash_with_options": "Bot.slash_with_options(name:string,description:string,handler:func(Interaction)->string,options:SlashOptions,guild_id=\"\")->bool",
+    "slash": "Bot.slash(name:string,description:string,handler:func(Interaction)->string,guild_id=\"\",default_permissions=\"\")->bool",
+    "slash_with_options": "Bot.slash_with_options(name:string,description:string,handler:func(Interaction)->string,options:SlashOptions,guild_id=\"\",default_permissions=\"\")->bool",
+    "user_menu": "Bot.user_menu(name:string,handler:func(Interaction)->string,guild_id=\"\",default_permissions=\"\")->bool",
+    "message_menu": "Bot.message_menu(name:string,handler:func(Interaction)->string,guild_id=\"\",default_permissions=\"\")->bool",
     "on_button": "Bot.on_button(id:string,handler:func(Interaction)->string)->bool",
     "on_select": "Bot.on_select(id:string,handler:func(Interaction)->string)->bool",
     "on_modal": "Bot.on_modal(id:string,handler:func(Interaction)->string)->bool",
@@ -288,6 +300,7 @@
     "entry": "Embed.entry()->string",
     "payload": "Embed.payload()->string",
     "send": "Embed.send(channel_id:string)->bool",
+    "send_files": "Embed.send_files(channel_id:string,paths:string_list)->string",
     "author": "Embed.author(name:string,url=\"\",icon_url=\"\")->bool",
     "timestamp": "Embed.timestamp(value:string)->bool"
   },
@@ -297,14 +310,16 @@
     "append_text": "Components.append_text(entry:string,weight:int,characters:int)->bool",
     "text": "Components.text(content:string)->bool",
     "separator": "Components.separator(spacing=1,divider=true)->bool",
-    "link": "Components.link(label:string,url:string)->bool",
-    "premium": "Components.premium(sku_id:string)->bool",
-    "button": "Components.button(label:string,custom_id:string,style=1)->bool\nComponents.button(label:string,custom_id:string,style:string)->bool",
+    "link": "Components.link(label:string,url:string,emoji=\"\",disabled=false)->bool",
+    "premium": "Components.premium(sku_id:string,disabled=false)->bool",
+    "button": "Components.button(label:string,custom_id:string,style=1,emoji=\"\",disabled=false)->bool\nComponents.button(label:string,custom_id:string,style:string,emoji=\"\",disabled=false)->bool",
     "section": "Components.section(content:string,thumbnail_url:string,description=\"\")->bool",
     "gallery": "Components.gallery(urls:string_list)->bool",
     "container": "Components.container(children:Components,accent=-1,spoiler=false)->bool",
     "payload": "Components.payload()->string",
     "send": "Components.send(channel_id:string)->bool",
+    "file": "Components.file(filename:string,spoiler=false)->bool",
+    "send_files": "Components.send_files(channel_id:string,paths:string_list)->string",
     "select": "Components.select(menu:Select)->bool",
     "row": "Components.row(buttons:Buttons)->bool"
   },
@@ -318,6 +333,8 @@
     "command_group": "Interaction.command_group()->string",
     "subcommand": "Interaction.subcommand()->string",
     "focused": "Interaction.focused()->string",
+    "target_id": "Interaction.target_id()->string",
+    "target": "Interaction.target()->string",
     "option_text": "Interaction.option_text(name:string)->string",
     "values": "Interaction.values()->string_list",
     "field": "Interaction.field(id:string)->string",
@@ -336,11 +353,11 @@
   },
   "discord.Modal": {
     "add_label": "Modal.add_label(id:string,label:string,component:string,description=\"\")->bool",
-    "text": "Modal.text(id:string,label:string,style=1,required=true,min_length=0,max_length=4000,placeholder=\"\",value=\"\")->bool",
+    "text": "Modal.text(id:string,label:string,style=1,required=true,min_length=0,max_length=4000,placeholder=\"\",value=\"\",description=\"\")->bool",
     "payload": "Modal.payload()->string",
-    "select": "Modal.select(label:string,menu:Select,required=true)->bool",
+    "select": "Modal.select(label:string,menu:Select,required=true,description=\"\")->bool",
     "help_text": "Modal.help_text(content:string)->bool",
-    "file": "Modal.file(id:string,label:string,minimum=1,maximum=1,required=true)->bool",
+    "file": "Modal.file(id:string,label:string,minimum=1,maximum=1,required=true,description=\"\")->bool\nModal.file(id:string,label:string,types:string_list,minimum=1,maximum=1,required=true,description=\"\")->bool",
     "choice_group": "Modal.choice_group(label:string,menu:Select,radio:bool,required:bool,description=\"\")->bool",
     "radio": "Modal.radio(label:string,menu:Select,required=true,description=\"\")->bool",
     "checkbox_group": "Modal.checkbox_group(label:string,menu:Select,required=true,description=\"\")->bool",
@@ -348,7 +365,8 @@
   },
   "discord.Select": {
     "placeholder": "Select.placeholder(value:string)->bool",
-    "option": "Select.option(label:string,value:string,description=\"\",selected=false)->bool",
+    "option": "Select.option(label:string,value:string,description=\"\",selected=false,emoji=\"\")->bool",
+    "disable": "Select.disable(disabled=true)->bool",
     "default_id": "Select.default_id(id:string,kind:string)->bool",
     "channels": "Select.channels(kinds:ints)->bool",
     "payload": "Select.payload()->string"
@@ -356,7 +374,8 @@
   "discord.Embeds": {
     "add": "Embeds.add(embed:Embed)->bool",
     "payload": "Embeds.payload()->string",
-    "send": "Embeds.send(channel_id:string)->bool"
+    "send": "Embeds.send(channel_id:string)->bool",
+    "send_files": "Embeds.send_files(channel_id:string,paths:string_list)->string"
   },
   "discord.SlashOptions": {
     "add": "SlashOptions.add(name:string,description:string,kind=\"string\",required=false,autocomplete=false)->bool",
@@ -371,12 +390,26 @@
     "payload": "CommandChoices.payload()->string"
   },
   "discord.Buttons": {
-    "button": "Buttons.button(label:string,id:string,style=1,disabled=false)->bool\nButtons.button(label:string,id:string,style:string,disabled=false)->bool",
-    "link": "Buttons.link(label:string,url:string,disabled=false)->bool",
-    "premium": "Buttons.premium(sku_id:string)->bool"
+    "button": "Buttons.button(label:string,id:string,style=1,disabled=false,emoji=\"\")->bool\nButtons.button(label:string,id:string,style:string,disabled=false,emoji=\"\")->bool",
+    "link": "Buttons.link(label:string,url:string,disabled=false,emoji=\"\")->bool",
+    "premium": "Buttons.premium(sku_id:string,disabled=false)->bool",
+    "disable": "Buttons.disable(id:string,disabled=true)->bool"
   },
   "discord.Guild": {
-    "member": "Guild.member(id:string)->Member"
+    "member": "Guild.member(id:string)->Member",
+    "channels": "Guild.channels()->string",
+    "create_channel": "Guild.create_channel(name:string,kind=\"text\",parent_id=\"\",topic=\"\")->string",
+    "audit": "Guild.audit(limit=25,before=\"\",action=0)->string",
+    "roles": "Guild.roles()->string",
+    "role_ref": "Guild.role_ref(id:string)->Role",
+    "create_role": "Guild.create_role(name:string,permissions=\"0\",color=\"\")->string"
+  },
+  "discord.Role": {
+    "id": "Role.id()->string",
+    "read": "Role.read()->string",
+    "permissions": "Role.permissions()->string",
+    "edit": "Role.edit(name=\"\",permissions=\"\",color=\"\")->bool",
+    "delete": "Role.delete()->bool"
   },
   "discord.Member": {
     "id": "Member.id()->string",
@@ -392,8 +425,14 @@
   "discord.Channel": {
     "id": "Channel.id()->string",
     "read": "Channel.read()->string",
+    "rename": "Channel.rename(name:string)->bool",
+    "topic": "Channel.topic(topic:string)->bool",
+    "move": "Channel.move(parent_id=\"\")->bool",
+    "delete": "Channel.delete()->bool",
     "slowmode": "Channel.slowmode(seconds:int)->bool",
     "delete_message": "Channel.delete_message(message_id:string)->bool",
+    "edit_message": "Channel.edit_message(message_id:string,content:string)->bool",
+    "edit_components": "Channel.edit_components(message_id:string,layout:Components)->bool",
     "purge": "Channel.purge(message_ids:string_list)->bool",
     "pin": "Channel.pin(message_id:string,pinned=true)->bool",
     "react": "Channel.react(message_id:string,emoji:string,enabled=true)->bool"

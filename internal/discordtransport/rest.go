@@ -137,6 +137,18 @@ func snowflake(id string) bool {
 }
 
 func (c *Client) request(ctx context.Context, method, path, token string, body []byte, interaction bool) (payload []byte, err error) {
+	if len(body) > maxMessage {
+		c.metrics.restErrors.Add(1)
+		return nil, errors.New("invalid Discord API request")
+	}
+	contentType := ""
+	if len(body) != 0 {
+		contentType = "application/json"
+	}
+	return c.requestBody(ctx, method, path, token, func() io.Reader { return bytes.NewReader(body) }, int64(len(body)), contentType, interaction)
+}
+
+func (c *Client) requestBody(ctx context.Context, method, path, token string, body func() io.Reader, contentLength int64, contentType string, interaction bool) (payload []byte, err error) {
 	defer func() {
 		if err != nil {
 			c.metrics.restErrors.Add(1)
@@ -144,7 +156,7 @@ func (c *Client) request(ctx context.Context, method, path, token string, body [
 	}()
 	target, err := url.ParseRequestURI(path)
 	if err != nil || target.IsAbs() || target.Host != "" || !strings.HasPrefix(path, "/api/v10/") ||
-		strings.ContainsAny(path, "\\#") || len(path) > 1024 || (!interaction && !validToken(token)) || len(body) > maxMessage {
+		strings.ContainsAny(path, "\\#") || len(path) > 1024 || (!interaction && !validToken(token)) {
 		return nil, errors.New("invalid Discord API request")
 	}
 	switch method {
@@ -157,7 +169,7 @@ func (c *Client) request(ctx context.Context, method, path, token string, body [
 		if err := c.waitLimit(ctx, route); err != nil {
 			return nil, err
 		}
-		req, err := http.NewRequestWithContext(ctx, method, c.base+path, bytes.NewReader(body))
+		req, err := http.NewRequestWithContext(ctx, method, c.base+path, body())
 		if err != nil {
 			return nil, errors.New("invalid Discord API request")
 		}
@@ -165,8 +177,9 @@ func (c *Client) request(ctx context.Context, method, path, token string, body [
 			req.Header.Set("Authorization", "Bot "+token)
 		}
 		req.Header.Set("User-Agent", userAgent)
-		if len(body) != 0 {
-			req.Header.Set("Content-Type", "application/json")
+		req.ContentLength = contentLength
+		if contentType != "" {
+			req.Header.Set("Content-Type", contentType)
 		}
 
 		c.metrics.restAttempts.Add(1)

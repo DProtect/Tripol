@@ -389,6 +389,7 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 					// Only acknowledge an event after admission to the bounded queue.
 					state.sequence = message.Sequence
 					c.metrics.dispatches.Add(1)
+					c.metrics.recordDispatch(message.Type, message.Data)
 					c.metrics.queueDepth.Store(int64(len(output)))
 				default:
 					return reconnect{terminal: true, err: errors.New("Discord Gateway event queue is full")}

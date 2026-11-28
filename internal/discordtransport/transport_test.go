@@ -231,6 +231,16 @@ func TestGatewayReconnectResumeAndFatalClose(t *testing.T) {
 		if !send(`{"op":11,"d":null}`) {
 			return
 		}
+		for _, event := range []string{
+			`{"op":0,"t":"INTERACTION_CREATE","s":43,"d":{"type":2,"data":{"type":2,"name":"Profile"},"token":"interaction-secret"}}`,
+			`{"op":0,"t":"INTERACTION_CREATE","s":44,"d":{"type":4,"data":{"type":1,"name":"Search"}}}`,
+			`{"op":0,"t":"INTERACTION_CREATE","s":45,"d":{"type":3,"data":{"custom_id":"button-secret"}}}`,
+			`{"op":0,"t":"INTERACTION_CREATE","s":46,"d":{"type":5,"data":{"custom_id":"modal-secret"}}}`,
+		} {
+			if !send(event) {
+				return
+			}
+		}
 		_ = ws.Close(websocket.StatusCode(4014), "fixture")
 	})
 	server := httptest.NewTLSServer(router)
@@ -238,6 +248,7 @@ func TestGatewayReconnectResumeAndFatalClose(t *testing.T) {
 	target = "wss" + strings.TrimPrefix(server.URL, "https")
 	client := newClient(server.Client(), server.URL)
 	defer client.Close()
+	client.EnableDispatchBreakdown()
 	g, err := client.startGateway(testCtx, []byte(testIdentify), gatewayOptions{
 		allowURL:      func(u *url.URL) bool { return u.String() == target },
 		retryDelay:    func(int) time.Duration { return time.Millisecond },
@@ -247,7 +258,7 @@ func TestGatewayReconnectResumeAndFatalClose(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer g.Close()
-	for _, name := range []string{"READY", "RESUMED"} {
+	for _, name := range []string{"READY", "RESUMED", "INTERACTION_CREATE", "INTERACTION_CREATE", "INTERACTION_CREATE", "INTERACTION_CREATE"} {
 		message, done, err := g.Poll(testCtx, 2*time.Second)
 		var got gatewayMessage
 		if err != nil || done || json.Unmarshal(message, &got) != nil || got.Type != name {
@@ -260,10 +271,17 @@ func TestGatewayReconnectResumeAndFatalClose(t *testing.T) {
 	}
 	stats := client.Metrics()
 	raw, marshalErr := json.Marshal(stats)
-	if marshalErr != nil || stats.Connected || stats.Resumes != 1 || stats.Dispatches != 2 || stats.QueueDepth != 0 ||
+	if marshalErr != nil || stats.Connected || stats.Resumes != 1 || stats.Dispatches != 6 || stats.QueueDepth != 0 ||
 		stats.HeartbeatMS < 0 || stats.GatewayErrors != 1 || strings.Contains(string(raw), "fixture-token") ||
-		strings.Contains(string(raw), "fixture-session") {
+		strings.Contains(string(raw), "fixture-session") || strings.Contains(string(raw), "-secret") ||
+		stats.Events["INTERACTION_CREATE"] != 4 || stats.Commands["user/Profile"] != 1 || len(stats.Commands) != 1 ||
+		stats.Interactions["command"] != 1 || stats.Interactions["autocomplete"] != 1 ||
+		stats.Interactions["component"] != 1 || stats.Interactions["modal"] != 1 {
 		t.Fatalf("incorrect or sensitive Gateway metrics: %s", raw)
+	}
+	stats.Events["INTERACTION_CREATE"] = 42
+	if client.Metrics().Events["INTERACTION_CREATE"] != 4 {
+		t.Fatal("snapshot shares its event counters")
 	}
 }
 

@@ -123,5 +123,22 @@
       "form.text(\"${3:topic}\", \"${4:Tema}\")",
       "return ctx.open_modal(form)"
     ]
+  },
+  "Discord emoji button": {
+    "prefix": "discord-emoji-button",
+    "body": [
+      "panel=discord.container(\"#FFFFFF\")",
+      "panel.button(\"${1:Aceptar}\",\"${2:accept}\",\"${3:success}\",\"${4:✅}\")",
+      "show panel.payload()"
+    ]
+  },
+  "Discord context menu": {
+    "prefix": "discord-context-menu",
+    "body": [
+      "func ${1:inspect}(ctx) {",
+      "    ctx.reply(\"ID: \" + ctx.target_id(), true)",
+      "}",
+      "bot.user_menu(\"${2:Ver perfil}\",${1:inspect})"
+    ]
   }
 }

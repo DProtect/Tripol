@@ -150,6 +150,25 @@ Use `tripol new Feedback --template discord-slash` for a runnable example. Set `
 
 Usa `tripol new Feedback --template discord-slash` para generar un ejemplo ejecutable. Configura `DISCORD_TOKEN`, opcionalmente `DISCORD_GUILD_ID`, e instala la aplicación con el alcance `applications.commands` en un servidor privado.
 
+### Context menus / Menús contextuales
+
+```tripol
+import tripol.discord
+
+func inspect(ctx) {
+    ctx.reply("ID: " + ctx.target_id(), true)
+}
+
+bot = discord.bot()
+bot.user_menu("Ver perfil", inspect, "123")
+bot.message_menu("Ver mensaje", inspect, "123")
+bot.start()
+```
+
+User and message menus can share a name because Discord assigns them different command types. `ctx.target_id()` returns the selected ID, and `ctx.target()` returns the user or message object from Discord's resolved data. Use the last argument of `user_menu`, `message_menu`, `slash` or `slash_with_options` for default permissions. For example, `"8192"` requires Manage Messages, `"0"` disables the command by default except for administrators, and `"everyone"` clears that default requirement. An empty value omits the permission field.
+
+Los menús de usuario y mensaje pueden compartir nombre porque Discord les asigna tipos distintos. `ctx.target_id()` devuelve el ID seleccionado y `ctx.target()` devuelve el objeto de usuario o mensaje que resolvió Discord. Usa el último argumento de `user_menu`, `message_menu`, `slash` o `slash_with_options` para configurar los permisos predeterminados. Por ejemplo, `"8192"` requiere Manage Messages, `"0"` desactiva el comando de forma predeterminada salvo para administradores y `"everyone"` elimina ese requisito predeterminado. Una cadena vacía omite el campo.
+
 ### Subcommands, choices and autocomplete / Subcomandos, elecciones y autocompletado
 
 ```tripol
@@ -200,13 +219,42 @@ message.container(panel, 41215)
 show message.payload()
 ```
 
-The payload includes flag 32768 and disables mentions. The builder also has `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` and `gallery(urls)`. It validates the 40-component limit, duplicate button IDs, container nesting and field lengths. Text Display content can total 4,000 characters across the message. The encoded body must fit in the TRIPOL string capacity of 65,535 bytes. Use `message.send(channel_id)` on Windows or Linux. Use `discord.button_row()` to group up to five buttons. `discord.select(id, kind)` supports string, user, role, mentionable and channel menus. `discord.modal(id, title)` supports text inputs, selects, help text, file-upload inputs, radio groups, checkbox groups and individual checkboxes. Multipart file sending is pending.
+The payload includes flag 32768 and disables mentions. The builder also has `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` and `gallery(urls)`. It validates the 40-component limit, duplicate button IDs, container nesting and field lengths. Text Display content can total 4,000 characters across the message. The encoded body must fit in the TRIPOL string capacity of 65,535 bytes. Use `message.send(channel_id)` on Windows or Linux. Use `discord.button_row()` to group up to five buttons. `discord.select(id, kind)` supports string, user, role, mentionable and channel menus. `discord.modal(id, title)` supports text inputs, selects, help text, file-upload inputs, radio groups, checkbox groups and individual checkboxes. The Linux launcher can send multipart attachments with `send_files`.
 
-El JSON incluye la bandera 32768 y desactiva las menciones. El constructor también ofrece `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` y `gallery(urls)`. Valida el límite de 40 componentes, los IDs de botones duplicados, el anidamiento y las longitudes de los campos. El contenido de Text Display admite 4.000 caracteres por mensaje. El JSON debe caber en la capacidad de cadena de TRIPOL de 65.535 bytes. Usa `message.send(channel_id)` en Windows o Linux. Usa `discord.button_row()` para agrupar hasta cinco botones. `discord.select(id, tipo)` admite texto, usuario, rol, mencionable y canal. `discord.modal(id, título)` admite texto, selectores, ayuda, campos de archivos, grupos de opción única, grupos de casillas y casillas individuales. Queda pendiente el envío multipart.
+El JSON incluye la bandera 32768 y desactiva las menciones. El constructor también ofrece `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` y `gallery(urls)`. Valida el límite de 40 componentes, los IDs de botones duplicados, el anidamiento y las longitudes de los campos. El contenido de Text Display admite 4.000 caracteres por mensaje. El JSON debe caber en la capacidad de cadena de TRIPOL de 65.535 bytes. Usa `message.send(channel_id)` en Windows o Linux. Usa `discord.button_row()` para agrupar hasta cinco botones. `discord.select(id, tipo)` admite texto, usuario, rol, mencionable y canal. `discord.modal(id, título)` admite texto, selectores, ayuda, campos de archivos, grupos de opción única, grupos de casillas y casillas individuales. El lanzador de Linux envía adjuntos multipart con `send_files`.
 
 For modal choices, create a String Select with the options and pass it to `form.radio(label, menu)` or `form.checkbox_group(label, menu)`. Use `form.checkbox(id, label)` for a single checkbox. Read a radio selection with `ctx.field(id)`, a group with `ctx.field_data(id)` and a checkbox with `ctx.checked(id)`.
 
 Para los campos de opciones, crea un selector de texto con las opciones y pásalo a `form.radio(etiqueta, selector)` o `form.checkbox_group(etiqueta, selector)`. Usa `form.checkbox(id, etiqueta)` para una casilla individual. Lee la selección única con `ctx.field(id)`, el grupo con `ctx.field_data(id)` y la casilla con `ctx.checked(id)`.
+
+### Button and select customization / Personalización de botones y selectores
+
+`panel.button("Aceptar", "accept", "success", "✅")` combines text and emoji. Use an empty label for an emoji-only button. Add `true` after the emoji to disable it. For a row, the existing disabled argument comes first, as in `row.button("Aceptar", "accept", "success", false, "✅")`. `row.disable("accept")` disables that button before the row is added to a new layout, and `row.disable("accept", false)` enables it. To update a sent Components V2 message, build the new layout and use `ctx.update_components(panel)` or `room.edit_components(message_id, panel)`.
+
+`panel.button("Aceptar", "accept", "success", "✅")` combina texto y emoji. Usa una etiqueta vacía para mostrar solo el emoji. Añade `true` después del emoji para deshabilitarlo. En una fila se conserva primero el argumento de deshabilitación, como en `row.button("Aceptar", "accept", "success", false, "✅")`. `row.disable("accept")` deshabilita ese botón antes de añadir la fila a un panel nuevo. Usa `row.disable("accept", false)` para habilitarlo. Para actualizar un mensaje Components V2 ya enviado, crea el nuevo panel y usa `ctx.update_components(panel)` o `room.edit_components(message_id, panel)`.
+
+Use Unicode, a custom emoji ID, `"<:check:123>"` or `"<a:party:123>"` for an animated custom emoji. Pass it as the last argument of `menu.option(label, value, description, selected, emoji)`. `menu.disable()` applies to a select in a message. Discord handles link and premium buttons directly. See the executable example for all six styles. [Buttons example](../examples/discord_buttons.tri)
+
+Usa Unicode, un ID de emoji personalizado, `"<:check:123>"` o `"<a:party:123>"` para un emoji personalizado animado. Pásalo como último argumento de `menu.option(etiqueta, valor, descripción, seleccionado, emoji)`. `menu.disable()` se aplica a los selectores de mensajes. Discord gestiona los botones de enlace y de compra. El ejemplo ejecutable reúne los seis estilos. [Ejemplo de botones](../examples/discord_buttons.tri)
+
+### Attachments / Adjuntos
+
+```tripol
+import tripol.discord
+
+panel = discord.container()
+panel.file("report.txt")
+message_id = panel.send_files("123", list(["./report.txt"]))
+show message_id
+```
+
+On Linux, `send_files` streams 1–10 local files into a multipart channel message and returns the message ID or an empty string on failure. `Embed` and `Embeds` provide the same method. Use `embed.image(discord.attachment_url("photo.png"))` for an embedded image. Names in the layout and the uploaded filenames must match. Use distinct names containing ASCII letters, digits, dots, underscores or hyphens. Windows uploads and multipart interaction responses remain pending.
+
+En Linux, `send_files` adjunta entre 1 y 10 archivos locales en un mensaje multipart y devuelve el ID del mensaje o una cadena vacía si falla. `Embed` y `Embeds` ofrecen el mismo método. Usa `embed.image(discord.attachment_url("photo.png"))` para una imagen de embed. Los nombres del panel y los nombres de los archivos enviados deben coincidir. Usa nombres distintos con letras ASCII, dígitos, puntos, guiones o guiones bajos. Quedan pendientes los envíos en Windows y las respuestas multipart a interacciones.
+
+For uploads submitted by users, call `form.file("files", "Upload", list(["image", ".pdf"]), 0, 2, false)`. Discord applies up to ten extension filters. Check the actual contents before trusting an upload.
+
+Para archivos enviados por usuarios, llama a `form.file("files", "Adjuntar", list(["image", ".pdf"]), 0, 2, false)`. Discord aplica hasta diez filtros por extensión. Comprueba el contenido del archivo antes de confiar en él.
 
 ## Discord Studio
 
@@ -217,6 +265,10 @@ tripol discord studio main.tri --metrics studio.jsonl
 On Linux x86-64, Studio runs the bot and samples its RSS, CPU ticks, connection state, heartbeat latency, uptime, guild count at READY, queued dispatches, REST requests, errors and rate limits. The launcher and bot process are reported separately. The output file must be new. Without `--metrics`, snapshots are sent to standard error. The export contains counters and process measurements. Live command and interaction metrics, log filtering and Windows monitoring are pending.
 
 En Linux x86-64, Studio ejecuta el bot y toma muestras de RSS, ticks de CPU, conexión, latencia de heartbeat, tiempo activo, servidores en READY, cola de eventos, peticiones REST, errores y límites. El lanzador y el bot se miden por separado. Usa un archivo de salida nuevo. Sin `--metrics`, las muestras se escriben en la salida de error. Quedan pendientes las métricas por comando e interacción, el filtrado de logs y el monitoreo en Windows.
+
+Studio adds `events_by_type`, `interactions_by_type` and `commands_by_name` to its Linux samples. They count events admitted to the Gateway queue, not callback results. Command keys include their type, such as `user/Ver perfil`. The counters contain neither interaction tokens nor component IDs. Names beyond the tracked set are counted under `other`.
+
+Studio añade `events_by_type`, `interactions_by_type` y `commands_by_name` a sus muestras de Linux. Cuentan los eventos admitidos en la cola del Gateway. Los resultados de los callbacks se registran por separado si el programa los mide. Las claves incluyen el tipo del comando, como `user/Ver perfil`. Los contadores mantienen fuera los tokens de interacción y los IDs de componentes. Los nombres que exceden el conjunto registrado se agrupan en `other`.
 
 ## Member moderation and welcome bot / Moderación de miembros y bienvenida
 
@@ -252,6 +304,18 @@ show room.read()
 Configure the token of an authorized bot. Discord checks the required permissions. These methods return a boolean on mutations and keep the native program running if the request fails.
 
 Configura el token de un bot autorizado. Discord comprueba los permisos requeridos. Los métodos que modifican el canal o un mensaje devuelven un booleano y permiten que el programa siga ejecutándose si falla la solicitud.
+
+### Channels, categories and audit / Canales, categorías y auditoría
+
+Use `server.create_channel(name, kind, parent_id, topic)` with `"text"`, `"voice"`, `"category"` or `"announcement"`. The result is the new ID or an empty string on failure. `server.channels()` returns the REST response as JSON. Read the audit log with `server.audit(limit, before, action)`. On a channel, use `rename`, `topic`, `move` and `delete`. An empty parent in `move()` detaches the channel from its category. `edit_message` and `edit_components` update messages owned by the bot.
+
+Usa `server.create_channel(nombre, tipo, parent_id, tema)` con `"text"`, `"voice"`, `"category"` o `"announcement"`. Devuelve el ID nuevo o una cadena vacía si falla. `server.channels()` devuelve la respuesta REST como JSON. Consulta auditoría con `server.audit(límite, antes, acción)`. En un canal están disponibles `rename`, `topic`, `move` y `delete`. Un padre vacío en `move()` saca el canal de su categoría. `edit_message` y `edit_components` actualizan mensajes del propio bot.
+
+### Guild roles / Roles de servidor
+
+Use `server.create_role("Reviewer", "0", "#FFFFFF")` to create a role with no permissions of its own. The method returns its ID. `server.roles()` lists the roles. Use `role = server.role_ref(id)` with `role.read()`, `role.edit(name, permissions, color)` and `role.delete()`. Empty edit arguments leave those properties as they are. `role.permissions()` reads the combined guild permissions of the role and @everyone as a decimal string. Effective permissions for a member in a channel also depend on other roles and overrides.
+
+Usa `server.create_role("Revisor", "0", "#FFFFFF")` para crear un rol sin permisos propios. El método devuelve su ID. `server.roles()` lista los roles. Usa `role = server.role_ref(id)` con `role.read()`, `role.edit(nombre, permisos, color)` y `role.delete()`. Los argumentos vacíos de edición conservan esas propiedades. `role.permissions()` devuelve como cadena decimal los permisos combinados del rol y @everyone en el servidor. Los permisos efectivos de un miembro en un canal también dependen de los demás roles y las excepciones.
 
 ## API
 

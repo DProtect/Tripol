@@ -132,3 +132,75 @@ show bot.preview_event("{\"op\":0,\"t\":\"MESSAGE_CREATE\",\"d\":{\"channel_id\"
 		t.Fatal(err)
 	}
 }
+
+func TestDiscordButtonAndSelectEmoji(t *testing.T) {
+	const source = `import tripol.discord
+panel=discord.container()
+row=discord.button_row()
+row.button("Go","go","primary",false,"✅")
+row.button("Later","later","secondary",true)
+row.button("Accept","approve","success",false,"<:check:123>")
+row.button("","remove","danger",false,"<a:party:456>")
+row.link("","https://example.org",false,"🔗")
+assert row.disable("go")
+assert row.disable("later",false)
+assert not row.disable("missing")
+panel.row(row)
+panel.premium("789",true)
+panel.button("Other","other","success","456",true)
+menu=discord.select("colors")
+menu.option("Blue","blue","Available",false,"💙")
+menu.disable()
+panel.select(menu)
+show panel.payload()
+form=discord.modal("upload","Archivos")
+form.file("files","Documento",list(["image",".pdf"]),0,2,false,"Opcional")
+show form.payload()
+`
+	out, failed := hyperRun(t, source, "turbo")
+	if failed {
+		t.Fatal(out)
+	}
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	if len(lines) != 2 || !json.Valid([]byte(lines[0])) || !json.Valid([]byte(lines[1])) {
+		t.Fatal(out)
+	}
+	for _, check := range []string{
+		`"style":1,"label":"Go","custom_id":"go","emoji":{"name":"✅"},"disabled":true`,
+		`"style":2,"label":"Later","custom_id":"later"}`,
+		`"style":3,"label":"Accept","custom_id":"approve","emoji":{"id":"123","name":"check","animated":false}`,
+		`"style":4,"custom_id":"remove","emoji":{"id":"456","name":"party","animated":true}`,
+		`"style":5,"url":"https://example.org","emoji":{"name":"🔗"}`,
+		`"style":6,"sku_id":"789","disabled":true`,
+		`"emoji":{"id":"456"},"disabled":true`,
+		`"emoji":{"name":"💙"}}],"disabled":true`,
+	} {
+		if !strings.Contains(lines[0], check) {
+			t.Fatalf("missing %s in %s", check, lines[0])
+		}
+	}
+	if !strings.Contains(lines[1], `"description":"Opcional","component":{"type":19`) || !strings.Contains(lines[1], `"file_types":["image",".pdf"]`) {
+		t.Fatal(lines[1])
+	}
+	if _, err := CompileWeb(source); err != nil {
+		t.Fatal(err)
+	}
+	compileProfile(source, "windows", "turbo")
+}
+
+func TestDiscordRejectsInvalidComponentCustomization(t *testing.T) {
+	runCase(t, `import tripol.discord
+row=discord.button_row()
+try {row.button("","empty")} catch code {show code}
+try {row.button("OK","x","primary",false,"<:ok:abc>")} catch code {show code}
+try {row.link("","https://example.org")} catch code {show code}
+form=discord.modal("upload","Archivos")
+try {form.file("files","Documento",list(["pdf"]))} catch code {show code}
+menu=discord.select("colors")
+menu.option("Blue","blue","",false,"💙")
+menu.disable()
+try {form.select("Color",menu)} catch code {show code}
+menu.disable(false)
+try {form.checkbox_group("Color",menu)} catch code {show code}
+`, "12\n12\n12\n12\n12\n12\n", false)
+}

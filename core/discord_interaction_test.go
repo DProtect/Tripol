@@ -293,3 +293,42 @@ options.__append("raw","Raw",1,"")`
 		t.Fatalf("unexpected diagnostic: %v", err)
 	}
 }
+
+const userMenuEvent = `{"op":0,"t":"INTERACTION_CREATE","d":{"id":"741","token":"menu-fixture","type":2,"guild_id":"321","channel_id":"987","data":{"type":2,"name":"Perfil / ficha","guild_id":"321","target_id":"42","resolved":{"users":{"42":{"id":"42","username":"Ada"}}}}}}`
+const messageMenuEvent = `{"op":0,"t":"INTERACTION_CREATE","d":{"id":"742","token":"menu-fixture","type":2,"guild_id":"321","channel_id":"987","data":{"type":3,"name":"Perfil / ficha","guild_id":"321","target_id":"43","resolved":{"messages":{"43":{"id":"43","content":"Un mensaje"}}}}}}`
+
+const contextMenuHandlers = `
+func profile(ctx) {
+    ctx.reply(ctx.name + ": " + ctx.target_id())
+}
+func quote(ctx) {
+    ctx.reply(ctx.target())
+}
+b.user_menu("Perfil / ficha",profile,"321","8192")
+b.message_menu("Perfil / ficha",quote,"321","everyone")
+`
+
+func TestDiscordContextMenuDispatchAndPermissions(t *testing.T) {
+	src := "import tripol.discord\nb=discord.bot()\n" + contextMenuHandlers
+	for _, event := range []string{userMenuEvent, messageMenuEvent, strings.Replace(userMenuEvent, `"guild_id":"321","target_id"`, `"guild_id":"111","target_id"`, 1)} {
+		encoded, _ := json.Marshal(event)
+		src += "show b.preview_interaction(" + string(encoded) + ")\n"
+	}
+	out, failed := hyperRun(t, src, "turbo")
+	if failed || !strings.Contains(out, `"content":"Perfil / ficha: 42"`) || !strings.Contains(out, `Un mensaje`) || !strings.HasSuffix(out, "\n\n") {
+		t.Fatal(out)
+	}
+	if _, err := CompileWeb(src); err != nil {
+		t.Fatal(err)
+	}
+	compileProfile(src, "windows", "turbo")
+	runCase(t, `import tripol.discord
+func handle(ctx:discord.Interaction)->string {return ""}
+b=discord.bot()
+try {b.user_menu("bad",handle,"321","08")} catch code {show code}
+try {b.message_menu("bad",handle,"321","WRITE")} catch code {show code}
+try {b.user_menu("",handle)} catch code {show code}
+show discord.slash_is_current("[{\"type\":2,\"name\":\"Perfil\",\"default_member_permissions\":\"8\"}]","{\"type\":2,\"name\":\"Perfil\",\"default_member_permissions\":null}")
+show discord.slash_is_current("[{\"type\":2,\"name\":\"Perfil\",\"default_member_permissions\":null}]","{\"type\":2,\"name\":\"Perfil\",\"default_member_permissions\":null}")
+`, "12\n12\n12\nfalse\ntrue\n", false)
+}

@@ -1,5 +1,10 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
+- Discord Studio adds opt-in Linux counts by event type, interaction type and command name at Gateway queue admission.
+
+- Discord buttons and string selects serialize Unicode and custom emoji, and message buttons and selects can be disabled. File Upload accepts file type filters. Linux streams multipart channel uploads for File components and embeds.
+- User and message context menus dispatch typed callbacks with resolved targets and optional default permissions. Guild and channel methods create, move and edit channels, update owned messages, manage roles, and read audit logs.
+
 - `discord.channel_ref` adds channel lookup, slowmode, pin and unpin, individual and bulk message deletion, and the bot's own reactions through recoverable native REST.
 - SIMPLE R2 infers monomorphic function signatures from calls and typed callbacks across modules, supports automatic function references and anonymous callbacks with scalar literal captures, lowers terminal expressions to returns, and resolves method overloads before code generation. Discord replies accept embeds and Components V2, and panel builders support named button styles and premium SKUs. Interaction follow-ups support edits and deletion.
 

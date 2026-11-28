@@ -1,0 +1,23 @@
+import tripol.discord
+
+panel = discord.container("#FFFFFF")
+panel.text("# Panel de control")
+panel.separator()
+
+row = discord.button_row()
+row.button("Inicio", "home", "primary")
+row.button("Cancelar", "cancel", "secondary", true)
+row.button("Aceptar", "accept", "success", false, "✅")
+row.button("", "delete", "danger", false, "🗑️")
+row.link("GitHub", "https://github.com/Tripollas/Tripol", false, "🔗")
+panel.row(row)
+
+panel.premium("123456789012345678")
+panel.button("Aprueba", "approve", "success", "<:check:234567890123456789>")
+panel.button("Celebra", "celebrate", "primary", "<a:party:345678901234567890>")
+
+menu = discord.select("state")
+menu.option("Listo", "ready", "Disponible", false, "✅")
+panel.select(menu)
+
+show panel.payload()

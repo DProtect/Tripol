@@ -2212,9 +2212,9 @@ discord_delete: .short 68,69,76,69,84,69,0
 .section .text.discord_rest_linux,"ax"
  cmp r8,1
  jb .drest_empty
- cmp r8,5
+ cmp r8,6
  ja .drest_empty
- lea r11d,[r8+6] # Bridge operations 7 through 11.
+ lea r11d,[r8+6] # Bridge operations 7 through 12, including multipart POST.
  mov r8,rax
  mov r9,rcx
  mov r10,rdx

@@ -46,6 +46,7 @@ func runDiscordCommand(cmd *exec.Cmd, client *discordtransport.Client, studio *d
 	defer client.Close()
 	var monitor func(context.Context, int)
 	if studio != nil {
+		client.EnableDispatchBreakdown()
 		output := os.Stderr
 		if studio.metricsFile != "" {
 			file, err := os.OpenFile(studio.metricsFile, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)

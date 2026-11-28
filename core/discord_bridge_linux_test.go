@@ -145,7 +145,7 @@ func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
  assert c.delete_followup(followup)
  return c.reply("Should not acknowledge twice")
 }`, 1)
-	if err := os.WriteFile(path, compileProfile(source+commandTree+eventRegistry+"b.start_with_events(registry)", "linux", "turbo"), 0700); err != nil {
+	if err := os.WriteFile(path, compileProfile(source+commandTree+contextMenuHandlers+eventRegistry+"b.start_with_events(registry)", "linux", "turbo"), 0700); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("DISCORD_TOKEN", "fixture-token")
@@ -172,11 +172,12 @@ func TestLinuxSlashSynchronizationAndInteractionCallback(t *testing.T) {
 func interactionFixture(input io.Reader, output io.Writer) error {
 	deferred := strings.ReplaceAll(strings.ReplaceAll(slashEvent, `"name":"hola"`, `"name":"wait"`), `"id":"710"`, `"id":"715"`)
 	expired := strings.Replace(deferred, `"id":"715"`, `"id":"716"`, 1)
-	first := `[{"type":1,"name":"hola","description":"La descripci\u00f3n","id":"919","options":[{"required":true,"type":3,"description":"La opci\u00f3n","name":"text"}]},{"type":1,"name":"unmanaged","description":"Leave it alone","id":"920"},{"type":1,"name":"inspect","description":"Inspecciona","id":"921","options":[{"type":2,"name":"stock","description":"Inventario","options":[{"type":1,"name":"find","description":"Busca","options":[{"type":3,"name":"query","description":"Qu\u00e9 buscar","autocomplete":true,"required":true},{"choices":[{"value":10,"name":"D\u00e9cada"}],"type":4,"name":"limit","description":"L\u00edmite"}]}]}]}]`
+	first := `[{"type":1,"name":"hola","description":"La descripci\u00f3n","id":"919","options":[{"required":true,"type":3,"description":"La opci\u00f3n","name":"text"}]},{"type":1,"name":"unmanaged","description":"Leave it alone","id":"920"},{"type":2,"name":"Perfil / ficha","default_member_permissions":"8192","id":"870"},{"type":1,"name":"inspect","description":"Inspecciona","id":"921","options":[{"type":2,"name":"stock","description":"Inventario","options":[{"type":1,"name":"find","description":"Busca","options":[{"type":3,"name":"query","description":"Qu\u00e9 buscar","autocomplete":true,"required":true},{"choices":[{"value":10,"name":"D\u00e9cada"}],"type":4,"name":"limit","description":"L\u00edmite"}]}]}]}]`
 	steps := []bridgeStep{
 		{discordtransport.OpREST, "/api/v10/oauth2/applications/@me", "fixture-token", "", `{"id":"890"}`},
 		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", "", first},
 		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", `"name":"wait"`, `{"id":"922"}`},
+		{discordtransport.OpREST, "/api/v10/applications/890/guilds/321/commands", "fixture-token", `"type":3,"default_member_permissions":null`, `{"id":"871"}`},
 		{discordtransport.OpStart, "", "", `"intents":3,`, "1"},
 		{discordtransport.OpPoll, "", "", "", `{"op":0,"t":"READY","s":3,"d":{}}`},
 		{discordtransport.OpPoll, "", "", "", slashEvent},
@@ -199,6 +200,10 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 		{discordtransport.OpInteractionEdit, "/api/v10/webhooks/890/interaction-fixture/messages/999", "", "", `{}`},
 		{discordtransport.OpPoll, "", "", "", expired},
 		{discordtransport.OpInteraction, "/api/v10/interactions/716/interaction-fixture/callback", "", `"type":5`, ""},
+		{discordtransport.OpPoll, "", "", "", userMenuEvent},
+		{discordtransport.OpInteraction, "/api/v10/interactions/741/menu-fixture/callback", "", `"content":"Perfil / ficha: 42"`, "{}"},
+		{discordtransport.OpPoll, "", "", "", messageMenuEvent},
+		{discordtransport.OpInteraction, "/api/v10/interactions/742/menu-fixture/callback", "", `Un mensaje`, "{}"},
 		{discordtransport.OpPoll, "", "", "", memberJoined},
 		{discordtransport.OpPoll, "", "", "", roleChanged},
 		{discordtransport.OpPoll, "", "", "", "!"},
@@ -405,6 +410,88 @@ func TestLinuxSimpleDiscordBotReceivesGatewayInteractions(t *testing.T) {
 		return err
 	}, nil); err != nil {
 		t.Fatalf("bot: %v (%s)", err, output.String())
+	}
+	if err := <-fixture; err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestLinuxDiscordUploadsAndGuildManagement(t *testing.T) {
+	if runtime.GOARCH != "amd64" {
+		t.Skip("requires native x86-64")
+	}
+	const source = `import tripol.discord
+server=discord.guild("321")
+assert server.channels()=="[]"
+category=server.create_channel("Reports","category")
+assert category=="450"
+id=server.create_channel("daily","text",category,"Daily reports")
+assert id=="451"
+room=discord.channel_ref(id)
+assert room.rename("status")
+assert room.topic("Updates")
+assert room.move()
+panel=discord.container()
+assert panel.file("report.txt",true)
+assert panel.send_files(id,list(["work/report.txt"]))=="901"
+embed=discord.embed()
+embed.image(discord.attachment_url("photo.png"))
+assert embed.send_files(id,list(["photo.png"]))=="902"
+assert room.edit_message("333","Actualizado")
+row=discord.button_row()
+row.button("Confirm","confirm","success",false,"✅")
+row.disable("confirm")
+other=discord.container()
+other.row(row)
+assert room.edit_components("901",other)
+assert server.audit(5,"900",10)=="{}"
+assert room.delete()
+assert server.roles()=="[]"
+role_id=server.create_role("Reviewer","0","#FFFFFF")
+assert role_id=="952"
+role=server.role_ref(role_id)
+assert role.read()=="{}"
+assert role.permissions()=="8192"
+assert role.edit("Review","8192","#000000")
+assert role.delete()
+`
+	program := filepath.Join(t.TempDir(), "guild")
+	if err := os.WriteFile(program, compileProfile(source, "linux", "turbo"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	compileProfile(source, "windows", "turbo")
+	t.Setenv("DISCORD_TOKEN", "fixture-token")
+	steps := []bridgeStep{
+		{discordtransport.OpRESTGet, "/api/v10/guilds/321/channels", "fixture-token", "", `[]`},
+		{discordtransport.OpRESTPost, "/api/v10/guilds/321/channels", "fixture-token", `{"name":"Reports","type":4}`, `{"id":"450"}`},
+		{discordtransport.OpRESTPost, "/api/v10/guilds/321/channels", "fixture-token", `{"name":"daily","type":0,"parent_id":"450","topic":"Daily reports"}`, `{"id":"451"}`},
+		{discordtransport.OpRESTPatch, "/api/v10/channels/451", "fixture-token", `{"name":"status"}`, `{}`},
+		{discordtransport.OpRESTPatch, "/api/v10/channels/451", "fixture-token", `{"topic":"Updates"}`, `{}`},
+		{discordtransport.OpRESTPatch, "/api/v10/channels/451", "fixture-token", `{"parent_id":null}`, `{}`},
+		{discordtransport.OpRESTUpload, "/api/v10/channels/451/messages", "fixture-token", `"type":13,"file":{"url":"attachment://report.txt"},"spoiler":true`, `{"id":"901"}`},
+		{discordtransport.OpRESTUpload, "/api/v10/channels/451/messages", "fixture-token", `"image":{"url":"attachment://photo.png"}`, `{"id":"902"}`},
+		{discordtransport.OpRESTPatch, "/api/v10/channels/451/messages/333", "fixture-token", `{"content":"Actualizado","allowed_mentions":{"parse":[]}}`, `{}`},
+		{discordtransport.OpRESTPatch, "/api/v10/channels/451/messages/901", "fixture-token", `"emoji":{"name":"✅"},"disabled":true`, `{}`},
+		{discordtransport.OpRESTGet, "/api/v10/guilds/321/audit-logs?limit=5&before=900&action_type=10", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTDelete, "/api/v10/channels/451", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTGet, "/api/v10/guilds/321/roles", "fixture-token", "", `[]`},
+		{discordtransport.OpRESTPost, "/api/v10/guilds/321/roles", "fixture-token", `{"name":"Reviewer","permissions":"0","colors":{"primary_color":16777215}}`, `{"id":"952"}`},
+		{discordtransport.OpRESTGet, "/api/v10/guilds/321/roles/952", "fixture-token", "", `{}`},
+		{discordtransport.OpRESTGet, "/api/v10/guilds/321/permissions/role/952", "fixture-token", "", `{"permissions":"8192"}`},
+		{discordtransport.OpRESTPatch, "/api/v10/guilds/321/roles/952", "fixture-token", `{"name":"Review","permissions":"8192","colors":{"primary_color":0}}`, `{}`},
+		{discordtransport.OpRESTDelete, "/api/v10/guilds/321/roles/952", "fixture-token", "", `{}`},
+	}
+	cmd := exec.Command(program)
+	var output bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &output, &output
+	fixture := make(chan error, 1)
+	err := runDiscordPipes(cmd, func(_ context.Context, input, output *os.File) error {
+		err := serveBridgeFixture(input, output, steps)
+		fixture <- err
+		return err
+	}, nil)
+	if err != nil {
+		t.Fatalf("guild executable: %v (%s)", err, output.String())
 	}
 	if err := <-fixture; err != nil {
 		t.Fatal(err)

@@ -727,7 +727,7 @@ func Embed.description(self:Embed,value:string)->bool {
 
 func Embed.footer(self:Embed,value:string,icon_url="")->bool {
  assert utf8.valid(value) and utf8.count(value)<=2048,"Embed footer allows up to 2048 characters"
- assert icon_url=="" or (value!="" and media_url(icon_url)),"Invalid Discord footer icon"
+ assert icon_url=="" or (value!="" and attachment_media_url(icon_url)),"Invalid Discord footer icon"
  self.footer_text=value
  self.footer_icon_url=icon_url
  return true
@@ -758,13 +758,13 @@ func Embed.url(self:Embed,value:string)->bool {
 }
 
 func Embed.image(self:Embed,value:string)->bool {
- assert value=="" or media_url(value),"Invalid Discord embed image URL"
+ assert value=="" or attachment_media_url(value),"Invalid Discord embed image URL"
  self.image_url=value
  return true
 }
 
 func Embed.thumbnail(self:Embed,value:string)->bool {
- assert value=="" or media_url(value),"Invalid Discord embed thumbnail URL"
+ assert value=="" or attachment_media_url(value),"Invalid Discord embed thumbnail URL"
  self.thumbnail_url=value
  return true
 }
@@ -864,6 +864,47 @@ func Embed.send(self:Embed,channel_id:string)->bool {
  return ok
 }
 
+func Embed.send_files(self:Embed,channel_id:string,paths:string_list)->string {
+ return send_attachments(channel_id,self.payload(),paths)
+}
+
+func attachment_name_valid(filename:string)->bool {
+ if filename=="" or filename=="." or filename==".." {return false}
+ for i in range(len(filename)) {
+  b=byte_at(filename,i)
+  if not ((b>=48 and b<=57) or (b>=65 and b<=90) or (b>=97 and b<=122) or b==45 or b==46 or b==95) {return false}
+ }
+ return true
+}
+
+func attachment_url(filename:string)->string {
+ assert attachment_name_valid(filename),"Use an attachment filename with letters, digits, dots, underscores or hyphens"
+ return "attachment://"+filename
+}
+
+func attachment_media_url(value:string)->bool {
+ if has_prefix(value,"attachment://") {return attachment_name_valid(slice(value,13,len(value)))}
+ return media_url(value)
+}
+
+func send_attachments(channel_id:string,payload:string,paths:string_list)->string {
+ if platform_name()!="linux" {return ""}
+ assert paths.size()>=1 and paths.size()<=10,"Discord messages accept one to ten uploaded files"
+ prefix="{\"payload\":"
+ middle=",\"files\":["
+ assert len(payload)+len(prefix)+len(middle)+2<=65535,"Multipart metadata exceeds the TRIPOL string capacity"
+ body=prefix+payload+middle
+ for i in range(paths.size()) {
+  assert paths[i]!="","Provide a path for each Discord attachment"
+  path=json.quote(paths[i])
+  assert len(body)+len(path)+3<=65535,"Multipart metadata exceeds the TRIPOL string capacity"
+  if i>0 {body+=","}
+  body+=path
+ }
+ reply=discord_rest(6,channel_path(channel_id),token(),body+"]}")
+ return event_id(json.get_raw_large(reply,"id"))
+}
+
 // Validate the supported URL subset without issuing a network request.
 func media_url(value:string)->bool {
  if len(value)>2048 or not utf8.valid(value) {return false}
@@ -940,31 +981,31 @@ func Components.separator(self:Components,spacing=1,divider=true)->bool {
  return self.append_entry("{\"type\":14,\"divider\":"+json.boolean(divider)+",\"spacing\":"+text(spacing)+"}",1)
 }
 
-func Components.link(self:Components,label:string,url:string)->bool {
+func Components.link(self:Components,label:string,url:string,emoji="",disabled=false)->bool {
  buttons=button_row()
- buttons.link(label,url)
+ buttons.link(label,url,disabled,emoji)
  return self.row(buttons)
 }
 
-func Components.premium(self:Components,sku_id:string)->bool {
+func Components.premium(self:Components,sku_id:string,disabled=false)->bool {
  buttons=button_row()
- buttons.premium(sku_id)
+ buttons.premium(sku_id,disabled)
  return self.row(buttons)
 }
 
-func Components.button(self:Components,label:string,custom_id:string,style=1)->bool {
+func Components.button(self:Components,label:string,custom_id:string,style=1,emoji="",disabled=false)->bool {
  buttons=button_row()
- buttons.button(label,custom_id,style)
+ buttons.button(label,custom_id,style,disabled,emoji)
  return self.row(buttons)
 }
 
-func Components.button(self:Components,label:string,custom_id:string,style:string)->bool {
- return self.button(label,custom_id,button_style(style))
+func Components.button(self:Components,label:string,custom_id:string,style:string,emoji="",disabled=false)->bool {
+ return self.button(label,custom_id,button_style(style),emoji,disabled)
 }
 
 func Components.section(self:Components,content:string,thumbnail_url:string,description="")->bool {
  assert len(content)>0 and utf8.valid(content),"Discord section requires nonempty UTF-8"
- assert media_url(thumbnail_url),"Invalid Discord thumbnail URL"
+ assert attachment_media_url(thumbnail_url),"Invalid Discord thumbnail URL"
  assert utf8.valid(description) and utf8.count(description)<=1024,"Discord thumbnail descriptions allow up to 1024 characters"
  thumb="{\"type\":11,\"media\":{\"url\":"+json.quote(thumbnail_url)+"}"
  if len(description)>0 {thumb+=",\"description\":"+json.quote(description)}
@@ -976,7 +1017,7 @@ func Components.gallery(self:Components,urls:string_list)->bool {
  assert urls.size()>=1 and urls.size()<=10,"Discord gallery requires 1 to 10 items"
  body="{\"type\":12,\"items\":["
  for i in range(urls.size()) {
-  assert media_url(urls[i]),"Invalid Discord gallery URL"
+  assert attachment_media_url(urls[i]),"Invalid Discord gallery URL"
   if i>0 {body+=","}
   body+="{\"media\":{\"url\":"+json.quote(urls[i])+"}}"
  }
@@ -1016,6 +1057,15 @@ func Components.send(self:Components,channel_id:string)->bool {
  result=false
  scratch {result=len(discord_request(channel_path(channel_id),token(),body))>0}
  return result
+}
+
+func Components.file(self:Components,filename:string,spoiler=false)->bool {
+ body="{\"type\":13,\"file\":{\"url\":"+json.quote(attachment_url(filename))+"},\"spoiler\":"+json.boolean(spoiler)+"}"
+ return self.append_entry(body,1)
+}
+
+func Components.send_files(self:Components,channel_id:string,paths:string_list)->string {
+ return send_attachments(channel_id,self.payload(),paths)
 }
 
 // Typed events keep the Discord event body and submitted data available.
@@ -1162,9 +1212,16 @@ func interaction_selector(event:string)->string {
  payload=json.get_raw_large(event,"d")
  kind=json.get_raw_large(payload,"type")
  data=json.get_raw_large(payload,"data")
- if kind=="2" and json.get_raw_large(data,"type")=="1" {
-  scope=event_id(json.get_raw_large(data,"guild_id"))
-  return "s"+json.get_raw_large(data,"name")+"/"+scope
+ if kind=="2" {
+  command_type=json.get_raw_large(data,"type")
+  route=""
+  if command_type=="1" {route="s"}
+  if command_type=="2" {route="u"}
+  if command_type=="3" {route="p"}
+  if route!="" {
+   scope=event_id(json.get_raw_large(data,"guild_id"))
+   return route+json.get_raw_large(data,"name")+"/"+scope
+  }
  }
  if kind=="4" {
   scope=event_id(json.get_raw_large(data,"guild_id"))
@@ -1180,25 +1237,30 @@ func interaction_selector(event:string)->string {
  return ""
 }
 
+// Generated command routes end in /guild. The registration name may itself
+// contain slash characters in a context menu.
+func interaction_key_end(key:string)->int {
+ end=len(key)
+ if end==0 {return 0}
+ kind=byte_at(key,0)
+ if kind!=115 and kind!=97 and kind!=117 and kind!=112 {return end}
+ at=end-1
+ while at>0 {
+  if byte_at(key,at)==47 {return at}
+  at-=1
+ }
+ return end
+}
+
 func interaction_matches(key:string,selector:string)->bool {
  if len(key)<2 or len(selector)<3 or byte_at(key,0)!=byte_at(selector,0) {return false}
- key_end=len(key)
- selector_end=len(selector)
- if byte_at(key,0)==115 or byte_at(key,0)==97 {
-  key_scope=""
-  selector_scope=""
-  key_slash=find_bytes(key,"/")
-  selector_slash=find_bytes(selector,"/")
-  if key_slash>=0 {
-   key_end=key_slash
-   key_scope=slice(key,key_slash+1,len(key))
-  }
-  if selector_slash>=0 {
-   selector_end=selector_slash
-   selector_scope=slice(selector,selector_slash+1,len(selector))
-  }
-  if key_scope!=selector_scope {return false}
- }
+ key_end=interaction_key_end(key)
+ selector_end=interaction_key_end(selector)
+ key_scope=""
+ selector_scope=""
+ if key_end<len(key) {key_scope=slice(key,key_end+1,len(key))}
+ if selector_end<len(selector) {selector_scope=slice(selector,selector_end+1,len(selector))}
+ if key_scope!=selector_scope {return false}
  return json.string_equals(slice(selector,1,selector_end),slice(key,1,key_end))
 }
 
@@ -1208,12 +1270,7 @@ func interaction_context(payload:string,key:string)->Interaction {
  kind=errors.int_or(json.get_raw_large(payload,"type"),0)
  author=json.get_raw_large(payload,"user")
  if len(author)==0 {author=json.get_raw_large(json.get_raw_large(payload,"member"),"user")}
- end=len(key)
- if byte_at(key,0)==115 or byte_at(key,0)==97 {
-  scope=find_bytes(key,"/")
-  if scope>=0 {end=scope}
- }
- name=slice(key,1,end)
+ name=slice(key,1,interaction_key_end(key))
  id=event_id(json.get_raw_large(payload,"id"))
  app=event_id(json.get_raw_large(payload,"application_id"))
  guild=event_id(json.get_raw_large(payload,"guild_id"))
@@ -1284,18 +1341,63 @@ func Bot.bind_interaction(self:Bot,key:string,handler:func(Interaction)->string,
  return true
 }
 
-func Bot.slash(self:Bot,name:string,description:string,handler:func(Interaction)->string,guild_id="")->bool {
- return self.slash_with_options(name,description,handler,slash_options(),guild_id)
+func permissions_bitset_valid(value:string)->bool {
+ if value=="" or (value!="0" and byte_at(value,0)==48) {return false}
+ for i in range(len(value)) {if not json.digit(byte_at(value,i)) {return false}}
+ return true
 }
 
-func Bot.slash_with_options(self:Bot,name:string,description:string,handler:func(Interaction)->string,options:SlashOptions,guild_id="")->bool {
+func command_permission_payload(default_permissions:string)->string {
+ if default_permissions=="" {return ""}
+ if default_permissions=="everyone" {return ",\"default_member_permissions\":null"}
+ assert permissions_bitset_valid(default_permissions),"Use a canonical decimal permissions bitset or everyone"
+ return ",\"default_member_permissions\":"+json.quote(default_permissions)
+}
+
+func Bot.slash(self:Bot,name:string,description:string,handler:func(Interaction)->string,guild_id="",default_permissions="")->bool {
+ return self.slash_with_options(name,description,handler,slash_options(),guild_id,default_permissions)
+}
+
+func Bot.slash_with_options(self:Bot,name:string,description:string,handler:func(Interaction)->string,options:SlashOptions,guild_id="",default_permissions="")->bool {
  assert slash_name(name),"Discord slash command names require 1 to 32 lowercase letters, digits or -_"
  assert utf8.valid(description) and utf8.count(description)>=1 and utf8.count(description)<=100,"Discord slash descriptions require 1 to 100 characters"
  assert guild_id=="" or event_id(json.quote(guild_id))==guild_id,"Invalid Discord command guild ID"
  definition="{\"name\":"+json.quote(name)+",\"description\":"+json.quote(description)+",\"type\":1"
  body=options.payload()
  if body!="[]" {definition+=",\"options\":"+body}
- return self.bind_interaction("s"+name,handler,definition+"}",guild_id)
+ return self.bind_interaction("s"+name,handler,definition+command_permission_payload(default_permissions)+"}",guild_id)
+}
+
+func Bot.__context_menu(self:Bot,name:string,handler:func(Interaction)->string,guild_id:string,default_permissions:string,kind:int,route:string)->bool {
+ assert utf8.valid(name) and utf8.count(name)>=1 and utf8.count(name)<=32,"Discord context menu names require 1 to 32 characters"
+ assert guild_id=="" or event_id(json.quote(guild_id))==guild_id,"Invalid Discord command guild ID"
+ for i in range(len(name)) {b=byte_at(name,i);assert b>=32 and b!=127,"Discord context menu names cannot contain control characters"}
+ definition="{\"name\":"+json.quote(name)+",\"type\":"+text(kind)+command_permission_payload(default_permissions)+"}"
+ return self.bind_interaction(route+name+"/"+guild_id,handler,definition,guild_id)
+}
+
+func Bot.user_menu(self:Bot,name:string,handler:func(Interaction)->string,guild_id="",default_permissions="")->bool {
+ return self.__context_menu(name,handler,guild_id,default_permissions,2,"u")
+}
+
+func Bot.message_menu(self:Bot,name:string,handler:func(Interaction)->string,guild_id="",default_permissions="")->bool {
+ return self.__context_menu(name,handler,guild_id,default_permissions,3,"p")
+}
+
+func Interaction.target_id(self:Interaction)->string {
+ return event_id(json.get_raw_large(self.data_json,"target_id"))
+}
+
+func Interaction.target(self:Interaction)->string {
+ id=self.target_id()
+ if id=="" {return ""}
+ kind=json.get_raw_large(self.data_json,"type")
+ collection=""
+ if kind=="2" {collection="users"}
+ if kind=="3" {collection="messages"}
+ if collection=="" {return ""}
+ resolved=json.get_raw_large(self.data_json,"resolved")
+ return json.get_raw_large(json.get_raw_large(resolved,collection),id)
 }
 
 func Bot.on_button(self:Bot,id:string,handler:func(Interaction)->string)->bool {
@@ -1336,15 +1438,23 @@ func Bot.preview_interaction(self:Bot,event:string)->string {
 func slash_is_current(remote:string,definition:string)->bool {
  if len(remote)<2 or byte_at(remote,0)!=91 {return false}
  n=len(remote)
- wanted_name=json.get_raw_large(definition,"name")
+ wanted_type=json.get_raw_large(definition,"type")
+ wanted_name=json.unquote(json.get_raw_large(definition,"name"))
  wanted_desc=json.unquote(json.get_raw_large(definition,"description"))
  wanted_options=slash_option_signature(json.get_raw_large(definition,"options"))
+ wanted_permissions=json.get_raw_large(definition,"default_member_permissions")
  at=json.ws(remote,1,n)
  while at<n and byte_at(remote,at)==123 {
   end=json.value(remote,at,n,0)
   if end<0 {return false}
   entry=slice(remote,at,end)
-  if json.get_raw_large(entry,"type")=="1" and json.get_raw_large(entry,"name")==wanted_name {
+  if json.get_raw_large(entry,"type")==wanted_type and json.string_equals(json.get_raw_large(entry,"name"),wanted_name) {
+   if wanted_permissions!="" {
+    existing=json.get_raw_large(entry,"default_member_permissions")
+    if existing=="" {existing="null"}
+    if existing!=wanted_permissions {return false}
+   }
+   if wanted_type!="1" {return true}
    options=json.get_raw_large(entry,"options")
    option_signature=slash_option_signature(options)
    return json.string_equals(json.get_raw_large(entry,"description"),wanted_desc) and option_signature!="!" and option_signature==wanted_options
@@ -1467,7 +1577,7 @@ func Modal.add_label(self:Modal,id:string,label:string,component:string,descript
  return true
 }
 
-func Modal.text(self:Modal,id:string,label:string,style=1,required=true,min_length=0,max_length=4000,placeholder="",value="")->bool {
+func Modal.text(self:Modal,id:string,label:string,style=1,required=true,min_length=0,max_length=4000,placeholder="",value="",description="")->bool {
  assert style==1 or style==2,"Discord text input style must be 1 or 2"
  assert min_length>=0 and min_length<=max_length and max_length>=1 and max_length<=4000,"Invalid Discord text input length limits"
  component="{\"type\":4,\"custom_id\":"+json.quote(id)+",\"style\":"+text(style)+",\"required\":"+json.boolean(required)
@@ -1476,7 +1586,7 @@ func Modal.text(self:Modal,id:string,label:string,style=1,required=true,min_leng
  component+=",\"min_length\":"+text(min_length)+",\"max_length\":"+text(max_length)
  if placeholder!="" {component+=",\"placeholder\":"+json.quote(placeholder)}
  if value!="" {component+=",\"value\":"+json.quote(value)}
- return self.add_label(id,label,component+"}")
+ return self.add_label(id,label,component+"}",description)
 }
 
 func Modal.payload(self:Modal)->string {
@@ -1505,6 +1615,7 @@ struct Select {
  value_ids:string_list
  defaults_json:string_list
  channel_types:string
+ __disabled:bool=false
 }
 
 func select(id:string,kind="string",minimum=1,maximum=1)->Select {
@@ -1526,7 +1637,7 @@ func Select.placeholder(self:Select,value:string)->bool {
  return true
 }
 
-func Select.option(self:Select,label:string,value:string,description="",selected=false)->bool {
+func Select.option(self:Select,label:string,value:string,description="",selected=false,emoji="")->bool {
  assert self.kind==3,"Manual options require a Discord String Select"
  assert utf8.valid(label) and utf8.count(label)>=1 and utf8.count(label)<=100,"Discord option labels require 1 to 100 characters"
  assert utf8.valid(value) and utf8.count(value)>=1 and utf8.count(value)<=100,"Discord option values require 1 to 100 characters"
@@ -1537,8 +1648,14 @@ func Select.option(self:Select,label:string,value:string,description="",selected
  assert not ids.contains(value),"Duplicate Discord select option"
  body="{\"label\":"+json.quote(label)+",\"value\":"+json.quote(value)+",\"default\":"+json.boolean(selected)
  if len(description)>0 {body+=",\"description\":"+json.quote(description)}
+ if emoji!="" {body+=",\"emoji\":"+emoji_payload(emoji)}
  items.add(body+"}")
  ids.add(value)
+ return true
+}
+
+func Select.disable(self:Select,disabled=true)->bool {
+ self.__disabled=disabled
  return true
 }
 
@@ -1594,6 +1711,7 @@ func Select.payload(self:Select)->string {
   }
  }
  if len(self.channel_types)>0 {body+=",\"channel_types\":"+self.channel_types}
+ if self.__disabled {body+=",\"disabled\":true"}
  return body+"}"
 }
 
@@ -1605,11 +1723,12 @@ func Components.select(self:Components,menu:Select)->bool {
  return true
 }
 
-func Modal.select(self:Modal,label:string,menu:Select,required=true)->bool {
+func Modal.select(self:Modal,label:string,menu:Select,required=true,description="")->bool {
+ assert not menu.__disabled,"Discord does not accept disabled components in modals"
  assert not required or menu.minimum>=1,"Required Discord selects must allow at least one selection"
  body=menu.payload()
  body=slice(body,0,len(body)-1)+",\"required\":"+json.boolean(required)+"}"
- return self.add_label(menu.custom_id,label,body)
+ return self.add_label(menu.custom_id,label,body,description)
 }
 
 func Modal.help_text(self:Modal,content:string)->bool {
@@ -1626,7 +1745,7 @@ func Modal.help_text(self:Modal,content:string)->bool {
 func Embed.author(self:Embed,name:string,url="",icon_url="")->bool {
  assert utf8.valid(name) and utf8.count(name)<=256,"Embed authors allow up to 256 characters"
  assert url=="" or (name!="" and media_url(url)),"Invalid Discord author URL"
- assert icon_url=="" or (name!="" and media_url(icon_url)),"Invalid Discord author icon"
+ assert icon_url=="" or (name!="" and attachment_media_url(icon_url)),"Invalid Discord author icon"
  self.author_text=name
  self.author_url=url
  self.author_icon_url=icon_url
@@ -1703,6 +1822,10 @@ func Embeds.send(self:Embeds,channel_id:string)->bool {
  sent=false
  scratch {sent=len(discord_request(channel_path(channel_id),token(),body))>0}
  return sent
+}
+
+func Embeds.send_files(self:Embeds,channel_id:string,paths:string_list)->string {
+ return send_attachments(channel_id,self.payload(),paths)
 }
 
 func Interaction.reply_embeds(self:Interaction,batch:Embeds,ephemeral=false)->string {
@@ -1905,10 +2028,59 @@ func Interaction.field_data(self:Interaction,id:string)->string {
  return modal_field_value(self.data_json,id,"values",0)
 }
 
-func Modal.file(self:Modal,id:string,label:string,minimum=1,maximum=1,required=true)->bool {
+func Modal.file(self:Modal,id:string,label:string,minimum=1,maximum=1,required=true,description="")->bool {
+ return self.file(id,label,string_list(),minimum,maximum,required,description)
+}
+
+func Modal.file(self:Modal,id:string,label:string,types:string_list,minimum=1,maximum=1,required=true,description="")->bool {
  assert minimum>=0 and minimum<=maximum and maximum>=1 and maximum<=10 and (not required or minimum>=1),"Invalid Discord File Upload value bounds"
- body="{\"type\":19,\"custom_id\":"+json.quote(id)+",\"min_values\":"+text(minimum)+",\"max_values\":"+text(maximum)+",\"required\":"+json.boolean(required)+"}"
- return self.add_label(id,label,body)
+ body="{\"type\":19,\"custom_id\":"+json.quote(id)+",\"min_values\":"+text(minimum)+",\"max_values\":"+text(maximum)+",\"required\":"+json.boolean(required)
+ if types.size()>0 {body+=",\"file_types\":"+file_types_payload(types)}
+ return self.add_label(id,label,body+"}",description)
+}
+
+func file_types_payload(types:string_list)->string {
+ assert types.size()<=10,"Discord accepts up to ten file type filters"
+ result="["
+ for i in range(types.size()) {
+  value=types[i]
+  if value!="image" and value!="video" and value!="audio" {
+   assert len(value)>1 and byte_at(value,0)==46,"Use image, video, audio or a dot-prefixed extension"
+   for j in range(1,len(value)) {
+    b=byte_at(value,j)
+    assert b>32 and b!=47 and b!=92 and b!=127,"Invalid Discord file type extension"
+   }
+   assert utf8.valid(value),"Invalid Discord file type extension"
+  }
+  if i>0 {result+=","}
+  result+=json.quote(value)
+ }
+ return result+"]"
+}
+
+// Accept Unicode or Discord's custom emoji notation, including animated names.
+func emoji_payload(emoji:string)->string {
+ assert len(emoji)>0 and utf8.valid(emoji),"Discord emoji requires nonempty UTF-8"
+ if event_id(json.quote(emoji))==emoji {return "{\"id\":"+json.quote(emoji)+"}"}
+ animated=has_prefix(emoji,"<a:")
+ if animated or has_prefix(emoji,"<:") {
+  start=2
+  if animated {start=3}
+  assert has_suffix(emoji,">"),"Use <:name:id> or <a:name:id> for custom emoji"
+  value=slice(emoji,start,len(emoji)-1)
+  colon=find_bytes(value,":")
+  assert colon>=1,"Use <:name:id> or <a:name:id> for custom emoji"
+  label=slice(value,0,colon)
+  for i in range(len(label)) {
+   b=byte_at(label,i)
+   assert (b>=48 and b<=57) or (b>=65 and b<=90) or (b>=97 and b<=122) or b==95,"Invalid Discord custom emoji name"
+  }
+  id=slice(value,colon+1,len(value))
+  assert id!="" and event_id(json.quote(id))==id,"Invalid Discord custom emoji ID"
+  return "{\"id\":"+json.quote(id)+",\"name\":"+json.quote(label)+",\"animated\":"+json.boolean(animated)+"}"
+ }
+ assert utf8.count(emoji)<len(emoji),"Use a Unicode emoji or provide a custom emoji ID"
+ return "{\"name\":"+json.quote(emoji)+"}"
 }
 
 struct Buttons {
@@ -1920,15 +2092,18 @@ func button_row()->Buttons {
  return Buttons(string_list(5),string_list(5))
 }
 
-func Buttons.button(self:Buttons,label:string,id:string,style=1,disabled=false)->bool {
- assert len(label)>0 and utf8.valid(label) and utf8.count(label)<=80,"Discord button labels require 1 to 80 characters"
+func Buttons.button(self:Buttons,label:string,id:string,style=1,disabled=false,emoji="")->bool {
+ assert (label!="" or emoji!="") and utf8.valid(label) and utf8.count(label)<=80,"Discord buttons require text up to 80 characters or an emoji"
  assert len(id)>0 and utf8.valid(id) and utf8.count(id)<=100,"Discord custom IDs require 1 to 100 characters"
  assert style>=1 and style<=4,"Discord custom button style must be 1 to 4"
  entries=self.entries
  ids=self.ids
  assert entries.size()<5,"Discord button rows accept up to five buttons"
  assert not ids.contains(id),"Duplicate Discord component ID"
- body="{\"type\":2,\"style\":"+text(style)+",\"label\":"+json.quote(label)+",\"custom_id\":"+json.quote(id)
+ body="{\"type\":2,\"style\":"+text(style)
+ if label!="" {body+=",\"label\":"+json.quote(label)}
+ body+=",\"custom_id\":"+json.quote(id)
+ if emoji!="" {body+=",\"emoji\":"+emoji_payload(emoji)}
  if disabled {body+=",\"disabled\":true"}
  entries.add(body+"}")
  ids.add(id)
@@ -1943,27 +2118,47 @@ func button_style(name:string)->int {
  return 4
 }
 
-func Buttons.button(self:Buttons,label:string,id:string,style:string,disabled=false)->bool {
- return self.button(label,id,button_style(style),disabled)
+func Buttons.button(self:Buttons,label:string,id:string,style:string,disabled=false,emoji="")->bool {
+ return self.button(label,id,button_style(style),disabled,emoji)
 }
 
-func Buttons.link(self:Buttons,label:string,url:string,disabled=false)->bool {
- assert len(label)>0 and utf8.valid(label) and utf8.count(label)<=80,"Discord button labels require 1 to 80 characters"
+func Buttons.link(self:Buttons,label:string,url:string,disabled=false,emoji="")->bool {
+ assert (label!="" or emoji!="") and utf8.valid(label) and utf8.count(label)<=80,"Discord buttons require text up to 80 characters or an emoji"
  assert len(url)<=512 and media_url(url),"Invalid Discord button URL"
  entries=self.entries
  assert entries.size()<5,"Discord button rows accept up to five buttons"
- body="{\"type\":2,\"style\":5,\"label\":"+json.quote(label)+",\"url\":"+json.quote(url)
+ body="{\"type\":2,\"style\":5"
+ if label!="" {body+=",\"label\":"+json.quote(label)}
+ body+=",\"url\":"+json.quote(url)
+ if emoji!="" {body+=",\"emoji\":"+emoji_payload(emoji)}
  if disabled {body+=",\"disabled\":true"}
  entries.add(body+"}")
  return true
 }
 
-func Buttons.premium(self:Buttons,sku_id:string)->bool {
+func Buttons.premium(self:Buttons,sku_id:string,disabled=false)->bool {
  assert sku_id!="" and event_id(json.quote(sku_id))==sku_id,"Invalid Discord premium SKU ID"
  entries=self.entries
  assert entries.size()<5,"Discord button rows accept up to five buttons"
- entries.add("{\"type\":2,\"style\":6,\"sku_id\":"+json.quote(sku_id)+"}")
+ body="{\"type\":2,\"style\":6,\"sku_id\":"+json.quote(sku_id)
+ if disabled {body+=",\"disabled\":true"}
+ entries.add(body+"}")
  return true
+}
+
+func Buttons.disable(self:Buttons,id:string,disabled=true)->bool {
+ entries=self.entries
+ suffix=",\"disabled\":true}"
+ for i in range(entries.size()) {
+  body=entries[i]
+  if json.string_equals(json.get_raw_large(body,"custom_id"),id) {
+   present=has_suffix(body,suffix)
+   if present and not disabled {entries.set(i,slice(body,0,len(body)-len(suffix))+"}")}
+   if not present and disabled {entries.set(i,slice(body,0,len(body)-1)+suffix)}
+   return true
+  }
+ }
+ return false
 }
 
 func Components.row(self:Components,buttons:Buttons)->bool {
@@ -1999,6 +2194,7 @@ func Modal.choice_group(self:Modal,label:string,menu:Select,radio:bool,required:
  body+=",\"options\":["
  for i in range(count) {
   if i>0 {body+=","}
+  assert json.get_raw_large(items[i],"emoji")=="","Discord radio and checkbox groups do not support emoji options"
   if json.get_raw_large(items[i],"default")=="true" {selected+=1}
   body+=items[i]
  }
@@ -2103,6 +2299,96 @@ func Guild.member(self:Guild,id:string)->Member {
  return Member(self.id,id)
 }
 
+func Guild.__path(self:Guild,resource:string)->string {
+ assert self.id!="" and event_id(json.quote(self.id))==self.id,"Invalid Discord guild ID"
+ return "/api/v10/guilds/"+self.id+"/"+resource
+}
+
+func Guild.channels(self:Guild)->string {
+ return discord_rest(1,self.__path("channels"),token(),"")
+}
+
+func Guild.create_channel(self:Guild,name:string,kind="text",parent_id="",topic="")->string {
+ assert utf8.valid(name) and utf8.count(name)>=1 and utf8.count(name)<=100,"Discord channel names require 1 to 100 characters"
+ code=0
+ if kind=="voice" {code=2}
+ else if kind=="category" {code=4}
+ else if kind=="announcement" {code=5}
+ else {assert kind=="text","Choose text, voice, category or announcement"}
+ assert parent_id=="" or (code!=4 and event_id(json.quote(parent_id))==parent_id),"Invalid Discord category ID"
+ assert topic=="" or ((code==0 or code==5) and utf8.valid(topic) and utf8.count(topic)<=1024),"Invalid topic for Discord channel type"
+ body="{\"name\":"+json.quote(name)+",\"type\":"+text(code)
+ if parent_id!="" {body+=",\"parent_id\":"+json.quote(parent_id)}
+ if topic!="" {body+=",\"topic\":"+json.quote(topic)}
+ reply=discord_rest(2,self.__path("channels"),token(),body+"}")
+ return event_id(json.get_raw_large(reply,"id"))
+}
+
+func Guild.audit(self:Guild,limit=25,before="",action=0)->string {
+ assert limit>=1 and limit<=100,"Discord audit log limit must be 1 to 100"
+ assert before=="" or event_id(json.quote(before))==before,"Invalid Discord audit entry ID"
+ assert action>=0,"Invalid Discord audit action type"
+ path=self.__path("audit-logs")+"?limit="+text(limit)
+ if before!="" {path+="&before="+before}
+ if action>0 {path+="&action_type="+text(action)}
+ return discord_rest(1,path,token(),"")
+}
+
+struct Role {
+ __guild:string
+ __id:string
+}
+
+func Guild.roles(self:Guild)->string {return discord_rest(1,self.__path("roles"),token(),"")}
+
+func Guild.role_ref(self:Guild,id:string)->Role {
+ assert self.id!="" and event_id(json.quote(self.id))==self.id,"Invalid Discord guild ID"
+ assert id!="" and event_id(json.quote(id))==id,"Invalid Discord role ID"
+ return Role(self.id,id)
+}
+
+func role_payload(name:string,permissions:string,color:string)->string {
+ assert utf8.valid(name) and utf8.count(name)<=100,"Discord role names allow up to 100 characters"
+ assert permissions=="" or permissions_bitset_valid(permissions),"Use a canonical decimal permissions bitset"
+ body="{"
+ if name!="" {body+="\"name\":"+json.quote(name)}
+ if permissions!="" {
+  if len(body)>1 {body+=","}
+  body+="\"permissions\":"+json.quote(permissions)
+ }
+ if color!="" {
+  if len(body)>1 {body+=","}
+  body+="\"colors\":{\"primary_color\":"+text(rgb_color(color))+"}"
+ }
+ return body+"}"
+}
+
+func Guild.create_role(self:Guild,name:string,permissions="0",color="")->string {
+ assert name!="","Provide a name for the Discord role"
+ body=role_payload(name,permissions,color)
+ return event_id(json.get_raw_large(discord_rest(2,self.__path("roles"),token(),body),"id"))
+}
+
+func Role.id(self:Role)->string {return self.__id}
+
+func Role.__path(self:Role)->string {return "/api/v10/guilds/"+self.__guild+"/roles/"+self.__id}
+
+func Role.read(self:Role)->string {return discord_rest(1,self.__path(),token(),"")}
+
+func Role.permissions(self:Role)->string {
+ path="/api/v10/guilds/"+self.__guild+"/permissions/role/"+self.__id
+ reply=discord_rest(1,path,token(),"")
+ return json.unquote(json.get_raw_large(reply,"permissions"))
+}
+
+func Role.edit(self:Role,name="",permissions="",color="")->bool {
+ body=role_payload(name,permissions,color)
+ assert body!="{}","Provide at least one Discord role field to edit"
+ return len(discord_rest(4,self.__path(),token(),body))>0
+}
+
+func Role.delete(self:Role)->bool {return len(discord_rest(5,self.__path(),token(),""))>0}
+
 func Member.id(self:Member)->string {return self.__user}
 
 func Member.__path(self:Member,resource:string)->string {
@@ -2180,6 +2466,27 @@ func Channel.read(self:Channel)->string {
  return discord_rest(1,"/api/v10/channels/"+self.__id,token(),"")
 }
 
+func Channel.rename(self:Channel,name:string)->bool {
+ assert utf8.valid(name) and utf8.count(name)>=1 and utf8.count(name)<=100,"Discord channel names require 1 to 100 characters"
+ return len(discord_rest(4,"/api/v10/channels/"+self.__id,token(),"{\"name\":"+json.quote(name)+"}"))>0
+}
+
+func Channel.topic(self:Channel,topic:string)->bool {
+ assert utf8.valid(topic) and utf8.count(topic)<=4096,"Discord channel topics allow at most 4096 characters"
+ return len(discord_rest(4,"/api/v10/channels/"+self.__id,token(),"{\"topic\":"+json.quote(topic)+"}"))>0
+}
+
+func Channel.move(self:Channel,parent_id="")->bool {
+ assert parent_id=="" or event_id(json.quote(parent_id))==parent_id,"Invalid Discord category ID"
+ parent="null"
+ if parent_id!="" {parent=json.quote(parent_id)}
+ return len(discord_rest(4,"/api/v10/channels/"+self.__id,token(),"{\"parent_id\":"+parent+"}"))>0
+}
+
+func Channel.delete(self:Channel)->bool {
+ return len(discord_rest(5,"/api/v10/channels/"+self.__id,token(),""))>0
+}
+
 func Channel.slowmode(self:Channel,seconds:int)->bool {
  assert seconds>=0 and seconds<=21600,"Discord slowmode requires 0 to 21600 seconds"
  body="{\"rate_limit_per_user\":"+text(seconds)+"}"
@@ -2189,6 +2496,16 @@ func Channel.slowmode(self:Channel,seconds:int)->bool {
 func Channel.delete_message(self:Channel,message_id:string)->bool {
  assert message_id!="" and event_id(json.quote(message_id))==message_id,"Invalid Discord message ID"
  return len(discord_rest(5,channel_path(self.__id)+"/"+message_id,token(),""))>0
+}
+
+func Channel.edit_message(self:Channel,message_id:string,content:string)->bool {
+ assert message_id!="" and event_id(json.quote(message_id))==message_id,"Invalid Discord message ID"
+ return len(discord_rest(4,channel_path(self.__id)+"/"+message_id,token(),interaction_message(content)))>0
+}
+
+func Channel.edit_components(self:Channel,message_id:string,layout:Components)->bool {
+ assert message_id!="" and event_id(json.quote(message_id))==message_id,"Invalid Discord message ID"
+ return len(discord_rest(4,channel_path(self.__id)+"/"+message_id,token(),layout.payload()))>0
 }
 
 func Channel.purge(self:Channel,message_ids:string_list)->bool {
