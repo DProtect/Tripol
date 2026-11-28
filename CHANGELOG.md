@@ -1,5 +1,7 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
+- The discord-moderation template registers kick, ban and unban with Discord default permissions and a configured operator and guild.
+
 - Discord Studio adds opt-in Linux counts by event type, interaction type and command name at Gateway queue admission.
 
 - Discord buttons and string selects serialize Unicode and custom emoji, and message buttons and selects can be disabled. File Upload accepts file type filters. Linux streams multipart channel uploads for File components and embeds.

@@ -288,6 +288,10 @@ Use `tripol new Welcome --template discord-welcome` to send a welcome to a chann
 
 Usa `tripol new Bienvenida --template discord-welcome` para enviar un saludo a un canal cuando se une una persona al servidor configurado. El README generado indica las variables de entorno, Server Members Intent y los permisos del canal. La plantilla omite bots y otros servidores y continúa recibiendo eventos si falla un envío.
 
+To start with a restricted moderation bot, run `tripol new Moderator --template discord-moderation`. Set `DISCORD_TOKEN`, `DISCORD_GUILD_ID` and `DISCORD_OPERATOR_ID`. The `/kick`, `/ban` and `/unban` commands use permission defaults and check the configured operator and guild before the REST call. The bot acknowledges an authorized request privately before applying the action.
+
+Para iniciar un bot de moderación restringido, ejecuta `tripol new Moderador --template discord-moderation`. Configura `DISCORD_TOKEN`, `DISCORD_GUILD_ID` y `DISCORD_OPERATOR_ID`. Los comandos `/kick`, `/ban` y `/unban` usan permisos predeterminados y comprueban el operador y servidor configurados antes de llamar a REST. El bot confirma en privado una solicitud autorizada antes de actuar.
+
 ## Channel moderation / Moderación de canales
 
 ```tripol

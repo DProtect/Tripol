@@ -497,3 +497,58 @@ assert role.delete()
 		t.Fatal(err)
 	}
 }
+
+func TestLinuxDiscordModerationTemplateEnforcesOperator(t *testing.T) {
+	if runtime.GOARCH != "amd64" {
+		t.Skip("requires native x86-64")
+	}
+	dir := filepath.Join(t.TempDir(), "moderator")
+	newProjectTemplate(dir, "discord-moderation")
+	fs, ss, _ := loadProject(filepath.Join(dir, "main.tri"))
+	program := filepath.Join(dir, "moderator")
+	if err := os.WriteFile(program, compileParsed(fs, ss, "linux", "turbo"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("DISCORD_TOKEN", "fixture-token")
+	t.Setenv("DISCORD_GUILD_ID", "321")
+	t.Setenv("DISCORD_OPERATOR_ID", "22")
+	event := func(id, name, operator string) string {
+		return fmt.Sprintf(`{"op":0,"t":"INTERACTION_CREATE","d":{"id":%q,"token":"moderation-fixture","type":2,"application_id":"890","guild_id":"321","member":{"user":{"id":%q}},"data":{"type":1,"name":%q,"guild_id":"321","options":[{"name":"miembro","type":6,"value":"45"}]}}}`, id, operator, name)
+	}
+	paths := "/api/v10/applications/890/guilds/321/commands"
+	steps := []bridgeStep{
+		{discordtransport.OpREST, "/api/v10/oauth2/applications/@me", "fixture-token", "", `{"id":"890"}`},
+		{discordtransport.OpREST, paths, "fixture-token", "", `[]`},
+		{discordtransport.OpREST, paths, "fixture-token", `"default_member_permissions":"2"`, `{"id":"911"}`},
+		{discordtransport.OpREST, paths, "fixture-token", `"default_member_permissions":"4"`, `{"id":"912"}`},
+		{discordtransport.OpREST, paths, "fixture-token", `"name":"unban"`, `{"id":"913"}`},
+		{discordtransport.OpStart, "", "", `"intents":1`, "1"},
+		{discordtransport.OpPoll, "", "", "", `{"op":0,"t":"READY","s":1,"d":{}}`},
+		{discordtransport.OpPoll, "", "", "", event("50", "kick", "99")},
+		{discordtransport.OpInteraction, "/api/v10/interactions/50/moderation-fixture/callback", "", `"content":"Operación no autorizada.","flags":64`, `{}`},
+		{discordtransport.OpPoll, "", "", "", event("51", "kick", "22")},
+		{discordtransport.OpInteraction, "/api/v10/interactions/51/moderation-fixture/callback", "", `"type":5,"data":{"flags":64}`, `{}`},
+		{discordtransport.OpRESTDelete, "/api/v10/guilds/321/members/45", "fixture-token", "", `{}`},
+		{discordtransport.OpInteractionEdit, "/api/v10/webhooks/890/moderation-fixture/messages/@original", "", `"content":"Operación aplicada."`, `{}`},
+		{discordtransport.OpPoll, "", "", "", event("52", "ban", "22")},
+		{discordtransport.OpInteraction, "/api/v10/interactions/52/moderation-fixture/callback", "", `"type":5,"data":{"flags":64}`, `{}`},
+		{discordtransport.OpRESTPut, "/api/v10/guilds/321/bans/45", "fixture-token", `"delete_message_seconds":0`, ""},
+		{discordtransport.OpInteractionEdit, "/api/v10/webhooks/890/moderation-fixture/messages/@original", "", `"content":"Discord no pudo aplicar la operación."`, `{}`},
+		{discordtransport.OpPoll, "", "", "", "!"},
+		{discordtransport.OpClose, "", "", "", "1"},
+	}
+	cmd := exec.Command(program)
+	var output bytes.Buffer
+	cmd.Stdout, cmd.Stderr = &output, &output
+	fixture := make(chan error, 1)
+	if err := runDiscordPipes(cmd, func(_ context.Context, in, out *os.File) error {
+		err := serveBridgeFixture(in, out, steps)
+		fixture <- err
+		return err
+	}, nil); err != nil {
+		t.Fatalf("moderator executable: %v (%s)", err, output.String())
+	}
+	if err := <-fixture; err != nil {
+		t.Fatal(err)
+	}
+}

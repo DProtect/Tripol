@@ -241,6 +241,45 @@ registry.on("member_join",&welcome)
 bot=discord.bot()
 bot.start_with_events(registry)
 `,
+		"discord-moderation": `import tripol.discord
+import tripol.env
+import tripol.json
+
+func moderate(ctx:discord.Interaction,action:string)->string {
+    guild_id=env.get("DISCORD_GUILD_ID")
+    if ctx.guild_id!=guild_id or ctx.user_id!=env.get("DISCORD_OPERATOR_ID") {
+        return ctx.reply("Operación no autorizada.",true)
+    }
+    target=ctx.option_text("miembro")
+    if action=="unban" {target=ctx.option_text("usuario")}
+    if target=="" or discord.event_id(json.quote(target))!=target {
+        return ctx.reply("Indica un ID de usuario válido.",true)
+    }
+    if not ctx.respond(ctx.defer(true)) {return ""}
+    member=discord.guild(guild_id).member(target)
+    success=false
+    if action=="kick" {success=member.kick()}
+    else if action=="ban" {success=member.ban()}
+    else {success=member.unban()}
+    if success {ctx.edit_reply("Operación aplicada.")}
+    else {ctx.edit_reply("Discord no pudo aplicar la operación.")}
+    return ""
+}
+
+guild=env.get("DISCORD_GUILD_ID")
+discord.guild(guild)
+operator=env.get("DISCORD_OPERATOR_ID")
+assert operator!="" and discord.event_id(json.quote(operator))==operator,"Configura DISCORD_OPERATOR_ID"
+member_options=discord.slash_options()
+member_options.add("miembro","Miembro del servidor","user",true)
+user_options=discord.slash_options()
+user_options.add("usuario","ID del usuario baneado","string",true)
+bot=discord.bot()
+bot.slash_with_options("kick","Expulsa a un miembro",func(ctx) {moderate(ctx,"kick")},member_options,guild,"2")
+bot.slash_with_options("ban","Banea a un miembro",func(ctx) {moderate(ctx,"ban")},member_options,guild,"4")
+bot.slash_with_options("unban","Revoca un baneo",func(ctx) {moderate(ctx,"unban")},user_options,guild,"4")
+bot.start()
+`,
 		"ecosystem": `import tripol.sort
 import tripol.time
 import tripol.system
@@ -274,7 +313,7 @@ show "Saved:", read_text("profile.txt")
 	}
 	source, ok := templates[template]
 	if !ok {
-		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem, game, discord, discord-embeds, discord-components, discord-slash or discord-welcome", template)
+		die("unknown project template %s; choose basic, calculator, files, records, libraries, ecosystem, game, discord, discord-embeds, discord-components, discord-slash, discord-welcome or discord-moderation", template)
 	}
 	if err := os.Mkdir(dir, 0755); err != nil {
 		die("cannot create project: %v", err)
@@ -302,6 +341,14 @@ show "Saved:", read_text("profile.txt")
 		guide := "# Discord welcome bot\n\n" +
 			"Set DISCORD_TOKEN, DISCORD_GUILD_ID and DISCORD_CHANNEL_ID in the process environment. Use a channel in that server. Enable Server Members Intent in the Discord Developer Portal and grant View Channel and Send Messages in the welcome channel. Start with `tripol run` on Linux x86-64 or Windows x64. The bot sends a welcome message when a human joins the configured server and logs a delivery failure while continuing to handle events.\n\n" +
 			"Configura DISCORD_TOKEN, DISCORD_GUILD_ID y DISCORD_CHANNEL_ID en el entorno del proceso. Usa un canal de ese servidor. Activa Server Members Intent en el portal de desarrolladores de Discord y concede permisos para ver el canal y enviar mensajes. Ejecuta `tripol run` en Linux x86-64 o Windows x64. El bot da la bienvenida cuando una persona se une al servidor configurado y sigue procesando eventos si falla el envío.\n"
+		if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte(guide), 0644); err != nil {
+			die("%v", err)
+		}
+	}
+	if template == "discord-moderation" {
+		guide := "# Discord moderation bot\n\n" +
+			"Set DISCORD_TOKEN, DISCORD_GUILD_ID and DISCORD_OPERATOR_ID. Install the bot in that guild with Kick Members and Ban Members. The commands /kick, /ban and /unban require the corresponding Discord default permissions and the handler checks the configured operator and guild. The bot defers privately before making the REST call. The bot’s role must rank above the target for applicable actions.\n\n" +
+			"Configura DISCORD_TOKEN, DISCORD_GUILD_ID y DISCORD_OPERATOR_ID. Instala el bot en ese servidor con permisos para expulsar y banear miembros. Los comandos /kick, /ban y /unban requieren los permisos predeterminados correspondientes de Discord y el callback comprueba el operador y servidor configurados. El bot confirma la interacción en privado antes de llamar a REST. El rol del bot debe estar por encima del objetivo en las operaciones donde se aplica la jerarquía.\n"
 		if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte(guide), 0644); err != nil {
 			die("%v", err)
 		}
