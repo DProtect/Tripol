@@ -1,5 +1,5 @@
 {
-  "commit": "819a0a9a97e3d9b2482ff329052956c082f8fc3d",
+  "commit": "8b18682173ba411998a087ff057798405e8854ad",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
   "total": 153,
@@ -1032,7 +1032,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "6163\n"
+      "output": "6762\n"
     },
     {
       "file": "docs/libraries/ui.html",
