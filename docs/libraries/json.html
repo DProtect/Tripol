@@ -139,7 +139,7 @@ show obj.encode()</code></pre>
 <p><span data-es="Resultado esperado: {&quot;n&quot;:42}">Expected: {&quot;n&quot;:42}</span></p>
 <p><span data-es="Funciona sin red. El ejemplo no abre una conexión.">Runs offline. The example does not open a socket.</span></p>
 </section>
-<h2 id="typed-decoding"><span data-es="Decodifica a tus propias estructuras">Decode into your own structures</span></h2><p><span data-es="json.decode(Tipo, texto) admite listas homogéneas, cadenas, enteros y booleanos. Los campos requeridos ausentes y las claves duplicadas se rechazan.">json.decode(Type, text) supports homogeneous lists, text, signed integers and booleans. Missing or duplicate fields fail validation.</span></p><pre><code class="language-tripol">import tripol.json
+<h2 id="typed-decoding"><span data-es="Decodifica a tus propias estructuras">Decode into your own structures</span></h2><p><span data-es="json.decode(Tipo, texto) lee números, booleanos, estructuras y listas tipados. Los campos ausentes pueden tener valores predeterminados y los opcionales aceptan null.">json.decode(Type, text) reads typed numbers, booleans, records and lists. Default values apply to missing fields and optional fields accept null.</span></p><pre><code class="language-tripol">import tripol.json
 
 struct Row {
     title:string
@@ -156,4 +156,24 @@ rows=report.rows
 for row in rows {
     show row.title,row.values.get(0),row.values.get(1)
 }
-</code></pre><p><code>Temperatura 20 21</code></p></article><aside class="docs-toc"><div class="side-kicker"><span data-es="En esta página">On this page</span></div><nav id="toc-links"></nav></aside></main><dialog id="doc-search"><div class="search-head"><input aria-label="Search documentation" data-placeholder-es="Buscar guías, bibliotecas, funciones..." id="global-search" placeholder="Search guides, libraries, functions..." type="search"/><button aria-label="Close" class="doc-action" id="search-close">Esc</button></div><div aria-live="polite" id="search-results"></div></dialog><div class="docs-toast" id="doc-toast" role="status"></div></body></html>
+</code></pre><p><code>Temperatura 20 21</code></p><h2 id="typed-encoding"><span data-es="Valores opcionales y serialización tipada">Optional values and typed serialization</span></h2><pre><code class="language-tripol">import tripol.json
+
+struct Player {
+    name:string
+    health:int = 100
+    speed:float = 1.5
+    points:int? = null
+}
+
+player = json.decode(Player, &quot;{\&quot;name\&quot;:\&quot;Alex\&quot;}&quot;)
+show player.name, player.health, player.speed
+show player.points.or_else(0)
+
+other = Player(speed: 2.75, name: &quot;Lina&quot;, points: some(7))
+show json.encode(Player, other)
+
+bonus = 3
+adjusted = func(points:int) { points + bonus }
+bonus = 10
+show adjusted(7)
+</code></pre></article><aside class="docs-toc"><div class="side-kicker"><span data-es="En esta página">On this page</span></div><nav id="toc-links"></nav></aside></main><dialog id="doc-search"><div class="search-head"><input aria-label="Search documentation" data-placeholder-es="Buscar guías, bibliotecas, funciones..." id="global-search" placeholder="Search guides, libraries, functions..." type="search"/><button aria-label="Close" class="doc-action" id="search-close">Esc</button></div><div aria-live="polite" id="search-results"></div></dialog><div class="docs-toast" id="doc-toast" role="status"></div></body></html>

@@ -1,10 +1,10 @@
 (function editorTools(root){
 'use strict';
-const keywords=new Set('show let const func return if else while for in repeat break continue assert and or not import struct try catch finally throw scratch'.split(' '));
+const keywords=new Set('show let const func return if else while for in repeat break continue assert and or not import struct try catch finally throw scratch async await'.split(' '));
 const types=new Set('int bool float string ints list string_list bool_list float_list'.split(' '));
-const builtins=new Set('input input_int len sum range ints abs min max sqrt float text parse_int slice'.split(' '));
-const reserved=new Set([...keywords,...types,...builtins,'true','false']);
-function tokenize(src){const pattern=/(\/\/[^\n]*|#[^\n]*|f?"(?:\\.|[^"\\\n])*"?|\b\d+(?:\.\d+)?\b|[A-Za-z_][A-Za-z_0-9]*|==|!=|<=|>=|=>|->|\+=|-=|\*=|\/=|%=|&&|\|\||[+\-*/%=<>!]|[{}()[\],.:;]|\s+|.)/gu;let out=[];for(const m of src.matchAll(pattern)){const v=m[0];let kind='plain';if(v.startsWith('//')||v.startsWith('#'))kind='comment';else if(v.startsWith('"')||v.startsWith('f"'))kind='string';else if(/^\d/.test(v))kind='number';else if(v==='true'||v==='false')kind='literal';else if(keywords.has(v))kind='keyword';else if(types.has(v))kind='type';else if(builtins.has(v)||/^[A-Za-z_]/.test(v)&&/^\s*\(/.test(src.slice(m.index+v.length)))kind='function';else if(/^[A-Za-z_]/.test(v)&&/^\s*\./.test(src.slice(m.index+v.length)))kind='namespace';else if(/^[+\-*/%=<>!&|]/.test(v))kind='operator';else if(/^[{}()[\],.:;]$/.test(v))kind='punct';out.push({v,kind})}return out}
+const builtins=new Set('input input_int len sum range ints abs min max sqrt float text parse_int slice some'.split(' '));
+const reserved=new Set([...keywords,...types,...builtins,'true','false','null']);
+function tokenize(src){const pattern=/(\/\/[^\n]*|#[^\n]*|f?"(?:\\.|[^"\\\n])*"?|\b\d+(?:\.\d+)?\b|[A-Za-z_][A-Za-z_0-9]*|==|!=|<=|>=|=>|->|\+=|-=|\*=|\/=|%=|&&|\|\||[+\-*/%=<>!]|[{}()[\],.:;]|\s+|.)/gu;let out=[];for(const m of src.matchAll(pattern)){const v=m[0];let kind='plain';if(v.startsWith('//')||v.startsWith('#'))kind='comment';else if(v.startsWith('"')||v.startsWith('f"'))kind='string';else if(/^\d/.test(v))kind='number';else if(v==='true'||v==='false'||v==='null')kind='literal';else if(keywords.has(v))kind='keyword';else if(types.has(v))kind='type';else if(builtins.has(v)||/^[A-Za-z_]/.test(v)&&/^\s*\(/.test(src.slice(m.index+v.length)))kind='function';else if(/^[A-Za-z_]/.test(v)&&/^\s*\./.test(src.slice(m.index+v.length)))kind='namespace';else if(/^[+\-*/%=<>!&|]/.test(v))kind='operator';else if(/^[{}()[\],.:;]$/.test(v))kind='punct';out.push({v,kind})}return out}
 function recordOwner(libs,source,name){
  const annotated=[...source.matchAll(/\b([A-Za-z_]\w*)\s*:\s*(\w+)\.(\w+)\b/g)].reverse().find(m=>m[1]===name);
  if(annotated){
@@ -36,7 +36,7 @@ function suggestions(src,pos){
   const [,name,prefix]=member;
   const lib=libs.find(l=>l.name===name);
   let functions=lib?.functions||[];
-  if(name==='json'&&lib)functions=[...functions,{name:'decode',signature:'json.decode(YourStruct, jsonText) -> YourStruct',en:'Decode JSON into a user-defined structure.',es:'Decodifica JSON a una estructura definida por el usuario.'}];
+  if(name==='json'&&lib)functions=[...functions,{name:'decode',signature:'json.decode(YourStruct, jsonText) -> YourStruct',en:'Decode JSON into a user-defined structure.',es:'Decodifica JSON a una estructura definida por el usuario.'},{name:'encode',signature:'json.encode(YourStruct, value) -> string',en:'Serialize a user-defined structure.',es:'Serializa una estructura definida por el usuario.'}];
   if(!lib){
    const owner=recordOwner(libs,before,name);
    functions=(owner?.lib?.methods||[]).filter(m=>m.receiver===owner.type);
@@ -53,7 +53,7 @@ function suggestions(src,pos){
   }
  }
  const prefix=(before.match(/[A-Za-z_][A-Za-z_0-9]*$/)||[''])[0];
- const known=[...keywords,...types,...builtins,'true','false',...libs.map(l=>l.name)];
+ const known=[...keywords,...types,...builtins,'true','false','null',...libs.map(l=>l.name)];
  const local=tokenize(src).filter(t=>t.kind==='plain'||t.kind==='function').map(t=>t.v).filter(v=>/^[A-Za-z_][A-Za-z_0-9]*$/.test(v)&&!reserved.has(v));
  return {prefix,items:[...new Set([...known,...local])].filter(v=>v.startsWith(prefix)&&v!==prefix).slice(0,12),details:{}}
 }
