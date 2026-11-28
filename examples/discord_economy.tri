@@ -1,0 +1,43 @@
+import tripol.discord
+import tripol.env
+import tripol.files
+import tripol.json
+
+func points_path(ctx:discord.Interaction)->string {
+    assert ctx.user_id!="" and discord.event_id(json.quote(ctx.user_id))==ctx.user_id,"Se requiere un usuario de Discord"
+    return "points-"+ctx.user_id+".log"
+}
+
+func daily(ctx) {
+    if not ctx.respond(ctx.defer(true)) {return ""}
+    recorded=false
+    try {recorded=files.append_line(points_path(ctx),"10")==3} catch code {recorded=false}
+    if recorded {ctx.edit_reply("Sumaste 10 puntos. Usa /saldo para consultar el total.")}
+    else {
+        ctx.reset_cooldown()
+        ctx.edit_reply("No se pudieron guardar los puntos. Intenta de nuevo.")
+    }
+    ""
+}
+
+func balance(ctx) {
+    points=0
+    readable=true
+    try {
+        entries=files.read(points_path(ctx))
+        for i in range(len(entries)) {
+            if byte_at(entries,i)==10 {points+=10}
+        }
+    } catch code {readable=false}
+    if not readable {return ctx.reply("Aún no hay puntos disponibles para consultar.",true)}
+    ctx.reply("Tu saldo es de "+text(points)+" puntos.",true)
+}
+
+guild=env.get("DISCORD_GUILD_ID")
+assert guild!="","Configura DISCORD_GUILD_ID"
+bot=discord.bot()
+bot.slash("daily","Recibe tus puntos diarios",daily,guild)
+bot.cooldown("daily",86400,"user","Puedes volver a pedir puntos en",guild)
+bot.slash("saldo","Consulta tus puntos",balance,guild)
+bot.persist_cooldowns("economy-cooldowns.json")
+bot.start()

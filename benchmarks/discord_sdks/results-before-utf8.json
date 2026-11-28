@@ -1,0 +1,65 @@
+{
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "runs": 7,
+  "count": 20000,
+  "embed_button": {
+    "TRIPOL": {
+      "startup_ms": 0.318,
+      "idle_rss_kib": 52,
+      "peak_rss_kib": 60,
+      "cpu_ms_with_startup": 85.455,
+      "serialize_ms": 85.129,
+      "payloads_per_second": 234936.751
+    },
+    "Discord.js": {
+      "startup_ms": 346.294,
+      "idle_rss_kib": 75656,
+      "peak_rss_kib": 99484,
+      "cpu_ms_with_startup": 1043.574,
+      "serialize_ms": 495.879,
+      "payloads_per_second": 40332.444
+    },
+    "Discord.py": {
+      "startup_ms": 197.027,
+      "idle_rss_kib": 36548,
+      "peak_rss_kib": 36720,
+      "cpu_ms_with_startup": 641.407,
+      "serialize_ms": 394.371,
+      "payloads_per_second": 50713.638
+    },
+    "Serenity": {
+      "startup_ms": 1.374,
+      "idle_rss_kib": 1120,
+      "peak_rss_kib": 1128,
+      "cpu_ms_with_startup": 12.87,
+      "serialize_ms": 11.533,
+      "payloads_per_second": 1734156.121
+    }
+  },
+  "components_v2": {
+    "TRIPOL": {
+      "startup_ms": 0.444,
+      "idle_rss_kib": 52,
+      "peak_rss_kib": 60,
+      "cpu_ms_with_startup": 19.282,
+      "serialize_ms": 19.021,
+      "payloads_per_second": 1051450.579
+    },
+    "Discord.js": {
+      "startup_ms": 385.964,
+      "idle_rss_kib": 75540,
+      "peak_rss_kib": 95656,
+      "cpu_ms_with_startup": 720.292,
+      "serialize_ms": 141.111,
+      "payloads_per_second": 141732.659
+    },
+    "Discord.py": {
+      "startup_ms": 201.295,
+      "idle_rss_kib": 36540,
+      "peak_rss_kib": 36784,
+      "cpu_ms_with_startup": 461.342,
+      "serialize_ms": 200.071,
+      "payloads_per_second": 99964.493
+    }
+  }
+}

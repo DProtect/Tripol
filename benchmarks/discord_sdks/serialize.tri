@@ -1,0 +1,37 @@
+import tripol.discord
+import tripol.time
+
+func classic()->string {
+    card=discord.embed()
+    card.title("TRIPOL")
+    card.description("Discord")
+    card.color("#00A0FF")
+    card.field("Version","0.28")
+    row=discord.button_row()
+    row.button("Confirm","confirm","success")
+    panel=discord.components()
+    panel.row(row)
+    return "["+card.entry()+","+panel.entries_json()+"]"
+}
+
+func modern()->string {
+    panel=discord.container("#00A0FF")
+    panel.text("TRIPOL")
+    return panel.payload()
+}
+
+show "READY"
+count=input_int("")
+mode=input_int("")
+total=0
+begin=time.now_ns()
+repeat count {
+    scratch {
+        if mode==0 {total+=len(classic())}
+        else {total+=len(modern())}
+    }
+}
+show time.elapsed_ns(begin),total
+if mode==0 {show classic()}
+else {show modern()}
+input_int("")

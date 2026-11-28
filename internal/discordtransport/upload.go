@@ -50,7 +50,7 @@ func (c *Client) UploadMessage(ctx context.Context, route, token string, body []
 		segments[3] != "channels" || !snowflake(segments[4]) || segments[5] != "messages" || !validToken(token) {
 		return nil, errors.New("invalid Discord upload destination")
 	}
-	return c.upload(ctx, route, token, body, false)
+	return c.upload(ctx, route, token, body, false, false)
 }
 
 // UploadInteraction sends a message as the initial interaction callback.
@@ -61,10 +61,10 @@ func (c *Client) UploadInteraction(ctx context.Context, route string, body []byt
 	}
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	return c.upload(ctx, route, "", body, true)
+	return c.upload(ctx, route, "", body, true, true)
 }
 
-func (c *Client) upload(ctx context.Context, route, token string, body []byte, initial bool) ([]byte, error) {
+func (c *Client) upload(ctx context.Context, route, token string, body []byte, initial, anonymous bool) ([]byte, error) {
 	var envelope struct {
 		Payload map[string]json.RawMessage `json:"payload"`
 		Files   []string                   `json:"files"`
@@ -166,5 +166,5 @@ func (c *Client) upload(ctx context.Context, route, token string, body []byte, i
 		}
 		return io.MultiReader(append(readers, bytes.NewReader(parts[len(files)]))...)
 	}
-	return c.requestBody(ctx, http.MethodPost, route, token, reader, size, writer.FormDataContentType(), initial)
+	return c.requestBody(ctx, http.MethodPost, route, token, reader, size, writer.FormDataContentType(), anonymous)
 }

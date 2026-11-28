@@ -230,11 +230,12 @@
     "interaction_matches": "func discord.interaction_matches(key:string,selector:string)->bool",
     "interaction_context": "func discord.interaction_context(payload:string,key:string)->Interaction",
     "dispatch_interaction": "func discord.dispatch_interaction(event:string,key:string,handler:func(Interaction)->string)->string",
-    "deliver_interaction": "func discord.deliver_interaction(event:string,key:string,handler:func(Interaction)->string)->bool",
+    "deliver_interaction": "func discord.deliver_interaction(event:string,key:string,handler:func(Interaction)->string,policy=\"\")->bool",
     "slash_name": "func discord.slash_name(name:string)->bool",
     "permissions_bitset_valid": "func discord.permissions_bitset_valid(value:string)->bool",
     "permission_index": "func discord.permission_index(name:string)->int",
     "command_permission_payload": "func discord.command_permission_payload(default_permissions:string)->string",
+    "cooldown_bucket": "func discord.cooldown_bucket(command:string,scope:string,subject=\"\",guild_id=\"\")->CooldownBucket",
     "slash_is_current": "func discord.slash_is_current(remote:string,definition:string)->bool",
     "sync_slash_commands": "func discord.sync_slash_commands(specs:string_list,guilds:string_list)->bool",
     "interaction_values": "func discord.interaction_values(values:string)->string_list",
@@ -255,7 +256,13 @@
     "guild": "func discord.guild(id:string)->Guild",
     "role_payload": "func discord.role_payload(name:string,permissions:string,color:string)->string",
     "post_message": "func discord.post_message(channel_id:string,content:string)->string",
-    "channel_ref": "func discord.channel_ref(id:string)->Channel"
+    "channel_ref": "func discord.channel_ref(id:string)->Channel",
+    "webhook_ref": "func discord.webhook_ref(id:string,credential=\"\")->Webhook",
+    "invite_path": "func discord.invite_path(code:string)->string",
+    "invite_info": "func discord.invite_info(code:string,counts=false)->string",
+    "revoke_invite": "func discord.revoke_invite(code:string)->bool",
+    "archive_minutes": "func discord.archive_minutes(duration:string)->int",
+    "forum_tags": "func discord.forum_tags()->ForumTags"
   },
   "discord.Message": {
     "matches": "Message.matches(content:string)->bool",
@@ -272,6 +279,9 @@
     "start": "Bot.start()->int",
     "start_with_events": "Bot.start_with_events(registry:GatewayEvents)->int",
     "bind_interaction": "Bot.bind_interaction(key:string,handler:func(Interaction)->string,definition=\"\",guild_id=\"\")->bool",
+    "permission": "Bot.permission(name:string,permission:string,target_option=\"\",guild_id=\"\")->bool",
+    "cooldown": "Bot.cooldown(name:string,seconds:int,scope=\"user\",message=\"\",guild_id=\"\")->bool",
+    "persist_cooldowns": "Bot.persist_cooldowns(path:string)->bool",
     "slash": "Bot.slash(name:string,description:string,handler:func(Interaction)->string,guild_id=\"\",default_permissions=\"\")->bool",
     "slash_with_options": "Bot.slash_with_options(name:string,description:string,handler:func(Interaction)->string,options:SlashOptions,guild_id=\"\",default_permissions=\"\")->bool",
     "user_menu": "Bot.user_menu(name:string,handler:func(Interaction)->string,guild_id=\"\",default_permissions=\"\")->bool",
@@ -339,6 +349,10 @@
     "subcommand": "Interaction.subcommand()->string",
     "focused": "Interaction.focused()->string",
     "can": "Interaction.can(permission:string)->bool",
+    "bot_can": "Interaction.bot_can(permission:string)->bool",
+    "can_moderate": "Interaction.can_moderate(target:string,permission:string)->bool",
+    "cooldown_remaining": "Interaction.cooldown_remaining()->int",
+    "reset_cooldown": "Interaction.reset_cooldown()->bool",
     "target_id": "Interaction.target_id()->string",
     "target": "Interaction.target()->string",
     "target_username": "Interaction.target_username()->string",
@@ -361,6 +375,10 @@
     "edit_followup_payload": "Interaction.edit_followup_payload(message_id:string,body:string)->bool",
     "edit_followup": "Interaction.edit_followup(message_id:string,content:string)->bool",
     "delete_followup": "Interaction.delete_followup(message_id:string)->bool"
+  },
+  "discord.CooldownBucket": {
+    "remaining": "CooldownBucket.remaining()->int",
+    "reset": "CooldownBucket.reset()->bool"
   },
   "discord.Modal": {
     "add_label": "Modal.add_label(id:string,label:string,component:string,description=\"\")->bool",
@@ -415,7 +433,10 @@
     "roles": "Guild.roles()->string",
     "move_role": "Guild.move_role(role_id:string,position:int)->bool",
     "role_ref": "Guild.role_ref(id:string)->Role",
-    "create_role": "Guild.create_role(name:string,permissions=\"0\",color=\"\")->string"
+    "create_role": "Guild.create_role(name:string,permissions=\"0\",color=\"\")->string",
+    "move_channel": "Guild.move_channel(channel_id:string,position:int)->bool",
+    "private_channel": "Guild.private_channel(name:string,user_id:string,parent_id=\"\")->string",
+    "invites": "Guild.invites()->string"
   },
   "discord.Role": {
     "id": "Role.id()->string",
@@ -442,6 +463,21 @@
     "topic": "Channel.topic(topic:string)->bool",
     "move": "Channel.move(parent_id=\"\")->bool",
     "delete": "Channel.delete()->bool",
+    "lock": "Channel.lock()->bool",
+    "unlock": "Channel.unlock()->bool",
+    "overwrite": "Channel.overwrite(id:string,allow=\"0\",deny=\"0\",kind=\"role\")->bool",
+    "clear_overwrite": "Channel.clear_overwrite(id:string)->bool",
+    "create_webhook": "Channel.create_webhook(name:string)->Webhook",
+    "invite": "Channel.invite(max_age=86400,max_uses=0,temporary=false,unique=true)->string",
+    "invites": "Channel.invites()->string",
+    "thread": "Channel.thread(name:string,archive=\"day\",private=false)->string",
+    "thread_from": "Channel.thread_from(message_id:string,name:string,archive=\"day\")->string",
+    "archive": "Channel.archive(enabled=true)->bool",
+    "lock_thread": "Channel.lock_thread(enabled=true)->bool",
+    "thread_member": "Channel.thread_member(user_id=\"@me\",enabled=true)->bool",
+    "post": "Channel.post(title:string,content:string,archive=\"day\")->string\nChannel.post(title:string,content:string,tags:string_list,archive=\"day\")->string",
+    "apply_tags": "Channel.apply_tags(tags:string_list)->bool",
+    "set_forum_tags": "Channel.set_forum_tags(tags:ForumTags)->bool",
     "slowmode": "Channel.slowmode(seconds:int)->bool",
     "delete_message": "Channel.delete_message(message_id:string)->bool",
     "edit_message": "Channel.edit_message(message_id:string,content:string)->bool",
@@ -449,6 +485,18 @@
     "purge": "Channel.purge(message_ids:string_list)->bool",
     "pin": "Channel.pin(message_id:string,pinned=true)->bool",
     "react": "Channel.react(message_id:string,emoji:string,enabled=true)->bool"
+  },
+  "discord.Webhook": {
+    "id": "Webhook.id()->string",
+    "read": "Webhook.read()->WebhookInfo",
+    "edit": "Webhook.edit(name:string,channel_id=\"\")->bool",
+    "delete": "Webhook.delete()->bool",
+    "send": "Webhook.send(content:string)->string\nWebhook.send(embed:Embed)->string\nWebhook.send(batch:Embeds)->string\nWebhook.send(layout:Components)->string",
+    "send_files": "Webhook.send_files(layout:Components,paths:string_list)->string\nWebhook.send_files(embed:Embed,paths:string_list)->string\nWebhook.send_files(content:string,paths:string_list)->string"
+  },
+  "discord.ForumTags": {
+    "tag": "ForumTags.tag(name:string,id=\"\",moderated=false,emoji=\"\")->bool",
+    "payload": "ForumTags.payload()->string"
   },
   "encoding": {
     "hex_digit": "func encoding.hex_digit(n:int) -> string",

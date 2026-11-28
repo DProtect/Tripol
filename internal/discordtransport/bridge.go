@@ -26,6 +26,11 @@ const (
 	OpRESTDelete
 	OpRESTUpload
 	OpInteractionUpload
+	OpCooldown
+	OpAuthorizeModeration
+	OpChannelLock
+	OpWebhook
+	OpWebhookUpload
 )
 
 // Serve is the private, process-local protocol between a launcher and one
@@ -33,6 +38,9 @@ const (
 func Serve(ctx context.Context, client *Client, input io.Reader, output io.Writer, diagnostics io.Writer) error {
 	var gateway *Gateway
 	var callbackDeadline time.Time
+	var cooldown cooldowns
+	var channelLock channelLocks
+	defer cooldown.close()
 	defer func() {
 		if gateway != nil {
 			gateway.Close()
@@ -68,6 +76,22 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 			if lengths[0] == 0 || lengths[0] > 1024 || lengths[1] != 0 || (op != OpInteractionEdit && lengths[2] == 0) {
 				return errors.New("invalid Discord bridge callback")
 			}
+		case OpWebhook, OpWebhookUpload:
+			if lengths[0] == 0 || lengths[0] > 20 || lengths[1] == 0 || lengths[1] > 512 || lengths[2] == 0 {
+				return errors.New("invalid Discord webhook bridge request")
+			}
+		case OpChannelLock:
+			if lengths[0] == 0 || lengths[0] > 20 || lengths[1] == 0 || lengths[1] > 512 || lengths[2] > 6 {
+				return errors.New("invalid Discord channel lock bridge request")
+			}
+		case OpAuthorizeModeration:
+			if lengths[0] != 0 || lengths[1] == 0 || lengths[1] > 512 || lengths[2] == 0 || lengths[2] > 4096 {
+				return errors.New("invalid Discord moderation bridge request")
+			}
+		case OpCooldown:
+			if lengths[0] == 0 || lengths[0] > 9 || lengths[1] != 0 || lengths[2] == 0 || lengths[2] > 16384 {
+				return errors.New("invalid Discord cooldown bridge request")
+			}
 		case OpREST, OpRESTGet, OpRESTPost, OpRESTPut, OpRESTPatch, OpRESTDelete, OpRESTUpload:
 			if lengths[0] == 0 || lengths[0] > 1024 || lengths[1] == 0 || lengths[1] > 512 {
 				return errors.New("invalid Discord bridge REST command")
@@ -97,6 +121,7 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 				reply = []byte("1")
 			}
 		case OpPoll:
+			cooldown.prune(time.Now())
 			if gateway == nil {
 				err = errors.New("Discord Gateway is closed")
 			} else {
@@ -147,6 +172,36 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 		case OpRESTGet, OpRESTPost, OpRESTPut, OpRESTPatch, OpRESTDelete:
 			methods := [...]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
 			reply, err = client.Request(ctx, methods[op-OpRESTGet], string(args[0]), string(args[1]), args[2])
+			if err != nil {
+				fmt.Fprintln(diagnostics, err)
+				reply, err = nil, nil
+			}
+		case OpWebhook, OpWebhookUpload:
+			reply, err = client.executeWebhook(ctx, string(args[0]), string(args[1]), args[2], op == OpWebhookUpload)
+			if err != nil {
+				fmt.Fprintln(diagnostics, err)
+				reply, err = nil, nil
+			}
+		case OpChannelLock:
+			if lockErr := channelLock.change(ctx, client, string(args[0]), string(args[1]), string(args[2])); lockErr != nil {
+				fmt.Fprintln(diagnostics, lockErr)
+			} else {
+				reply = []byte("1")
+			}
+		case OpAuthorizeModeration:
+			requestCtx := ctx
+			cancel := func() {}
+			if !callbackDeadline.IsZero() {
+				requestCtx, cancel = context.WithDeadline(ctx, callbackDeadline.Add(-250*time.Millisecond))
+			}
+			result, checkErr := client.authorizeModeration(requestCtx, string(args[1]), args[2])
+			cancel()
+			if checkErr != nil {
+				fmt.Fprintln(diagnostics, checkErr)
+			}
+			reply = []byte(result)
+		case OpCooldown:
+			reply, err = cooldown.respond(string(args[0]), args[2])
 			if err != nil {
 				fmt.Fprintln(diagnostics, err)
 				reply, err = nil, nil

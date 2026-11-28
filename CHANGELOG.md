@@ -1,5 +1,10 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
+- Slash commands support scoped cooldowns, custom replies, resets and optional persistent reservations.
+- Protected slash callbacks check effective actor and bot permissions, role hierarchy and guild ownership before member moderation.
+- Added reversible channel locks, permission overwrites, private channels, channel positions, webhook management and delivery, invites, threads and forum labels.
+- Removed redundant UTF-8 scans in embed, button and V2 text builders and published offline SDK measurements.
+
 - The Windows launcher uses the same transport as Linux, including Resume, zlib-stream compression, HTTPS reuse and rate-limit handling. A PE run directly uses WinHTTP.
 - JSON property lookup validates the complete object in a single traversal.
 - Multipart replies can stream attachments in a private or public initial interaction response. Launched Windows and Linux programs can also upload files to channels.

@@ -1,0 +1,48 @@
+import tripol.discord
+import tripol.env
+
+func operator(ctx:discord.Interaction)->bool {
+    return ctx.user_id==env.get("DISCORD_OPERATOR_ID") and ctx.channel_id==env.get("DISCORD_CHANNEL_ID")
+}
+
+func manage_channel(ctx:discord.Interaction,action:string)->string {
+    if not operator(ctx) {return ctx.reply("Usa la cuenta y el canal de pruebas autorizados.",true)}
+    if not ctx.respond(ctx.defer(true)) {return ""}
+    room=discord.channel_ref(ctx.channel_id)
+    if action=="invite" {
+        code=room.invite(600,1)
+        if code!="" {ctx.edit_reply("Invitación de un solo uso: https://discord.gg/"+code)}
+        else {ctx.edit_reply("Discord rechazó la creación de la invitación.")}
+        return ""
+    }
+    changed=false
+    if action=="lock" {changed=room.lock()}
+    if action=="unlock" {changed=room.unlock()}
+    if changed {ctx.edit_reply("Permiso de envío actualizado.")}
+    else {ctx.edit_reply("No se pudo actualizar el permiso. Revisa los permisos y el registro del lanzador.")}
+    return ""
+}
+
+func ban_test_member(ctx) {
+    if not operator(ctx) {return ctx.reply("Usa la cuenta y el canal de pruebas autorizados.",true)}
+    if not ctx.respond(ctx.defer(true)) {return ""}
+    member=discord.guild(ctx.guild_id).member(ctx.option_text("miembro"))
+    if member.ban() {ctx.edit_reply("Miembro de prueba baneado.")}
+    else {ctx.edit_reply("Discord rechazó el baneo.")}
+    ""
+}
+
+guild=env.get("DISCORD_GUILD_ID")
+assert guild!="" and env.get("DISCORD_OPERATOR_ID")!="" and env.get("DISCORD_CHANNEL_ID")!="","Configura servidor, operador y canal de pruebas"
+b=discord.bot()
+b.slash("lock","Bloquea el envío para @everyone",func(ctx) {manage_channel(ctx,"lock")},guild)
+b.permission("lock","MANAGE_ROLES","",guild)
+b.slash("unlock","Restaura el permiso guardado",func(ctx) {manage_channel(ctx,"unlock")},guild)
+b.permission("unlock","MANAGE_ROLES","",guild)
+b.slash("invite","Crea una invitación de prueba",func(ctx) {manage_channel(ctx,"invite")},guild)
+b.permission("invite","CREATE_INSTANT_INVITE","",guild)
+args=discord.slash_options()
+args.add("miembro","Cuenta de prueba autorizada","user",true)
+b.slash_with_options("ban-prueba","Banea una cuenta de prueba",ban_test_member,args,guild)
+b.permission("ban-prueba","BAN_MEMBERS","",guild)
+b.start()

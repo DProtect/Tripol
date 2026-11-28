@@ -212,52 +212,6 @@ func interactionFixture(input io.Reader, output io.Writer) error {
 	return serveBridgeFixture(input, output, steps)
 }
 
-type bridgeStep struct {
-	op                          uint32
-	path, auth, contains, reply string
-}
-
-func serveBridgeFixture(input io.Reader, output io.Writer, steps []bridgeStep) error {
-	for index, step := range steps {
-		var hdr [16]byte
-		if _, err := io.ReadFull(input, hdr[:]); err != nil {
-			return err
-		}
-		if op := binary.LittleEndian.Uint32(hdr[:4]); op != step.op {
-			return fmt.Errorf("step %d: want operation %d, got %d", index, step.op, op)
-		}
-		var args [3]string
-		for i := range args {
-			n := binary.LittleEndian.Uint32(hdr[4+i*4:])
-			if n > 65535 {
-				return fmt.Errorf("invalid argument length")
-			}
-			b := make([]byte, n)
-			if _, err := io.ReadFull(input, b); err != nil {
-				return err
-			}
-			args[i] = string(b)
-		}
-		if step.op == discordtransport.OpStart {
-			if !strings.Contains(args[0], step.contains) {
-				return fmt.Errorf("incorrect Identify in step %d", index)
-			}
-		} else if args[0] != step.path || args[1] != step.auth || !strings.Contains(args[2], step.contains) ||
-			(step.contains == "" && args[2] != "") {
-			return fmt.Errorf("invalid operation arguments in step %d", index)
-		}
-		var size [4]byte
-		binary.LittleEndian.PutUint32(size[:], uint32(len(step.reply)))
-		if _, err := output.Write(size[:]); err != nil {
-			return err
-		}
-		if _, err := io.WriteString(output, step.reply); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func TestLinuxDiscordModeration(t *testing.T) {
 	if runtime.GOARCH != "amd64" {
 		t.Skip("requires native x86-64")

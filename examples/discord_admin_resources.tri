@@ -1,0 +1,53 @@
+import tripol.discord
+import tripol.env
+
+guild_id=env.get("DISCORD_GUILD_ID")
+channel_id=env.get("DISCORD_CHANNEL_ID")
+mode=env.get("DISCORD_RESOURCE_TEST")
+assert guild_id!="" and channel_id!="","Configura el servidor y el canal privado de pruebas"
+room=discord.channel_ref(channel_id)
+
+if mode=="webhook" {
+    hook=room.create_webhook("TRIPOL validation")
+    assert hook.id()!="","Discord no creó el webhook"
+    info=hook.read()
+    show "Webhook",info.id,info.name
+    show "Edit",hook.edit("TRIPOL validator")
+    show "Message",hook.send("Mensaje de prueba")
+    card=discord.embed()
+    card.title("TRIPOL")
+    show "Embed",hook.send(card)
+    panel=discord.container("#00A0FF")
+    panel.text("Validación V2")
+    show "Components",hook.send(panel)
+    show "File",hook.send_files("Adjunto de prueba",list(["report.txt"]))
+    show "Delete",hook.delete()
+} else if mode=="thread" {
+    id=room.thread("TRIPOL validation","hour",true)
+    assert id!="","Discord no creó el hilo privado"
+    thread=discord.channel_ref(id)
+    show "Thread",id
+    show "Join",thread.thread_member()
+    show "Rename",thread.rename("TRIPOL validation edited")
+    show "Archive",thread.archive()
+    show "Lock",thread.lock_thread()
+    show "Delete",thread.delete()
+} else if mode=="forum" {
+    server=discord.guild(guild_id)
+    id=server.create_channel("tripol-validation","forum")
+    assert id!="","Discord no creó el foro de pruebas"
+    forum=discord.channel_ref(id)
+    tags=discord.forum_tags()
+    tags.tag("Validado","",false,"✅")
+    show "Forum",id
+    show "Set tag",forum.set_forum_tags(tags)
+    post_id=forum.post("TRIPOL validation","Publicación de prueba")
+    if post_id!="" {
+        post=discord.channel_ref(post_id)
+        show "Post",post_id
+        show "Archive",post.archive()
+    }
+    show "Delete forum",forum.delete()
+} else {
+    assert false,"Configura DISCORD_RESOURCE_TEST como webhook, thread o forum"
+}

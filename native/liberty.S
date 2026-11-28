@@ -1909,7 +1909,9 @@ method: .short 71,69,84,0
  mov r10,[rsp+160]
  mov rax,[rsp+176]
  cmp eax,7
- je .discord_host_upload_callback
+ je .discord_host_unauthenticated
+ cmp eax,8
+ je .discord_host_unauthenticated
  test eax,eax
  jnz .discord_host_rest_method
  cmp r9,1
@@ -1917,15 +1919,15 @@ method: .short 71,69,84,0
  lea eax,[r9+5]
  xor r9d,r9d
  jmp .discord_host_rest
-.discord_host_upload_callback:
- mov eax,13
+.discord_host_unauthenticated:
+ add eax,6
  xor r9d,r9d
  jmp .discord_host_rest
 .discord_host_legacy:
  mov eax,4
  jmp .discord_host_rest
 .discord_host_rest_method:
- cmp eax,6
+ cmp eax,12
  ja 9f
  add eax,6
 .discord_host_rest:
@@ -2243,11 +2245,13 @@ discord_delete: .short 68,69,76,69,84,69,0
 .section .text.discord_rest_linux,"ax"
  cmp r8,1
  jb .drest_empty
- cmp r8,7
+ cmp r8,12
  ja .drest_empty
- lea r11d,[r8+6] # Bridge operations 7 through 13, including multipart POST.
+ lea r11d,[r8+6] # Bridge operations 7 through 18.
  cmp r8,7
- jne .drest_authenticated
+ jb .drest_authenticated
+ cmp r8,8
+ ja .drest_authenticated
  xor ecx,ecx
 .drest_authenticated:
  mov r8,rax

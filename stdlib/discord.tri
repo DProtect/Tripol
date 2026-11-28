@@ -347,10 +347,10 @@ func run_handler(handler:func(Message)->string,intents=33281)->int {
 
 func run_session(handler:func(Message)->string,intents:int,keys:string_list,handlers:list[func(Interaction)->string])->int {
  assert intents==1 or intents==33281,"Unsupported Discord Gateway intents"
- return events().__run(handler,intents,keys,handlers)
+ return events().__run(handler,intents,keys,handlers,string_list())
 }
 
-func GatewayEvents.__run(self:GatewayEvents,handler:func(Message)->string,intents:int,keys:string_list,handlers:list[func(Interaction)->string])->int {
+func GatewayEvents.__run(self:GatewayEvents,handler:func(Message)->string,intents:int,keys:string_list,handlers:list[func(Interaction)->string],policies:string_list)->int {
  assert configured(),"Call discord.login first"
  scratch {assert has_channel() or len(bot_slot_get(36))==0,"Welcome requires a selected channel"}
  events=self.__names
@@ -388,7 +388,9 @@ func GatewayEvents.__run(self:GatewayEvents,handler:func(Message)->string,intent
       for i in range(keys.size()) {
        key=keys.get(i)
        if interaction_matches(key,selector) {
-        deliver_interaction(event,key,handlers.get(i))
+        policy=""
+        if i<policies.size() {policy=policies.get(i)}
+        deliver_interaction(event,key,handlers.get(i),policy)
         break
        }
       }
@@ -446,7 +448,9 @@ func GatewayEvents.__run(self:GatewayEvents,handler:func(Message)->string,intent
       for i in range(keys.size()) {
        key=keys.get(i)
        if interaction_matches(key,selector) {
-        deliver_interaction(event,key,handlers.get(i))
+        policy=""
+        if i<policies.size() {policy=policies.get(i)}
+        deliver_interaction(event,key,handlers.get(i),policy)
         break
        }
       }
@@ -497,10 +501,12 @@ struct Bot {
  interaction_handlers:list[func(Interaction)->string]
  slash_definitions:string_list
  slash_guilds:string_list
+ __policies:string_list
+ __cooldowns_path:string=""
 }
 
 func bot()->Bot {
- return Bot("", "online", "", string_list(4), string_list(4), &ignore_message, false, string_list(), empty_interactions(), string_list(), string_list())
+ return Bot("", "online", "", string_list(4), string_list(4), &ignore_message, false, string_list(), empty_interactions(), string_list(), string_list(), string_list())
 }
 
 func Bot.prefix(self:Bot,value:string)->bool {
@@ -581,11 +587,22 @@ func Bot.start_with_events(self:Bot,registry:GatewayEvents)->int {
   response=replies[i]
   scratch {reply(prefix+name,response)}
  }
+ if self.__cooldowns_path!="" {
+  assert gw_host_available(),"Persistent Discord cooldowns require tripol run or tripol discord-run"
+  assert discord_rest(8,"load","",json.quote(self.__cooldowns_path))=="0","Could not open the Discord cooldown store"
+ }
+ policies=self.__policies
+ if not gw_host_available() {
+  for i in range(policies.size()) {
+   policy=policies.get(i)
+   assert json.get_raw_large(policy,"seconds")=="0" or policy=="","Discord cooldowns require tripol run or tripol discord-run"
+  }
+ }
  // Registering a text command explicitly requests guild message content.
  sync_slash_commands(self.slash_definitions,self.slash_guilds)
  intents=registry.intent_mask()
  if names.size()>0 or self.handles_messages {intents=bits.set(bits.set(intents,9),15)}
- return registry.__run(self.message_handler,intents,self.interaction_keys,self.interaction_handlers)
+ return registry.__run(self.message_handler,intents,self.interaction_keys,self.interaction_handlers,policies)
 }
 
 struct GatewayEvent {
@@ -714,13 +731,13 @@ func embed()->Embed {
 }
 
 func Embed.title(self:Embed,value:string)->bool {
- assert utf8.valid(value) and utf8.count(value)<=256,"Embed title allows up to 256 characters"
+ assert utf8.count(value)<=256,"Embed title allows up to 256 characters"
  self.title_text=value
  return true
 }
 
 func Embed.description(self:Embed,value:string)->bool {
- assert utf8.valid(value) and utf8.count(value)<=4096,"Embed description allows up to 4096 characters"
+ assert utf8.count(value)<=4096,"Embed description allows up to 4096 characters"
  self.description_text=value
  return true
 }
@@ -770,8 +787,8 @@ func Embed.thumbnail(self:Embed,value:string)->bool {
 }
 
 func Embed.field(self:Embed,label:string,value:string,inline=false)->bool {
- assert len(label)>0 and utf8.valid(label) and utf8.count(label)<=256,"Embed field name requires 1 to 256 characters"
- assert len(value)>0 and utf8.valid(value) and utf8.count(value)<=1024,"Embed field value requires 1 to 1024 characters"
+ assert len(label)>0 and utf8.count(label)<=256,"Embed field name requires 1 to 256 characters"
+ assert len(value)>0 and utf8.count(value)<=1024,"Embed field value requires 1 to 1024 characters"
  labels=self.labels
  values=self.values
  flags=self.inline_flags
@@ -976,7 +993,7 @@ func Components.append_text(self:Components,entry:string,weight:int,characters:i
 }
 
 func Components.text(self:Components,content:string)->bool {
- assert len(content)>0 and utf8.valid(content),"Text Display requires nonempty UTF-8"
+ assert len(content)>0,"Text Display requires nonempty UTF-8"
  return self.append_text("{\"type\":10,\"content\":"+json.quote(content)+"}",1,utf8.count(content))
 }
 
@@ -1087,6 +1104,8 @@ struct Interaction {
  __interaction_token:string=""
  __response_state:int=0
  __member_permissions:string=""
+ __app_permissions:string=""
+ __cooldown_request:string=""
 }
 
 func interaction_message(content:string,ephemeral=false)->string {
@@ -1314,6 +1333,7 @@ func interaction_context(payload:string,key:string)->Interaction {
  has_message=len(json.get_raw_large(payload,"message"))>0
  ctx=Interaction(kind,name,id,app,guild,channel_id,user,data,has_message)
  ctx.__member_permissions=json.unquote(json.get_raw_large(member,"permissions"))
+ ctx.__app_permissions=json.unquote(json.get_raw_large(payload,"app_permissions"))
  return ctx
 }
 
@@ -1326,7 +1346,7 @@ func Interaction.__invoke(self:Interaction,handler:func(Interaction)->string)->s
  return handler(self)
 }
 
-func deliver_interaction(event:string,key:string,handler:func(Interaction)->string)->bool {
+func deliver_interaction(event:string,key:string,handler:func(Interaction)->string,policy="")->bool {
  if not interaction_matches(key,interaction_selector(event)) {return false}
  payload=json.get_raw_large(event,"d")
  raw=json.get_raw_large(payload,"token")
@@ -1340,6 +1360,10 @@ func deliver_interaction(event:string,key:string,handler:func(Interaction)->stri
  context=interaction_context(payload,key)
  if context.id=="" {return false}
  context.__interaction_token=secret
+ if policy!="" {
+  denied=context.__apply_policy(key,policy)
+  if denied!="" {return context.respond(denied)}
+ }
  body=handler(context)
  // A failed attempt can still be ambiguous. Never replay it automatically.
  if context.__response_state!=0 {return context.__response_state==2}
@@ -1362,10 +1386,13 @@ func Bot.bind_interaction(self:Bot,key:string,handler:func(Interaction)->string,
  handlers=self.interaction_handlers
  specs=self.slash_definitions
  guilds=self.slash_guilds
- assert keys.size()==handlers.size() and keys.size()==specs.size() and keys.size()==guilds.size(),"Invalid Discord interaction registry"
+ policies=self.__policies
+ assert keys.size()==handlers.size() and keys.size()==specs.size() and keys.size()==guilds.size() and keys.size()==policies.size(),"Invalid Discord interaction registry"
  for i in range(keys.size()) {
   if keys[i]==key {
    handlers.set(i,handler)
+   permission=json.unquote(json.get_raw_large(policies.get(i),"permission"))
+   if permission!="" {definition=self.__with_default_permission(definition,permission)}
    specs.set(i,definition)
    guilds.set(i,guild_id)
    return true
@@ -1375,6 +1402,7 @@ func Bot.bind_interaction(self:Bot,key:string,handler:func(Interaction)->string,
  handlers.add(handler)
  specs.add(definition)
  guilds.add(guild_id)
+ policies.add("")
  return true
 }
 
@@ -1385,31 +1413,84 @@ func permissions_bitset_valid(value:string)->bool {
 }
 
 func permission_index(name:string)->int {
- if name=="kick_members" {return 1}
- if name=="ban_members" {return 2}
- if name=="administrator" {return 3}
- if name=="manage_channels" {return 4}
- if name=="manage_guild" {return 5}
- if name=="view_audit_log" {return 7}
- if name=="view_channel" {return 10}
- if name=="send_messages" {return 11}
- if name=="manage_messages" {return 13}
- if name=="manage_roles" {return 28}
- if name=="manage_webhooks" {return 29}
- if name=="manage_threads" {return 34}
- if name=="moderate_members" {return 40}
+ lowered=""
+ for i in range(len(name)) {
+  b=byte_at(name,i)
+  if b>=65 and b<=90 {b+=32}
+  lowered+=utf8_char(b)
+ }
+ if lowered=="create_instant_invite" {return 0}
+ if lowered=="kick_members" {return 1}
+ if lowered=="ban_members" {return 2}
+ if lowered=="administrator" {return 3}
+ if lowered=="manage_channels" {return 4}
+ if lowered=="manage_guild" {return 5}
+ if lowered=="add_reactions" {return 6}
+ if lowered=="view_audit_log" {return 7}
+ if lowered=="priority_speaker" {return 8}
+ if lowered=="stream" {return 9}
+ if lowered=="view_channel" {return 10}
+ if lowered=="send_messages" {return 11}
+ if lowered=="send_tts_messages" {return 12}
+ if lowered=="manage_messages" {return 13}
+ if lowered=="embed_links" {return 14}
+ if lowered=="attach_files" {return 15}
+ if lowered=="read_message_history" {return 16}
+ if lowered=="mention_everyone" {return 17}
+ if lowered=="use_external_emojis" {return 18}
+ if lowered=="view_guild_insights" {return 19}
+ if lowered=="connect" {return 20}
+ if lowered=="speak" {return 21}
+ if lowered=="mute_members" {return 22}
+ if lowered=="deafen_members" {return 23}
+ if lowered=="move_members" {return 24}
+ if lowered=="use_vad" {return 25}
+ if lowered=="change_nickname" {return 26}
+ if lowered=="manage_nicknames" {return 27}
+ if lowered=="manage_roles" {return 28}
+ if lowered=="manage_webhooks" {return 29}
+ if lowered=="manage_guild_expressions" {return 30}
+ if lowered=="use_application_commands" {return 31}
+ if lowered=="request_to_speak" {return 32}
+ if lowered=="manage_events" {return 33}
+ if lowered=="manage_threads" {return 34}
+ if lowered=="create_public_threads" {return 35}
+ if lowered=="create_private_threads" {return 36}
+ if lowered=="use_external_stickers" {return 37}
+ if lowered=="send_messages_in_threads" {return 38}
+ if lowered=="use_embedded_activities" {return 39}
+ if lowered=="moderate_members" {return 40}
+ if lowered=="view_creator_monetization_analytics" {return 41}
+ if lowered=="use_soundboard" {return 42}
+ if lowered=="create_guild_expressions" {return 43}
+ if lowered=="create_events" {return 44}
+ if lowered=="use_external_sounds" {return 45}
+ if lowered=="send_voice_messages" {return 46}
+ if lowered=="set_voice_channel_status" {return 48}
+ if lowered=="send_polls" {return 49}
+ if lowered=="use_external_apps" {return 50}
+ if lowered=="pin_messages" {return 51}
+ if lowered=="bypass_slowmode" {return 52}
  return -1
 }
 
 func Interaction.can(self:Interaction,permission:string)->bool {
+ return self.__has_permission(self.__member_permissions,permission)
+}
+
+func Interaction.bot_can(self:Interaction,permission:string)->bool {
+ return self.__has_permission(self.__app_permissions,permission)
+}
+
+func Interaction.__has_permission(self:Interaction,raw:string,permission:string)->bool {
  index=permission_index(permission)
- if self.guild_id=="" or index<0 or not permissions_bitset_valid(self.__member_permissions) {return false}
+ if self.guild_id=="" or index<0 or not permissions_bitset_valid(raw) {return false}
  // Discord's bitfields are decimal strings. Long division is unnecessary:
- // each step can keep just the low 41 bits used by these named permissions.
- mask=2199023255552
+ // each step can keep just the low 53 bits used by these named permissions.
+ mask=9007199254740992
  value=0
- for i in range(len(self.__member_permissions)) {
-  value=(value*10+byte_at(self.__member_permissions,i)-48)%mask
+ for i in range(len(raw)) {
+  value=(value*10+byte_at(raw,i)-48)%mask
  }
  return bits.test(value,3) or bits.test(value,index)
 }
@@ -1421,6 +1502,165 @@ func command_permission_payload(default_permissions:string)->string {
  if index>=0 {return ",\"default_member_permissions\":"+json.quote(text(bits.mask(index)))}
  assert permissions_bitset_valid(default_permissions),"Use a Discord permission name, a canonical decimal bitset or everyone"
  return ",\"default_member_permissions\":"+json.quote(default_permissions)
+}
+
+func Bot.__slash_index(self:Bot,name:string,guild_id:string)->int {
+ assert slash_name(name),"Use the name of a registered slash command"
+ keys=self.interaction_keys
+ target="s"+name+"/"+guild_id
+ for i in range(keys.size()) {
+  if keys.get(i)==target {return i}
+ }
+ assert false,"Register this slash command before configuring permissions or cooldown"
+ return -1
+}
+
+func Bot.__policy(self:Bot,i:int,permission:string,target:string,seconds:int,scope:string,message:string)->bool {
+ policies=self.__policies
+ policies.set(i,"{\"permission\":"+json.quote(permission)+",\"target\":"+json.quote(target)+",\"seconds\":"+text(seconds)+",\"scope\":"+json.quote(scope)+",\"message\":"+json.quote(message)+"}")
+ return true
+}
+
+func Bot.__with_default_permission(self:Bot,definition:string,permission:string)->string {
+ at=find_bytes(definition,",\"default_member_permissions\":")
+ if at<0 {at=len(definition)-1}
+ return slice(definition,0,at)+command_permission_payload(permission)+"}"
+}
+
+func Bot.__user_option(self:Bot,definition:string)->string {
+ items=json.get_raw_large(definition,"options")
+ n=len(items)
+ at=json.ws(items,1,n)
+ name=""
+ while at<n and byte_at(items,at)==123 {
+  end=json.value(items,at,n,0)
+  if end<0 {return ""}
+  item=slice(items,at,end)
+  if json.get_raw_large(item,"type")=="6" {
+   assert name=="","Specify the target option for this command's hierarchy check"
+   name=json.unquote(json.get_raw_large(item,"name"))
+  }
+  at=json.ws(items,end,n)
+  if at>=n or byte_at(items,at)!=44 {return name}
+  at=json.ws(items,at+1,n)
+ }
+ return name
+}
+
+func Bot.permission(self:Bot,name:string,permission:string,target_option="",guild_id="")->bool {
+ assert permission_index(permission)>=0,"Use a Discord permission name, such as BAN_MEMBERS"
+ assert target_option=="" or slash_name(target_option),"Use the name of a user option for the hierarchy check"
+ index=permission_index(permission)
+ assert target_option=="" or index==1 or index==2 or index==28 or index==40,"Hierarchy checks support kick, ban, role management and timeout"
+ i=self.__slash_index(name,guild_id)
+ specs=self.slash_definitions
+ definition=specs.get(i)
+ if target_option=="" and (index==1 or index==2 or index==40) {target_option=self.__user_option(definition)}
+ specs.set(i,self.__with_default_permission(definition,permission))
+ policies=self.__policies
+ old=policies.get(i)
+ return self.__policy(i,permission,target_option,errors.int_or(json.get_raw_large(old,"seconds"),0),json.unquote(json.get_raw_large(old,"scope")),json.unquote(json.get_raw_large(old,"message")))
+}
+
+func Bot.cooldown(self:Bot,name:string,seconds:int,scope="user",message="",guild_id="")->bool {
+ assert seconds>=0 and seconds<=31536000,"Discord cooldown must be 0 to 31536000 seconds"
+ assert scope=="user" or scope=="channel" or scope=="guild" or scope=="global","Choose user, channel, guild or global for the Discord cooldown"
+ assert utf8.valid(message) and utf8.count(message)<=1960,"Discord cooldown message must fit in 1960 characters"
+ i=self.__slash_index(name,guild_id)
+ policies=self.__policies
+ old=policies.get(i)
+ return self.__policy(i,json.unquote(json.get_raw_large(old,"permission")),json.unquote(json.get_raw_large(old,"target")),seconds,scope,message)
+}
+
+func Bot.persist_cooldowns(self:Bot,path:string)->bool {
+ assert len(path)<=4096 and utf8.valid(path),"Provide a local cooldown store path"
+ self.__cooldowns_path=path
+ return true
+}
+
+func Interaction.__apply_policy(self:Interaction,key:string,policy:string)->string {
+ permission=json.unquote(json.get_raw_large(policy,"permission"))
+ if permission!="" and not self.can(permission) {return self.reply("Te falta el permiso efectivo requerido.",true)}
+ if permission!="" and not self.bot_can(permission) {return self.reply("El bot necesita el permiso requerido en este canal.",true)}
+ target=json.unquote(json.get_raw_large(policy,"target"))
+ if target!="" {
+  denied=self.__moderation_error(self.option_text(target),permission)
+  if denied!="" {return self.reply(denied,true)}
+ }
+ seconds=errors.int_or(json.get_raw_large(policy,"seconds"),0)
+ if seconds==0 {return ""}
+ scope=json.unquote(json.get_raw_large(policy,"scope"))
+ subject=""
+ if scope=="user" {subject=self.user_id}
+ if scope=="guild" {subject=self.guild_id}
+ if scope=="channel" {subject=self.channel_id}
+ if scope!="global" and (subject=="" or subject=="0") {return self.reply("Este comando requiere un contexto válido para el cooldown.",true)}
+ self.__cooldown_request="{\"command\":"+json.quote(key)+",\"scope\":"+json.quote(scope)+",\"subject\":"+json.quote(subject)+",\"seconds\":"+text(seconds)+"}"
+ left=self.__cooldown_exchange("use")
+ if left<0 {return self.reply("El cooldown no está disponible.",true)}
+ if left==0 {return ""}
+ message=json.unquote(json.get_raw_large(policy,"message"))
+ if message=="" {message="Vuelve a intentarlo en"}
+ return self.reply(message+" "+text(left)+" s.",true)
+}
+
+func Interaction.__moderation_error(self:Interaction,target:string,permission:string)->string {
+ if target=="" or event_id(json.quote(target))!=target {return "Selecciona un miembro válido."}
+ if not gw_host_available() {return "La comprobación de jerarquía requiere el lanzador de TRIPOL."}
+ request="{\"guild\":"+json.quote(self.guild_id)+",\"actor\":"+json.quote(self.user_id)+",\"target\":"+json.quote(target)+",\"permission\":"+text(permission_index(permission))+"}"
+ result=discord_rest(9,"",token(),request)
+ if result=="1" {return ""}
+ if result=="owner" {return "Esta operación está bloqueada para el propietario del servidor."}
+ if result=="self" {return "Esta operación no se puede aplicar al operador ni al bot."}
+ if result=="actor_role" {return "Tu rol debe estar por encima del rol del miembro."}
+ if result=="bot_role" {return "El rol del bot debe estar por encima del rol del miembro."}
+ if result=="actor_permission" {return "Te falta el permiso de moderación en el servidor."}
+ if result=="bot_permission" {return "Al bot le falta el permiso de moderación en el servidor."}
+ if result=="target_admin" {return "Discord no permite aislar a un administrador."}
+ return "No se pudo verificar la jerarquía de roles."
+}
+
+func Interaction.can_moderate(self:Interaction,target:string,permission:string)->bool {
+ if self.__interaction_token=="" or not self.can(permission) or not self.bot_can(permission) {return false}
+ return self.__moderation_error(target,permission)==""
+}
+
+struct CooldownBucket {
+ __request:string
+}
+
+func cooldown_bucket(command:string,scope:string,subject="",guild_id="")->CooldownBucket {
+ assert slash_name(command),"Use the registered slash command name"
+ assert guild_id=="" or event_id(json.quote(guild_id))==guild_id,"Invalid slash registration guild ID"
+ assert scope=="user" or scope=="channel" or scope=="guild" or scope=="global","Choose user, channel, guild or global"
+ assert (scope=="global" and subject=="") or (scope!="global" and subject!="" and subject!="0" and event_id(json.quote(subject))==subject),"Provide the ID for this cooldown scope"
+ request="{\"command\":"+json.quote("s"+command+"/"+guild_id)+",\"scope\":"+json.quote(scope)+",\"subject\":"+json.quote(subject)+"}"
+ return CooldownBucket(request)
+}
+
+func CooldownBucket.__exchange(self:CooldownBucket,action:string)->int {
+ if self.__request=="" or not gw_host_available() {return -1}
+ return errors.int_or(discord_rest(8,action,"",self.__request),-1)
+}
+
+func CooldownBucket.remaining(self:CooldownBucket)->int {
+ return self.__exchange("remaining")
+}
+
+func CooldownBucket.reset(self:CooldownBucket)->bool {
+ return self.__exchange("reset")==0
+}
+
+func Interaction.__cooldown_exchange(self:Interaction,action:string)->int {
+ return CooldownBucket(self.__cooldown_request).__exchange(action)
+}
+
+func Interaction.cooldown_remaining(self:Interaction)->int {
+ return self.__cooldown_exchange("remaining")
+}
+
+func Interaction.reset_cooldown(self:Interaction)->bool {
+ return self.__cooldown_exchange("reset")==0
 }
 
 func Bot.slash(self:Bot,name:string,description:string,handler:func(Interaction)->string,guild_id="",default_permissions="")->bool {
@@ -2261,8 +2501,8 @@ func button_row()->Buttons {
 }
 
 func Buttons.button(self:Buttons,label:string,id:string,style=1,disabled=false,emoji="")->bool {
- assert (label!="" or emoji!="") and utf8.valid(label) and utf8.count(label)<=80,"Discord buttons require text up to 80 characters or an emoji"
- assert len(id)>0 and utf8.valid(id) and utf8.count(id)<=100,"Discord custom IDs require 1 to 100 characters"
+ assert (label!="" or emoji!="") and utf8.count(label)<=80,"Discord buttons require text up to 80 characters or an emoji"
+ assert len(id)>0 and utf8.count(id)<=100,"Discord custom IDs require 1 to 100 characters"
  assert style>=1 and style<=4,"Discord custom button style must be 1 to 4"
  entries=self.entries
  ids=self.ids
@@ -2482,9 +2722,11 @@ func Guild.create_channel(self:Guild,name:string,kind="text",parent_id="",topic=
  if kind=="voice" {code=2}
  else if kind=="category" {code=4}
  else if kind=="announcement" {code=5}
- else {assert kind=="text","Choose text, voice, category or announcement"}
+ else if kind=="forum" {code=15}
+ else if kind=="media" {code=16}
+ else {assert kind=="text","Choose text, voice, category, announcement, forum or media"}
  assert parent_id=="" or (code!=4 and event_id(json.quote(parent_id))==parent_id),"Invalid Discord category ID"
- assert topic=="" or ((code==0 or code==5) and utf8.valid(topic) and utf8.count(topic)<=1024),"Invalid topic for Discord channel type"
+ assert topic=="" or ((code==0 or code==5 or code==15 or code==16) and utf8.valid(topic) and utf8.count(topic)<=1024),"Invalid topic for Discord channel type"
  body="{\"name\":"+json.quote(name)+",\"type\":"+text(code)
  if parent_id!="" {body+=",\"parent_id\":"+json.quote(parent_id)}
  if topic!="" {body+=",\"topic\":"+json.quote(topic)}
@@ -2660,6 +2902,265 @@ func Channel.move(self:Channel,parent_id="")->bool {
 
 func Channel.delete(self:Channel)->bool {
  return len(discord_rest(5,"/api/v10/channels/"+self.__id,token(),""))>0
+}
+
+func Channel.lock(self:Channel)->bool {
+ if not gw_host_available() {return false}
+ return discord_rest(10,self.__id,token(),"lock")=="1"
+}
+
+func Channel.unlock(self:Channel)->bool {
+ if not gw_host_available() {return false}
+ return discord_rest(10,self.__id,token(),"unlock")=="1"
+}
+
+func Channel.overwrite(self:Channel,id:string,allow="0",deny="0",kind="role")->bool {
+ assert id!="" and event_id(json.quote(id))==id,"Provide a role or user ID for the channel overwrite"
+ assert permissions_bitset_valid(allow) and permissions_bitset_valid(deny),"Channel permission masks must be decimal strings"
+ assert kind=="role" or kind=="user","Choose role or user for the channel overwrite"
+ target=0
+ if kind=="user" {target=1}
+ body="{\"type\":"+text(target)+",\"allow\":"+json.quote(allow)+",\"deny\":"+json.quote(deny)+"}"
+ return len(discord_rest(3,"/api/v10/channels/"+self.__id+"/permissions/"+id,token(),body))>0
+}
+
+func Channel.clear_overwrite(self:Channel,id:string)->bool {
+ assert id!="" and event_id(json.quote(id))==id,"Provide a role or user ID for the channel overwrite"
+ return len(discord_rest(5,"/api/v10/channels/"+self.__id+"/permissions/"+id,token(),""))>0
+}
+
+func Guild.move_channel(self:Guild,channel_id:string,position:int)->bool {
+ assert channel_id!="" and event_id(json.quote(channel_id))==channel_id and position>=0,"Provide a channel ID and a nonnegative position"
+ body="[{\"id\":"+json.quote(channel_id)+",\"position\":"+text(position)+"}]"
+ return len(discord_rest(4,self.__path("channels"),token(),body))>0
+}
+
+func Guild.private_channel(self:Guild,name:string,user_id:string,parent_id="")->string {
+ assert utf8.valid(name) and utf8.count(name)>=1 and utf8.count(name)<=100,"Discord channel names require 1 to 100 characters"
+ assert user_id!="" and event_id(json.quote(user_id))==user_id,"Provide the user's Discord ID"
+ assert parent_id=="" or event_id(json.quote(parent_id))==parent_id,"Provide a category ID or leave it empty"
+ body="{\"name\":"+json.quote(name)+",\"type\":0,\"permission_overwrites\":[{\"id\":"+json.quote(self.id)+",\"type\":0,\"deny\":\"1024\"},{\"id\":"+json.quote(user_id)+",\"type\":1,\"allow\":\"3072\"}]"
+ if parent_id!="" {body+=",\"parent_id\":"+json.quote(parent_id)}
+ return event_id(json.get_raw_large(discord_rest(2,self.__path("channels"),token(),body+"}"),"id"))
+}
+
+struct Webhook {
+ __id:string
+ __credential:string
+}
+
+struct WebhookInfo {
+ id:string
+ name:string
+ channel_id:string
+ guild_id:string
+}
+
+func webhook_ref(id:string,credential="")->Webhook {
+ assert id!="" and event_id(json.quote(id))==id,"Invalid Discord webhook ID"
+ return Webhook(id,credential)
+}
+
+func Webhook.id(self:Webhook)->string {return self.__id}
+
+func Channel.create_webhook(self:Channel,name:string)->Webhook {
+ assert utf8.valid(name) and utf8.count(name)>=1 and utf8.count(name)<=80,"Discord webhook names require 1 to 80 characters"
+ body=discord_rest(2,"/api/v10/channels/"+self.__id+"/webhooks",token(),"{\"name\":"+json.quote(name)+"}")
+ return Webhook(event_id(json.get_raw_large(body,"id")),json.unquote(json.get_raw_large(body,"token")))
+}
+
+func Webhook.read(self:Webhook)->WebhookInfo {
+ if self.__id=="" {return WebhookInfo("","","","")}
+ body=discord_rest(1,"/api/v10/webhooks/"+self.__id,token(),"")
+ return WebhookInfo(event_id(json.get_raw_large(body,"id")),json.unquote(json.get_raw_large(body,"name")),event_id(json.get_raw_large(body,"channel_id")),event_id(json.get_raw_large(body,"guild_id")))
+}
+
+func Webhook.edit(self:Webhook,name:string,channel_id="")->bool {
+ if self.__id=="" {return false}
+ assert utf8.valid(name) and utf8.count(name)>=1 and utf8.count(name)<=80,"Discord webhook names require 1 to 80 characters"
+ assert channel_id=="" or event_id(json.quote(channel_id))==channel_id,"Invalid Discord webhook channel ID"
+ body="{\"name\":"+json.quote(name)
+ if channel_id!="" {body+=",\"channel_id\":"+json.quote(channel_id)}
+ return len(discord_rest(4,"/api/v10/webhooks/"+self.__id,token(),body+"}"))>0
+}
+
+func Webhook.delete(self:Webhook)->bool {
+ if self.__id=="" {return false}
+ return len(discord_rest(5,"/api/v10/webhooks/"+self.__id,token(),""))>0
+}
+
+func Webhook.__send(self:Webhook,payload:string,multipart=false)->string {
+ if self.__id=="" or self.__credential=="" or not gw_host_available() {return ""}
+ method=11
+ if multipart {method=12}
+ return event_id(json.get_raw_large(discord_rest(method,self.__id,self.__credential,payload),"id"))
+}
+
+func Webhook.send(self:Webhook,content:string)->string {
+ return self.__send(interaction_message(content))
+}
+
+func Webhook.send(self:Webhook,embed:Embed)->string {
+ return self.__send(embed.payload())
+}
+
+func Webhook.send(self:Webhook,batch:Embeds)->string {
+ return self.__send(batch.payload())
+}
+
+func Webhook.send(self:Webhook,layout:Components)->string {
+ return self.__send(layout.payload())
+}
+
+func Webhook.send_files(self:Webhook,layout:Components,paths:string_list)->string {
+ return self.__send(upload_envelope(layout.payload(),paths),true)
+}
+
+func Webhook.send_files(self:Webhook,embed:Embed,paths:string_list)->string {
+ return self.__send(upload_envelope(embed.payload(),paths),true)
+}
+
+func Webhook.send_files(self:Webhook,content:string,paths:string_list)->string {
+ return self.__send(upload_envelope(interaction_message(content),paths),true)
+}
+
+func Channel.invite(self:Channel,max_age=86400,max_uses=0,temporary=false,unique=true)->string {
+ assert max_age>=0 and max_age<=604800,"Discord invite duration must be 0 to 604800 seconds"
+ assert max_uses>=0 and max_uses<=100,"Discord invite use limit must be 0 to 100"
+ body="{\"max_age\":"+text(max_age)+",\"max_uses\":"+text(max_uses)+",\"temporary\":"+json.boolean(temporary)+",\"unique\":"+json.boolean(unique)+"}"
+ return json.unquote(json.get_raw_large(discord_rest(2,"/api/v10/channels/"+self.__id+"/invites",token(),body),"code"))
+}
+
+func Channel.invites(self:Channel)->string {
+ return discord_rest(1,"/api/v10/channels/"+self.__id+"/invites",token(),"")
+}
+
+func Guild.invites(self:Guild)->string {
+ return discord_rest(1,self.__path("invites"),token(),"")
+}
+
+func invite_path(code:string)->string {
+ assert len(code)>0 and len(code)<=100,"Provide the Discord invite code"
+ for i in range(len(code)) {
+  b=byte_at(code,i)
+  assert (b>=48 and b<=57) or (b>=65 and b<=90) or (b>=97 and b<=122) or b==45 or b==95,"Invalid Discord invite code"
+ }
+ return "/api/v10/invites/"+code
+}
+
+func invite_info(code:string,counts=false)->string {
+ return discord_rest(1,invite_path(code)+"?with_counts="+json.boolean(counts)+"&with_expiration=true",token(),"")
+}
+
+func revoke_invite(code:string)->bool {
+ return len(discord_rest(5,invite_path(code),token(),""))>0
+}
+
+func archive_minutes(duration:string)->int {
+ if duration=="hour" {return 60}
+ if duration=="day" {return 1440}
+ if duration=="three_days" {return 4320}
+ assert duration=="week","Choose hour, day, three_days or week for auto archive"
+ return 10080
+}
+
+func Channel.thread(self:Channel,name:string,archive="day",private=false)->string {
+ assert utf8.valid(name) and utf8.count(name)>=1 and utf8.count(name)<=100,"Discord thread names require 1 to 100 characters"
+ kind=11
+ if private {kind=12}
+ body="{\"name\":"+json.quote(name)+",\"type\":"+text(kind)+",\"auto_archive_duration\":"+text(archive_minutes(archive))+"}"
+ return event_id(json.get_raw_large(discord_rest(2,"/api/v10/channels/"+self.__id+"/threads",token(),body),"id"))
+}
+
+func Channel.thread_from(self:Channel,message_id:string,name:string,archive="day")->string {
+ assert message_id!="" and event_id(json.quote(message_id))==message_id,"Invalid Discord message ID"
+ assert utf8.valid(name) and utf8.count(name)>=1 and utf8.count(name)<=100,"Discord thread names require 1 to 100 characters"
+ body="{\"name\":"+json.quote(name)+",\"auto_archive_duration\":"+text(archive_minutes(archive))+"}"
+ return event_id(json.get_raw_large(discord_rest(2,channel_path(self.__id)+"/"+message_id+"/threads",token(),body),"id"))
+}
+
+func Channel.archive(self:Channel,enabled=true)->bool {
+ return len(discord_rest(4,"/api/v10/channels/"+self.__id,token(),"{\"archived\":"+json.boolean(enabled)+"}"))>0
+}
+
+func Channel.lock_thread(self:Channel,enabled=true)->bool {
+ return len(discord_rest(4,"/api/v10/channels/"+self.__id,token(),"{\"locked\":"+json.boolean(enabled)+"}"))>0
+}
+
+func Channel.thread_member(self:Channel,user_id="@me",enabled=true)->bool {
+ assert user_id=="@me" or (user_id!="" and event_id(json.quote(user_id))==user_id),"Invalid Discord thread member ID"
+ method=3
+ if not enabled {method=5}
+ return len(discord_rest(method,"/api/v10/channels/"+self.__id+"/thread-members/"+user_id,token(),""))>0
+}
+
+func Channel.__tag_ids(self:Channel,tags:string_list)->string {
+ assert tags.size()<=5,"Discord posts accept up to five tags"
+ result="["
+ for i in range(tags.size()) {
+  id=tags.get(i)
+  assert id!="" and event_id(json.quote(id))==id,"Provide a Discord forum tag ID"
+  for j in range(i) {assert tags.get(j)!=id,"Duplicate Discord forum tag"}
+  if i>0 {result+=","}
+  result+=json.quote(id)
+ }
+ return result+"]"
+}
+
+func Channel.post(self:Channel,title:string,content:string,archive="day")->string {
+ return self.post(title,content,string_list(),archive)
+}
+
+func Channel.post(self:Channel,title:string,content:string,tags:string_list,archive="day")->string {
+ assert utf8.valid(title) and utf8.count(title)>=1 and utf8.count(title)<=100,"Discord forum titles require 1 to 100 characters"
+ body="{\"name\":"+json.quote(title)+",\"auto_archive_duration\":"+text(archive_minutes(archive))+",\"message\":"+interaction_message(content)+",\"applied_tags\":"+self.__tag_ids(tags)+"}"
+ return event_id(json.get_raw_large(discord_rest(2,"/api/v10/channels/"+self.__id+"/threads",token(),body),"id"))
+}
+
+func Channel.apply_tags(self:Channel,tags:string_list)->bool {
+ return len(discord_rest(4,"/api/v10/channels/"+self.__id,token(),"{\"applied_tags\":"+self.__tag_ids(tags)+"}"))>0
+}
+
+struct ForumTags {
+ __entries:string_list
+ __ids:string_list
+}
+
+func forum_tags()->ForumTags {
+ return ForumTags(string_list(),string_list())
+}
+
+func ForumTags.tag(self:ForumTags,name:string,id="",moderated=false,emoji="")->bool {
+ assert utf8.valid(name) and utf8.count(name)>=1 and utf8.count(name)<=20,"Discord forum tag names require 1 to 20 characters"
+ entries=self.__entries
+ ids=self.__ids
+ assert entries.size()<20,"Discord forums accept up to 20 tags"
+ assert id=="" or (event_id(json.quote(id))==id and not ids.contains(id)),"Use a unique existing tag ID or leave it empty"
+ item="{\"name\":"+json.quote(name)+",\"moderated\":"+json.boolean(moderated)
+ if id!="" {item+=",\"id\":"+json.quote(id)}
+ if emoji!="" {
+  parsed=emoji_payload(emoji)
+  custom=json.get_raw_large(parsed,"id")
+  if custom!="" {item+=",\"emoji_id\":"+custom}
+  else {item+=",\"emoji_name\":"+json.get_raw_large(parsed,"name")}
+ }
+ entries.add(item+"}")
+ ids.add(id)
+ return true
+}
+
+func ForumTags.payload(self:ForumTags)->string {
+ entries=self.__entries
+ result="["
+ for i in range(entries.size()) {
+  if i>0 {result+=","}
+  result+=entries.get(i)
+ }
+ return result+"]"
+}
+
+func Channel.set_forum_tags(self:Channel,tags:ForumTags)->bool {
+ return len(discord_rest(4,"/api/v10/channels/"+self.__id,token(),"{\"available_tags\":"+tags.payload()+"}"))>0
 }
 
 func Channel.slowmode(self:Channel,seconds:int)->bool {
