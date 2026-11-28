@@ -63,3 +63,42 @@ jobs:
         with:
           name: quantum-x-measurements
           path: benchmark-results/
+  http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRIPOL_NO_UPDATE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+          cache: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Build six HTTP benchmark clients
+        run: |
+          go build -trimpath -o "$RUNNER_TEMP/tripol" .
+          cd benchmarks/http_r2
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+          cargo build --manifest-path reqwest/Cargo.toml --release --locked
+          "$RUNNER_TEMP/tripol" build tripol.tri --target linux --profile turbo -o tripol-http
+          go build -trimpath -ldflags='-s -w' -o go-http net_http.go
+      - name: Exercise sequential, concurrent and streaming profiles
+        working-directory: benchmarks/http_r2
+        run: |
+          mkdir -p "$RUNNER_TEMP/http-results"
+          for mode in sequential concurrent stream; do
+            python run.py --mode "$mode" --runs 2 > "$RUNNER_TEMP/http-results/$mode.json"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dipo-http-2-measurements
+          path: ${{ runner.temp }}/http-results/

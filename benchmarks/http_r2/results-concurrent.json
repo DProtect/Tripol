@@ -1,0 +1,69 @@
+{
+  "mode": "concurrent",
+  "runs": 7,
+  "count": 400,
+  "width": 4,
+  "bytes": 512,
+  "results": {
+    "TRIPOL": {
+      "startup_ms": 3.535,
+      "idle_rss_kib": 8484,
+      "peak_rss_kib": 13648,
+      "cpu_ms_with_startup": 128.698,
+      "batch_ms_per_request": 0.292,
+      "requests_per_second": 3430.081,
+      "bytes_per_second": 1756201.561,
+      "connections": 4
+    },
+    "Requests": {
+      "startup_ms": 96.551,
+      "idle_rss_kib": 21240,
+      "peak_rss_kib": 21756,
+      "cpu_ms_with_startup": 412.47,
+      "batch_ms_per_request": 0.717,
+      "requests_per_second": 1394.035,
+      "bytes_per_second": 713745.728,
+      "connections": 4
+    },
+    "HTTPX": {
+      "startup_ms": 111.91,
+      "idle_rss_kib": 22692,
+      "peak_rss_kib": 23632,
+      "cpu_ms_with_startup": 400.772,
+      "batch_ms_per_request": 0.641,
+      "requests_per_second": 1559.901,
+      "bytes_per_second": 798669.33,
+      "connections": 4
+    },
+    "Fetch": {
+      "startup_ms": 36.605,
+      "idle_rss_kib": 28512,
+      "peak_rss_kib": 73584,
+      "cpu_ms_with_startup": 397.721,
+      "batch_ms_per_request": 0.623,
+      "requests_per_second": 1606.382,
+      "bytes_per_second": 822467.482,
+      "connections": 8
+    },
+    "Reqwest": {
+      "startup_ms": 1.528,
+      "idle_rss_kib": 2908,
+      "peak_rss_kib": 3296,
+      "cpu_ms_with_startup": 21.407,
+      "batch_ms_per_request": 0.124,
+      "requests_per_second": 8084.406,
+      "bytes_per_second": 4139215.981,
+      "connections": 4
+    },
+    "Go": {
+      "startup_ms": 2.351,
+      "idle_rss_kib": 5188,
+      "peak_rss_kib": 8840,
+      "cpu_ms_with_startup": 52.805,
+      "batch_ms_per_request": 0.163,
+      "requests_per_second": 6134.736,
+      "bytes_per_second": 3140984.629,
+      "connections": 4
+    }
+  }
+}

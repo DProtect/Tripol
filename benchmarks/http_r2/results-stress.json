@@ -1,0 +1,40 @@
+{
+  "concurrent": {
+    "mode": "concurrent",
+    "runs": 1,
+    "count": 16000,
+    "width": 4,
+    "bytes": 512,
+    "results": {
+      "TRIPOL": {
+        "startup_ms": 4.058,
+        "idle_rss_kib": 8520,
+        "peak_rss_kib": 15232,
+        "cpu_ms_with_startup": 4638.617,
+        "batch_ms_per_request": 0.277,
+        "requests_per_second": 3614.372,
+        "bytes_per_second": 1850558.43,
+        "connections": 4
+      }
+    }
+  },
+  "stream": {
+    "mode": "stream",
+    "runs": 1,
+    "count": 96,
+    "width": 1,
+    "bytes": 4194304,
+    "results": {
+      "TRIPOL": {
+        "startup_ms": 5.451,
+        "idle_rss_kib": 8352,
+        "peak_rss_kib": 12792,
+        "cpu_ms_with_startup": 1320.676,
+        "batch_ms_per_request": 15.013,
+        "requests_per_second": 66.61,
+        "bytes_per_second": 279381274.999,
+        "connections": 1
+      }
+    }
+  }
+}

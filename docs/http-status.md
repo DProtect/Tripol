@@ -8,8 +8,8 @@
 | Concurrencia | Tareas HTTP en el lanzador, cancelación y recolección de resultados | [Dos peticiones simultáneas y cancelación independiente](../internal/httptransport/http_test.go) |
 | Discord | Respuestas diferidas desde callbacks tipados sin bloquear el trabajo HTTP en el ciclo de eventos | [Continuación TLS local](../internal/discordtransport/http_continuation_test.go), [bot de ejemplo](../examples/discord_http_apps.tri) |
 | SIMPLE R3 | Sobrecargas de funciones, registros anidados, callbacks sin resultado y literales con contexto JSON | [Casos nativo y WebAssembly](../core/simple_r3_test.go) |
-| Rendimiento | GET secuencial, RAM, CPU, transferencia y reutilización de conexiones en seis clientes, con perfil previo y optimizado | [Medición, scripts y resultados](../benchmarks/http_r2/) |
-| Pendiente | Comparativa de rendimiento concurrente y transferencia prolongada con todos los clientes | [Metodología secuencial](../benchmarks/http_r2/) |
+| Rendimiento | GET secuencial y concurrente, descarga a disco, RAM, CPU, transferencia y reutilización de conexiones en seis clientes | [Medición, scripts y resultados](../benchmarks/http_r2/) |
+| Estabilidad local | 16,000 GET concurrentes y 96 descargas de 4 MiB con verificación SHA-256. Pendientes mediciones prolongadas y rendimiento en Windows | [Evidencia local](../benchmarks/http_r2/results-stress.json) |
 | Pendiente | Colecciones generales de objetos, deserialización a tipos del usuario, captura dinámica y concurrencia de callbacks del lenguaje | [Referencia](language.md) |
 | Pendiente | Cookies en disco y telemetría de recursos por cliente | [Guía](http.md) |
 | Pendiente | Validación conectada en Discord y proveedores de ejemplo con credenciales autorizadas | [Integración HTTP y Discord](http.md) |

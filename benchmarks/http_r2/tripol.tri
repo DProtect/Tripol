@@ -1,15 +1,46 @@
 import tripol.http
 import tripol.time
-show "READY"
+
+func received(reply:http.Response, size:int)->int {
+    assert reply.status==200 and reply.error=="" and len(reply.text)==size,"Unexpected HTTP benchmark response"
+    return len(reply.text)
+}
+
 url=input("")
 n=input_int("")
+mode=input("")
+width=input_int("")
+size=input_int("")
+directory=input("")
+show "READY"
+input_int("")
 start=time.now_ns()
 count=0
-repeat n {
-    scratch {
-        reply=http.get(url)
-        assert reply.status==200 and reply.error=="" and len(reply.text)==512,"Unexpected HTTP benchmark response"
-        count+=len(reply.text)
+if width==4 {
+    repeat n/4 {
+        scratch {
+            request=http.request("GET",url)
+            first=request.start()
+            second=request.start()
+            third=request.start()
+            fourth=request.start()
+            count+=received(first.await(),size)
+            count+=received(second.await(),size)
+            count+=received(third.await(),size)
+            count+=received(fourth.await(),size)
+        }
+    }
+} else {
+    for index in range(n) {
+        scratch {
+            if mode=="stream" {
+                reply=http.download(url,f"{directory}/{index}.bin")
+                assert reply.status==200 and reply.error=="" and reply.bytes==size,"Unexpected HTTP download"
+                count+=reply.bytes
+            } else {
+                count+=received(http.get(url),size)
+            }
+        }
     }
 }
 show time.elapsed_ns(start),count
