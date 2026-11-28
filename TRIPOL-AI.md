@@ -1,16 +1,16 @@
-# TRIPOL AI Reference — v0.28.0 DISCORD REVOLUTION
+# TRIPOL AI Reference — v0.29.0 DIPO HTTP 2 (development)
 
 **Referencia oficial para asistentes de IA / Official reference for AI assistants**
 
-Experimental public release · Apache-2.0 · Windows and Linux x86-64. Browser support is a separate subset. [Release and downloads](https://github.com/Tripollas/Tripol/releases/tag/v0.28.0) · [Documentation](https://tripollas.github.io/Tripol/docs/)
+Experimental v0.29 development branch · Apache-2.0 · Windows and Linux x86-64. Browser support is a separate subset. [Release and downloads](https://github.com/Tripollas/Tripol/releases/tag/v0.28.0) · [Documentation](https://tripollas.github.io/Tripol/docs/)
 
 ## Cómo usar este archivo / How to use this file
 
-Usa TRIPOL v0.28.0. Prioriza SIMPLE R2, la guía de Discord de esta versión y las firmas del catálogo actual frente a explicaciones de versiones anteriores. No inventes módulos, sintaxis, métodos, sobrecargas ni capacidades. Escribe ejemplos sencillos y legibles, con tipos explícitos cuando el compilador los necesite. Indica qué requiere el compilador nativo, qué funciona sin conexión y qué necesita una aplicación y un servidor de Discord autorizados.
+Usa TRIPOL v0.29.0 de desarrollo. Prioriza SIMPLE R3, la guía de Discord de esta versión y las firmas del catálogo actual frente a explicaciones de versiones anteriores. No inventes módulos, sintaxis, métodos, sobrecargas ni capacidades. Escribe ejemplos sencillos y legibles, con tipos explícitos cuando el compilador los necesite. Indica qué requiere el compilador nativo, qué funciona sin conexión y qué necesita una aplicación y un servidor de Discord autorizados.
 
-Use TRIPOL v0.28.0. Prefer the SIMPLE R2 section, the current Discord guide and exact catalog signatures over historical descriptions. Do not invent modules, syntax, methods, overloads or capabilities. Prefer readable code; add annotations when inference is insufficient. Distinguish native, browser and offline execution from connected validation. Test with the actual compiler before claiming that a program works.
+Use development TRIPOL v0.29.0. Prefer the SIMPLE R3 section, the current Discord guide and exact catalog signatures over historical descriptions. Do not invent modules, syntax, methods, overloads or capabilities. Prefer readable code; add annotations when inference is insufficient. Distinguish native, browser and offline execution from connected validation. Test with the actual compiler before claiming that a program works.
 
-**Current catalog / Catálogo actual:** 64 libraries, 449 functions and 196 methods (645 entries). Discord: 98 functions and 196 methods (294 entries across 15 categories).
+**Current catalog / Catálogo actual:** 64 libraries, 465 functions and 243 methods (708 entries).
 
 **Version precedence / Prioridad de versión:** SIMPLE R2 extends older SIMPLE R1, Infinity and Quantum rules: contextual monomorphic inference, implicit final-expression returns, named and inline callbacks, scalar literal constant captures and static overloads are supported in their documented scope. Dynamic captures, general polymorphism and arbitrary named arguments are not established. Earlier limitations in historical sections describe earlier versions.
 
@@ -5570,7 +5570,7 @@ Documented expected output:
 
 ---
 
-## tripol.json — 17 functions
+## tripol.json — 18 functions + 3 methods
 
 Import: `import tripol.json`
 
@@ -6028,6 +6028,105 @@ café 😀
 ```
 
 ---
+
+### json.object
+
+Create an empty typed JSON object. / Crea un objeto JSON tipado vacío.
+
+```tripol
+func json.object() -> Object
+```
+
+```tripol
+import tripol.json
+
+obj=json.object()
+show obj.encode()
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+{}
+```
+
+### json.Object.set
+
+Store a string, integer, boolean or nested object by key. / Guarda texto, entero, booleano u objeto anidado por clave.
+
+```tripol
+func json.Object.set(key:string,value:string) -> bool
+func json.Object.set(key:string,value:int) -> bool
+func json.Object.set(key:string,value:bool) -> bool
+func json.Object.set(key:string,value:Object) -> bool
+```
+
+```tripol
+import tripol.json
+
+obj=json.object()
+show obj.set("n",42)
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### json.Object.with
+
+Set a field and return the object for chaining. / Asigna un campo y devuelve el objeto para encadenar.
+
+```tripol
+func json.Object.with(key:string,value:string) -> Object
+func json.Object.with(key:string,value:int) -> Object
+func json.Object.with(key:string,value:bool) -> Object
+func json.Object.with(key:string,value:Object) -> Object
+```
+
+```tripol
+import tripol.json
+
+obj=json.object().with("status",true)
+show obj.encode()
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+{"status":true}
+```
+
+### json.Object.encode
+
+Serialize the current object as JSON text. / Serializa el objeto como texto JSON.
+
+```tripol
+func json.Object.encode() -> string
+```
+
+```tripol
+import tripol.json
+
+obj=json.object()
+obj.set("n",42)
+show obj.encode()
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+{"n":42}
+```
 
 ## tripol.matrix — 6 functions
 
@@ -8858,7 +8957,7 @@ ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 
 ---
 
-## tripol.discord — 98 functions + 196 methods
+## tripol.discord — 98 functions + 200 methods
 
 Import: `import tripol.discord`
 
@@ -15960,6 +16059,130 @@ Documented expected output:
 
 ---
 
+### discord.GatewayEvents.on_http
+
+Register a callback for a background HTTP response. / Registra un callback para una respuesta HTTP en segundo plano.
+
+```tripol
+func discord.GatewayEvents.on_http(name:string,handler:func(GatewayEvent)->bool) -> bool
+```
+
+```tripol
+import tripol.discord
+
+import tripol.http
+
+func fetch(ctx) {
+    request=http.request("GET","http://127.0.0.1:8765/health")
+    ctx.defer_http(request,"health")
+    ""
+}
+func completed(event) {
+    response=event.http_response()
+    event.complete_http(response.text)
+}
+events=discord.events()
+events.on_http("health",completed)
+bot=discord.bot()
+bot.slash("health","Read the local status",fetch)
+bot.start_with_events(events)
+```
+
+Requires an authorized private Discord server and the native launcher. / Requiere un servidor privado autorizado y el lanzador nativo.
+
+### discord.Interaction.defer_http
+
+Defer an interaction and start a background HTTP request. / Difiere una interacción e inicia una petición HTTP en segundo plano.
+
+```tripol
+func discord.Interaction.defer_http(request:http.Request,event:string,ephemeral=true) -> bool
+```
+
+```tripol
+import tripol.discord
+
+import tripol.http
+
+func fetch(ctx) {
+    request=http.request("GET","http://127.0.0.1:8765/health")
+    ctx.defer_http(request,"health")
+    ""
+}
+func completed(event) {
+    response=event.http_response()
+    event.complete_http(response.text)
+}
+events=discord.events()
+events.on_http("health",completed)
+bot=discord.bot()
+bot.slash("health","Read the local status",fetch)
+bot.start_with_events(events)
+```
+
+Requires an authorized private Discord server and the native launcher. / Requiere un servidor privado autorizado y el lanzador nativo.
+
+### discord.GatewayEvent.http_response
+
+Read a completed HTTP response through a typed result. / Lee una respuesta HTTP terminada mediante un resultado tipado.
+
+```tripol
+func discord.GatewayEvent.http_response() -> http.Response
+```
+
+```tripol
+import tripol.discord
+
+import tripol.http
+
+func fetch(ctx) {
+    request=http.request("GET","http://127.0.0.1:8765/health")
+    ctx.defer_http(request,"health")
+    ""
+}
+func completed(event) {
+    response=event.http_response()
+    event.complete_http(response.text)
+}
+events=discord.events()
+events.on_http("health",completed)
+bot=discord.bot()
+bot.slash("health","Read the local status",fetch)
+bot.start_with_events(events)
+```
+
+Requires an authorized private Discord server and the native launcher. / Requiere un servidor privado autorizado y el lanzador nativo.
+
+### discord.GatewayEvent.complete_http
+
+Edit the deferred reply once with the result. / Edita una vez la respuesta diferida con el resultado.
+
+```tripol
+func discord.GatewayEvent.complete_http(message:string) -> bool
+```
+
+```tripol
+import tripol.discord
+
+import tripol.http
+
+func fetch(ctx) {
+    request=http.request("GET","http://127.0.0.1:8765/health")
+    ctx.defer_http(request,"health")
+    ""
+}
+func completed(event) {
+    response=event.http_response()
+    event.complete_http(response.text)
+}
+events=discord.events()
+events.on_http("health",completed)
+bot=discord.bot()
+bot.slash("health","Read the local status",fetch)
+bot.start_with_events(events)
+```
+
+Requires an authorized private Discord server and the native launcher. / Requiere un servidor privado autorizado y el lanzador nativo.
+
 ## tripol.encoding — 4 functions
 
 Import: `import tripol.encoding`
@@ -16592,50 +16815,41 @@ game.close()
 
 ---
 
-## tripol.http — 3 functions
-
-Import: `import tripol.http`
+## tripol.http — 16 functions + 40 methods
 
 ### http.get_raw
 
-`func http.get_raw(address:int,port:int,host:string,path:string) -> string`
+Send a legacy HTTP/1.0 request and return the raw message. / Hace una petición HTTP/1.0 antigua y devuelve el mensaje completo.
 
-EN: Send a plain HTTP/1.0 GET and return headers and body.
-
-ES: Envía una petición GET HTTP/1.0 sin cifrado y devuelve cabeceras y cuerpo.
-
-Native example flag: true.
-
-Note: Requires a local HTTP server on port 8080 and native TCP support. No TLS; never send secrets.
-
-Nota: Requiere un servidor HTTP local en el puerto 8080 y TCP nativo. Sin TLS; nunca envíes secretos.
+```tripol
+func http.get_raw(address:int,port:int,host:string,path:string) -> string
+```
 
 ```tripol
 import tripol.http
 
-import tripol.network
-
-response = http.get_raw(network.loopback(), 8080, "localhost", "/")
-show http.status(response)
+show http.get_raw(2130706433,8765,"localhost","/health")
 ```
+
+Plain HTTP legacy transport. Uses the original platform TCP support. / Transporte antiguo HTTP sin TLS. Usa el TCP original de la plataforma.
 
 ### http.status
 
-`func http.status(response:string) -> int`
+Extract the status from a raw HTTP/1.x message. / Extrae el estado de un mensaje HTTP/1.x sin procesar.
 
-EN: Extract the HTTP status code from a raw response.
-
-ES: Extrae el código de estado HTTP de una respuesta sin procesar.
-
-Native example flag: false.
+```tripol
+func http.status(response:string) -> int
+```
 
 ```tripol
 import tripol.http
 
-show http.status("HTTP/1.0 200 OK")
+show http.status("HTTP/1.0 200 OK\r\n\r\nHello")
 ```
 
-Documented expected output:
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
 
 ```text
 200
@@ -16643,59 +16857,1213 @@ Documented expected output:
 
 ### http.body
 
-`func http.body(response:string) -> string`
+Extract the body of a raw HTTP/1.x message. / Extrae el cuerpo de un mensaje HTTP/1.x.
 
-EN: Extract the text after the header separator.
-
-ES: Extrae el texto después del separador de cabeceras.
-
-Native example flag: false.
-
-Note: Does not decode chunked transfer encoding.
-
-Nota: No decodifica transferencias por fragmentos.
+```tripol
+func http.body(response:string) -> string
+```
 
 ```tripol
 import tripol.http
 
-response = "HTTP/1.0 200 OK\r\n\r\nHola"
-show http.body(response)
+show http.body("HTTP/1.0 200 OK\r\n\r\nHello")
 ```
 
-Documented expected output:
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
 
 ```text
-Hola
+Hello
 ```
 
----
+### http.request
 
-## tripol.https — 1 functions
+Build a request from a method and URL. / Construye una petición a partir del método y la URL.
 
-Import: `import tripol.https`
+```tripol
+func http.request(method:string,url:string) -> Request
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.method
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+GET
+```
+
+### http.secure_request
+
+Build a request that requires HTTPS. / Construye una petición que exige HTTPS.
+
+```tripol
+func http.secure_request(method:string,url:string) -> Request
+```
+
+```tripol
+import tripol.http
+
+r=http.secure_request("GET","https://example.com/")
+show r.url
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+https://example.com/
+```
+
+### http.parse_response
+
+Decode the launcher response into a Response object. / Decodifica el resultado del lanzador en un objeto Response.
+
+```tripol
+func http.parse_response(raw:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.parse_response("{\"status\":200,\"text\":\"{\\\"ok\\\":true}\",\"headers\":{\"x-test\":\"ready\"}}")
+show r.status
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+200
+```
+
+### http.secure_client
+
+Create a client restricted to HTTPS. / Crea un cliente restringido a HTTPS.
+
+```tripol
+func http.secure_client() -> Client
+```
+
+```tripol
+import tripol.http
+
+c=http.secure_client()
+show c.base_url("https://example.com")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.client
+
+Create a client with connection pooling and optional cookies. / Crea un cliente con conexiones reutilizadas y cookies opcionales.
+
+```tripol
+func http.client() -> Client
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+show c.timeout(5000)
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.get
+
+Read a resource. / Lee un recurso.
+
+```tripol
+func http.get(url:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.get("http://127.0.0.1:8765/health")
+show r.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.head
+
+Fetch resource headers without its body. / Consulta los encabezados de un recurso.
+
+```tripol
+func http.head(url:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.head("http://127.0.0.1:8765/health")
+show r.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.options
+
+Send an OPTIONS request. / Envía una petición OPTIONS.
+
+```tripol
+func http.options(url:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.options("http://127.0.0.1:8765/health")
+show r.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.delete
+
+Send a DELETE request. / Envía una petición DELETE.
+
+```tripol
+func http.delete(url:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.delete("http://127.0.0.1:8765/health")
+show r.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.post
+
+Send JSON in a POST. / Envía JSON en una petición POST.
+
+```tripol
+func http.post(url:string,body:string) -> Response
+func http.post(url:string,body:json.Object) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.post("http://127.0.0.1:8765/echo", {"name":"Alex","active":true})
+show r.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.put
+
+Send JSON in a PUT. / Envía JSON en una petición PUT.
+
+```tripol
+func http.put(url:string,body:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.put("http://127.0.0.1:8765/echo", "{}")
+show r.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.patch
+
+Send JSON in a PATCH. / Envía JSON en una petición PATCH.
+
+```tripol
+func http.patch(url:string,body:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.patch("http://127.0.0.1:8765/echo", "{}")
+show r.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.download
+
+Stream a file to a new path with optional progress updates. / Transmite un archivo a una ruta nueva con progreso opcional.
+
+```tripol
+func http.download(url:string,path:string) -> Response
+func http.download(url:string,path:string,callback:func(Progress)->void) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.download("http://127.0.0.1:8765/health","health.json",func(progress) {show progress.percent})
+show r.ok()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Client.get
+
+Read a resource. Reuse the client session. / Lee un recurso. Reutiliza la sesión.
+
+```tripol
+func http.Client.get(url:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+r=c.get("http://127.0.0.1:8765/health")
+show r.status
+c.close()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Client.head
+
+Fetch resource headers without its body. Reuse the client session. / Consulta los encabezados de un recurso. Reutiliza la sesión.
+
+```tripol
+func http.Client.head(url:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+r=c.head("http://127.0.0.1:8765/health")
+show r.status
+c.close()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Client.options
+
+Send an OPTIONS request. Reuse the client session. / Envía una petición OPTIONS. Reutiliza la sesión.
+
+```tripol
+func http.Client.options(url:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+r=c.options("http://127.0.0.1:8765/health")
+show r.status
+c.close()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Client.delete
+
+Send a DELETE request. Reuse the client session. / Envía una petición DELETE. Reutiliza la sesión.
+
+```tripol
+func http.Client.delete(url:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+r=c.delete("http://127.0.0.1:8765/health")
+show r.status
+c.close()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Client.post
+
+Send JSON in a POST. Reuse the client session. / Envía JSON en una petición POST. Reutiliza la sesión.
+
+```tripol
+func http.Client.post(url:string,body:string) -> Response
+func http.Client.post(url:string,body:json.Object) -> Response
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+r=c.post("http://127.0.0.1:8765/echo", {"name":"Alex","active":true})
+show r.status
+c.close()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Client.put
+
+Send JSON in a PUT. Reuse the client session. / Envía JSON en una petición PUT. Reutiliza la sesión.
+
+```tripol
+func http.Client.put(url:string,body:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+r=c.put("http://127.0.0.1:8765/echo", "{}")
+show r.status
+c.close()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Client.patch
+
+Send JSON in a PATCH. Reuse the client session. / Envía JSON en una petición PATCH. Reutiliza la sesión.
+
+```tripol
+func http.Client.patch(url:string,body:string) -> Response
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+r=c.patch("http://127.0.0.1:8765/echo", "{}")
+show r.status
+c.close()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Request.header
+
+Add a header to a request. / Añade un encabezado a la petición.
+
+```tripol
+func http.Request.header(name:string,value:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.header("Accept","application/json")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.query
+
+Append a URL-encoded query value. / Añade un valor codificado a la consulta.
+
+```tripol
+func http.Request.query(name:string,value:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.query("q","a & b")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.form
+
+Append a URL-encoded or multipart field. / Añade un campo codificado en URL o multipart.
+
+```tripol
+func http.Request.form(name:string,value:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.form("name","Alex")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.file
+
+Add a local file part to a multipart upload. / Añade un archivo local a una subida multipart.
+
+```tripol
+func http.Request.file(name:string,path:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.file("report","report.txt")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.bearer
+
+Set Bearer authorization. / Configura la autorización Bearer.
+
+```tripol
+func http.Request.bearer(token:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.bearer("fixture-token")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.basic
+
+Set HTTP Basic authorization. / Configura la autorización HTTP Basic.
+
+```tripol
+func http.Request.basic(user:string,password:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.basic("demo","demo")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.api_key
+
+Set an API key header. / Configura un encabezado de clave API.
+
+```tripol
+func http.Request.api_key(name:string,value:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.api_key("X-API-Key","fixture")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.timeout
+
+Set the timeout in milliseconds. / Configura el tiempo de espera en milisegundos.
+
+```tripol
+func http.Request.timeout(milliseconds:int) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.timeout(5000)
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.redirects
+
+Choose no redirects or same-origin GET and HEAD redirects. / Elige sin redirecciones o redirecciones GET y HEAD del mismo origen.
+
+```tripol
+func http.Request.redirects(policy="same-origin") -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.redirects("same-origin")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.retries
+
+Set the number of safe retries for bodyless reads. / Configura los reintentos seguros de lecturas sin cuerpo.
+
+```tripol
+func http.Request.retries(count=1) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.retries(2)
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.text
+
+Set a plain text request body. / Configura un cuerpo de texto.
+
+```tripol
+func http.Request.text(value:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.text("Hola")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.json
+
+Set a JSON string or typed object as the body. / Configura una cadena JSON u objeto tipado como cuerpo.
+
+```tripol
+func http.Request.json(value:string) -> bool
+func http.Request.json(value:json.Object) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.json({"active":true})
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.download_to
+
+Set a destination for a streaming GET. / Configura un destino para un GET por flujo.
+
+```tripol
+func http.Request.download_to(path:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+show r.download_to("health.json")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Request.send
+
+Send the prepared request and wait for its response. / Envía la petición preparada y espera su respuesta.
+
+```tripol
+func http.Request.send() -> Response
+func http.Request.send(callback:func(Progress)->void) -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+response=r.send()
+show response.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Request.start
+
+Execute the request in the launcher background. / Ejecuta la petición en segundo plano en el lanzador.
+
+```tripol
+func http.Request.start() -> Task
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+task=r.start()
+response=task.await()
+show response.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Task.id
+
+Return the current job identifier. / Devuelve el identificador de la tarea actual.
+
+```tripol
+func http.Task.id() -> int
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+task=r.start()
+show task.id()
+task.await()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Task.poll
+
+Collect a completed response without blocking. / Recoge una respuesta terminada sin bloquear.
+
+```tripol
+func http.Task.poll() -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+task=r.start()
+response=task.poll()
+show response.error
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Task.await
+
+Wait for a response and collect it once. / Espera la respuesta y recógela una vez.
+
+```tripol
+func http.Task.await() -> Response
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+task=r.start()
+response=task.await()
+show response.status
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Task.cancel
+
+Request cancellation of a job. / Solicita la cancelación de la tarea.
+
+```tripol
+func http.Task.cancel() -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+task=r.start()
+show task.cancel()
+task.await()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Task.progress
+
+Read the bytes transferred and the expected total. / Lee los bytes transferidos y el total esperado.
+
+```tripol
+func http.Task.progress() -> Progress
+```
+
+```tripol
+import tripol.http
+
+r=http.request("GET","http://127.0.0.1:8765/health")
+task=r.start()
+progress=task.progress()
+show progress.bytes
+task.await()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Response.ok
+
+Check for a successful 2xx result. / Comprueba si el resultado es 2xx.
+
+```tripol
+func http.Response.ok() -> bool
+```
+
+```tripol
+import tripol.http
+
+r=http.parse_response("{\"status\":200,\"text\":\"{\\\"ok\\\":true}\",\"headers\":{\"x-test\":\"ready\"}}")
+show r.ok()
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Response.json
+
+Read the validated response body as JSON text. / Lee el cuerpo validado como texto JSON.
+
+```tripol
+func http.Response.json() -> string
+```
+
+```tripol
+import tripol.http
+
+r=http.parse_response("{\"status\":200,\"text\":\"{\\\"ok\\\":true}\",\"headers\":{\"x-test\":\"ready\"}}")
+show r.json()
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+{"ok":true}
+```
+
+### http.Response.header
+
+Read the first value of a response header. / Lee el primer valor de un encabezado.
+
+```tripol
+func http.Response.header(name:string) -> string
+```
+
+```tripol
+import tripol.http
+
+r=http.parse_response("{\"status\":200,\"text\":\"{\\\"ok\\\":true}\",\"headers\":{\"x-test\":\"ready\"}}")
+show r.header("X-Test")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+ready
+```
+
+### http.Client.base_url
+
+Set the base URL of the client. / Configura la URL base del cliente.
+
+```tripol
+func http.Client.base_url(url:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+show c.base_url("https://example.com/")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Client.cookies
+
+Enable or disable cookies before opening a session. / Habilita o deshabilita cookies antes de abrir la sesión.
+
+```tripol
+func http.Client.cookies(enabled=true) -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+show c.cookies(false)
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Client.timeout
+
+Set the default timeout in milliseconds. / Configura el tiempo de espera predeterminado.
+
+```tripol
+func http.Client.timeout(milliseconds:int) -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+show c.timeout(5000)
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Client.bearer
+
+Set the client Bearer credential. / Configura la credencial Bearer del cliente.
+
+```tripol
+func http.Client.bearer(token:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+show c.bearer("fixture-token")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Client.basic
+
+Set the client Basic credential. / Configura la credencial Basic del cliente.
+
+```tripol
+func http.Client.basic(user:string,password:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+show c.basic("demo","demo")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Client.api_key
+
+Set the client API key header. / Configura el encabezado de clave API del cliente.
+
+```tripol
+func http.Client.api_key(name:string,value:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+show c.api_key("X-API-Key","fixture")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Client.redirects
+
+Set the default redirect policy. / Configura la política de redirección.
+
+```tripol
+func http.Client.redirects(policy="same-origin") -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+show c.redirects("same-origin")
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Client.retries
+
+Set the client retry count for safe methods. / Configura los reintentos para métodos seguros.
+
+```tripol
+func http.Client.retries(count=1) -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+show c.retries(2)
+```
+
+Runs offline. The example does not open a socket. / Funciona sin red. El ejemplo no abre una conexión.
+
+Expected / Resultado
+
+```text
+true
+```
+
+### http.Client.request
+
+Prepare a request using the client defaults. / Prepara una petición con los valores predeterminados del cliente.
+
+```tripol
+func http.Client.request(method:string,url:string) -> Request
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+r=c.request("GET","/health")
+response=r.send()
+show response.status
+c.close()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Client.close
+
+Close the connection pool and cancel its jobs. / Cierra las conexiones y cancela las tareas del cliente.
+
+```tripol
+func http.Client.close() -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("http://127.0.0.1:8765")
+r=c.get("/health")
+show c.close()
+```
+
+Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+## tripol.https — 3 functions
 
 ### https.get
 
-`func https.get(host:string,path:string) -> string`
+Get a full HTTPS URL or use the original host/path call. / Consulta una URL HTTPS completa o usa la llamada antigua de host y ruta.
 
-EN: Request the text body of a successful HTTPS GET.
-
-ES: Solicita el cuerpo de texto de una petición HTTPS GET exitosa.
-
-Native example flag: true.
-
-Note: Native Windows WinHTTP; uses OS certificate trust, no redirects. Requires Internet.
-
-Nota: WinHTTP de Windows nativo; utiliza certificados del sistema, sin redirecciones. Requiere Internet.
+```tripol
+func https.get(host:string,path:string) -> string
+func https.get(url:string) -> http.Response
+```
 
 ```tripol
 import tripol.https
 
-response = https.get("example.com", "/")
-show len(response) > 0
+r=https.get("https://example.com/")
+show r.status
 ```
 
----
+Uses TLS with the system trust store. The older get(host,path) overload uses Windows WinHTTP. / Usa TLS con certificados del sistema. La sobrecarga antigua get(host,path) usa WinHTTP en Windows.
+
+### https.request
+
+Build a request restricted to TLS. / Construye una petición que requiere TLS.
+
+```tripol
+func https.request(method:string,url:string) -> http.Request
+```
+
+```tripol
+import tripol.https
+
+r=https.request("HEAD","https://example.com/")
+result=r.send()
+show result.status
+```
+
+Uses TLS with the system trust store. The older get(host,path) overload uses Windows WinHTTP. / Usa TLS con certificados del sistema. La sobrecarga antigua get(host,path) usa WinHTTP en Windows.
+
+### https.client
+
+Create an HTTPS-only client. / Crea un cliente que solo admite HTTPS.
+
+```tripol
+func https.client() -> http.Client
+```
+
+```tripol
+import tripol.https
+
+c=https.client()
+c.base_url("https://example.com")
+response=c.head("/")
+show response.status
+c.close()
+```
+
+Uses TLS with the system trust store. The older get(host,path) overload uses Windows WinHTTP. / Usa TLS con certificados del sistema. La sobrecarga antigua get(host,path) usa WinHTTP en Windows.
 
 ## tripol.memory — 4 functions
 
