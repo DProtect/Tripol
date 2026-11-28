@@ -57,6 +57,7 @@ Estado de desarrollo frente al prompt maestro. «Completo» indica una capacidad
 | Servidores | Consulta general de permisos, jerarquía del operador, bloqueo de canales, webhooks, invitaciones, hilos y foros | Pendiente | [Guía de Discord](discord.md) |
 | Servidores | Gestión avanzada de archivos, reacciones ajenas y seguimiento de auditoría en tiempo real | Pendiente | [Guía de Discord](discord.md) |
 | Rendimiento | Comparación JSON sin copia, codificación nativa con una sola reserva, decodificación Unicode y reutilización HTTPS | Experimental | [Comparación de texto y memoria](../core/gateway_test.go), [pruebas REST](../internal/discordtransport/transport_test.go) |
+| Rendimiento | Consulta JSON en una sola pasada, mediana de tiempo y CPU, tamaño binario | Verificado localmente | [Medición de estabilidad](#medición-local-de-estabilidad), [script](../benchmarks/discord_json.py) |
 | Rendimiento | Benchmarks equivalentes frente a Discord.js, Discord.py y Serenity, latencia real, RSS y Ryzen 5 3400G | Pendiente | [Benchmarks generales del compilador](../benchmarks/) |
 | Rendimiento | Sharding, despachador concurrente, cachés de entidades y reducción del tamaño del paquete Linux | Pendiente | [Arquitectura del lanzador](../core/discord_bridge_linux.go) |
 | Studio | Estado del Gateway, latencia heartbeat, CPU ticks, RSS, tiempo activo, servidores en READY, contador de eventos, cola, REST, errores, Resume y 429 | Experimental en Linux | [Métricas](../internal/discordtransport/metrics.go), [pruebas](../internal/discordtransport/transport_test.go) |
@@ -71,7 +72,7 @@ Estado de desarrollo frente al prompt maestro. «Completo» indica una capacidad
 | Voz | Conexión, sesiones, Opus, DAVE, control de reproducción, colas y recuperación | Aplazado | [Protocolo oficial de voz](https://docs.discord.com/developers/topics/voice-connections) |
 | Compatibilidad | API anterior, PE32+, ELF64, perfiles nativos y previews WebAssembly | Completo para los casos de regresión | [CI del compilador](../.github/workflows/ci.yml), [pruebas web](../cmd/tripol-web/test-r3.cjs) |
 | Ecosistema | Autocompletado y ejemplos del Playground, VS Code, guía bilingüe y referencia de IA | Completo para la API implementada | [Playground](https://tripollas.github.io/Tripol/playground/?library=discord), [VS Code](../vscode/), [TRIPOL-AI](../TRIPOL-AI.md) |
-| Validación | Regresiones y artefactos Linux, Windows y VSIX | Evidencia por commit | [Workflows](https://github.com/Tripollas/Tripol/actions), [empaquetado](../.github/workflows/public-ecosystem.yml) |
+| Validación | Regresiones y artefactos Linux, Windows y VSIX | Cuatro workflows correctos para `1aaf450` | [Compiler CI](https://github.com/Tripollas/Tripol/actions/runs/46098671552), [Public ecosystem y artefactos](https://github.com/Tripollas/Tripol/actions/runs/46098671550), [QUANTUM X benchmarks](https://github.com/Tripollas/Tripol/actions/runs/46098671492), [TRIPOL Web Engine](https://github.com/Tripollas/Tripol/actions/runs/46098671508) |
 | Validación | 2.000 interacciones ordenadas y detección de secuencias repetidas en TLS local | Verificado localmente | [Pruebas de carga y Resume](../internal/discordtransport/transport_test.go) |
 | Validación | Prueba prolongada contra Discord con aplicación y servidor autorizados | Pendiente | [Procedimiento bilingüe y resultados esperados](discord-validation.md) |
 | Alcance | Sharding avanzado y Discord Visual Builder | Aplazado | Alcance de Final Stability |
@@ -86,3 +87,18 @@ Estado de desarrollo frente al prompt maestro. «Completo» indica una capacidad
 | `bench_compiler_revolution.tri` | 3.764 → 4.001 ms | 0.387 → 0.348 ms | 1.422 → 1.422 B, idéntico |
 | `academy/simple-r1.tri` | 2.917 → 2.828 ms | 0.439 → 0.468 ms | 2.294 → 2.294 B, idéntico |
 | `discord_new.tri` | 18.202 → 19.225 ms | 0.313 → 0.320 ms | 30.267 → 30.702 B |
+
+
+## Medición local de estabilidad
+
+Linux x86-64, AMD EPYC 7763, Go 1.23.12 y perfil TRIPOL `turbo`. Cada muestra ejecuta 50.000 consultas del campo de secuencia sobre el mismo evento simulado. Se alternaron los binarios de `8b18682` y `1aaf450` durante 11 ejecuciones por versión. Ambos produjeron `2100000`. Compila ambos checkouts con el mismo Go y ejecuta `python3 benchmarks/discord_json.py /ruta/tripol-anterior /ruta/tripol-nuevo`. [Script](../benchmarks/discord_json.py)
+
+| Medición | `8b18682` | `1aaf450` |
+| --- | ---: | ---: |
+| Tiempo transcurrido mediano | 2,6054 s | 2,4977 s |
+| Tiempo de CPU mediano | 2,5695 s | 2,4915 s |
+| ELF de prueba | 7.951 B | 8.140 B |
+| Distribución CLI Linux sin símbolos | 7.614.616 B | 7.635.096 B |
+| Distribución CLI Windows sin símbolos | 7.466.496 B | 7.778.816 B |
+
+Los tamaños del CLI corresponden a `CGO_ENABLED=0 go build -buildvcs=false -trimpath -ldflags="-s -w" .` para cada plataforma. La medición de consultas se limita al procesamiento local de JSON. Las comparativas con SDK externos y la latencia del Gateway conectado permanecen en la matriz.
