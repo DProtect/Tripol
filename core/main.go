@@ -97,37 +97,41 @@ func (p *parser) end() {
 }
 func (p *parser) name() string {
 	t := p.t()
-	if t.k != "id" || strings.Contains("|import|func|struct|assert|try|catch|finally|throw|scratch|return|show|let|const|if|else|while|for|in|range|repeat|and|or|not|break|continue|true|false|int|bool|string|float|ints|void|", "|"+t.s+"|") {
+	if t.k != "id" || strings.Contains("|import|func|struct|assert|try|catch|finally|throw|scratch|return|show|let|const|if|else|while|for|in|range|repeat|and|or|not|break|continue|true|false|null|int|bool|string|float|ints|void|", "|"+t.s+"|") {
 		p.err("expected identifier")
 	}
 	return p.take().s
 }
 func (p *parser) typ() string {
+	var t string
 	if p.eat("list") {
-		if !p.eat("[") { return "list" }
-		element := p.typ()
-		p.need("]")
-		typ := listType(element)
-		if typ == "" { p.err("list elements must have a concrete value type") }
-		return typ
-	}
-	if !p.eat("func") {
-		return p.typeName()
-	}
-	p.need("(")
-	var args []string
-	if !p.eat(")") {
-		for {
-			if p.t().s == "list" { args = append(args, p.typ()) } else { args = append(args, p.typeName()) }
-			if p.eat(")") {
-				break
-			}
-			p.need(",")
+		t = "list"
+		if p.eat("[") {
+			element := p.typ()
+			p.need("]")
+			t = listType(element)
+			if t == "" { p.err("list elements must have a concrete value type") }
 		}
+	} else if p.eat("func") {
+		p.need("(")
+		var args []string
+		if !p.eat(")") {
+			for {
+				args = append(args, p.typ())
+				if p.eat(")") { break }
+				p.need(",")
+			}
+		}
+		p.need("->")
+		return callbackType(args, p.typ())
+	} else {
+		t = p.typeName()
 	}
-	p.need("->")
-	if p.t().s == "list" { return callbackType(args, p.typ()) }
-	return callbackType(args, p.typeName())
+	if p.eat("?") {
+		t = optionalType(t)
+		if t=="" { p.err("an optional type needs a concrete value type") }
+	}
+	return t
 }
 func (p *parser) typeName() string {
 	switch p.t().s {
@@ -395,6 +399,18 @@ func (p *parser) expression(min int) *expr {
 		if json.Unmarshal([]byte(t.s), &e.s) != nil || strings.ContainsRune(e.s, 0) {
 			die("line %d: invalid string", t.line)
 		}
+	case t.s == "async" && p.t().s == "{":
+		p.need("{")
+		p.skip()
+		e.op="async"
+		e.args=[]*expr{p.expression(1)}
+		p.skip()
+		p.need("}")
+	case t.s == "await" && startsAwaitOperand(p.t()) && p.t().col>t.col+len(t.s):
+		e.op="await"
+		e.args=[]*expr{p.expression(7)}
+	case t.s == "null":
+		e.op = "null"
 	case t.s == "true" || t.s == "false":
 		e.op = "bool"
 		if t.s == "true" {
@@ -406,25 +422,23 @@ func (p *parser) expression(min int) *expr {
 		e.op = "var"
 		if p.eat("(") {
 			e.op = "call"
-			if !p.eat(")") {
-				for {
-					e.args = append(e.args, p.expression(1))
-					if p.eat(")") {
-						break
-					}
-					p.need(",")
-				}
-			}
+			e.args = append(e.args, p.callArgs()...)
 		}
 	default:
 		die("line %d: expected expression", t.line)
 	}
-	if e.op == "var" && p.eat("[") {
-		e.op = "index"
-		e.args = []*expr{p.expression(1)}
-		p.need("]")
-	}
-	for p.eat(".") {
+	for {
+		if p.eat("[") {
+			index := p.expression(1)
+			p.need("]")
+			if e.op == "var" {
+				e.op, e.args = "index", []*expr{index}
+			} else {
+				e = &expr{op:"at",args:[]*expr{e,index},line:t.line,col:t.col}
+			}
+			continue
+		}
+		if !p.eat(".") {break}
 		memberToken := p.t()
 		member := p.name()
 		if p.eat("(") {
@@ -433,15 +447,7 @@ func (p *parser) expression(min int) *expr {
 			} else {
 				e = &expr{op: "method", s: member, args: []*expr{e}, line: memberToken.line, col: memberToken.col}
 			}
-			if !p.eat(")") {
-				for {
-					e.args = append(e.args, p.expression(1))
-					if p.eat(")") {
-						break
-					}
-					p.need(",")
-				}
-			}
+			e.args = append(e.args, p.callArgs()...)
 		} else {
 			e = &expr{op: "field", s: member, args: []*expr{e}, line: t.line, col: t.col}
 		}
@@ -459,6 +465,26 @@ func (p *parser) expression(min int) *expr {
 	}
 	return e
 }
+func (p *parser) callArgs() []*expr {
+	var args []*expr
+	p.skip()
+	for !p.eat(")") {
+		start := p.t()
+		if start.k == "id" && p.ts[p.i+1].s == ":" {
+			name := p.take().s
+			p.need(":")
+			p.skip()
+			args = append(args, &expr{op: "named", s: name, args: []*expr{p.expression(1)}, line: start.line, col: start.col})
+		} else {
+			args = append(args, p.expression(1))
+		}
+		p.skip()
+		if p.eat(")") { break }
+		p.need(",")
+		p.skip()
+	}
+	return args
+}
 func (p *parser) functionBody(f fn, receiver string) fn {
 	f.ret, f.inferRet = "int", true
 	p.need("(")
@@ -473,11 +499,10 @@ func (p *parser) functionBody(f fn, receiver string) fn {
 			if p.eat("=") {
 				def = p.defaultValue()
 				if !typed {
+					if def.op == "null" { p.err("give a null parameter default an optional type such as int?") }
 					a.typ = def.op
 				}
-				if a.typ != def.op {
-					p.err("default parameter type mismatch")
-				}
+				if !matchDefault(a.typ,def) { p.err("default parameter type mismatch") }
 			} else if len(f.defaults) > 0 && f.defaults[len(f.defaults)-1] != nil {
 				p.err("required parameter after optional parameter")
 			}
@@ -545,7 +570,7 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 				t := p.typ()
 				f.args = append(f.args, param{n, t})
 				var def *expr
-				if p.eat("="){def=p.defaultValue();if def.op!=t{p.err("default field type mismatch")}}else if len(f.defaults)>0&&f.defaults[len(f.defaults)-1]!=nil{p.err("required field after optional field")}
+				if p.eat("="){def=p.defaultValue();if !matchDefault(t,def){p.err("default field type mismatch")}}else if len(f.defaults)>0&&f.defaults[len(f.defaults)-1]!=nil{p.err("required field after optional field")}
 				f.defaults=append(f.defaults,def)
 				if p.eat(",") {
 					p.skip()
@@ -772,6 +797,15 @@ func (c *compiler) expression(e *expr) string {
 		return c.formatExpression(e)
 	case "function-ref":
 		return c.functionReference(e.s)
+	case "closure":
+		return c.emitClosure(e)
+	case "capture":
+		env,ok:=c.lookup(closureEnvironment)
+		if !ok {c.err("capture is only available in a closure")}
+		a.load(env.off)
+		a.emit(0x48,0x8b,0x80)
+		a.u32(int(e.n)*8)
+		return e.s
 	case "var":
 		v, ok := c.lookup(e.s)
 		if !ok {
@@ -782,6 +816,31 @@ func (c *compiler) expression(e *expr) string {
 		}
 		a.load(v.off)
 		return v.typ
+	case "null":
+		c.err("null needs an optional type, for example let value:int? = null")
+	case "none":
+		a.imm(0)
+		return e.s
+	case "some":
+		value := c.expression(e.args[0])
+		c.require(value,optionalElement(e.s))
+		a.emit(0x50)
+		a.imm(8)
+		a.call("alloc")
+		a.emit(0x59,0x48,0x89,0x08)
+		return e.s
+	case "named":
+		c.err("named arguments require a declared function, method or struct")
+	case "bound-args":
+		c.scopes = append(c.scopes, map[string]variable{})
+		defer func() { c.scopes = c.scopes[:len(c.scopes)-1] }()
+		for _, binding := range e.args[:len(e.args)-1] {
+			typ := c.expression(binding.args[0])
+			v := c.alloc(typ,false)
+			c.scopes[len(c.scopes)-1][binding.s] = v
+			a.store(v.off)
+		}
+		return c.expression(e.args[len(e.args)-1])
 	case "dictionary":return c.dictionaryLiteral(e)
 	case "array":
 		c.err("array literal only allowed in a local declaration")
@@ -797,6 +856,19 @@ func (c *compiler) expression(e *expr) string {
 		}
         if isList(v.typ){return listElement(v.typ)}
 		return "int"
+	case "at":
+		typ:=c.expression(e.args[0])
+		element:=listElement(typ)
+		if element=="" && typ!="ints" {c.err("computed indexing requires a list or dynamic ints")}
+		a.emit(0x50)
+		c.require(c.expression(e.args[1]),"int")
+		a.emit(0x59)
+		if isList(typ) {a.emit(0x48,0x8b,0x49,8)}
+		a.emit(0x48,0x3b,0x01)
+		a.j(0x83,"bounds")
+		a.emit(0x48,0x8b,0x44,0xc1,8)
+		if element=="" {return "int"}
+		return element
 	case "field":
 		t := c.expression(e.args[0])
 		field, off := c.recordField(t, e.s)
@@ -819,7 +891,7 @@ func (c *compiler) expression(e *expr) string {
 		if !ok {
 			if t, handled := c.listMethod(e); handled {return t}
 			if name, method, qualified := strings.Cut(e.s, "."); qualified {
-				if v, exists := c.lookup(name); exists && c.isRecord(v.typ) {
+				if v, exists := c.lookup(name); exists && (c.isRecord(v.typ) || optionalElement(v.typ)!="") {
 					c.a.load(v.off)
 					return c.emitMethodCall(v.typ, method, e.args)
 				}
@@ -1121,8 +1193,9 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				c.require(t, s.typ)
 			}
 			if ok {
-				if len(c.scratchScopes) > 0 && v.typ == "string" && c.outerScratchBinding(s.name) {
-					c.err("scratch cannot assign outer string " + s.name)
+				if len(c.scratchScopes)>0 && c.outerScratchBinding(s.name) {
+					if v.typ=="string" {c.err("scratch cannot assign outer string "+s.name)}
+					if strings.HasPrefix(v.typ,callbackPrefix) {c.err("scratch cannot assign an outer callback "+s.name)}
 				}
 				if !v.mut {
 					c.err("cannot modify constant " + s.name)
@@ -1261,6 +1334,7 @@ func (c *compiler) function(f fn, main bool) {
 		}
 		c.scopes[0][p.name] = variable{p.typ, 16 + 8*(len(f.args)-1-i), true}
 	}
+	if !main && len(a.b)%2!=0 {a.emit(0x90)}
 	a.label("fn:" + f.name)
 	if !main && f.ret != "void" {
 		if c.emitNativeSSA(f){return}

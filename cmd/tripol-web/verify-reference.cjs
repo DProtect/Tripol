@@ -9,7 +9,8 @@ const vm = require('node:vm');
 require('./wasm_exec.js');
 const host = require('./host-r3.js');
 
-const [catalogPath, compilerPath, examplesPath] = process.argv.slice(2);
+const [catalogPath, compilerPath, examplesPath, siteRef] = process.argv.slice(2);
+const signatures = require('./api-signatures.cjs');
 const compiler = path.resolve(compilerPath);
 const environment = { ...process.env, TRIPOL_NO_UPDATE: '1' };
 
@@ -59,6 +60,11 @@ async function main() {
     const expectedCounts = new Map([...inventory.stdout.matchAll(/^tripol\.(\w+) \((\d+) functions\)$/gm)]
       .map(([, name, count]) => [name, Number(count)]));
     assert.equal(catalog.length, expectedCounts.size, 'catalog modules and compiler inventory differ');
+    let signatureCount = 0;
+    const readSite = file => cp.execFileSync('git', ['show', `${siteRef}:${file}`], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+    const reference = siteRef ? readSite('TRIPOL-AI.md') : null;
+    if (reference !== null) assert.equal(reference, fs.readFileSync('TRIPOL-AI.md', 'utf8'), 'TRIPOL-AI.md differs between branches');
+    const ai = reference !== null ? signatures.referenceSignatures(reference) : null;
     for (const lib of catalog) {
       assert.equal(lib.functions.length, expectedCounts.get(lib.name), lib.name);
       const module = native(['docs', lib.name], dir);
@@ -70,9 +76,17 @@ async function main() {
         .filter(m => !m[2].startsWith('__')).map(m => m[1] + '.' + m[2]))].sort();
       const documentedMethods = Array.from(lib.methods || [], f => f.receiver + '.' + f.name).sort();
       assert.deepEqual(documentedMethods, methodNames, lib.name);
+      const publicAPI = signatures.publicSignatures(module.stdout, lib.name);
+      const html = siteRef ? signatures.htmlSignatures(readSite(`docs/libraries/${lib.name}.html`), lib.name) : null;
       for (const f of [...lib.functions, ...(lib.methods || [])]) {
         const name = [lib.name, f.receiver, f.name].filter(Boolean).join('.');
         assert.ok(f.en && f.es && f.signature && f.source, `missing documentation: ${name}`);
+        const expected = publicAPI.get(name);
+        assert.ok(expected, `missing compiler signature for ${name}`);
+        signatures.verifySignature(expected, f.signature, name, 'Playground');
+        if (ai !== null) signatures.verifySignature(expected, ai.get(name), name, 'TRIPOL-AI.md');
+        if (html !== null) signatures.verifySignature(expected, html.get(name), name, 'website');
+        signatureCount += expected.length;
         const row = { name };
         const caseDir = fs.mkdtempSync(path.join(dir, 'case-'));
         const source = path.join(caseDir, 'example.tri');
@@ -95,6 +109,7 @@ async function main() {
       else web(row, source, input, expected);
       examples.push(row);
     }
+    console.log(`API SIGNATURES ${signatureCount} verified variations across ${rows.length + methods.length} entries`);
     const allRows = [...rows, ...methods];
     const summary = allRows.reduce((counts, row) => {
       for (const [kind, status] of Object.entries({ native: row.native, web: row.web })) {

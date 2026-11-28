@@ -43,6 +43,12 @@ func (s *Service) Close() {
 }
 
 func (s *Service) Handle(ctx context.Context, action string, data []byte) []byte {
+	reply := encode
+	switch action {
+	case "send2", "await2", "poll2":
+		action = action[:len(action)-1]
+		reply = encodeTextFrame
+	}
 	switch action {
 	case "open":
 		if len(s.sessions) >= maxSessions {
@@ -114,7 +120,7 @@ func (s *Service) Handle(ctx context.Context, action string, data []byte) []byte
 			return encode(result{Error: "client_closed"})
 		}
 		if action == "send" {
-			return encode(client.send(ctx, request, &transfer{}))
+			return reply(client.send(ctx, request, &transfer{}))
 		}
 		if len(s.tasks) >= maxTasks || s.active.Load() >= maxTasks {
 			return encode(result{Error: "task_limit"})
@@ -159,7 +165,7 @@ func (s *Service) Handle(ctx context.Context, action string, data []byte) []byte
 			select {
 			case response := <-task.done:
 				delete(s.tasks, id)
-				return encode(response)
+				return reply(response)
 			default:
 				return []byte("0")
 			}
@@ -167,7 +173,7 @@ func (s *Service) Handle(ctx context.Context, action string, data []byte) []byte
 			select {
 			case response := <-task.done:
 				delete(s.tasks, id)
-				return encode(response)
+				return reply(response)
 			case <-ctx.Done():
 				return encode(result{Error: "canceled"})
 			}

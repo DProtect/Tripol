@@ -1,0 +1,12 @@
+import tripol.http
+
+url = "http://127.0.0.1:8765/health"
+group = http.group()
+
+first = async { http.get(url) }
+second = async { http.request("GET", url) }
+group.add(first)
+group.add(second)
+
+responses = await group
+show responses[0].status, responses[1].status

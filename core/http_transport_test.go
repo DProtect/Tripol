@@ -38,6 +38,9 @@ func TestHTTPNativeClientAndSimpleR3(t *testing.T) {
 			w.WriteHeader(201)
 		case "/download":
 			fmt.Fprint(w, "text copied")
+		case "/framed":
+			w.Header().Set("X-Test", "quoted")
+			fmt.Fprint(w, "@body\n \"á\"\tend")
 		case "/cookie":
 			if cookie, err := r.Cookie("test"); err == nil {
 				fmt.Fprint(w, cookie.Value)
@@ -88,6 +91,16 @@ second.cookie_file(%q)
 from_second=second.get("/cookie")
 show from_second.text
 show second.close()
+group=http.group()
+left=async { http.get(url+"/framed") }
+right=async { http.request("GET",url+"/download") }
+show group.add(left),group.add(right),group.add(left)
+responses=await group
+show responses[0].header("X-Test")
+show responses[0].text
+show responses[1].text
+direct=await http.get(url+"/download")
+show direct.status
 `, server.URL, dest, cookieFile, cookieFile)
 	if err := os.WriteFile(path, compileProfile(source, runtime.GOOS, "turbo"), 0700); err != nil {
 		t.Fatal(err)
@@ -103,7 +116,7 @@ show second.close()
 	if err := runNativeCommand(cmd, nil); err != nil {
 		t.Fatalf("native program %v: %s", err, out.String())
 	}
-	want := "200 normal {\"ok\":true}\n201\ninvalid_url\nSucceeded: 11\ntrue\ntrue\nnew 1 1\ntrue\nsaved\ntrue\n"
+	want := "200 normal {\"ok\":true}\n201\ninvalid_url\nSucceeded: 11\ntrue\ntrue\nnew 1 1\ntrue\nsaved\ntrue\ntrue true false\nquoted\n@body\n \"á\"\tend\ntext copied\n200\n"
 	if output := strings.ReplaceAll(out.String(), "\r\n", "\n"); output != want {
 		t.Fatalf("got %q want %q", output, want)
 	}

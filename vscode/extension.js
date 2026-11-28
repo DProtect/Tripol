@@ -4,12 +4,13 @@ const cp = require("child_process");
 const path = require("path");
 const catalog = require("./catalog.json");
 catalog.json.decode = "json.decode(YourStruct, jsonText) -> YourStruct";
+catalog.json.encode = "json.encode(YourStruct, value) -> string";
 const gatewayChoices = require("./discord-gateway.json");
 function activate(context) {
  const output = vscode.window.createOutputChannel("TRIPOL");
  const diagnostics = vscode.languages.createDiagnosticCollection("tripol");
  const selector = {language:"tripol",scheme:"file"};
- const keyword = "import if else while repeat for in break continue return show assert try catch finally throw scratch func struct let const int bool string float ints list true false and or not".split(" ");
+ const keyword = "import if else while repeat for in break continue return show assert try catch finally throw scratch func struct let const int bool string float ints list true false null some async await and or not".split(" ");
  const recordType=(source,name)=>{
   const annotated=[...source.matchAll(/\b([A-Za-z_]\w*)\s*:\s*(\w+\.\w+)\b/g)].reverse().find(m=>m[1]===name);
   if(annotated&&catalog[annotated[2]])return annotated[2];

@@ -1,7 +1,7 @@
 name: Public ecosystem
 on:
   push:
-    branches: [main, v0.29-dipo-http-2]
+    branches: [main]
   pull_request:
   workflow_dispatch:
     inputs:

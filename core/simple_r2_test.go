@@ -65,8 +65,8 @@ func TestSimpleR2Diagnostics(t *testing.T) {
 show answer(1)
 show answer("a")`, `Conflicting types for parameter "x"`, 3},
 		{`func apply(cb:func(int)->int)->int {return cb(1)}
-number=2
-show apply(func(n) {n + number})`, `cannot capture "number"`, 3},
+number=ints(1)
+show apply(func(n) {n + number[0]})`, `cannot capture "number"`, 3},
 		{`func apply(cb:func(int)->int)->int {return cb(1)}
 show apply(func(a,b) {a+b})`, `needs 1 parameters`, 2},
 		{`struct X {value:int}

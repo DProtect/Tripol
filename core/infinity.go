@@ -9,7 +9,7 @@ import (
 // Default arguments are scalar constants. No implicit scope or side effects.
 func (p *parser) defaultValue() *expr {
 	e := p.expression(1)
-	if e.op == "string" || e.op == "float" {
+	if e.op == "string" || e.op == "float" || e.op == "null" {
 		return e
 	}
 	if e.op == "un" && e.s == "-" && e.args[0].op == "float" {

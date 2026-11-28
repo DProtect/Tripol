@@ -23,7 +23,7 @@ type webFunction struct { f fn; index uint32; typ uint32 }
 type webModule struct { definitions map[string]fn; funcs map[string]webFunction; order []webFunction; types []webSig; bodies []webCode; current int; strings []string; stringIDs map[string]int64; records map[string]fn; dictionaries map[string][]param; callbackSlots map[uint32]uint32; callbackElements []uint32; indirectTypes map[int]uint32 }
 type webEmitter struct { module *webModule; code webCode; scopes []map[string]webLocal; locals,params uint32; line int; labels []string; result string }
 func webReject(format string,args ...any){die("Web Engine R3: "+format,args...)}
-func webScalar(t string)bool{return t=="int"||t=="bool"||t=="string"||t=="float"||t=="ints"||isList(t)}
+func webScalar(t string)bool{return t=="int"||t=="bool"||t=="string"||t=="float"||t=="ints"||isList(t)||optionalElement(t)!=""}
 func (m *webModule) signature(a,r []byte)uint32{m.types=append(m.types,webSig{a,r});return uint32(len(m.types)-1)}
 func (m *webModule) supported(t string)bool{if webScalar(t)||strings.HasPrefix(t,callbackPrefix){return true};_,ok:=m.records[t];return ok}
 func (m *webModule) fields(t string)[]param{if f,ok:=m.records[t];ok{return f.args};return m.dictionaries[t]}
@@ -66,6 +66,11 @@ func (e *webEmitter) expression(x *expr)string{
  if x==nil{webReject("missing expression")};switch x.op{
  case "int","bool","float":e.code.i64(x.n);return x.op
  case "string":e.code.i64(e.module.stringID(x.s));return "string"
+ case "capture":
+  env,ok:=e.get(closureEnvironment);if !ok{webReject("capture requires a closure")}
+  e.val(11,env.index,e.constant(x.n+1),e.constant(0));return x.s
+ case "closure":
+  return e.webClosure(x)
  case "function-ref":
   f, ok := e.module.definitions[x.s]
   typ := functionCallbackType(f)
@@ -74,6 +79,19 @@ func (e *webEmitter) expression(x *expr)string{
   e.code.i64(int64(e.module.callbackSlot(callee.index)))
   return typ
  case "array":return e.arrayLiteral(x,false,"")
+ case "none": e.code.i64(0);return x.s
+ case "some":
+  item,_:=e.save(x.args[0]);z:=e.constant(0)
+  e.val(10,e.constant(1),e.constant(4),z);h:=e.temp();e.code.inst(0x21,h)
+  e.val(12,h,z,item);e.code.raw(0x1a)
+  e.code.inst(0x20,h);e.code.i64(1);e.code.raw(0x7c);return x.s
+ case "bound-args":
+  e.push();defer e.pop()
+  for _, binding := range x.args[:len(x.args)-1] {
+   saved,typ:=e.save(binding.args[0]);v:=e.local(binding.s,typ)
+   e.code.inst(0x20,saved);e.code.inst(0x21,v.index)
+  }
+  return e.expression(x.args[len(x.args)-1])
  case "dictionary":
   fields:=[]param{};values:=[]uint32{};for i:=0;i<len(x.args);i+=2{if x.args[i].op!="string"{webReject("literal dictionary key required")};v,t:=e.save(x.args[i+1]);fields=append(fields,param{x.args[i].s,t});values=append(values,v)}
   // The native validator has already checked the shape. The web shape is
@@ -84,6 +102,10 @@ func (e *webEmitter) expression(x *expr)string{
   base,t:=e.save(x.args[0]);idx,kind:=e.module.field(t,x.s);z:=e.constant(0);e.val(11,base,e.constant(idx),z);return kind
  case "format":
   zero:=e.constant(0);acc:=e.constant(e.module.stringID(""));for _,part:=range x.args{v,t:=e.save(part);if t!="string"&&t!="int"&&t!="bool"{webReject("unsupported interpolation type")};k:=e.constant(webKind(t));e.val(21,v,k,zero);v=e.temp();e.code.inst(0x21,v);e.code.i32(5);e.code.inst(0x20,acc);e.code.inst(0x20,v);e.code.i32(int64(e.line));e.code.inst(0x10,1);e.code.inst(0x21,acc)};e.code.inst(0x20,acc);return "string"
+ case "at":
+  base,t:=e.save(x.args[0]);idx,i:=e.save(x.args[1])
+  if i!="int"||webElem(t)==""{webReject("computed indexing requires a list and an integer")}
+  e.val(11,base,idx,e.constant(0));return webElem(t)
  case "index":v,ok:=e.get(x.s);if !ok{webReject("unsupported index target %s",x.s)}
   if strings.HasPrefix(v.typ,"@webdict:"){if x.args[0].op!="string"{webReject("dictionary key must be literal")};idx,kind:=e.module.field(v.typ,x.args[0].s);e.val(11,v.index,e.constant(idx),e.constant(0));return kind}
   if webElem(v.typ)==""{webReject("unsupported index target %s",x.s)};idx,t:=e.save(x.args[0]);if t!="int"{webReject("index must be int")};e.val(11,v.index,idx,e.constant(0));return webElem(v.typ)
@@ -205,6 +227,8 @@ func (e *webEmitter) expression(x *expr)string{
    if name=="len"&&t=="string"{e.code.i32(6);e.code.inst(0x20,v);e.code.i64(0);e.code.i32(int64(e.line));e.code.inst(0x10,1);return "int"}
    if webElem(t)==""&&!(name=="len"&&strings.HasPrefix(t,"@webdict:")){webReject("expected collection")};op:=int64(13);if name=="sum"{if webElem(t)!="int"{webReject("sum requires integers")};op=20};e.val(op,v,zero,zero);return "int"
   }
+  if name=="float_bits"{e.expression(x.args[0]);return "int"}
+  if name=="float_from_bits"{e.expression(x.args[0]);return "float"}
   if name=="float"&&len(x.args)==1{v,t:=e.save(x.args[0]);if t!="int"{webReject("float requires int")};z:=e.constant(0);e.val(32,v,z,z);return "float"}
   if name=="sqrt"&&len(x.args)==1{v,t:=e.save(x.args[0]);if t!="float"{webReject("sqrt requires float")};z:=e.constant(0);e.val(34,v,z,z);return "float"}
   if name=="abs"||name=="min"||name=="max"{if len(x.args)<1||len(x.args)>2{webReject("invalid intrinsic args")};a,t:=e.save(x.args[0]);if t!="int"{webReject("expected int")};b:=e.constant(0);if len(x.args)==2{var bt string;b,bt=e.save(x.args[1]);if bt!="int"{webReject("expected int")}};e.val(map[string]int64{"abs":35,"min":36,"max":37}[name],a,b,e.constant(0));return "int"}
@@ -256,6 +280,7 @@ func (e *webEmitter) listMethod(receiver uint32, typ, member string, args []*exp
 	}
 }
 func (e *webEmitter) method(receiver uint32, typ, member string, args []*expr) string {
+	if element:=optionalElement(typ);element!="" {return e.webOptional(receiver,element,member,args)}
 	if isList(typ) { return e.listMethod(receiver,typ,member,args) }
 	f, ok := e.module.definitions[methodName(typ, member)]
 	if !ok {
@@ -292,15 +317,38 @@ func (e *webEmitter) callCallback(receiver uint32, params []string, result strin
 	if len(args) != len(params) {
 		webReject("wrong callback argument count")
 	}
-	for i, arg := range args {
-		if e.expression(arg) != params[i] {
-			webReject("invalid callback argument %d", i+1)
-		}
+	values:=make([]uint32,len(args))
+	for i,arg:=range args {
+		saved,typ:=e.save(arg)
+		if typ!=params[i] {webReject("invalid callback argument %d",i+1)}
+		values[i]=saved
 	}
-	e.code.inst(0x20, receiver)
-	e.code.raw(0xa7) // i32.wrap_i64, the WebAssembly table index
-	e.code.inst(0x11, e.module.indirectType(len(params)))
-	e.code.u(0)
+	emitCall:=func(slot uint32,arity int) {
+		for _,value:=range values {e.code.inst(0x20,value)}
+		e.code.inst(0x20,slot)
+		e.code.raw(0xa7)
+		e.code.inst(0x11,e.module.indirectType(arity))
+		e.code.u(0)
+	}
+	// Nonnegative references are original function-table slots. The
+	// negative range identifies boxed closures with a separate environment.
+	e.code.inst(0x20,receiver)
+	e.code.i64(0)
+	e.code.raw(0x53,0x04,0x7e)
+	e.code.i64(-1)
+	e.code.inst(0x20,receiver)
+	e.code.raw(0x7d)
+	env:=e.temp()
+	e.code.inst(0x21,env)
+	z:=e.constant(0)
+	e.val(11,env,z,z)
+	slot:=e.temp()
+	e.code.inst(0x21,slot)
+	e.code.inst(0x20,env)
+	emitCall(slot,len(params)+1)
+	e.code.raw(0x05)
+	emitCall(receiver,len(params))
+	e.code.raw(0x0b)
 	return result
 }
 

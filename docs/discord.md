@@ -466,3 +466,7 @@ Llama a `ctx.defer_http(request, "profile")` y registra `events.on_http("profile
 Registra `events.on_http("weather", handler)` para tratar el resultado. `event.queue_http(panel)` pone la edición en cola y permite seguir recibiendo eventos mientras Discord responde. Admite una cadena, un embed o Components V2. `events.on_http_delivery("weather", delivered)` recibe el estado de la entrega y el mismo recibo. Usa `event.http_delivered()` para comprobarlo. `event.complete_http` permite esperar el resultado de la edición de forma síncrona.
 
 Use `events.on_http` for the upstream result and `event.queue_http` to enqueue the original reply edit. The optional `events.on_http_delivery` handler receives its delivery status and the same receipt. `event.complete_http` waits for the edit. The launcher expires continuations and cancels their outstanding work when a bot explicitly closes its Gateway. [Executable examples and authorized validation](http.md)
+
+For a bot handling several HTTP commands, retain `ctx.defer_http` and `event.queue_http`. A direct `await http.get(url)` waits on the TRIPOL event dispatcher, even though the launcher's Gateway heartbeat continues.
+
+Para un bot con varios comandos HTTP simultáneos, usa `ctx.defer_http` y `event.queue_http`. Un `await http.get(url)` directo espera en el despachador de eventos de TRIPOL, aunque el lanzador siga enviando los heartbeats del Gateway.

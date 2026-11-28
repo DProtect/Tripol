@@ -10,9 +10,9 @@ Usa TRIPOL v0.29.0 de desarrollo. Prioriza SIMPLE R3, la guía de Discord de est
 
 Use development TRIPOL v0.29.0. Prefer the SIMPLE R3 section, the current Discord guide and exact catalog signatures over historical descriptions. Do not invent modules, syntax, methods, overloads or capabilities. Prefer readable code; add annotations when inference is insufficient. Distinguish native, browser and offline execution from connected validation. Test with the actual compiler before claiming that a program works.
 
-**Current catalog / Catálogo actual:** 64 libraries, 466 functions and 251 methods (717 entries).
+**Current catalog / Catálogo actual:** 64 libraries, 467 functions and 254 methods (721 entries).
 
-**Version precedence / Prioridad de versión:** SIMPLE R2 extends older SIMPLE R1, Infinity and Quantum rules: contextual monomorphic inference, implicit final-expression returns, named and inline callbacks, scalar literal constant captures and static overloads are supported in their documented scope. Dynamic captures, general polymorphism and arbitrary named arguments are not established. Earlier limitations in historical sections describe earlier versions.
+**Version precedence / Prioridad de versión:** SIMPLE R2 extends older SIMPLE R1, Infinity and Quantum rules: contextual monomorphic inference, implicit final-expression returns, named and inline callbacks, scalar literal constant captures and static overloads are supported in their documented scope. SIMPLE R3 Final Polish adds named arguments and immutable snapshots of dynamic scalar captures. General polymorphism, mutable aggregate capture and parallel execution of callback bodies remain pending. Earlier limitations in historical sections describe earlier versions.
 
 **Discord:** A returned interaction payload or an explicit `ctx.respond(payload)` sends the initial response; a discarded `ctx.reply(...)` expression does not send it. Use the shared launcher on Windows and Linux for advanced networking; directly executed Windows PE uses the older WinHTTP path. Keep DISCORD_TOKEN in the process environment, never in source, logs or shared binaries. Long live validation, connected-bot comparisons and channel lock recovery after launcher restart remain pending. No production-readiness claim follows from local tests.
 
@@ -25,17 +25,35 @@ Use `list([Point(1), Point(2)])` to infer a homogeneous list of records. Declare
 
 Usa `list([Point(1), Point(2)])` para inferir una lista homogénea de estructuras. Declara una lista vacía con `let points:list[Point]=list()`. Un tipo como `list[list[Point]]` conserva el tipo de cada nivel. Lee un elemento con `rows.get(0).get(1)` y asigna la lista interna a una variable local si vas a modificarla. Los alias comparten un identificador verificado. Las listas se asignan en la arena del programa. Un bloque `scratch` restringe el acceso a elementos compuestos de listas exteriores para que la memoria temporal no salga del bloque.
 
-`json.decode(Report, raw)` uses the struct declaration at compile time. It handles user structs, nested structs, typed lists, text, booleans and signed 64-bit integers. It raises an assertion on malformed JSON, missing required fields, duplicate keys or incompatible values. Unknown fields are accepted. Fractional fields, null, omitted fields with defaults and function references need another schema. Use the same source on native targets and in the Playground. [Runnable example](../examples/simple_r3_objects.tri)
+`json.decode(Report, raw)` uses the struct declaration at compile time. It handles user structs, nested structs, typed lists, text, booleans and signed 64-bit integers. It raises an assertion on malformed JSON, missing required fields, duplicate keys or incompatible values. Unknown fields are accepted. See Final Polish below for decimals, defaults and optional fields. Function references are outside the JSON schema. Use the same source on native targets and in the Playground. [Runnable example](../examples/simple_r3_objects.tri)
 
-`json.decode(Report, raw)` usa la estructura en tiempo de compilación. Admite estructuras anidadas, listas tipadas, cadenas, booleanos y enteros de 64 bits. Genera un error de aserción ante JSON inválido, campos requeridos ausentes, claves duplicadas o valores incompatibles. Admite campos adicionales. Los decimales, valores nulos, campos omitidos con valor por defecto y referencias a funciones requieren otro esquema. [Ejemplo ejecutable](../examples/simple_r3_objects.tri)
+`json.decode(Report, raw)` usa la estructura en tiempo de compilación. Admite estructuras anidadas, listas tipadas, cadenas, booleanos y enteros de 64 bits. Genera un error de aserción ante JSON inválido, campos requeridos ausentes, claves duplicadas o valores incompatibles. Admite campos adicionales. Final Polish añade decimales, valores predeterminados y campos opcionales. Las referencias a funciones quedan fuera del esquema JSON. [Ejemplo ejecutable](../examples/simple_r3_objects.tri)
 
+
+## SIMPLE R3 Final Polish / Acabado final de SIMPLE R3
+
+Use named arguments after positional arguments. A call such as `Player(speed: 2.75, name: "Lina")` fills omitted parameters or fields that have defaults. Expressions run once in the order written, even when the names appear out of declaration order. In an overloaded call, the names and types both participate in selecting the signature.
+
+Usa argumentos nombrados después de los posicionales. Una llamada como `Player(speed: 2.75, name: "Lina")` conserva los valores predeterminados de los campos omitidos. Cada expresión se evalúa una vez, en el orden escrito. Los nombres y tipos intervienen en la selección de una sobrecarga.
+
+Declare an optional value with `T?`. Use `null` for absence and `some(value)` for presence. Read it with `.has()`, `.unwrap()` or the lazy fallback `.or_else(value)`. A nested list can be read as `rows[0][1]`. Computed indices are checked on native and WebAssembly targets.
+
+Declara un valor opcional con `T?`. Usa `null` para la ausencia y `some(value)` para un valor presente. Puedes comprobarlo con `.has()`, leerlo con `.unwrap()` o proporcionar un valor alternativo con `.or_else(value)`. La alternativa solo se evalúa si falta el valor. Usa `rows[0][1]` para leer una lista anidada con comprobación de límites.
+
+An anonymous callback takes a snapshot of captured integer, Boolean, decimal and text values when it is created. Later changes to the original variables do not change the snapshot. Callbacks may outlive the function where they were created. Temporary `scratch` memory cannot be assigned to an outer callback. Mutable aggregate capture and general parallel execution of callback bodies remain pending.
+
+Un callback anónimo captura el valor de las variables escalares cuando se crea. Los cambios posteriores de las variables originales no cambian la captura. El callback puede sobrevivir a la función en la que se creó. Un bloque `scratch` impide asignarlo a un callback exterior cuando su memoria es temporal. Siguen pendientes las capturas de agregados mutables y la ejecución paralela general de callbacks.
+
+`json.decode(Player, text)` uses defaults for absent fields and validates the types of present fields. Optional fields accept `null`. `json.encode(Player, player)` serializes the fields in declaration order, with exact finite binary64 decimal output. Invalid recognizable fields produce a diagnostic naming the struct and field. Malformed input, overflow and unrepresentable string contents can be reported by the underlying value reader. Cycles fail the serialization depth check.
+
+`json.decode(Player, texto)` usa los valores predeterminados cuando faltan campos y valida los que están presentes. Los opcionales aceptan `null`. `json.encode(Player, player)` serializa los campos en orden de declaración y conserva el valor exacto de los decimales binarios finitos. Una incompatibilidad de tipo identifica la estructura y el campo cuando el lector puede reconocerlo. La serialización limita la profundidad y rechaza los ciclos. [Ejemplo / Example](../examples/simple_r3_polish.tri)
 
 ## Index / Índice
 
 - Project overview and downloads
 - Native language and toolchain guides (including SIMPLE R2)
 - Discord Revolution guide
-- Complete standard library catalog (717 entries)
+- Complete standard library catalog (721 entries)
 - Additional official guides and 14 lessons
 
 ---
@@ -9566,7 +9584,7 @@ Documented expected output:
 
 #### discord.deliver_interaction
 
-`func discord.deliver_interaction(event:string,key:string,handler:func(Interaction)->string) -> bool`
+`func discord.deliver_interaction(event:string,key:string,handler:func(Interaction)->string,policy="") ->bool`
 
 EN: Send the returned response to the interaction callback endpoint.
 
@@ -16974,7 +16992,7 @@ game.close()
 
 ---
 
-## tripol.http — 16 functions + 42 methods
+## tripol.http — 17 functions + 45 methods
 
 ### http.get_raw
 
@@ -18207,6 +18225,93 @@ c.close()
 Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.
 
 Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.
+
+### http.group
+
+Create an empty group of HTTP tasks. / Crea un grupo vacío de tareas HTTP.
+
+```text
+func http.group() ->TaskGroup
+```
+
+```tripol
+import tripol.http
+
+group=http.group()
+task=async {http.get("http://127.0.0.1:8765/health")}
+group.add(task)
+responses=await group
+show responses[0].status
+```
+
+Run with the native launcher and the local HTTP fixture.
+
+Ejecuta con el lanzador nativo y el servidor HTTP local.
+
+### http.TaskGroup.add
+
+Add a submitted task once. / Añade una tarea iniciada una sola vez.
+
+```text
+func http.TaskGroup.add(job:Task) ->bool
+```
+
+```tripol
+import tripol.http
+
+g=http.group()
+t=async {http.get("http://127.0.0.1:8765/health")}
+show g.add(t)
+responses=await g
+```
+
+Run with the native launcher and the local HTTP fixture.
+
+Ejecuta con el lanzador nativo y el servidor HTTP local.
+
+### http.TaskGroup.cancel
+
+Request cancellation for every outstanding task. / Solicita la cancelación de cada tarea pendiente.
+
+```text
+func http.TaskGroup.cancel() ->int
+```
+
+```tripol
+import tripol.http
+
+g=http.group()
+t=async {http.get("http://127.0.0.1:8765/health")}
+g.add(t)
+show g.cancel()
+responses=await g
+```
+
+Run with the native launcher and the local HTTP fixture.
+
+Ejecuta con el lanzador nativo y el servidor HTTP local.
+
+### http.TaskGroup.await
+
+Collect responses in insertion order. / Recoge las respuestas en el orden de alta.
+
+```text
+func http.TaskGroup.await() ->list[Response]
+```
+
+```tripol
+import tripol.http
+
+g=http.group()
+t=async {http.get("http://127.0.0.1:8765/health")}
+g.add(t)
+responses=await g
+show responses[0].status
+```
+
+Run with the native launcher and the local HTTP fixture.
+
+Ejecuta con el lanzador nativo y el servidor HTTP local.
 
 ## tripol.https — 3 functions
 

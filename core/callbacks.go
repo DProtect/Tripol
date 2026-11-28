@@ -3,6 +3,7 @@ package core
 import "strings"
 
 const callbackPrefix = "func("
+const closureEnvironment = "@closure_env"
 
 func callbackType(args []string, result string) string {
 	return callbackPrefix + strings.Join(args, ",") + ")->" + result
@@ -13,16 +14,36 @@ func callbackParts(typ string) (args []string, result string, ok bool) {
 	if !ok {
 		return nil, "", false
 	}
-	params, result, ok := strings.Cut(signature, ")->")
-	if params != "" {
-		args = strings.Split(params, ",")
+	depth, start := 0, 0
+	for i, ch := range signature {
+		switch ch {
+		case '(', '[':
+			depth++
+		case ']', ')':
+			if depth == 0 && ch == ')' && strings.HasPrefix(signature[i:], ")->") {
+				if i > start {
+					args = append(args, signature[start:i])
+				}
+				return args, signature[i+3:], true
+			}
+			depth--
+		case ',':
+			if depth == 0 {
+				args = append(args, signature[start:i])
+				start = i + 1
+			}
+		}
 	}
-	return args, result, ok
+	return nil, "", false
 }
 
 func functionCallbackType(f fn) string {
-	args := make([]string, len(f.args))
-	for i, param := range f.args {
+	parameters := f.args
+	if len(parameters) > 0 && parameters[0].name == closureEnvironment {
+		parameters = parameters[1:]
+	}
+	args := make([]string, len(parameters))
+	for i, param := range parameters {
 		args[i] = param.typ
 		if strings.HasPrefix(param.typ, callbackPrefix) || callbackListElement(param.typ) != "" {
 			return ""
@@ -41,7 +62,7 @@ func callbackTargets(fs []fn, main []stmt) map[string]bool {
 		if e == nil {
 			return
 		}
-		if e.op == "function-ref" {
+		if e.op == "function-ref" || e.op == "closure" {
 			if targets == nil {
 				targets = make(map[string]bool)
 			}
@@ -91,14 +112,22 @@ func (c *compiler) callCallback(name string, v variable, args []*expr) (string, 
 	}
 	a := c.a
 	a.load(v.off)
-	a.emit(0x50)
+	plain := a.fresh()
+	// Native code addresses are even. An odd reference points at an arena
+	// record containing the code pointer followed by the immutable captures.
+	a.emit(0x31, 0xc9, 0xa8, 1)
+	a.j(0x84, plain)
+	a.emit(0x48, 0x8d, 0x48, 7, 0x48, 0x8b, 0x40, 0xff)
+	a.label(plain)
+	a.emit(0x50, 0x51)
 	for i, arg := range args {
 		c.require(c.expression(arg), params[i])
 		a.emit(0x50)
 	}
-	// Arguments are above the saved target on the ordinary TRIPOL stack.
+	// The environment is pushed before user arguments. Capture-free
+	// functions use their original offsets and ignore that extra slot.
 	a.emit(0xff, 0x94, 0x24)
-	a.u32(len(args) * 8)
-	a.dropStack(len(args) + 1)
+	a.u32((len(args) + 1) * 8)
+	a.dropStack(len(args) + 2)
 	return result, true
 }

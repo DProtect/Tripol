@@ -8,6 +8,9 @@ import (
 // Horizon records are typed references to arena-resident sequences of 8-byte slots.
 func (c *compiler) isRecord(t string) bool { f, ok := c.fs[t]; return ok && f.record }
 func (c *compiler) validType(t string) bool {
+	if inner := optionalElement(t); inner != "" {
+		return c.validType(inner)
+	}
 	if element := typedListElement(t); element != "" {
 		return c.validType(element)
 	}
@@ -104,7 +107,10 @@ func (c *compiler) recordField(t, n string) (param, int) {
 }
 func (c *compiler) recordConstruct(f fn, e *expr) string {
 	args := c.callArguments(f, e)
-	for i := range e.args {
+	for i, arg := range e.args {
+		if i < len(f.defaults) && arg == f.defaults[i] {
+			continue
+		}
 		c.checkRecordFieldAccess(f, f.args[i].name)
 	}
 	a := c.a

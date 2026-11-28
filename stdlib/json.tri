@@ -349,7 +349,6 @@ func __decode_field(object_value:Object,name:string)->string {
  for i in range(keys.size()) {
   if keys.get(i)==name {return values.get(i)}
  }
- assert false,"Required JSON field is missing"
  return ""
 }
 
@@ -368,4 +367,209 @@ func __decode_array(raw:string)->string_list {
   if byte_at(raw,i)==44 {i=ws(raw,i+1,n)}
  }
  return values
+}
+
+// Positive integer limbs are least-significant first. The caller picks a base
+// that leaves room for each multiplication and carry in a signed 64-bit slot.
+func __multiply(limbs:list,factor:int,carry:int,base:int)->bool {
+ for i in range(limbs.size()) {
+  word=limbs.get(i)*factor+carry
+  limbs.set(i,word%base)
+  carry=word/base
+ }
+ while carry>0 {
+  limbs.add(carry%base)
+  carry/=base
+ }
+ return true
+}
+
+func __compare(left:list,right:list)->int {
+ if left.size()!=right.size() {return left.size()-right.size()}
+ i=left.size()-1
+ while i>=0 {
+  a=left.get(i)
+  b=right.get(i)
+  if a!=b {return a-b}
+  i-=1
+ }
+ return 0
+}
+
+func __subtract(left:list,right:list)->bool {
+ borrow=0
+ for i in range(left.size()) {
+  value=left.get(i)-borrow
+  if i<right.size() {value-=right.get(i)}
+  borrow=0
+  if value<0 {value+=1073741824;borrow=1}
+  left.set(i,value)
+ }
+ while left.size()>1 and left.get(left.size()-1)==0 {
+  left.remove_at(left.size()-1)
+ }
+ return true
+}
+
+func __bit_length(limbs:list)->int {
+ word=limbs.get(limbs.size()-1)
+ size=(limbs.size()-1)*30
+ while word>0 {size+=1;word/=2}
+ return size
+}
+
+func __power(limbs:list,power:int,factor:int,step:int,step_factor:int,base:int)->bool {
+ while power>=step {
+  __multiply(limbs,step_factor,0,base)
+  power-=step
+ }
+ rest=1
+ repeat power {rest*=factor}
+ if rest>1 {__multiply(limbs,rest,0,base)}
+ return true
+}
+
+func __half(limbs:list)->bool {
+ carry=0
+ i=limbs.size()-1
+ while i>=0 {
+  word=limbs.get(i)+carry
+  limbs.set(i,word/2)
+  carry=word%2*1073741824
+  i-=1
+ }
+ if limbs.size()>1 and limbs.get(limbs.size()-1)==0 {limbs.remove_at(limbs.size()-1)}
+ return true
+}
+
+// A binary64 rounding boundary has at most 768 significant decimal digits.
+// Keep 800 digits and remember whether any discarded digit is nonzero.
+func __decode_float(raw:string)->float {
+ size=len(raw)
+ assert number(raw,0,size)==size and size>0,"Expected a finite JSON decimal"
+ i=0
+ sign=0
+ if byte_at(raw,0)==45 {i=1;sign=-9223372036854775807-1}
+ numerator=list([0])
+ denominator=list([1])
+ fractional=false
+ scale=0
+ significant=0
+ omitted=0
+ sticky=false
+ while i<size {
+  b=byte_at(raw,i)
+  if b==101 or b==69 {break}
+  i+=1
+  if b==46 {fractional=true;continue}
+  if fractional {scale-=1}
+  digit_value=b-48
+  if significant==0 and digit_value==0 {continue}
+  significant+=1
+  if significant<=800 {__multiply(numerator,10,digit_value,1073741824)}
+  else {omitted+=1;sticky=sticky or digit_value!=0}
+ }
+ if significant==0 {return float_from_bits(sign)}
+ scale+=omitted
+ if i<size {
+  i+=1
+  negative=byte_at(raw,i)==45
+  if negative or byte_at(raw,i)==43 {i+=1}
+  exponent=0
+  while i<size {
+   if exponent<100000 {exponent=exponent*10+byte_at(raw,i)-48}
+   i+=1
+  }
+  if negative {scale-=exponent} else {scale+=exponent}
+ }
+ leading=scale+significant-omitted-1
+ assert leading<=308,"JSON decimal exceeds the finite binary64 range"
+ if leading < -325 {return float_from_bits(sign)}
+ if scale>=0 {__power(numerator,scale,10,9,1000000000,1073741824)}
+ else {__power(denominator,-scale,10,9,1000000000,1073741824)}
+
+ exponent=__bit_length(numerator)-__bit_length(denominator)
+ if exponent<0 {__power(numerator,-exponent,2,29,536870912,1073741824)}
+ else {__power(denominator,exponent,2,29,536870912,1073741824)}
+ if __compare(numerator,denominator)<0 {
+  if exponent>0 {__half(denominator)} else {__multiply(numerator,2,0,1073741824)}
+  exponent-=1
+ }
+ if exponent < -1075 {return float_from_bits(sign)}
+ if exponent == -1075 {
+  if sticky or __compare(numerator,denominator)>0 {return float_from_bits(sign+1)}
+  return float_from_bits(sign)
+ }
+
+ __subtract(numerator,denominator)
+ fraction=1
+ places=52
+ if exponent < -1022 {places=exponent+1074}
+ repeat places {
+  __multiply(numerator,2,0,1073741824)
+  fraction*=2
+  if __compare(numerator,denominator)>=0 {
+   __subtract(numerator,denominator)
+   fraction+=1
+  }
+ }
+ __multiply(numerator,2,0,1073741824)
+ remainder=__compare(numerator,denominator)
+ if remainder>0 or (remainder==0 and (sticky or fraction%2==1)) {fraction+=1}
+ if exponent>=-1022 {fraction+=(exponent+1022)*4503599627370496}
+ assert fraction<9218868437227405312,"JSON decimal exceeds the finite binary64 range"
+ return float_from_bits(sign+fraction)
+}
+
+// Write the exact decimal expansion of a finite IEEE binary64 value. This
+// keeps even subnormals round-trippable without depending on locale or libc.
+func __encode_float(value:float)->string {
+ raw=float_bits(value)
+ prefix=""
+ if raw<0 {prefix="-";raw-=(-9223372036854775807-1)}
+ if raw==0 {return prefix+"0"}
+ coded=raw/4503599627370496
+ assert coded<2047,"JSON cannot encode a non-finite decimal"
+ limb=raw%4503599627370496
+ shift=-1074
+ if coded>0 {limb+=4503599627370496;shift=coded-1075}
+ digits=list([limb%1000000000])
+ if limb>=1000000000 {digits.add(limb/1000000000)}
+ if shift>=0 {__power(digits,shift,2,29,536870912,1000000000)}
+ else {__power(digits,-shift,5,12,244140625,1000000000)}
+ i=digits.size()-1
+ output=text(digits.get(i))
+ i-=1
+ while i>=0 {
+  chunk=text(digits.get(i))
+  repeat 9-len(chunk) {output+="0"}
+  output+=chunk
+  i-=1
+ }
+ if shift>=0 {return prefix+output}
+ fractional=-shift
+ end=len(output)
+ while end>0 and fractional>0 and byte_at(output,end-1)==48 {end-=1;fractional-=1}
+ output=slice(output,0,end)
+ if fractional==0 {return prefix+output}
+ if fractional<end {return prefix+slice(output,0,end-fractional)+"."+slice(output,end-fractional,end)}
+ result=prefix+"0."
+ repeat fractional-end {result+="0"}
+ return result+output
+}
+
+func __decode_type(raw:string,kind:string,optional:bool)->bool {
+ if raw=="" or raw=="null" {return optional}
+ if kind=="string" {return byte_at(raw,0)==34}
+ if kind=="int" {return errors.is_int(raw)}
+ if kind=="bool" {return raw=="true" or raw=="false"}
+ if kind=="float" {return number(raw,0,len(raw))==len(raw)}
+ if kind=="list" {return byte_at(raw,0)==91}
+ return byte_at(raw,0)==123
+}
+
+func __append(output:string,item:string)->string {
+ assert len(output)+len(item)+2<=65535,"JSON output exceeds the TRIPOL string capacity"
+ if len(output)==1 {return output+item}
+ return output+","+item
 }

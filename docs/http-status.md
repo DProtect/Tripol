@@ -13,3 +13,14 @@
 | Callbacks generales | Continúan disponibles inferencia y referencias estáticas. Pendientes capturas dinámicas con cierre y ejecución concurrente general de callbacks TRIPOL | [Guía del lenguaje](language.md) |
 | Rendimiento y estabilidad | Mediciones locales de seis clientes y la base 08063b3. Prueba sostenida de 150.000 peticiones. Medición Windows y Linux en GitHub Actions | [Metodología y datos](../benchmarks/http_r2/) |
 | Validación conectada | Pendiente con acceso autorizado a Discord y proveedores. Las pruebas con servidores locales cubren fallos controlados | [Pasos de validación](http.md#pruebas-manuales-de-discord--manual-discord-checks) |
+
+## Final Polish
+
+| Área / Area | Estado / Status | Evidencia / Evidence |
+| --- | --- | --- |
+| Endpoints and HTTP transport | Verified private response format and grouped I/O. The native fixture verifies newlines, quotes, headers and Unicode round-trip. Legacy frame actions remain available. | [Native transport test](../core/http_transport_test.go), [performance data](../benchmarks/http_r2/) |
+| Named arguments and nullables | Verified named arguments on functions, overloads, methods and struct constructors. Tests check source-order evaluation, optional defaults and fallback. | [Compiler tests](../core/final_polish_test.go) |
+| Scalar closures | Verified independent snapshots, nested captures, returning callbacks, and protection against retaining a closure allocated in a temporary arena. Mutable aggregates and general parallel callbacks remain pending. | [Lifetime tests](../core/final_polish_test.go) |
+| Typed JSON | Verified defaults, optional values, nested lists and records, field validation and exact finite binary64 round trips. | [Decimal and typed JSON tests](../core/final_polish_test.go), [official example](../examples/simple_r3_polish.tri) |
+| Async task protocol | Verified `async` and `await` on launcher-backed HTTP, task grouping and response collection. Arbitrary parallel execution of TRIPOL blocks and suspension inside a Discord handler remain pending. | [Native task test](../core/http_transport_test.go), [HTTP group example](../examples/http_async_group.tri) |
+| Sustained workloads | One million real local GETs in about 208 seconds. Multi-hour runs and live Discord validation remain pending. | [One million results](../benchmarks/http_r2/results-polish-million-linux.json), [manual validation](http.md#pruebas-manuales-de-discord--manual-discord-checks) |

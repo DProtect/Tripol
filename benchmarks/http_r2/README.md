@@ -73,3 +73,19 @@ Each latency sample measures one request for the sequential and stream profiles,
 [Secuencial](results-final-sequential-linux.json) · [Concurrente](results-final-concurrent-linux.json) · [Transferencia](results-final-stream-linux.json) · [Estrés de 150.000 peticiones](results-final-stress-linux.json)
 
 En una única prueba sostenida, TRIPOL completó 150.000 peticiones en unas 45,5 s con cuatro conexiones y 15.772 KiB de RSS máximo combinado. El p95 de la tanda pasó de 1,396 a 1,426 ms en la comparación de siete muestras. Ese incremento coexistió con mayor rendimiento agregado. Las cifras de transferencia incluyen sincronización de cada archivo y verificación posterior de SHA-256. Las pruebas conectadas a un servidor de Discord requieren acceso autorizado.
+
+## Final Polish — puente HTTP / HTTP bridge
+
+La comparación de siete muestras intercaló el worker de este cambio y el de `8fc0852` con la misma carga y los mismos clientes. El puente escribe encabezado y cuerpo juntos. Su formato privado conserva el cuerpo UTF-8 y evita codificarlo y analizarlo como JSON. Los perfiles y tiempos por tanda se mantuvieron.
+
+Seven rotated samples compare the updated worker with `8fc0852` under the same workload. TRIPOL still uses the same HTTP requests, connection pool and validation. The private bridge groups writes and carries validated response text without JSON quoting it.
+
+| Perfil / Profile | Base 8fc0852 | Final Polish | p95 base / final |
+| --- | ---: | ---: | ---: |
+| GET secuencial | 3.199 GET/s | 4.892 GET/s | 0,425 / 0,311 ms |
+| GET concurrente ×4 | 3.419 GET/s | 4.820 GET/s | 1,459 / 1,111 ms |
+| Archivos descargados y sincronizados | 753,8 MiB/s | 756,8 MiB/s | 7,071 / 10,098 ms |
+
+La ejecución de un millón de GET terminó en unos 208 segundos, con 4.805 GET/s, p95 de 1,113 ms por tanda y 17.708 KiB de RSS máximo combinado. En las muestras cortas, el RSS concurrente pasó de 13.120 a 13.648 KiB. El p95 de descarga aumentó y el objetivo experimental de 5.000 GET/s en concurrencia Linux quedó pendiente. Las comparativas con Requests, HTTPX, Fetch, Reqwest y Go incluyen p50, p95, p99, RAM, CPU, arranque y conexiones en los datos originales. Las mediciones de Windows y Linux de CI pueden consultarse por separado en [QUANTUM X benchmarks](https://github.com/Tripollas/Tripol/actions/workflows/quantum-benchmarks.yml).
+
+[GET secuencial](results-polish-sequential-linux.json) · [GET concurrente](results-polish-concurrent-linux.json) · [Archivos](results-polish-stream-linux.json) · [Un millón de peticiones](results-polish-million-linux.json)

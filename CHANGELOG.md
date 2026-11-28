@@ -1,5 +1,10 @@
 # v0.29.0 DIPO HTTP 2 (development)
 
+- Final Polish adds named arguments, nested indexing, scalar closure snapshots and optional values.
+- Typed JSON supports defaults, nullable fields, correctly rounded finite decimals and user-defined record serialization.
+- Launcher-backed operations support `async` and `await` syntax. HTTP can group, cancel and collect submitted tasks.
+- The HTTP response frame passes validated UTF-8 directly and coalesces launcher writes. Existing Discord continuations and legacy HTTP actions remain available.
+
 - Added typed HTTP and HTTPS requests, sessions, pooled transport, streamed files, cancellable tasks and structured errors.
 - Added module-level overloads, nested records, void callbacks and JSON object literals in typed contexts.
 - Added cancellable HTTP continuation events, deferred panel updates and queued reply edits for Discord interactions.

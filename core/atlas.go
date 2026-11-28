@@ -65,6 +65,9 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 	}
 	var qualifyType func(string) string
 	qualifyType = func(typ string) string {
+		if element := optionalElement(typ); element != "" {
+			return optionalType(qualifyType(element))
+		}
 		if element := typedListElement(typ); element != "" {
 			return listType(qualifyType(element))
 		}
@@ -127,6 +130,9 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 		callbackParams = nil
 		for i := range f.args {
 			f.args[i].typ = qualifyType(f.args[i].typ)
+			if i < len(f.defaults) && f.defaults[i] != nil && f.defaults[i].op == "none" {
+				f.defaults[i].s = f.args[i].typ
+			}
 			if strings.HasPrefix(f.args[i].typ, callbackPrefix) {
 				if callbackParams == nil {
 					callbackParams = make(map[string]bool)

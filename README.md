@@ -2,7 +2,7 @@
 
 ## v0.29.0 DIPO HTTP 2 — development
 
-Typed HTTP requests, private cookie stores, client metrics, streamed files and queued Discord replies. SIMPLE R3 adds nested typed lists and JSON decoding into user structs. The development compiler builds for Windows and Linux x86-64. [HTTP guide](docs/http.md) · [Validation and status](docs/http-status.md)
+Typed HTTP requests, private cookie stores, client metrics, streamed files and queued Discord replies. SIMPLE R3 adds named arguments, optional fields, scalar closure snapshots and typed JSON round trips. HTTP tasks support `async` and `await` through the launcher. The development compiler builds for Windows and Linux x86-64. [HTTP guide](docs/http.md) · [Validation and status](docs/http-status.md)
 
 <img src="assets/tripol-emblem.png" alt="TRIPOL official logo" width="220" />
 
@@ -24,7 +24,7 @@ A free, experimental programming language that turns readable code directly into
 
 ## AI-ready reference / Referencia para IA
 
-[TRIPOL-AI.md](TRIPOL-AI.md) covers the v0.29 development APIs and retains the earlier language and library reference. The development catalog has 64 modules, 466 public functions and 251 public methods (717 entries). [Direct download](https://tripollas.github.io/Tripol/TRIPOL-AI.md)
+[TRIPOL-AI.md](TRIPOL-AI.md) covers the v0.29 development APIs and retains the earlier language and library reference. The development catalog has 64 modules, 467 public functions and 254 public methods (721 entries). [Direct download](https://tripollas.github.io/Tripol/TRIPOL-AI.md)
 
 ## Why TRIPOL?
 

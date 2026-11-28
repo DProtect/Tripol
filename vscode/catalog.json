@@ -593,7 +593,8 @@
     "post": "func http.post(url:string,body:string)->Response\nfunc http.post(url:string,body:json.Object)->Response",
     "put": "func http.put(url:string,body:string)->Response",
     "patch": "func http.patch(url:string,body:string)->Response",
-    "download": "func http.download(url:string,path:string)->Response\nfunc http.download(url:string,path:string,callback:func(Progress)->void)->Response"
+    "download": "func http.download(url:string,path:string)->Response\nfunc http.download(url:string,path:string,callback:func(Progress)->void)->Response",
+    "group": "func http.group()->TaskGroup"
   },
   "http.Response": {
     "ok": "Response.ok()->bool",
@@ -644,6 +645,11 @@
     "post": "Client.post(url:string,body:string)->Response\nClient.post(url:string,body:json.Object)->Response",
     "put": "Client.put(url:string,body:string)->Response",
     "patch": "Client.patch(url:string,body:string)->Response"
+  },
+  "http.TaskGroup": {
+    "add": "TaskGroup.add(job:Task)->bool",
+    "cancel": "TaskGroup.cancel()->int",
+    "await": "TaskGroup.await()->list[Response]"
   },
   "https": {
     "get": "func https.get(host:string,path:string)->string\nfunc https.get(url:string)->http.Response",

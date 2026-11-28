@@ -2,7 +2,7 @@ name: TRIPOL Web Engine
 on:
   workflow_dispatch:
   push:
-    branches: [main, v0.29-dipo-http-2]
+    branches: [main]
     paths:
       - 'core/**'
       - 'stdlib/**'
@@ -15,7 +15,7 @@ concurrency:
   group: tripol-web-engine-${{ github.ref }}
   cancel-in-progress: false
 env:
-  DOCS_BRANCH: ${{ github.ref_name == 'v0.29-dipo-http-2' && 'v0.29-dipo-http-2-pages' || 'gh-pages' }}
+  DOCS_BRANCH: gh-pages
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -58,10 +58,10 @@ jobs:
           git fetch origin "refs/heads/$DOCS_BRANCH:refs/remotes/origin/$DOCS_BRANCH"
           git show "origin/$DOCS_BRANCH":playground/examples-r3.js > web-dist/examples-r3.js
           node --experimental-global-webcrypto web-dist/test-r3.cjs web-dist/examples-r3.js "$(pwd)/web-dist/tripol-native"
-          cp cmd/tripol-web/verify-reference.cjs web-dist/verify-reference.cjs
+          cp cmd/tripol-web/{verify-reference,api-signatures}.cjs web-dist/
           git show "origin/$DOCS_BRANCH":playground/library-catalog-r6.1.js > web-dist/library-catalog.js
-          node --experimental-global-webcrypto web-dist/verify-reference.cjs web-dist/library-catalog.js "$(pwd)/web-dist/tripol-native" web-dist/examples-r3.js
-          rm web-dist/tripol-native web-dist/examples-r3.js web-dist/test-r3.cjs web-dist/library-catalog.js web-dist/verify-reference.cjs
+          node --experimental-global-webcrypto web-dist/verify-reference.cjs web-dist/library-catalog.js "$(pwd)/web-dist/tripol-native" web-dist/examples-r3.js "origin/$DOCS_BRANCH"
+          rm web-dist/tripol-native web-dist/examples-r3.js web-dist/test-r3.cjs web-dist/library-catalog.js web-dist/verify-reference.cjs web-dist/api-signatures.cjs
       - name: Upload diagnostic reports even on failed tests
         if: always()
         uses: actions/upload-artifact@v4
@@ -83,7 +83,7 @@ jobs:
           name: tripol-web-engine
           path: web-dist/
       - name: Publish compiler assets to the documentation branch
-        if: github.ref_name == 'main' || github.ref_name == 'v0.29-dipo-http-2'
+        if: github.ref_name == 'main'
         run: |
           git fetch origin "refs/heads/$DOCS_BRANCH:refs/remotes/origin/$DOCS_BRANCH"
           git worktree add --detach /tmp/tripol-pages "origin/$DOCS_BRANCH"

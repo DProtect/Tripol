@@ -1,0 +1,20 @@
+import tripol.json
+
+struct Player {
+    name:string
+    health:int = 100
+    speed:float = 1.5
+    points:int? = null
+}
+
+player = json.decode(Player, "{\"name\":\"Alex\"}")
+show player.name, player.health, player.speed
+show player.points.or_else(0)
+
+other = Player(speed: 2.75, name: "Lina", points: some(7))
+show json.encode(Player, other)
+
+bonus = 3
+adjusted = func(points:int) { points + bonus }
+bonus = 10
+show adjusted(7)

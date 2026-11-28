@@ -120,6 +120,14 @@ func (c *compiler) builtin(e *expr) (string, bool) {
 		c.require(c.expression(e.args[0]), "string")
 		a.call("parseint")
 		return "int", true
+	case "float_bits", "float_from_bits":
+		if c.source!="tripol.json" || len(e.args)!=1 { c.err("decimal bit conversion is an internal JSON operation") }
+		if e.s=="float_bits" {
+			c.require(c.expression(e.args[0]),"float")
+			return "int",true
+		}
+		c.require(c.expression(e.args[0]),"int")
+		return "float",true
 	case "float":
 		if len(e.args) != 1 {
 			c.err("float expects one argument")

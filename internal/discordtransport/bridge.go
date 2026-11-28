@@ -1,6 +1,7 @@
 package discordtransport
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/binary"
@@ -40,6 +41,8 @@ const (
 // Serve is the private, process-local protocol between a launcher and one
 // generated program. Command and reply ends are inherited, never published.
 func Serve(ctx context.Context, client *Client, input io.Reader, output io.Writer, diagnostics io.Writer) error {
+	input = bufio.NewReaderSize(input, 8192)
+	writer := bufio.NewWriterSize(output, maxMessage+4)
 	var gateway *Gateway
 	var httpService httptransport.Service
 	continuations := make(httpContinuations)
@@ -280,13 +283,16 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 		} else {
 			binary.LittleEndian.PutUint32(header[:], uint32(len(reply)))
 		}
-		if _, err := output.Write(header[:]); err != nil {
+		if _, err := writer.Write(header[:]); err != nil {
 			return err
 		}
 		if len(reply) > 0 {
-			if _, err := output.Write(reply); err != nil {
+			if _, err := writer.Write(reply); err != nil {
 				return err
 			}
+		}
+		if err := writer.Flush(); err != nil {
+			return err
 		}
 	}
 }

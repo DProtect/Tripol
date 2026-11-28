@@ -27,14 +27,12 @@ type simpleResolver struct {
 	overloads       map[string][]*fn
 	overloadMembers map[string]bool
 	captures        map[string]map[string]simpleBinding
+	capturedValues  map[string][]param
 	final, changed  bool
 }
 
 func resolveSimpleProgram(fs []fn, main []stmt) []fn {
 	fs = lowerJSONDecoders(fs, main)
-	if len(fs) == 0 {
-		return fs
-	}
 	r := simpleResolver{
 		functions: make(map[string]*fn, len(fs)),
 		overloads: make(map[string][]*fn),
@@ -65,6 +63,7 @@ func resolveSimpleProgram(fs []fn, main []stmt) []fn {
 		}
 		if f.anonymous && r.captures == nil {
 			r.captures = make(map[string]map[string]simpleBinding)
+			r.capturedValues = make(map[string][]param)
 		}
 	}
 	for key, group := range r.overloads {
@@ -110,7 +109,7 @@ func resolveSimpleProgram(fs []fn, main []stmt) []fn {
 	limit := 1
 	for i := range fs {
 		f := &fs[i]
-		if f.inferRet {
+		if f.inferRet || f.anonymous {
 			limit++
 		}
 		for _, p := range f.args {
@@ -142,6 +141,12 @@ func resolveSimpleProgram(fs []fn, main []stmt) []fn {
 	}
 	r.final = true
 	r.walkProgram(fs, main, standardBodies)
+	for i := range fs {
+		f := &fs[i]
+		if len(r.capturedValues[f.name]) != 0 {
+			f.args = append([]param{{closureEnvironment, "int"}}, f.args...)
+		}
+	}
 	return fs
 }
 
@@ -160,6 +165,8 @@ func (r *simpleResolver) contextualExpression(e *expr) bool {
 		return false
 	}
 	switch e.op {
+	case "named", "async", "await", "null":
+		return true
 	case "var", "function-ref":
 		if f := r.functions[e.s]; f != nil && !f.record && (e.op == "var" || f.anonymous || f.inferRet) {
 			return true
@@ -243,7 +250,7 @@ func (r *simpleResolver) failure(scope simpleScope, e *expr, message string) {
 		d.Hint = "Compare the argument types with the available method signatures."
 	} else if strings.Contains(message, "capture") {
 		d.Code = "TP1012"
-		d.Hint = "Capture only a const scalar literal or pass the value as an argument."
+		d.Hint = "Capture a scalar value by snapshot, or pass an aggregate through an argument."
 	} else if strings.HasPrefix(message, "Callback ") {
 		d.Code = "TP1013"
 		d.Hint = "The callback must have the number of parameters in the expected function signature."
@@ -367,7 +374,7 @@ func (r *simpleResolver) parameter(f *fn, i int, typ string, scope simpleScope, 
 }
 
 func (r *simpleResolver) captureError(scope simpleScope, e *expr, name string) {
-	r.failure(scope, e, fmt.Sprintf("Anonymous callback cannot capture %q. Use a const scalar literal or pass the value through the callback context.", name))
+	r.failure(scope, e, fmt.Sprintf("Anonymous callback cannot capture %q by mutation or as an aggregate. Use a scalar snapshot or pass the value through the callback context.", name))
 }
 
 func (r *simpleResolver) binding(e *expr, name, want string, scope simpleScope) (string, bool) {
@@ -380,11 +387,21 @@ func (r *simpleResolver) binding(e *expr, name, want string, scope simpleScope) 
 		return b.typ, true
 	}
 	if b, ok := scope.captures[name]; ok {
-		if b.literal == nil {
+		if b.literal != nil {
+			if r.final && e.op == "var" {
+				*e = expr{op: b.literal.op, s: b.literal.s, n: b.literal.n, line: e.line, col: e.col}
+			}
+			return b.typ, true
+		}
+		if b.typ == "" && !r.final {
+			return "", true
+		}
+		if !scalarCapture(b.typ) {
 			r.captureError(scope, e, name)
 		}
+		slot := r.captureSlot(scope.function.name, name, b.typ)
 		if r.final && e.op == "var" {
-			*e = expr{op: b.literal.op, s: b.literal.s, n: b.literal.n, line: e.line, col: e.col}
+			*e = expr{op: "capture", s: b.typ, n: int64(slot), line: e.line, col: e.col}
 		}
 		return b.typ, true
 	}
@@ -394,9 +411,21 @@ func (r *simpleResolver) binding(e *expr, name, want string, scope simpleScope) 
 func (r *simpleResolver) reference(e *expr, f *fn, want string, scope simpleScope) string {
 	if f.anonymous && !r.final {
 		captures := maps.Clone(scope.locals)
+		for name, b := range captures {
+			if b.parameter > 0 && scope.function != nil {
+				b.typ = scope.function.args[b.parameter-1].typ
+				b.parameter = 0
+				captures[name] = b
+			}
+		}
 		for name, b := range scope.captures {
 			if _, found := captures[name]; !found {
 				captures[name] = b
+			}
+		}
+		for _, capture := range r.capturedValues[f.name] {
+			if _, local := scope.locals[capture.name]; !local {
+				r.binding(&expr{op: "var", s: capture.name, line: e.line, col: e.col}, capture.name, "", scope)
 			}
 		}
 		if previous := r.captures[f.name]; !maps.Equal(previous, captures) {
@@ -417,6 +446,14 @@ func (r *simpleResolver) reference(e *expr, f *fn, want string, scope simpleScop
 	}
 	if r.final {
 		e.op, e.s, e.args = "function-ref", f.name, nil
+		if captures := r.capturedValues[f.name]; len(captures) != 0 {
+			e.op = "closure"
+			for _, capture := range captures {
+				value := &expr{op: "var", s: capture.name, line: e.line, col: e.col}
+				r.expression(value, capture.typ, scope)
+				e.args = append(e.args, value)
+			}
+		}
 	}
 	if f.ret == "" {
 		return ""
@@ -436,6 +473,16 @@ func (r *simpleResolver) expression(e *expr, want string, scope simpleScope) str
 	switch e.op {
 	case "int", "string", "bool", "float":
 		return e.op
+	case "null":
+		if optionalElement(want) != "" {
+			if r.final {
+				e.op, e.s = "none", want
+			}
+			return want
+		}
+		return ""
+	case "none", "some", "capture":
+		return e.s
 	case "var":
 		if typ, ok := r.binding(e, e.s, want, scope); ok {
 			return typ
@@ -463,6 +510,15 @@ func (r *simpleResolver) expression(e *expr, want string, scope simpleScope) str
 				}
 			}
 		}
+	case "async", "await":
+		return r.asyncExpression(e, scope)
+	case "at":
+		r.expression(e.args[1], "int", scope)
+		typ := r.expression(e.args[0], "", scope)
+		if typ == "ints" {
+			return "int"
+		}
+		return listElement(typ)
 	case "index":
 		r.expression(e.args[0], "int", scope)
 		typ, _ := r.binding(e, e.s, "", scope)
@@ -512,6 +568,9 @@ func (r *simpleResolver) expression(e *expr, want string, scope simpleScope) str
 		return r.call(e, want, scope)
 	case "method":
 		receiver := r.expression(e.args[0], "", scope)
+		if element := optionalElement(receiver); element != "" {
+			return r.optionalMethod(element, e.s, e.args[1:], scope)
+		}
 		if isList(receiver) {
 			return r.listMethod(receiver, e.s, e.args[1:], scope)
 		}
@@ -542,7 +601,7 @@ func (r *simpleResolver) expression(e *expr, want string, scope simpleScope) str
 
 func (r *simpleResolver) call(e *expr, want string, scope simpleScope) string {
 	if f := r.functions[e.s]; f != nil {
-		return r.arguments(f, e.args, 0, scope)
+		return r.arguments(e, f, 0, 0, scope)
 	}
 	if group := r.overloads[e.s]; len(group) != 0 {
 		selected := r.selectOverload(e, e.s, e.args, group, 0, scope)
@@ -552,11 +611,14 @@ func (r *simpleResolver) call(e *expr, want string, scope simpleScope) string {
 		if r.final {
 			e.s = selected.name
 		}
-		return r.arguments(selected, e.args, 0, scope)
+		return r.arguments(e, selected, 0, 0, scope)
 	}
 	name := strings.TrimPrefix(e.s, "@builtin:")
 	if receiver, member, ok := strings.Cut(name, "."); ok {
 		if typ, found := r.binding(e, receiver, "", scope); found {
+			if element := optionalElement(typ); element != "" {
+				return r.optionalMethod(element, member, e.args, scope)
+			}
 			if isList(typ) {
 				return r.listMethod(typ, member, e.args, scope)
 			}
@@ -572,6 +634,17 @@ func (r *simpleResolver) call(e *expr, want string, scope simpleScope) string {
 			}
 			return result
 		}
+	}
+	if name == "some" && len(e.args) == 1 {
+		inner := r.expression(e.args[0], optionalElement(want), scope)
+		typ := optionalType(inner)
+		if r.final {
+			if typ == "" {
+				r.failure(scope, e, "some() needs a concrete non-optional value")
+			}
+			e.op, e.s = "some", typ
+		}
+		return typ
 	}
 	if name == "list" && len(e.args) == 1 && e.args[0].op == "array" && len(e.args[0].args) > 0 {
 		element := ""
@@ -636,23 +709,10 @@ func (r *simpleResolver) listMethod(typ, member string, args []*expr, scope simp
 	}
 }
 
-func (r *simpleResolver) arguments(f *fn, args []*expr, offset int, scope simpleScope) string {
-	for i, arg := range args {
-		j := i + offset
-		if j >= len(f.args) {
-			r.expression(arg, "", scope)
-			continue
-		}
-		typ := r.expression(arg, f.args[j].typ, scope)
-		r.parameter(f, j, typ, scope, arg)
-	}
-	return f.ret
-}
-
 func (r *simpleResolver) method(e *expr, receiver, member string, offset int, scope simpleScope) string {
 	key := methodName(receiver, member)
 	if f := r.functions[key]; f != nil {
-		return r.arguments(f, e.args[offset:], 1, scope)
+		return r.arguments(e, f, offset, 1, scope)
 	}
 	group := r.overloads[key]
 	if len(group) == 0 {
@@ -675,29 +735,28 @@ func (r *simpleResolver) method(e *expr, receiver, member string, offset int, sc
 			e.s = root + "." + resolved
 		}
 	}
-	return r.arguments(selected, args, 1, scope)
+	return r.arguments(e, selected, offset, 1, scope)
 }
 
 func (r *simpleResolver) selectOverload(e *expr, label string, args []*expr, group []*fn, paramOffset int, scope simpleScope) *fn {
 	types := make([]string, len(args))
 	for i, arg := range args {
-		types[i] = r.expression(arg, "", scope)
+		types[i] = r.expression(argumentValue(arg), "", scope)
 	}
 	var selected *fn
 	count := 0
 	var signatures []string
 	for _, f := range group {
 		params := f.args[paramOffset:]
-		matches := len(args) <= len(params)
-		for i, arg := range params {
-			if i < len(args) {
-				if args[i].op == "dictionary" && arg.typ != "json.Object" {
+		slots, issue := bindArgumentSlots(f, args, paramOffset)
+		matches := issue == ""
+		if matches {
+			for i, slot := range slots {
+				typ := params[slot].typ
+				if argumentValue(args[i]).op == "dictionary" && typ != "json.Object" || argumentValue(args[i]).op == "null" && optionalElement(typ) == "" || types[i] != "" && types[i] != typ {
 					matches = false
-				} else if types[i] != "" && types[i] != arg.typ {
-					matches = false
+					break
 				}
-			} else if i+paramOffset >= len(f.defaults) || f.defaults[i+paramOffset] == nil {
-				matches = false
 			}
 		}
 		if matches {
@@ -707,7 +766,7 @@ func (r *simpleResolver) selectOverload(e *expr, label string, args []*expr, gro
 		if r.final {
 			items := make([]string, len(params))
 			for i, p := range params {
-				items[i] = p.typ
+				items[i] = p.name + ":" + p.typ
 			}
 			signatures = append(signatures, "("+strings.Join(items, ", ")+")")
 		}

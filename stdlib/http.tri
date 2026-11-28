@@ -260,10 +260,53 @@ func parse_response(raw:string)->Response {
  return response
 }
 
+func Response.__read_frame(self:Response,raw:string)->bool {
+ at=1
+ n=len(raw)
+ for i in range(10) {
+  end=at
+  if i<6 {
+   number=0
+   while end<n {
+    b=byte_at(raw,end)
+    if b==10 {break}
+    digit=b-48
+    if digit<0 or digit>9 or number>922337203685477580 or (number==922337203685477580 and digit>7) {return false}
+    number=number*10+digit
+    end+=1
+   }
+   if end==at {return false}
+   if i==0 {self.status=number}
+   else if i==1 {self.bytes=number}
+   else if i==2 {self.elapsed_ms=number}
+   else if i==3 {self.attempts=number}
+   else if i==4 {self.uploaded=number}
+   else {self.upload_total=number}
+  } else {
+   while end<n and byte_at(raw,end)!=10 {end+=1}
+   if i==6 {self.protocol=slice(raw,at,end)}
+   else if i==7 {self.error=slice(raw,at,end)}
+   else if i==8 and end-at>2 {self.file=json.unquote(slice(raw,at,end))}
+   else if i==9 {self.__headers=slice(raw,at,end)}
+  }
+  if end==n {return false}
+  at=end+1
+ }
+ self.text=slice(raw,at,n)
+ return true
+}
+
+func __response(raw:string)->Response {
+ if not has_prefix(raw,"@") {return parse_response(raw)}
+ result=Response(0,"","","",0,0,0,"")
+ if not result.__read_frame(raw) {return Response(0,"","invalid_response","",0,0,0,"")}
+ return result
+}
+
 func Request.send(self:Request)->Response {
  if not gw_host_available() {return parse_response("")}
  if self.__open_error!="" {return Response(0,"",self.__open_error,"",0,0,0,"")}
- return parse_response(http_exchange("send",self.__payload()))
+ return __response(http_exchange("send2",self.__payload()))
 }
 
 struct Task {
@@ -290,19 +333,19 @@ func Request.start(self:Request)->Task {
 
 func Task.poll(self:Task)->Response {
  if self.__id<=0 {return Response(0,"",self.__error,"",0,0,0,"")}
- raw=http_exchange("poll",text(self.__id))
+ raw=http_exchange("poll2",text(self.__id))
  if raw=="0" {return Response(0,"","pending","",0,0,0,"")}
  self.__id=0
  self.__error="unknown_task"
- return parse_response(raw)
+ return __response(raw)
 }
 
 func Task.await(self:Task)->Response {
  if self.__id<=0 {return Response(0,"",self.__error,"",0,0,0,"")}
- raw=http_exchange("await",text(self.__id))
+ raw=http_exchange("await2",text(self.__id))
  self.__id=0
  self.__error="unknown_task"
- return parse_response(raw)
+ return __response(raw)
 }
 
 func Task.cancel(self:Task)->bool {
@@ -548,3 +591,41 @@ func Request.send(self:Request,callback:func(Progress)->void)->Response {
 }
 
 func Task.id(self:Task)->int {return self.__id}
+
+struct TaskGroup {
+ __members:list[Task]
+}
+
+func group()->TaskGroup {
+ tasks=list([Task(0)])
+ tasks.clear()
+ return TaskGroup(tasks)
+}
+
+func TaskGroup.add(self:TaskGroup,job:Task)->bool {
+ if job.id()<=0 {return false}
+ tasks=self.__members
+ for item in tasks {
+  if item.id()==job.id() {return false}
+ }
+ tasks.add(job)
+ return true
+}
+
+func TaskGroup.cancel(self:TaskGroup)->int {
+ tasks=self.__members
+ canceled=0
+ for item in tasks {
+  if item.cancel() {canceled+=1}
+ }
+ return canceled
+}
+
+func TaskGroup.await(self:TaskGroup)->list[Response] {
+ tasks=self.__members
+ responses=list([parse_response("")])
+ responses.clear()
+ for item in tasks {responses.add(item.await())}
+ tasks.clear()
+ return responses
+}

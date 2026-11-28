@@ -1,0 +1,23 @@
+{
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "mode": "concurrent",
+  "runs": 1,
+  "count": 1000000,
+  "width": 4,
+  "bytes": 512,
+  "results": {
+    "TRIPOL": {
+      "startup_ms": 3.843,
+      "idle_rss_kib": 8632,
+      "peak_rss_kib": 17708,
+      "cpu_ms_with_startup": 192090.0,
+      "batch_ms_per_request": 0.208,
+      "requests_per_second": 4804.774,
+      "bytes_per_second": 2460044.257,
+      "p50_ms": 0.776,
+      "p95_ms": 1.113,
+      "p99_ms": 1.875,
+      "connections": 4
+    }
+  }
+}
