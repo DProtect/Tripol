@@ -107,6 +107,18 @@ Use `room=discord.channel_ref(id)` for channel moderation. `room.read()` fetches
 
 Usa `room=discord.channel_ref(id)` para moderar un canal. `room.read()` consulta el JSON del canal, `room.slowmode(segundos)` ajusta o retira la espera, `room.pin(id,false)` desfija un mensaje y `room.react(id,emoji,false)` retira la reacción del bot. `room.purge(ids)` ejecuta un borrado masivo de entre 2 y 100 IDs distintos. Discord aplica los permisos y límites de antigüedad.
 
+Use `panel.button("Aceptar", "accept", "success", "✅")` or pass an empty label for an emoji-only button. Custom emoji use an ID, `"<:name:id>"` or `"<a:name:id>"`. Keep the disabled flag before the emoji when calling `row.button`. Use `form.file(id, label, list(["image", ".pdf"]))` for file filters. On Linux use `panel.file(filename)` with `panel.send_files(channel_id, paths)`, or `embed.image(discord.attachment_url(filename))` with `embed.send_files(channel_id, paths)`. Register context menus with `bot.user_menu(name, handler)` and `bot.message_menu(name, handler)`. Read `ctx.target_id()` and `ctx.target()` inside the callback. Create and manage channels with `server.create_channel` and `discord.channel_ref(id)`. Use `server.audit()` for audit logs.
+
+Usa `panel.button("Aceptar", "accept", "success", "✅")` o una etiqueta vacía para un botón de solo emoji. Los emoji personalizados admiten un ID, `"<:nombre:id>"` o `"<a:nombre:id>"`. En `row.button` el argumento de deshabilitación precede al emoji. Usa `form.file(id, etiqueta, list(["image", ".pdf"]))` para filtrar archivos. En Linux usa `panel.file(nombre)` con `panel.send_files(channel_id, rutas)` o `embed.image(discord.attachment_url(nombre))` con `embed.send_files(channel_id, rutas)`. Registra menús contextuales con `bot.user_menu(nombre, manejador)` y `bot.message_menu(nombre, manejador)`. Lee `ctx.target_id()` y `ctx.target()` en el callback. Crea y administra canales con `server.create_channel` y `discord.channel_ref(id)`. Consulta auditoría con `server.audit()`.
+
+Create roles with `server.create_role(name, permissions, color)` and use `server.role_ref(id)` with `read`, `edit`, `permissions` and `delete`. Permission bitsets are decimal strings.
+
+Crea roles con `server.create_role(nombre, permisos, color)` y usa `server.role_ref(id)` con `read`, `edit`, `permissions` y `delete`. Los permisos se expresan como cadenas decimales.
+
+Linux Discord Studio can report event types, interaction types and names of commands admitted to the Gateway queue. Use the counts to inspect traffic.
+
+Discord Studio en Linux registra los tipos de evento, los tipos de interacción y los nombres de comandos admitidos en la cola del Gateway. Usa los contadores para inspeccionar el tráfico.
+
 ## Cómo usar este archivo / How to use this file
 
 Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».
