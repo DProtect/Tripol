@@ -139,4 +139,21 @@ show obj.encode()</code></pre>
 <p><span data-es="Resultado esperado: {&quot;n&quot;:42}">Expected: {&quot;n&quot;:42}</span></p>
 <p><span data-es="Funciona sin red. El ejemplo no abre una conexión.">Runs offline. The example does not open a socket.</span></p>
 </section>
-</article><aside class="docs-toc"><div class="side-kicker"><span data-es="En esta página">On this page</span></div><nav id="toc-links"></nav></aside></main><dialog id="doc-search"><div class="search-head"><input aria-label="Search documentation" data-placeholder-es="Buscar guías, bibliotecas, funciones..." id="global-search" placeholder="Search guides, libraries, functions..." type="search"/><button aria-label="Close" class="doc-action" id="search-close">Esc</button></div><div aria-live="polite" id="search-results"></div></dialog><div class="docs-toast" id="doc-toast" role="status"></div></body></html>
+<h2 id="typed-decoding"><span data-es="Decodifica a tus propias estructuras">Decode into your own structures</span></h2><p><span data-es="json.decode(Tipo, texto) admite listas homogéneas, cadenas, enteros y booleanos. Los campos requeridos ausentes y las claves duplicadas se rechazan.">json.decode(Type, text) supports homogeneous lists, text, signed integers and booleans. Missing or duplicate fields fail validation.</span></p><pre><code class="language-tripol">import tripol.json
+
+struct Row {
+    title:string
+    values:list[int]
+}
+
+struct Report {
+    ready:bool
+    rows:list[Row]
+}
+
+report=json.decode(Report, &quot;{\&quot;ready\&quot;:true,\&quot;rows\&quot;:[{\&quot;title\&quot;:\&quot;Temperatura\&quot;,\&quot;values\&quot;:[20,21]}]}&quot;)
+rows=report.rows
+for row in rows {
+    show row.title,row.values.get(0),row.values.get(1)
+}
+</code></pre><p><code>Temperatura 20 21</code></p></article><aside class="docs-toc"><div class="side-kicker"><span data-es="En esta página">On this page</span></div><nav id="toc-links"></nav></aside></main><dialog id="doc-search"><div class="search-head"><input aria-label="Search documentation" data-placeholder-es="Buscar guías, bibliotecas, funciones..." id="global-search" placeholder="Search guides, libraries, functions..." type="search"/><button aria-label="Close" class="doc-action" id="search-close">Esc</button></div><div aria-live="polite" id="search-results"></div></dialog><div class="docs-toast" id="doc-toast" role="status"></div></body></html>

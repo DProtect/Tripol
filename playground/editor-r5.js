@@ -36,6 +36,7 @@ function suggestions(src,pos){
   const [,name,prefix]=member;
   const lib=libs.find(l=>l.name===name);
   let functions=lib?.functions||[];
+  if(name==='json'&&lib)functions=[...functions,{name:'decode',signature:'json.decode(YourStruct, jsonText) -> YourStruct',en:'Decode JSON into a user-defined structure.',es:'Decodifica JSON a una estructura definida por el usuario.'}];
   if(!lib){
    const owner=recordOwner(libs,before,name);
    functions=(owner?.lib?.methods||[]).filter(m=>m.receiver===owner.type);

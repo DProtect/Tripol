@@ -1316,7 +1316,46 @@ show room.set_forum_tags(tags)</code></pre>
 show discord.interaction_key_end(&quot;ushow/321&quot;)</code></pre></section></section>
 <h2 id="cli"><span data-es="Consultar el módulo localmente">Inspect the module locally</span></h2><pre><code>tripol docs discord</code></pre><a class="textlink" href="../libraries.html">← <span data-es="Todas las bibliotecas">All libraries</span></a>
 
-<section class="library-api-category"><h2 id="api-http"><span data-es="Integración HTTP diferida">Deferred HTTP integration</span></h2>
+<section class="library-api-category"><h2 id="api-http"><span data-es="Integración HTTP diferida">Deferred HTTP integration</span></h2><section class="function-card" id="Interaction.defer_http_update"><h3>discord.Interaction.defer_http_update <a href="#Interaction.defer_http_update" aria-label="Permalink">#</a></h3><p><span data-es="Inicia una petición cancelable para editar el mensaje original del componente.">Start a cancelable request to update the original component message.</span></p><pre class="signature"><code>func discord.Interaction.defer_http_update(request:http.Request,event:string) -&gt; int</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+import tripol.http
+func load(ctx:discord.Interaction)-&gt;int {
+ r=http.request(&quot;GET&quot;,&quot;https://example.com/&quot;)
+ return ctx.defer_http_update(r,&quot;status&quot;)
+}</code></pre><p><span data-es="Resultado esperado: Consulta el procedimiento autorizado para el resultado conectado.">Expected: See the authorized verification procedure for connected output.</span></p><p><span data-es="Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.">Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.</span></p></section>
+<section class="function-card" id="Interaction.defer_http_task"><h3>discord.Interaction.defer_http_task <a href="#Interaction.defer_http_task" aria-label="Permalink">#</a></h3><p><span data-es="Inicia una petición cancelable tras diferir la respuesta.">Start a cancelable request after deferring a reply.</span></p><pre class="signature"><code>func discord.Interaction.defer_http_task(request:http.Request,event:string,ephemeral=true) -&gt; int</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+import tripol.http
+func load(ctx:discord.Interaction)-&gt;int {
+ r=http.request(&quot;GET&quot;,&quot;https://example.com/&quot;)
+ return ctx.defer_http_task(r,&quot;status&quot;)
+}</code></pre><p><span data-es="Resultado esperado: Consulta el procedimiento autorizado para el resultado conectado.">Expected: See the authorized verification procedure for connected output.</span></p><p><span data-es="Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.">Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.</span></p></section>
+<section class="function-card" id="GatewayEvents.on_http_delivery"><h3>discord.GatewayEvents.on_http_delivery <a href="#GatewayEvents.on_http_delivery" aria-label="Permalink">#</a></h3><p><span data-es="Registra un callback para el estado de una edición encolada.">Register a status callback for a queued edit.</span></p><pre class="signature"><code>func discord.GatewayEvents.on_http_delivery(name:string,handler:func(GatewayEvent)-&gt;bool) -&gt; bool</code></pre><pre><code class="language-tripol">import tripol.discord
+
+func delivered(event) {event.http_delivered()}
+events=discord.events()
+show events.on_http_delivery(&quot;status&quot;,delivered)</code></pre><p><span data-es="Resultado esperado: true">Expected: true</span></p><p><span data-es="Funciona sin conexión.">Run offline.</span></p></section>
+<section class="function-card" id="GatewayEvent.queue_http"><h3>discord.GatewayEvent.queue_http <a href="#GatewayEvent.queue_http" aria-label="Permalink">#</a></h3><p><span data-es="Encola una sola edición con texto, un embed o Components V2.">Queue a single edit with text, an embed or Components V2.</span></p><pre class="signature"><code>func discord.GatewayEvent.queue_http(message:string) -&gt; bool
+func discord.GatewayEvent.queue_http(embed:Embed) -&gt; bool
+func discord.GatewayEvent.queue_http(layout:Components) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+func result(event:discord.GatewayEvent)-&gt;bool {
+ panel=discord.components()
+ panel.text(&quot;# Status&quot;)
+ return event.queue_http(panel)
+}</code></pre><p><span data-es="Resultado esperado: Consulta el procedimiento autorizado para el resultado conectado.">Expected: See the authorized verification procedure for connected output.</span></p><p><span data-es="Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.">Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.</span></p></section>
+<section class="function-card" id="GatewayEvent.http_delivered"><h3>discord.GatewayEvent.http_delivered <a href="#GatewayEvent.http_delivered" aria-label="Permalink">#</a></h3><p><span data-es="Comprueba si se completó una edición de Discord.">Check whether a queued Discord edit succeeded.</span></p><pre class="signature"><code>func discord.GatewayEvent.http_delivered() -&gt; bool</code></pre><pre><code class="language-tripol">import tripol.discord
+
+ev=discord.GatewayEvent(&quot;TRIPOL_HTTP_DELIVERY:status&quot;,0,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;{\&quot;receipt\&quot;:7,\&quot;ok\&quot;:true}&quot;)
+show ev.http_delivered()</code></pre><p><span data-es="Resultado esperado: true">Expected: true</span></p><p><span data-es="Funciona sin conexión.">Run offline.</span></p></section>
+<section class="function-card" id="GatewayEvent.http_receipt"><h3>discord.GatewayEvent.http_receipt <a href="#GatewayEvent.http_receipt" aria-label="Permalink">#</a></h3><p><span data-es="Lee el recibo del resultado HTTP o de su entrega.">Read the receipt for an HTTP result or delivery status.</span></p><pre class="signature"><code>func discord.GatewayEvent.http_receipt() -&gt; int</code></pre><pre><code class="language-tripol">import tripol.discord
+
+ev=discord.GatewayEvent(&quot;TRIPOL_HTTP:status&quot;,0,&quot;&quot;,&quot;&quot;,&quot;&quot;,&quot;{\&quot;receipt\&quot;:7}&quot;)
+show ev.http_receipt()</code></pre><p><span data-es="Resultado esperado: 7">Expected: 7</span></p><p><span data-es="Funciona sin conexión.">Run offline.</span></p></section>
+<section class="function-card" id="cancel_http"><h3>discord.cancel_http <a href="#cancel_http" aria-label="Permalink">#</a></h3><p><span data-es="Cancela la petición de una respuesta diferida de Discord.">Cancel an upstream request owned by a deferred Discord reply.</span></p><pre class="signature"><code>func discord.cancel_http(receipt:int) -&gt; bool</code></pre><pre><code class="language-tripol">import tripol.discord
+
+show discord.cancel_http(0)</code></pre><p><span data-es="Resultado esperado: false">Expected: false</span></p><p><span data-es="Funciona sin conexión.">Run offline.</span></p></section>
+
 <section class="function-card" id="GatewayEvents.on_http"><h3>discord.GatewayEvents.on_http <a href="#GatewayEvents.on_http" aria-label="Permalink">#</a></h3><p><span data-es="Registra un callback para una respuesta HTTP en segundo plano.">Register a callback for a background HTTP response.</span></p>
 <pre class="signature"><code>func discord.GatewayEvents.on_http(name:string,handler:func(GatewayEvent)-&gt;bool) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
 
@@ -1383,26 +1422,15 @@ bot.start_with_events(events)</code></pre>
 <p><span data-es="Resultado esperado: El programa imprime valores del endpoint configurado.">Expected: The program prints values from the configured endpoint.</span></p>
 <p><span data-es="Requiere un servidor privado autorizado y el lanzador nativo.">Requires an authorized private Discord server and the native launcher.</span></p>
 </section>
-<section class="function-card" id="GatewayEvent.complete_http"><h3>discord.GatewayEvent.complete_http <a href="#GatewayEvent.complete_http" aria-label="Permalink">#</a></h3><p><span data-es="Edita una vez la respuesta diferida con el resultado.">Edit the deferred reply once with the result.</span></p>
-<pre class="signature"><code>func discord.GatewayEvent.complete_http(message:string) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+<section class="function-card" id="GatewayEvent.complete_http"><h3>discord.GatewayEvent.complete_http <a href="#GatewayEvent.complete_http" aria-label="Permalink">#</a></h3><p><span data-es="Espera la edición de la respuesta diferida. Admite texto, embeds y Components V2.">Wait for the one allowed edit of the deferred reply. Supports text, embeds and Components V2.</span></p><pre class="signature"><code>func discord.GatewayEvent.complete_http(message:string) -&gt; bool
+func discord.GatewayEvent.complete_http(embed:Embed) -&gt; bool
+func discord.GatewayEvent.complete_http(batch:Embeds) -&gt; bool
+func discord.GatewayEvent.complete_http(layout:Components) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
 
-import tripol.http
+func result(event:discord.GatewayEvent)-&gt;bool {
+ panel=discord.components()
+ panel.text(&quot;# Status&quot;)
+ return event.complete_http(panel)
+}</code></pre><p><span data-es="Resultado esperado: Consulta el procedimiento autorizado para el resultado conectado.">Expected: See the authorized verification procedure for connected output.</span></p><p><span data-es="Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.">Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.</span></p></section>
 
-func fetch(ctx) {
-    request=http.request(&quot;GET&quot;,&quot;http://127.0.0.1:8765/health&quot;)
-    ctx.defer_http(request,&quot;health&quot;)
-    &quot;&quot;
-}
-func completed(event) {
-    response=event.http_response()
-    event.complete_http(response.text)
-}
-events=discord.events()
-events.on_http(&quot;health&quot;,completed)
-bot=discord.bot()
-bot.slash(&quot;health&quot;,&quot;Read the local status&quot;,fetch)
-bot.start_with_events(events)</code></pre>
-<p><span data-es="Resultado esperado: El programa imprime valores del endpoint configurado.">Expected: The program prints values from the configured endpoint.</span></p>
-<p><span data-es="Requiere un servidor privado autorizado y el lanzador nativo.">Requires an authorized private Discord server and the native launcher.</span></p>
-</section>
 </section></article><aside class="docs-toc"><div class="side-kicker"><span data-es="En esta página">On this page</span></div><nav id="toc-links"></nav></aside></main><dialog id="doc-search"><div class="search-head"><input aria-label="Search documentation" data-placeholder-es="Buscar guías, bibliotecas, funciones..." id="global-search" placeholder="Search guides, libraries, functions..." type="search"/><button aria-label="Close" class="doc-action" id="search-close">Esc</button></div><div aria-live="polite" id="search-results"></div></dialog><div class="docs-toast" id="doc-toast" role="status"></div></body></html>

@@ -333,7 +333,14 @@ show r.json({&quot;active&quot;:true})</code></pre>
 <p><span data-es="Funciona sin red. El ejemplo no abre una conexión.">Runs offline. The example does not open a socket.</span></p>
 </section>
 </section>
-<section class="library-api-category"><h2 id="http-clients"><span data-es="Clientes y sesiones">Clients &amp; sessions</span></h2>
+<section class="library-api-category"><h2 id="http-clients"><span data-es="Clientes y sesiones">Clients &amp; sessions</span></h2><section class="function-card" id="Client.metrics"><h3>http.Client.metrics <a href="#Client.metrics" aria-label="Permalink">#</a></h3><p><span data-es="Consulta contadores de peticiones, errores, conexiones, transferencia y latencia para este cliente.">Read request, error, connection, transfer and elapsed time counters for this client.</span></p><pre class="signature"><code>func http.Client.metrics() -&gt; ClientMetrics</code></pre><pre data-native-only><code class="language-tripol">import tripol.http
+
+c=http.client()
+r=c.get(&quot;http://127.0.0.1:8765/health&quot;)
+stats=c.metrics()
+show stats.completed,stats.connections
+c.close()</code></pre><p><span data-es="Resultado esperado: Consulta el procedimiento autorizado para el resultado conectado.">Expected: See the authorized verification procedure for connected output.</span></p><p><span data-es="Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.">Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.</span></p></section>
+
 <p><span data-es="Los clientes reutilizan conexiones y aíslan el estado de sus sesiones.">Client handles pool connections and isolate session state.</span></p>
 <section class="function-card" id="client"><h3>http.client <a href="#client" aria-label="Permalink">#</a></h3><p><span data-es="Crea un cliente con conexiones reutilizadas y cookies opcionales.">Create a client with connection pooling and optional cookies.</span></p>
 <pre class="signature"><code>func http.client() -&gt; Client</code></pre><pre><code class="language-tripol">import tripol.http
@@ -364,8 +371,13 @@ show c.close()</code></pre>
 <p><span data-es="Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.">Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide.</span></p>
 </section>
 </section>
-<section class="library-api-category"><h2 id="http-cookies"><span data-es="Cookies">Cookies</span></h2>
-<p><span data-es="Las cookies se conservan durante la sesión del cliente.">Cookie jars live for the duration of a client session.</span></p>
+<section class="library-api-category"><h2 id="http-cookies"><span data-es="Cookies">Cookies</span></h2><section class="function-card" id="Client.cookie_file"><h3>http.Client.cookie_file <a href="#Client.cookie_file" aria-label="Permalink">#</a></h3><p><span data-es="Guarda cookies con caducidad en un archivo aislado para el origen base.">Save expiring cookies in an isolated file for the base origin.</span></p><pre class="signature"><code>func http.Client.cookie_file(path:string) -&gt; bool</code></pre><pre><code class="language-tripol">import tripol.http
+
+c=http.client()
+c.base_url(&quot;https://example.com&quot;)
+show c.cookie_file(&quot;private-cookies.json&quot;)</code></pre><p><span data-es="Resultado esperado: true">Expected: true</span></p><p><span data-es="Configura antes de abrir el cliente. Usa un directorio privado y un archivo por cliente.">Configure before opening the client. Use a private directory and select a separate file for each client.</span></p></section>
+
+<p><span data-es="Las cookies se conservan en memoria por defecto. El cliente puede guardarlas en un archivo privado ligado al origen.">Cookies default to memory. A client can persist expiring cookies in a private origin-bound file.</span></p>
 <section class="function-card" id="Client.cookies"><h3>http.Client.cookies <a href="#Client.cookies" aria-label="Permalink">#</a></h3><p><span data-es="Habilita o deshabilita cookies antes de abrir la sesión.">Enable or disable cookies before opening a session.</span></p>
 <pre class="signature"><code>func http.Client.cookies(enabled=true) -&gt; bool</code></pre><pre><code class="language-tripol">import tripol.http
 
