@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 428,
-  "methods": 123,
+  "functions": 438,
+  "methods": 150,
   "summary": {
-    "native compiled": 551,
-    "web executed": 460,
-    "web native-only": 91
+    "native compiled": 588,
+    "web executed": 478,
+    "web native-only": 110
   },
   "rows": [
     {
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2999\n"
+      "output": "1779\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "3028038741\n"
+      "output": "1796793150\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2187,6 +2187,65 @@
       "output": "123\n"
     },
     {
+      "name": "discord.attachment_name_valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.attachment_url",
+      "native": "compiled",
+      "web": "executed",
+      "output": "attachment://report.txt\n"
+    },
+    {
+      "name": "discord.attachment_media_url",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.send_attachments",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.interaction_key_end",
+      "native": "compiled",
+      "web": "executed",
+      "output": "5\n"
+    },
+    {
+      "name": "discord.permissions_bitset_valid",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.command_permission_payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": ",\"default_member_permissions\":\"8192\"\n"
+    },
+    {
+      "name": "discord.file_types_payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[\"image\",\".pdf\"]\n"
+    },
+    {
+      "name": "discord.emoji_payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"name\":\"✅\"}\n"
+    },
+    {
+      "name": "discord.role_payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"name\":\"Reviewer\",\"permissions\":\"0\",\"colors\":{\"primary_color\":16777215}}\n"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2421,7 +2480,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n54663\n"
+      "output": "4950\n36153\n"
     },
     {
       "name": "simd.equal",
@@ -3222,6 +3281,150 @@
     },
     {
       "name": "discord.Channel.react",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Components.send_files",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Embed.send_files",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Embeds.send_files",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Components.file",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Select.disable",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Buttons.disable",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.user_menu",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.message_menu",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.target_id",
+      "native": "compiled",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "name": "discord.Interaction.target",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"id\":\"42\",\"username\":\"Ada\"}\n"
+    },
+    {
+      "name": "discord.Guild.channels",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Guild.create_channel",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Guild.audit",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Guild.roles",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Guild.create_role",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Guild.role_ref",
+      "native": "compiled",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "name": "discord.Role.id",
+      "native": "compiled",
+      "web": "executed",
+      "output": "42\n"
+    },
+    {
+      "name": "discord.Role.read",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Role.permissions",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Role.edit",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Role.delete",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.rename",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.topic",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.move",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.delete",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.edit_message",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.edit_components",
       "native": "compiled",
       "web": "native-only"
     }
@@ -5098,6 +5301,18 @@
       "name": "SIMPLE R2 Components V2 bot",
       "web": "executed",
       "output": "{\"type\":4,\"data\":{\"flags\":32768,\"components\":[{\"type\":17,\"accent_color\":16777215,\"components\":[{\"type\":10,\"content\":\"# TRIPOL\"},{\"type\":10,\"content\":\"Mi lenguaje de programacion\"},{\"type\":14,\"divider\":true,\"spacing\":1},{\"type\":1,\"components\":[{\"type\":2,\"style\":1,\"label\":\"Aceptar\",\"custom_id\":\"accept\"}]},{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"GitHub\",\"url\":\"https://github.com/Tripollas/Tripol\"}]}]}],\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "index": 312,
+      "name": "Discord button styles and emoji",
+      "web": "executed",
+      "output": "{\"flags\":32768,\"components\":[{\"type\":17,\"accent_color\":16777215,\"components\":[{\"type\":10,\"content\":\"# Panel de control\"},{\"type\":14,\"divider\":true,\"spacing\":1},{\"type\":1,\"components\":[{\"type\":2,\"style\":1,\"label\":\"Inicio\",\"custom_id\":\"home\"},{\"type\":2,\"style\":2,\"label\":\"Cancelar\",\"custom_id\":\"cancel\",\"disabled\":true},{\"type\":2,\"style\":3,\"label\":\"Aceptar\",\"custom_id\":\"accept\",\"emoji\":{\"name\":\"✅\"}},{\"type\":2,\"style\":4,\"custom_id\":\"delete\",\"emoji\":{\"name\":\"🗑️\"}},{\"type\":2,\"style\":5,\"label\":\"GitHub\",\"url\":\"https://github.com/Tripollas/Tripol\",\"emoji\":{\"name\":\"🔗\"}}]},{\"type\":1,\"components\":[{\"type\":2,\"style\":6,\"sku_id\":\"123456789012345678\"}]},{\"type\":1,\"components\":[{\"type\":2,\"style\":3,\"label\":\"Aprueba\",\"custom_id\":\"approve\",\"emoji\":{\"id\":\"234567890123456789\",\"name\":\"check\",\"animated\":false}}]},{\"type\":1,\"components\":[{\"type\":2,\"style\":1,\"label\":\"Celebra\",\"custom_id\":\"celebrate\",\"emoji\":{\"id\":\"345678901234567890\",\"name\":\"party\",\"animated\":true}}]},{\"type\":1,\"components\":[{\"type\":3,\"custom_id\":\"state\",\"min_values\":1,\"max_values\":1,\"options\":[{\"label\":\"Listo\",\"value\":\"ready\",\"default\":false,\"description\":\"Disponible\",\"emoji\":{\"name\":\"✅\"}}]}]}]}],\"allowed_mentions\":{\"parse\":[]}}\n"
+    },
+    {
+      "index": 313,
+      "name": "Discord user context menu",
+      "web": "executed",
+      "output": "{\"type\":4,\"data\":{\"content\":\"ID: 42\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
     }
   ]
 }

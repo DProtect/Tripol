@@ -1,11 +1,11 @@
 {
-  "commit": "17ff73c6209ab1f13db0ece18945514406a8943c",
+  "commit": "819a0a9a97e3d9b2482ff329052956c082f8fc3d",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
-  "total": 150,
+  "total": 153,
   "counts": {
-    "executed": 133,
-    "native-only": 17
+    "executed": 135,
+    "native-only": 18
   },
   "rows": [
     {
@@ -58,32 +58,52 @@
     {
       "file": "docs/discord.html",
       "index": 8,
+      "source": "import tripol.discord\n\nfunc selected(ctx) { ctx.reply(\"ID: \"+ctx.target_id(),true) }\nbot=discord.bot()\nbot.user_menu(\"Ver perfil\",selected)\nshow bot.preview_interaction(\"{\\\"op\\\":0,\\\"t\\\":\\\"INTERACTION_CREATE\\\",\\\"d\\\":{\\\"type\\\":2,\\\"data\\\":{\\\"type\\\":2,\\\"name\\\":\\\"Ver perfil\\\",\\\"target_id\\\":\\\"42\\\"}}}\")",
+      "status": "executed",
+      "output": "{\"type\":4,\"data\":{\"content\":\"ID: 42\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 9,
       "source": "import tripol.discord\n\nfunc search(ctx:discord.Interaction)->string {\n    return ctx.reply(\"Busca \" + ctx.option_text(\"query\"), true)\n}\n\nfunc suggest(ctx:discord.Interaction)->string {\n    choices = discord.command_choices()\n    if ctx.focused()==\"query\" and ctx.option_text(\"query\")==\"ca\" {\n        choices.add(\"Café\", \"cafe\")\n    }\n    return ctx.autocomplete(choices)\n}\n\narguments = discord.slash_options()\narguments.add(\"query\", \"Qué buscar\", \"string\", true, true)\nlimits = discord.command_choices()\nlimits.integer(\"Diez\", 10)\narguments.choose(\"limit\", \"Resultados máximos\", limits)\ncommands = discord.slash_options()\ncommands.subcommand(\"find\", \"Busca una bebida\", arguments)\nroot = discord.slash_options()\nroot.group(\"drinks\", \"Bebidas\", commands)\nbot = discord.bot()\nbot.slash_with_options(\"order\", \"Haz tu pedido\", &search, root)\nbot.on_autocomplete(\"order\", &suggest)\nshow bot.preview_interaction(\"{\\\"op\\\":0,\\\"t\\\":\\\"INTERACTION_CREATE\\\",\\\"d\\\":{\\\"type\\\":4,\\\"data\\\":{\\\"type\\\":1,\\\"name\\\":\\\"order\\\",\\\"options\\\":[{\\\"type\\\":2,\\\"name\\\":\\\"drinks\\\",\\\"options\\\":[{\\\"type\\\":1,\\\"name\\\":\\\"find\\\",\\\"options\\\":[{\\\"name\\\":\\\"query\\\",\\\"type\\\":3,\\\"value\\\":\\\"ca\\\",\\\"focused\\\":true}]}]}]}}}\")",
       "status": "executed",
       "output": "{\"type\":8,\"data\":{\"choices\":[{\"name\":\"Café\",\"value\":\"cafe\"}]}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 9,
+      "index": 10,
       "source": "import tripol.discord\n\npanel = discord.components()\npanel.text(\"## Bienvenido\")\npanel.separator()\npanel.link(\"Docs\", \"https://example.org/docs\")\nmessage = discord.components()\nmessage.container(panel, 41215)\nshow message.payload()",
       "status": "executed",
       "output": "{\"flags\":32768,\"components\":[{\"type\":17,\"components\":[{\"type\":10,\"content\":\"## Bienvenido\"},{\"type\":14,\"divider\":true,\"spacing\":1},{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"Docs\",\"url\":\"https://example.org/docs\"}]}],\"spoiler\":false,\"accent_color\":41215}],\"allowed_mentions\":{\"parse\":[]}}\n"
     },
     {
       "file": "docs/discord.html",
-      "index": 10,
+      "index": 11,
       "source": "import tripol.discord\n\nserver = discord.guild(\"123\")\nmember = server.member(\"456\")\nshow member.read()",
       "status": "native-only"
     },
     {
       "file": "docs/discord.html",
-      "index": 11,
+      "index": 12,
       "source": "import tripol.discord\n\nroom = discord.channel_ref(\"123\")\nshow room.read()",
       "status": "native-only"
     },
     {
       "file": "docs/discord.html",
-      "index": 12,
+      "index": 13,
+      "source": "import tripol.discord\n\npanel = discord.container(\"#FFFFFF\")\npanel.text(\"# Panel de control\")\npanel.separator()\n\nrow = discord.button_row()\nrow.button(\"Inicio\", \"home\", \"primary\")\nrow.button(\"Cancelar\", \"cancel\", \"secondary\", true)\nrow.button(\"Aceptar\", \"accept\", \"success\", false, \"✅\")\nrow.button(\"\", \"delete\", \"danger\", false, \"🗑️\")\nrow.link(\"GitHub\", \"https://github.com/Tripollas/Tripol\", false, \"🔗\")\npanel.row(row)\n\npanel.premium(\"123456789012345678\")\npanel.button(\"Aprueba\", \"approve\", \"success\", \"<:check:234567890123456789>\")\npanel.button(\"Celebra\", \"celebrate\", \"primary\", \"<a:party:345678901234567890>\")\n\nmenu = discord.select(\"state\")\nmenu.option(\"Listo\", \"ready\", \"Disponible\", false, \"✅\")\npanel.select(menu)\n\nshow panel.payload()",
+      "status": "executed",
+      "output": "{\"flags\":32768,\"components\":[{\"type\":17,\"accent_color\":16777215,\"components\":[{\"type\":10,\"content\":\"# Panel de control\"},{\"type\":14,\"divider\":true,\"spacing\":1},{\"type\":1,\"components\":[{\"type\":2,\"style\":1,\"label\":\"Inicio\",\"custom_id\":\"home\"},{\"type\":2,\"style\":2,\"label\":\"Cancelar\",\"custom_id\":\"cancel\",\"disabled\":true},{\"type\":2,\"style\":3,\"label\":\"Aceptar\",\"custom_id\":\"accept\",\"emoji\":{\"name\":\"✅\"}},{\"type\":2,\"style\":4,\"custom_id\":\"delete\",\"emoji\":{\"name\":\"🗑️\"}},{\"type\":2,\"style\":5,\"label\":\"GitHub\",\"url\":\"https://github.com/Tripollas/Tripol\",\"emoji\":{\"name\":\"🔗\"}}]},{\"type\":1,\"components\":[{\"type\":2,\"style\":6,\"sku_id\":\"123456789012345678\"}]},{\"type\":1,\"components\":[{\"type\":2,\"style\":3,\"label\":\"Aprueba\",\"custom_id\":\"approve\",\"emoji\":{\"id\":\"234567890123456789\",\"name\":\"check\",\"animated\":false}}]},{\"type\":1,\"components\":[{\"type\":2,\"style\":1,\"label\":\"Celebra\",\"custom_id\":\"celebrate\",\"emoji\":{\"id\":\"345678901234567890\",\"name\":\"party\",\"animated\":true}}]},{\"type\":1,\"components\":[{\"type\":3,\"custom_id\":\"state\",\"min_values\":1,\"max_values\":1,\"options\":[{\"label\":\"Listo\",\"value\":\"ready\",\"default\":false,\"description\":\"Disponible\",\"emoji\":{\"name\":\"✅\"}}]}]}]}],\"allowed_mentions\":{\"parse\":[]}}\n"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 14,
+      "source": "import tripol.discord\n\npanel=discord.container()\npanel.file(\"report.txt\")\nshow panel.send_files(\"123\",list([\"./report.txt\"]))",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 15,
       "source": "import tripol.discord\n\ndiscord.login_env()\ndiscord.activity(\"Programming in TRIPOL\")\ndiscord.reply(\"!hello\", \"Hello, friend!\")\ndiscord.reply(\"!ping\", \"Pong!\")\ndiscord.run()\n",
       "status": "native-only"
     },
@@ -1012,7 +1032,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "7494\n"
+      "output": "6163\n"
     },
     {
       "file": "docs/libraries/ui.html",
