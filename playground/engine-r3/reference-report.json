@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 438,
-  "methods": 150,
+  "functions": 442,
+  "methods": 159,
   "summary": {
-    "native compiled": 588,
-    "web executed": 478,
-    "web native-only": 110
+    "native compiled": 601,
+    "web executed": 489,
+    "web native-only": 112
   },
   "rows": [
     {
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2889\n"
+      "output": "3905\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2918536104\n"
+      "output": "3954239998\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2119,7 +2119,7 @@
       "name": "discord.slash_choice_signature",
       "native": "compiled",
       "web": "executed",
-      "output": "\"Díez\":10;\n"
+      "output": "\"Díez\":1e1;\n"
     },
     {
       "name": "discord.ignore_gateway_event",
@@ -2244,6 +2244,30 @@
       "native": "compiled",
       "web": "executed",
       "output": "{\"name\":\"Reviewer\",\"permissions\":\"0\",\"colors\":{\"primary_color\":16777215}}\n"
+    },
+    {
+      "name": "discord.upload_envelope",
+      "native": "compiled",
+      "web": "executed",
+      "output": "{\"payload\":{},\"files\":[\"report.txt\"]}\n"
+    },
+    {
+      "name": "discord.permission_index",
+      "native": "compiled",
+      "web": "executed",
+      "output": "13\n"
+    },
+    {
+      "name": "discord.interaction_values",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Ada\n"
+    },
+    {
+      "name": "discord.slash_number_signature",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
     },
     {
       "name": "encoding.hex_digit",
@@ -2480,7 +2504,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n59391\n"
+      "output": "4950\n50554\n"
     },
     {
       "name": "simd.equal",
@@ -3425,6 +3449,58 @@
     },
     {
       "name": "discord.Channel.edit_components",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.has_field",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true false\n"
+    },
+    {
+      "name": "discord.Interaction.field_values",
+      "native": "compiled",
+      "web": "executed",
+      "output": "100 200\n"
+    },
+    {
+      "name": "discord.Interaction.field_attachment",
+      "native": "compiled",
+      "web": "executed",
+      "output": "report.pdf 42\n"
+    },
+    {
+      "name": "discord.Interaction.target_username",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Ada\n"
+    },
+    {
+      "name": "discord.Interaction.target_content",
+      "native": "compiled",
+      "web": "executed",
+      "output": "Hola\n"
+    },
+    {
+      "name": "discord.Interaction.can",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true false\n"
+    },
+    {
+      "name": "discord.CommandChoices.number",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[{\"name\":\"Half\",\"value\":0.5}]\n"
+    },
+    {
+      "name": "discord.Guild.move_role",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.reply_files",
       "native": "compiled",
       "web": "native-only"
     }
@@ -5313,6 +5389,23 @@
       "name": "Discord user context menu",
       "web": "executed",
       "output": "{\"type\":4,\"data\":{\"content\":\"ID: 42\",\"flags\":64,\"allowed_mentions\":{\"parse\":[]}}}\n"
+    },
+    {
+      "index": 314,
+      "name": "Discord form attachment metadata",
+      "web": "executed",
+      "output": "report.pdf 42\n"
+    },
+    {
+      "index": 315,
+      "name": "Discord fractional command choices",
+      "web": "executed",
+      "output": "[{\"name\":\"Half\",\"value\":0.5}]\n"
+    },
+    {
+      "index": 316,
+      "name": "Discord stability bot (native)",
+      "web": "native-only"
     }
   ]
 }

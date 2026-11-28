@@ -1,11 +1,11 @@
 {
-  "commit": "8b18682173ba411998a087ff057798405e8854ad",
+  "commit": "1aaf4501b88bd356e413a7185d703e5fef350d9c",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
-  "total": 153,
+  "total": 154,
   "counts": {
     "executed": 135,
-    "native-only": 18
+    "native-only": 19
   },
   "rows": [
     {
@@ -104,6 +104,12 @@
     {
       "file": "docs/discord.html",
       "index": 15,
+      "source": "import tripol.discord\nimport tripol.env\n\nfunc form(ctx) {\n    feedback = discord.modal(\"feedback\", \"Comentarios\")\n    feedback.text(\"topic\", \"Tema\", 1, true, 1, 100)\n    choices = discord.select(\"features\", \"string\", 0, 2)\n    choices.option(\"Formularios\", \"forms\")\n    choices.option(\"Comandos\", \"commands\")\n    feedback.checkbox_group(\"Funciones que usaste\", choices, false)\n    feedback.file(\"file\", \"Archivo opcional\", list([\".txt\", \".pdf\"]), 0, 1, false)\n    ctx.open_modal(feedback)\n}\n\nfunc submitted(ctx) {\n    choices = ctx.field_values(\"features\")\n    file = ctx.field_attachment(\"file\")\n    note = ctx.field(\"topic\") + \" · opciones: \" + text(choices.size())\n    if file.id != \"\" {note += \" · archivo: \" + file.filename}\n    ctx.reply(note, true)\n}\n\nfunc rating(ctx) {\n    ctx.reply(\"Valoración: \" + ctx.option(\"score\"), true)\n}\n\nfunc report(ctx) {\n    panel = discord.components()\n    panel.file(\"report.txt\")\n    show ctx.reply_files(panel, list([\"report.txt\"]), true)\n    \"\"\n}\n\nguild = env.get(\"DISCORD_GUILD_ID\")\nassert guild != \"\", \"Configura DISCORD_GUILD_ID\"\nscores = discord.command_choices()\nscores.number(\"Uno con cinco\", \"1.5\")\nscores.number(\"Dos con cinco\", \"2.5\")\narguments = discord.slash_options()\narguments.choose(\"score\", \"Puntuación\", scores, true)\nbot = discord.bot()\nbot.slash(\"feedback\", \"Abre el formulario\", form, guild)\nbot.on_modal(\"feedback\", submitted)\nbot.slash_with_options(\"rating\", \"Elige una puntuación\", rating, arguments, guild)\nbot.slash(\"report\", \"Envía un archivo de prueba\", report, guild)\nbot.user_menu(\"Ver usuario\", func(ctx) {\n    name = ctx.target_username()\n    if name == \"\" {name = \"Usuario seleccionado: \" + ctx.target_id()}\n    ctx.reply(name, true)\n}, guild)\nbot.message_menu(\"Ver mensaje\", func(ctx) {\n    body = discord.embed()\n    body.title(\"Mensaje seleccionado\")\n    content = ctx.target_content()\n    if content == \"\" {content = \"El mensaje no tiene texto visible.\"}\n    body.description(content)\n    ctx.reply(body, true)\n}, guild)\nbot.start()",
+      "status": "native-only"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 16,
       "source": "import tripol.discord\n\ndiscord.login_env()\ndiscord.activity(\"Programming in TRIPOL\")\ndiscord.reply(\"!hello\", \"Hello, friend!\")\ndiscord.reply(\"!ping\", \"Pong!\")\ndiscord.run()\n",
       "status": "native-only"
     },
@@ -1032,7 +1038,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "6762\n"
+      "output": "7574\n"
     },
     {
       "file": "docs/libraries/ui.html",
