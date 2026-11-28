@@ -7,7 +7,7 @@ func (c *compiler) nexusGatewayBuiltin(e *expr) (string, bool) {
 	var args []string
 	var ret string
 	switch e.s {
-	case "gw_open", "gw_close":
+	case "gw_open", "gw_close", "gw_host_available":
 		ret = "bool"
 	case "gw_abort":
 		ret = "int"
@@ -31,8 +31,8 @@ func (c *compiler) nexusGatewayBuiltin(e *expr) (string, bool) {
 	for i, x := range e.args {
 		c.require(c.expression(x), args[i])
 	}
-	if c.a.target != "linux" && (e.s == "gw_host_start" || e.s == "gw_host_poll" || e.s == "gw_host_stop") {
-		c.a.str("")
+	if c.a.target == "linux" && e.s == "gw_host_available" {
+		c.a.imm(1)
 	} else {
 		c.a.call(e.s)
 	}

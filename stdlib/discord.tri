@@ -355,7 +355,7 @@ func GatewayEvents.__run(self:GatewayEvents,handler:func(Message)->string,intent
  scratch {assert has_channel() or len(bot_slot_get(36))==0,"Welcome requires a selected channel"}
  events=self.__names
  callbacks=self.__handlers
- if platform_name()=="linux" {
+ if gw_host_available() {
   started=false
   scratch {started=gw_host_start(identify_payload(intents))=="1"}
   assert started,"Unable to start Discord Gateway"
@@ -887,8 +887,7 @@ func attachment_media_url(value:string)->bool {
  return media_url(value)
 }
 
-func send_attachments(channel_id:string,payload:string,paths:string_list)->string {
- if platform_name()!="linux" {return ""}
+func upload_envelope(payload:string,paths:string_list)->string {
  assert paths.size()>=1 and paths.size()<=10,"Discord messages accept one to ten uploaded files"
  prefix="{\"payload\":"
  middle=",\"files\":["
@@ -901,7 +900,12 @@ func send_attachments(channel_id:string,payload:string,paths:string_list)->strin
   if i>0 {body+=","}
   body+=path
  }
- reply=discord_rest(6,channel_path(channel_id),token(),body+"]}")
+ return body+"]}"
+}
+
+func send_attachments(channel_id:string,payload:string,paths:string_list)->string {
+ if not gw_host_available() {return ""}
+ reply=discord_rest(6,channel_path(channel_id),token(),upload_envelope(payload,paths))
  return event_id(json.get_raw_large(reply,"id"))
 }
 
@@ -1082,6 +1086,7 @@ struct Interaction {
  // Internal credentials are populated only by live dispatch.
  __interaction_token:string=""
  __response_state:int=0
+ __member_permissions:string=""
 }
 
 func interaction_message(content:string,ephemeral=false)->string {
@@ -1107,6 +1112,35 @@ func Interaction.reply(self:Interaction,batch:Embeds,ephemeral=false)->string {
 
 func Interaction.reply(self:Interaction,layout:Components,ephemeral=false)->string {
  return self.reply_components(layout,ephemeral)
+}
+
+// Immediately acknowledge an interaction and stream local attachments.
+func Interaction.reply_files(self:Interaction,content:string,paths:string_list,ephemeral=false)->bool {
+ return self.__respond_files(self.reply(content,ephemeral),paths)
+}
+
+func Interaction.reply_files(self:Interaction,embed:Embed,paths:string_list,ephemeral=false)->bool {
+ return self.__respond_files(self.reply(embed,ephemeral),paths)
+}
+
+func Interaction.reply_files(self:Interaction,batch:Embeds,paths:string_list,ephemeral=false)->bool {
+ return self.__respond_files(self.reply(batch,ephemeral),paths)
+}
+
+func Interaction.reply_files(self:Interaction,layout:Components,paths:string_list,ephemeral=false)->bool {
+ return self.__respond_files(self.reply(layout,ephemeral),paths)
+}
+
+func Interaction.__respond_files(self:Interaction,body:string,paths:string_list)->bool {
+ if self.__interaction_token=="" or self.id=="" or self.kind==4 or self.__response_state!=0 {return false}
+ if not gw_host_available() {return false}
+ path="/api/v10/interactions/"+self.id+"/"+self.__interaction_token+"/callback"
+ envelope=upload_envelope(body,paths)
+ self.__response_state=1
+ ok=false
+ scratch {ok=len(discord_rest(7,path,"",envelope))>0}
+ if ok {self.__response_state=2}
+ return ok
 }
 
 func Interaction.defer(self:Interaction,ephemeral=false)->string {
@@ -1268,8 +1302,9 @@ func interaction_context(payload:string,key:string)->Interaction {
  assert len(key)>=2,"Invalid Discord interaction key"
  data=json.get_raw_large(payload,"data")
  kind=errors.int_or(json.get_raw_large(payload,"type"),0)
+ member=json.get_raw_large(payload,"member")
  author=json.get_raw_large(payload,"user")
- if len(author)==0 {author=json.get_raw_large(json.get_raw_large(payload,"member"),"user")}
+ if len(author)==0 {author=json.get_raw_large(member,"user")}
  name=slice(key,1,interaction_key_end(key))
  id=event_id(json.get_raw_large(payload,"id"))
  app=event_id(json.get_raw_large(payload,"application_id"))
@@ -1277,7 +1312,9 @@ func interaction_context(payload:string,key:string)->Interaction {
  channel_id=event_id(json.get_raw_large(payload,"channel_id"))
  user=event_id(json.get_raw_large(author,"id"))
  has_message=len(json.get_raw_large(payload,"message"))>0
- return Interaction(kind,name,id,app,guild,channel_id,user,data,has_message)
+ ctx=Interaction(kind,name,id,app,guild,channel_id,user,data,has_message)
+ ctx.__member_permissions=json.unquote(json.get_raw_large(member,"permissions"))
+ return ctx
 }
 
 func dispatch_interaction(event:string,key:string,handler:func(Interaction)->string)->string {
@@ -1347,10 +1384,42 @@ func permissions_bitset_valid(value:string)->bool {
  return true
 }
 
+func permission_index(name:string)->int {
+ if name=="kick_members" {return 1}
+ if name=="ban_members" {return 2}
+ if name=="administrator" {return 3}
+ if name=="manage_channels" {return 4}
+ if name=="manage_guild" {return 5}
+ if name=="view_audit_log" {return 7}
+ if name=="view_channel" {return 10}
+ if name=="send_messages" {return 11}
+ if name=="manage_messages" {return 13}
+ if name=="manage_roles" {return 28}
+ if name=="manage_webhooks" {return 29}
+ if name=="manage_threads" {return 34}
+ if name=="moderate_members" {return 40}
+ return -1
+}
+
+func Interaction.can(self:Interaction,permission:string)->bool {
+ index=permission_index(permission)
+ if self.guild_id=="" or index<0 or not permissions_bitset_valid(self.__member_permissions) {return false}
+ // Discord's bitfields are decimal strings. Long division is unnecessary:
+ // each step can keep just the low 41 bits used by these named permissions.
+ mask=2199023255552
+ value=0
+ for i in range(len(self.__member_permissions)) {
+  value=(value*10+byte_at(self.__member_permissions,i)-48)%mask
+ }
+ return bits.test(value,3) or bits.test(value,index)
+}
+
 func command_permission_payload(default_permissions:string)->string {
  if default_permissions=="" {return ""}
  if default_permissions=="everyone" {return ",\"default_member_permissions\":null"}
- assert permissions_bitset_valid(default_permissions),"Use a canonical decimal permissions bitset or everyone"
+ index=permission_index(default_permissions)
+ if index>=0 {return ",\"default_member_permissions\":"+json.quote(text(bits.mask(index)))}
+ assert permissions_bitset_valid(default_permissions),"Use a Discord permission name, a canonical decimal bitset or everyone"
  return ",\"default_member_permissions\":"+json.quote(default_permissions)
 }
 
@@ -1398,6 +1467,16 @@ func Interaction.target(self:Interaction)->string {
  if collection=="" {return ""}
  resolved=json.get_raw_large(self.data_json,"resolved")
  return json.get_raw_large(json.get_raw_large(resolved,collection),id)
+}
+
+func Interaction.target_username(self:Interaction)->string {
+ if json.get_raw_large(self.data_json,"type")!="2" {return ""}
+ return json.unquote(json.get_raw_large(self.target(),"username"))
+}
+
+func Interaction.target_content(self:Interaction)->string {
+ if json.get_raw_large(self.data_json,"type")!="3" {return ""}
+ return json.unquote(json.get_raw_large(self.target(),"content"))
 }
 
 func Bot.on_button(self:Bot,id:string,handler:func(Interaction)->string)->bool {
@@ -1505,8 +1584,11 @@ func Interaction.option_text(self:Interaction,name:string)->string {
 }
 
 func Interaction.values(self:Interaction)->string_list {
+ return interaction_values(json.get_raw_large(self.data_json,"values"))
+}
+
+func interaction_values(values:string)->string_list {
  result=string_list()
- values=json.get_raw_large(self.data_json,"values")
  if len(values)<2 or byte_at(values,0)!=91 {return result}
  n=len(values)
  at=json.ws(values,1,n)
@@ -1949,6 +2031,63 @@ func CommandChoices.integer(self:CommandChoices,label:string,value:int)->bool {
  return self.__append(label,text(value),4)
 }
 
+// Accept decimal text so that the definition and comparison preserve the
+// submitted digits on every target, including the Web Engine.
+func CommandChoices.number(self:CommandChoices,label:string,value:string)->bool {
+ assert slash_number_signature(value)!="","Provide a Discord number between -9007199254740992 and 9007199254740992"
+ return self.__append(label,value,10)
+}
+
+// Normalize the significand and exponent without converting to machine floats.
+func slash_number_signature(value:string)->string {
+ n=len(value)
+ if n==0 or json.number(value,0,n)!=n {return ""}
+ start=0
+ if byte_at(value,0)==45 {start=1}
+ point=n
+ end=n
+ for i in range(start,n) {
+  b=byte_at(value,i)
+  if b==46 {point=i}
+  if b==101 or b==69 {end=i;break}
+ }
+ exponent=0
+ if end<n {
+  at=end+1
+  negative=byte_at(value,at)==45
+  if negative or byte_at(value,at)==43 {at+=1}
+  while at<n {
+   exponent=exponent*10+byte_at(value,at)-48
+   if exponent>100000 {break}
+   at+=1
+  }
+  if negative {exponent=-exponent}
+ }
+ if point>end {point=end}
+ digits=slice(value,start,point)
+ if point<end {digits+=slice(value,point+1,end)}
+ first=0
+ last=len(digits)
+ while first<last and byte_at(digits,first)==48 {first+=1}
+ if first==last {return "0"}
+ while last>first and byte_at(digits,last-1)==48 {last-=1}
+ order=exponent+point-start-first-1
+ if order>15 or order< -324 {return ""}
+ if order==15 {
+  bound="9007199254740992"
+  equal=true
+  for i in range(16) {
+   digit=48
+   if first+i<last {digit=byte_at(digits,first+i)}
+   if digit>byte_at(bound,i) {return ""}
+   if digit<byte_at(bound,i) {equal=false;break}
+  }
+  if equal and last-first>16 {return ""}
+ }
+ if order== -324 and byte_at(digits,first)<51 {return ""}
+ return slice(value,0,start)+slice(digits,first,last)+"e"+text(order)
+}
+
 func CommandChoices.payload(self:CommandChoices)->string {
  body="["
  entries=self.__entries
@@ -1963,7 +2102,7 @@ func Interaction.autocomplete(self:Interaction,choices:CommandChoices)->string {
  assert self.kind==4,"Discord autocomplete requires an autocomplete interaction"
  option=interaction_option(self.data_json,"",true)
  kind=json.get_raw_large(option,"type")
- assert choices.__kind==0 or (kind=="3" and choices.__kind==3) or ((kind=="4" or kind=="10") and choices.__kind==4),"Discord choices must match the focused option type"
+ assert choices.__kind==0 or (kind=="3" and choices.__kind==3) or (kind=="4" and choices.__kind==4) or (kind=="10" and (choices.__kind==4 or choices.__kind==10)),"Discord choices must match the focused option type"
  return "{\"type\":8,\"data\":{\"choices\":"+choices.payload()+"}}"
 }
 
@@ -1981,7 +2120,7 @@ func slash_choice_signature(choices:string)->string {
   value=json.get_raw_large(entry,"value")
   if len(label)<2 or len(value)==0 {return "!"}
   if byte_at(value,0)==34 {value=json.quote(json.unquote(value))}
-  else if errors.is_int(value) {value=text(parse_int(value))}
+  else {value=slash_number_signature(value);if value=="" {return "!"}}
   result+=json.quote(json.unquote(label))+":"+value+";"
   at=json.ws(choices,end,n)
   if at>=n {return "!"}
@@ -2026,6 +2165,35 @@ func slash_option_signature(options:string,depth=0)->string {
 
 func Interaction.field_data(self:Interaction,id:string)->string {
  return modal_field_value(self.data_json,id,"values",0)
+}
+
+func Interaction.has_field(self:Interaction,id:string)->bool {
+ return self.kind==5 and modal_field_value(self.data_json,id,"type",0)!=""
+}
+
+func Interaction.field_values(self:Interaction,id:string)->string_list {
+ return interaction_values(self.field_data(id))
+}
+
+struct UploadedFile {
+ id:string
+ filename:string
+ url:string
+ size:int
+ content_type:string
+}
+
+func Interaction.field_attachment(self:Interaction,id:string,index=0)->UploadedFile {
+ empty=UploadedFile("","","",0,"")
+ if self.kind!=5 or index<0 or modal_field_value(self.data_json,id,"type",0)!="19" {return empty}
+ values=self.field_values(id)
+ if index>=values.size() {return empty}
+ attachment_id=values[index]
+ if event_id(json.quote(attachment_id))!=attachment_id or attachment_id=="" {return empty}
+ resolved=json.get_raw_large(self.data_json,"resolved")
+ file=json.get_raw_large(json.get_raw_large(resolved,"attachments"),attachment_id)
+ if event_id(json.get_raw_large(file,"id"))!=attachment_id {return empty}
+ return UploadedFile(attachment_id,json.unquote(json.get_raw_large(file,"filename")),json.unquote(json.get_raw_large(file,"url")),errors.int_or(json.get_raw_large(file,"size"),0),json.unquote(json.get_raw_large(file,"content_type")))
 }
 
 func Modal.file(self:Modal,id:string,label:string,minimum=1,maximum=1,required=true,description="")->bool {
@@ -2340,6 +2508,13 @@ struct Role {
 }
 
 func Guild.roles(self:Guild)->string {return discord_rest(1,self.__path("roles"),token(),"")}
+
+func Guild.move_role(self:Guild,role_id:string,position:int)->bool {
+ assert role_id!="" and role_id!=self.id and event_id(json.quote(role_id))==role_id,"Provide a role ID other than @everyone"
+ assert position>=1,"Discord role positions start at 1 above @everyone"
+ body="[{\"id\":"+json.quote(role_id)+",\"position\":"+text(position)+"}]"
+ return len(discord_rest(4,self.__path("roles"),token(),body))>0
+}
 
 func Guild.role_ref(self:Guild,id:string)->Role {
  assert self.id!="" and event_id(json.quote(self.id))==self.id,"Invalid Discord guild ID"

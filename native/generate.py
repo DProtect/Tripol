@@ -2,7 +2,7 @@
 import pathlib, subprocess, tempfile, re
 root=pathlib.Path(__file__).resolve().parent
 names={'print_float':'print:float','osalloc_linux':'osalloc:linux','osalloc_windows':'osalloc:windows','readbyte_linux':'readbyte:linux','readbyte_windows':'readbyte:windows'}
-for helper in ('gw_open','gw_send','gw_receive','gw_close','discord_callback','discord_edit','discord_rest','discord_request','env_get','oscommit','game_open','game_running','game_present','game_key','game_close','ui_form','https_get','net_connect','net_send','net_shutdown','net_recv','net_close','file_open','file_chunk_read','file_chunk_write','file_close','clock_ms','clock_ns','sleep_ms'):
+for helper in ('discord_pipe_prepare','discord_pipe_io','gw_open','gw_send','gw_receive','gw_close','discord_callback','discord_edit','discord_rest','discord_request','env_get','oscommit','game_open','game_running','game_present','game_key','game_close','ui_form','https_get','net_connect','net_send','net_shutdown','net_recv','net_close','file_open','file_chunk_read','file_chunk_write','file_close','clock_ms','clock_ns','sleep_ms'):
  for target in ('linux','windows'): names[helper+'_'+target]=helper+':'+target
 with tempfile.TemporaryDirectory() as tmp:
  o=pathlib.Path(tmp)/'liberty.o'; b=pathlib.Path(tmp)/'code.bin'

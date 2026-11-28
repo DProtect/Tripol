@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
+	"time"
 )
 
 // Discord's documented Create Message request ceiling, including MIME headers.
@@ -49,6 +50,21 @@ func (c *Client) UploadMessage(ctx context.Context, route, token string, body []
 		segments[3] != "channels" || !snowflake(segments[4]) || segments[5] != "messages" || !validToken(token) {
 		return nil, errors.New("invalid Discord upload destination")
 	}
+	return c.upload(ctx, route, token, body, false)
+}
+
+// UploadInteraction sends a message as the initial interaction callback.
+func (c *Client) UploadInteraction(ctx context.Context, route string, body []byte) ([]byte, error) {
+	initial, err := validateInteractionRoute(http.MethodPost, route)
+	if err != nil || !initial {
+		return nil, errors.New("invalid Discord interaction upload destination")
+	}
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+	return c.upload(ctx, route, "", body, true)
+}
+
+func (c *Client) upload(ctx context.Context, route, token string, body []byte, initial bool) ([]byte, error) {
 	var envelope struct {
 		Payload map[string]json.RawMessage `json:"payload"`
 		Files   []string                   `json:"files"`
@@ -57,6 +73,15 @@ func (c *Client) UploadMessage(ctx context.Context, route, token string, body []
 		envelope.Payload == nil || envelope.Payload["attachments"] != nil ||
 		len(envelope.Files) < 1 || len(envelope.Files) > 10 {
 		return nil, errors.New("Discord upload requires a message payload and one to ten files")
+	}
+
+	message := envelope.Payload
+	if initial {
+		message = nil
+		if string(envelope.Payload["type"]) != "4" ||
+			json.Unmarshal(envelope.Payload["data"], &message) != nil || message == nil || message["attachments"] != nil {
+			return nil, errors.New("Discord interaction upload requires a type 4 response with a message")
+		}
 	}
 
 	files := make([]uploadFile, 0, len(envelope.Files))
@@ -99,7 +124,13 @@ func (c *Client) UploadMessage(ctx context.Context, route, token string, body []
 	if err != nil {
 		return nil, err
 	}
-	envelope.Payload["attachments"] = metadata
+	message["attachments"] = metadata
+	if initial {
+		envelope.Payload["data"], err = json.Marshal(message)
+		if err != nil {
+			return nil, err
+		}
+	}
 	payload, err := json.Marshal(envelope.Payload)
 	if err != nil {
 		return nil, err
@@ -135,5 +166,5 @@ func (c *Client) UploadMessage(ctx context.Context, route, token string, body []
 		}
 		return io.MultiReader(append(readers, bytes.NewReader(parts[len(files)]))...)
 	}
-	return c.requestBody(ctx, http.MethodPost, route, token, reader, size, writer.FormDataContentType(), false)
+	return c.requestBody(ctx, http.MethodPost, route, token, reader, size, writer.FormDataContentType(), initial)
 }

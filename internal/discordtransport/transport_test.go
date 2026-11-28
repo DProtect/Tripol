@@ -2,6 +2,7 @@ package discordtransport
 
 import (
 	"bytes"
+	"compress/zlib"
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -176,17 +177,37 @@ func TestGatewayReconnectResumeAndFatalClose(t *testing.T) {
 			return
 		}
 		defer ws.CloseNow()
+		if r.URL.Query().Get("compress") != "zlib-stream" {
+			t.Error("Gateway compression was not requested")
+			return
+		}
+		var compressed bytes.Buffer
+		stream := zlib.NewWriter(&compressed)
+		defer stream.Close()
 		send := func(payload string) bool {
-			if err := ws.Write(testCtx, websocket.MessageText, []byte(payload)); err != nil {
+			if _, err := io.WriteString(stream, payload); err != nil {
 				t.Error(err)
 				return false
 			}
+			if err := stream.Flush(); err != nil {
+				t.Error(err)
+				return false
+			}
+			packet := compressed.Bytes()
+			for _, fragment := range [][]byte{packet[:len(packet)-2], packet[len(packet)-2:]} {
+				if err := ws.Write(testCtx, websocket.MessageBinary, fragment); err != nil {
+					t.Error(err)
+					return false
+				}
+			}
+			compressed.Reset()
 			return true
 		}
+
 		if !send(`{"op":10,"d":{"heartbeat_interval":1000}}`) {
 			return
 		}
-		first := readFrame(testCtx, ws)
+		first := readFrame(testCtx, ws, nil)
 		if first.err != nil {
 			t.Error(first.err)
 			return
@@ -212,17 +233,17 @@ func TestGatewayReconnectResumeAndFatalClose(t *testing.T) {
 			t.Error("invalid Resume")
 			return
 		}
-		if !send(`{"op":0,"t":"RESUMED","s":42,"d":{}}`) {
+		if !send(`{"op":0,"t":"INTERACTION_CREATE","s":41,"d":{}}`) || !send(`{"op":0,"t":"RESUMED","s":42,"d":{}}`) {
 			return
 		}
 		if !send(`{"op":1,"d":null}`) {
 			return
 		}
-		beat := readFrame(testCtx, ws)
+		beat := readFrame(testCtx, ws, nil)
 		// A scheduled beat can race the RESUMED dispatch. The requested
 		// heartbeat after that dispatch must report its sequence.
 		if beat.err == nil && beat.message.Op == 1 && string(beat.message.Data) == "41" {
-			beat = readFrame(testCtx, ws)
+			beat = readFrame(testCtx, ws, nil)
 		}
 		if beat.err != nil || beat.message.Op != 1 || string(beat.message.Data) != "42" {
 			t.Errorf("incorrect heartbeat: %+v", beat)
@@ -253,6 +274,7 @@ func TestGatewayReconnectResumeAndFatalClose(t *testing.T) {
 		allowURL:      func(u *url.URL) bool { return u.String() == target },
 		retryDelay:    func(int) time.Duration { return time.Millisecond },
 		helloDeadline: time.Second,
+		compress:      true,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -416,5 +438,86 @@ func TestInteractionWebhookEditAndFollowup(t *testing.T) {
 	}
 	if requests.Load() != 4 {
 		t.Fatal(requests.Load())
+	}
+}
+
+func TestGatewayDeliversTwoThousandInteractionsInOrder(t *testing.T) {
+	const interactions = 2000
+	const batch = 16
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	consumed := make(chan struct{})
+	var target string
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v10/gateway/bot" {
+			fmt.Fprintf(w, `{"url":%q,"session_start_limit":{"remaining":1}}`, target)
+			return
+		}
+		ws, err := websocket.Accept(w, r, nil)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		defer ws.CloseNow()
+		send := func(body string) bool {
+			if err := ws.Write(ctx, websocket.MessageText, []byte(body)); err != nil {
+				t.Error(err)
+				return false
+			}
+			return true
+		}
+		if !send(`{"op":10,"d":{"heartbeat_interval":300000}}`) {
+			return
+		}
+		if first := readFrame(ctx, ws, nil); first.err != nil || first.message.Op != 2 {
+			t.Error("expected Identify")
+			return
+		}
+		if !send(fmt.Sprintf(`{"op":0,"t":"READY","s":0,"d":{"session_id":"fixture","resume_gateway_url":%q}}`, target)) {
+			return
+		}
+		for seq := 1; seq <= interactions; seq++ {
+			if !send(fmt.Sprintf(`{"op":0,"t":"INTERACTION_CREATE","s":%d,"d":{"type":2}}`, seq)) {
+				return
+			}
+			if seq%batch == 0 {
+				select {
+				case <-consumed:
+				case <-ctx.Done():
+					return
+				}
+			}
+		}
+		_ = ws.Close(websocket.StatusCode(4014), "fixture")
+	}))
+	defer server.Close()
+	target = "wss" + strings.TrimPrefix(server.URL, "https")
+	client := newClient(server.Client(), server.URL)
+	defer client.Close()
+	gateway, err := client.startGateway(ctx, []byte(testIdentify), gatewayOptions{
+		allowURL: func(u *url.URL) bool { return u.String() == target }, helloDeadline: time.Second,
+		retryDelay: func(int) time.Duration { return time.Millisecond },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer gateway.Close()
+	for seq := 0; seq <= interactions; seq++ {
+		event, done, err := gateway.poll(ctx, 2*time.Second)
+		var message gatewayMessage
+		if err != nil || done || json.Unmarshal(event.raw, &message) != nil ||
+			message.Sequence == nil || *message.Sequence != int64(seq) || event.callbackDeadline.IsZero() != (seq == 0) {
+			t.Fatalf("sequence %d, got %s, done %v, error %v", seq, event.raw, done, err)
+		}
+		if seq > 0 && seq%batch == 0 {
+			select {
+			case consumed <- struct{}{}:
+			case <-ctx.Done():
+				t.Fatal(ctx.Err())
+			}
+		}
+	}
+	if _, done, err := gateway.Poll(ctx, 2*time.Second); !done || err == nil || client.Metrics().Dispatches != interactions+1 {
+		t.Fatalf("unexpected termination: done %v, err %v, metrics %+v", done, err, client.Metrics())
 	}
 }

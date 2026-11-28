@@ -93,35 +93,46 @@ func (c *Client) DeleteInteractionFollowup(ctx context.Context, path string) ([]
 }
 
 func (c *Client) interaction(ctx context.Context, method, path string, body []byte) ([]byte, error) {
-	parts := strings.Split(path, "/")
-	if len(parts) < 6 || parts[0] != "" || parts[1] != "api" || parts[2] != "v10" ||
-		!snowflake(parts[4]) || !validToken(parts[5]) || parts[5] == "." || parts[5] == ".." {
-		return nil, errors.New("invalid Discord interaction request")
+	initial, err := validateInteractionRoute(method, path)
+	if err != nil {
+		return nil, err
 	}
 	if method != http.MethodDelete && (len(body) == 0 || !json.Valid(body)) {
 		return nil, errors.New("invalid Discord interaction request body")
 	}
+	if initial {
+		deadline, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+		ctx = deadline
+	}
+	return c.request(ctx, method, path, "", body, true)
+}
+
+func validateInteractionRoute(method, path string) (initial bool, err error) {
+	parts := strings.Split(path, "/")
+	if len(parts) < 6 || parts[0] != "" || parts[1] != "api" || parts[2] != "v10" ||
+		!snowflake(parts[4]) || !validToken(parts[5]) || parts[5] == "." || parts[5] == ".." {
+		return false, errors.New("invalid Discord interaction request")
+	}
 	switch parts[3] {
 	case "interactions":
-		if method != http.MethodPost || len(parts) != 7 || parts[6] != "callback" {
-			return nil, errors.New("invalid Discord interaction callback route")
+		if method == http.MethodPost && len(parts) == 7 && parts[6] == "callback" {
+			return true, nil
 		}
-		initial, cancel := context.WithTimeout(ctx, 3*time.Second)
-		defer cancel()
-		ctx = initial
+		return false, errors.New("invalid Discord interaction callback route")
 	case "webhooks":
 		valid := method == http.MethodPost && len(parts) == 6
 		if len(parts) == 8 && parts[6] == "messages" {
 			valid = method == http.MethodPatch && (snowflake(parts[7]) || parts[7] == "@original") ||
 				method == http.MethodDelete && snowflake(parts[7])
 		}
-		if !valid {
-			return nil, errors.New("invalid Discord interaction webhook route")
+		if valid {
+			return false, nil
 		}
+		return false, errors.New("invalid Discord interaction webhook route")
 	default:
-		return nil, errors.New("invalid Discord interaction endpoint")
+		return false, errors.New("invalid Discord interaction endpoint")
 	}
-	return c.request(ctx, method, path, "", body, true)
 }
 
 func snowflake(id string) bool {

@@ -120,3 +120,86 @@ func TestUploadMessageStreamsMultipartAndRetriesExplicit429(t *testing.T) {
 		t.Fatalf("invalid request reached the server: %d", requests.Load())
 	}
 }
+
+func TestUploadInteractionAttachesToCallbackData(t *testing.T) {
+	const route = "/api/v10/interactions/711/fixture-interaction/callback"
+	const content = "first line\n\x00\xff"
+	path := filepath.Join(t.TempDir(), "report.txt")
+	if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+		t.Fatal(err)
+	}
+	var requests atomic.Int32
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		if r.URL.Path != route || r.Method != http.MethodPost || r.Header.Get("Authorization") != "" {
+			t.Error("unexpected callback route or authorization")
+		}
+		reader, err := r.MultipartReader()
+		if err != nil {
+			t.Error(err)
+			w.WriteHeader(400)
+			return
+		}
+		form, err := reader.ReadForm(1024)
+		if err != nil {
+			t.Error(err)
+			w.WriteHeader(400)
+			return
+		}
+		defer form.RemoveAll()
+		var callback struct {
+			Type        int                `json:"type"`
+			Attachments []uploadAttachment `json:"attachments"`
+			Data        struct {
+				Flags       int                `json:"flags"`
+				Attachments []uploadAttachment `json:"attachments"`
+			} `json:"data"`
+		}
+		values := form.Value["payload_json"]
+		if len(values) != 1 || json.Unmarshal([]byte(values[0]), &callback) != nil || callback.Type != 4 ||
+			len(callback.Attachments) != 0 || callback.Data.Flags != 64 ||
+			len(callback.Data.Attachments) != 1 || callback.Data.Attachments[0] != (uploadAttachment{ID: 0, Filename: "report.txt"}) {
+			t.Errorf("invalid callback metadata: %+v", callback)
+		}
+		parts := form.File["files[0]"]
+		if len(parts) != 1 || parts[0].Filename != "report.txt" {
+			t.Error("missing attachment")
+			w.WriteHeader(400)
+			return
+		}
+		f, err := parts[0].Open()
+		if err != nil {
+			t.Error(err)
+			w.WriteHeader(400)
+			return
+		}
+		defer f.Close()
+		b, err := io.ReadAll(f)
+		if err != nil || string(b) != content {
+			t.Errorf("invalid file contents: %q %v", b, err)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+	client := newClient(server.Client(), server.URL)
+	defer client.Close()
+	makeBody := func(callback string) []byte {
+		data, err := json.Marshal(map[string]any{"payload": json.RawMessage(callback), "files": []string{path}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return data
+	}
+	body := makeBody(`{"type":4,"data":{"content":"Report","flags":64}}`)
+	if out, err := client.UploadInteraction(context.Background(), route, body); err != nil || string(out) != "{}" {
+		t.Fatalf("response %q, error %v", out, err)
+	}
+	for _, callback := range []string{`{"type":5}`, `{"type":4,"data":null}`, `{"type":4,"data":{"attachments":[]}}`} {
+		if _, err := client.UploadInteraction(context.Background(), route, makeBody(callback)); err == nil {
+			t.Fatalf("accepted %s", callback)
+		}
+	}
+	if _, err := client.UploadInteraction(context.Background(), "/api/v10/webhooks/711/fixture-interaction", body); err == nil || requests.Load() != 1 {
+		t.Fatalf("invalid route accepted or made extra requests, count %d", requests.Load())
+	}
+}

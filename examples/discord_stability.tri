@@ -1,0 +1,59 @@
+import tripol.discord
+import tripol.env
+
+func form(ctx) {
+    feedback = discord.modal("feedback", "Comentarios")
+    feedback.text("topic", "Tema", 1, true, 1, 100)
+    choices = discord.select("features", "string", 0, 2)
+    choices.option("Formularios", "forms")
+    choices.option("Comandos", "commands")
+    feedback.checkbox_group("Funciones que usaste", choices, false)
+    feedback.file("file", "Archivo opcional", list([".txt", ".pdf"]), 0, 1, false)
+    ctx.open_modal(feedback)
+}
+
+func submitted(ctx) {
+    choices = ctx.field_values("features")
+    file = ctx.field_attachment("file")
+    note = ctx.field("topic") + " · opciones: " + text(choices.size())
+    if file.id != "" {note += " · archivo: " + file.filename}
+    ctx.reply(note, true)
+}
+
+func rating(ctx) {
+    ctx.reply("Valoración: " + ctx.option("score"), true)
+}
+
+func report(ctx) {
+    panel = discord.components()
+    panel.file("report.txt")
+    show ctx.reply_files(panel, list(["report.txt"]), true)
+    ""
+}
+
+guild = env.get("DISCORD_GUILD_ID")
+assert guild != "", "Configura DISCORD_GUILD_ID"
+scores = discord.command_choices()
+scores.number("Uno con cinco", "1.5")
+scores.number("Dos con cinco", "2.5")
+arguments = discord.slash_options()
+arguments.choose("score", "Puntuación", scores, true)
+bot = discord.bot()
+bot.slash("feedback", "Abre el formulario", form, guild)
+bot.on_modal("feedback", submitted)
+bot.slash_with_options("rating", "Elige una puntuación", rating, arguments, guild)
+bot.slash("report", "Envía un archivo de prueba", report, guild)
+bot.user_menu("Ver usuario", func(ctx) {
+    name = ctx.target_username()
+    if name == "" {name = "Usuario seleccionado: " + ctx.target_id()}
+    ctx.reply(name, true)
+}, guild)
+bot.message_menu("Ver mensaje", func(ctx) {
+    body = discord.embed()
+    body.title("Mensaje seleccionado")
+    content = ctx.target_content()
+    if content == "" {content = "El mensaje no tiene texto visible."}
+    body.description(content)
+    ctx.reply(body, true)
+}, guild)
+bot.start()

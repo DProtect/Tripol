@@ -198,16 +198,36 @@ func get_raw(s:string,key:string)->string {
 }
 // Gateway-sized bounded input, up to 65535 bytes; same grammar and depth.
 func get_raw_large(s:string,key:string)->string {
- n=len(s);if len(key)>512 or n>65535 {return ""};end=value(s,0,n,0);if end<0 or ws(s,end,n)!=n {return ""};i=ws(s,0,n)
- if byte_at(s,i)!=123 {return ""};i=ws(s,i+1,n)
- if byte_at(s,i)==125 {return ""}
+ n=len(s)
+ if len(key)>512 or n>65535 {return ""}
+ i=ws(s,0,n)
+ if i>=n or byte_at(s,i)!=123 {return ""}
+ i=ws(s,i+1,n)
  wanted=quote(key)
+ found=""
  while i<n {
-  end=quoted(s,i,n);if end<0 {return ""};match=end-i==len(wanted)
-  if match {for j in range(end-i) {if byte_at(s,i+j)!=byte_at(wanted,j) {match=false;break}}}
-  i=ws(s,end,n)+1;i=ws(s,i,n);end=value(s,i,n,1)
-  if match {return slice(s,i,end)}
-  i=ws(s,end,n);if byte_at(s,i)==125 {return ""};i=ws(s,i+1,n)
+  end=quoted(s,i,n)
+  if end<0 {return ""}
+  match=found=="" and end-i==len(wanted)
+  if match {
+   for j in range(end-i) {
+    if byte_at(s,i+j)!=byte_at(wanted,j) {match=false;break}
+   }
+  }
+  i=ws(s,end,n)
+  if i>=n or byte_at(s,i)!=58 {return ""}
+  i=ws(s,i+1,n)
+  end=value(s,i,n,1)
+  if end<0 {return ""}
+  if match {found=slice(s,i,end)}
+  i=ws(s,end,n)
+  if i>=n {return ""}
+  if byte_at(s,i)==125 {
+   if ws(s,i+1,n)==n {return found}
+   return ""
+  }
+  if byte_at(s,i)!=44 {return ""}
+  i=ws(s,i+1,n)
  }
  return ""
 }

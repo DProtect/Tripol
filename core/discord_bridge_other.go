@@ -1,4 +1,4 @@
-//go:build !linux
+//go:build !linux && !windows
 
 package core
 
@@ -16,4 +16,4 @@ func runNativeCommand(cmd *exec.Cmd, studio *discordStudioOptions) error {
 
 func packageDiscordExecutable(binary []byte, _ string) []byte { return binary }
 func runBundledDiscord() bool                                 { return false }
-func runDiscordExecutable(_ []string)                         { die("tripol discord-run is available on Linux") }
+func runDiscordExecutable(_ []string)                         { die("tripol discord-run is available on Linux and Windows") }

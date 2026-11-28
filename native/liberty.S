@@ -1901,12 +1901,43 @@ method: .short 71,69,84,0
  mov [rsp+64],rcx # token address, 0 for anonymous POST, 1 for anonymous PATCH/DELETE
  mov [rsp+160],rdx # body
  mov [rsp+176],r8 # method: 0 legacy, 1 GET, 2 POST, 3 PUT, 4 PATCH, 5 DELETE
+ call gw_host_available
+ test eax,eax
+ jz .winhttp_rest
+ mov r8,[rsp+72]
+ mov r9,[rsp+64]
+ mov r10,[rsp+160]
+ mov rax,[rsp+176]
+ cmp eax,7
+ je .discord_host_upload_callback
+ test eax,eax
+ jnz .discord_host_rest_method
+ cmp r9,1
+ ja .discord_host_legacy
+ lea eax,[r9+5]
+ xor r9d,r9d
+ jmp .discord_host_rest
+.discord_host_upload_callback:
+ mov eax,13
+ xor r9d,r9d
+ jmp .discord_host_rest
+.discord_host_legacy:
+ mov eax,4
+ jmp .discord_host_rest
+.discord_host_rest_method:
+ cmp eax,6
+ ja 9f
+ add eax,6
+.discord_host_rest:
+ leave
+ jmp discord_pipe
+.winhttp_rest:
  mov qword ptr [rsp+168],0 # body length
  mov qword ptr [rsp+80],0
  mov qword ptr [rsp+88],0
  mov qword ptr [rsp+96],0
  mov qword ptr [rsp+104],0
- cmp r8,5
+ cmp qword ptr [rsp+176],5
  ja 9f
  # Fixed trusted host, path ASCII and bounded, token restricted to safe chars.
  mov rsi,[rsp+72]
@@ -2212,9 +2243,13 @@ discord_delete: .short 68,69,76,69,84,69,0
 .section .text.discord_rest_linux,"ax"
  cmp r8,1
  jb .drest_empty
- cmp r8,6
+ cmp r8,7
  ja .drest_empty
- lea r11d,[r8+6] # Bridge operations 7 through 12, including multipart POST.
+ lea r11d,[r8+6] # Bridge operations 7 through 13, including multipart POST.
+ cmp r8,7
+ jne .drest_authenticated
+ xor ecx,ecx
+.drest_authenticated:
  mov r8,rax
  mov r9,rcx
  mov r10,rdx
@@ -2844,22 +2879,21 @@ discord_delete: .short 68,69,76,69,84,69,0
  leave
  ret
 
-# Linux launcher requests: op, three byte lengths, then unpadded text.
+# Launcher requests: op, three byte lengths, then unpadded text.
 # Replies: one length followed by text. 0xffffffff denotes a diagnosed error.
 .section .text.discord_pipe,"ax"
  push rbp
  mov rbp,rsp
- sub rsp,64
+ sub rsp,80
  mov [rbp-16],eax
  mov [rbp-32],r8
  mov [rbp-40],r9
  mov [rbp-48],r10
- lea rax,[rip+.discord_pipe_env]
- call env_get
- cmp byte ptr [rax],49
- jne .discord_pipe_missing
- cmp byte ptr [rax+1],0
- jne .discord_pipe_missing
+ call discord_pipe_prepare
+ test rax,rax
+ jz .discord_pipe_missing
+ mov [rbp-64],rax
+ mov [rbp-72],rcx
  mov qword ptr [rbp-56],0
 .discord_pipe_lengths:
  mov rdi,[rbp-56]
@@ -2878,7 +2912,7 @@ discord_delete: .short 68,69,76,69,84,69,0
  sub qword ptr [rbp-56],8
  cmp qword ptr [rbp-56],-24
  jne .discord_pipe_lengths
- mov edi,3
+ mov rdi,[rbp-64]
  lea rsi,[rbp-16]
  mov edx,16
  mov r8d,1
@@ -2893,14 +2927,14 @@ discord_delete: .short 68,69,76,69,84,69,0
  test edx,edx
  jz .discord_pipe_next
  mov rsi,[rbp+r10-32]
- mov edi,3
+ mov rdi,[rbp-64]
  mov r8d,1
  call discord_pipe_io
 .discord_pipe_next:
  sub qword ptr [rbp-56],8
  cmp qword ptr [rbp-56],-24
  jne .discord_pipe_arguments
- mov edi,4
+ mov rdi,[rbp-72]
  lea rsi,[rbp-16]
  mov edx,4
  xor r8d,r8d
@@ -2914,7 +2948,7 @@ discord_delete: .short 68,69,76,69,84,69,0
  call alloc
  mov [rbp-24],rax
  mov rsi,rax
- mov edi,4
+ mov rdi,[rbp-72]
  mov edx,[rbp-16]
  xor r8d,r8d
  call discord_pipe_io
@@ -2933,21 +2967,134 @@ discord_delete: .short 68,69,76,69,84,69,0
  call writeerr
  mov eax,15
  jmp exit
-.discord_pipe_env: .asciz "TRIPOL_DISCORD_PIPE"
 .discord_pipe_none: .byte 0
-.discord_pipe_message: .ascii "Discord transport on Linux requires the TRIPOL launcher. Run the source with tripol run.\n"
+.discord_pipe_message: .ascii "Discord transport requires the TRIPOL launcher. Run the source with tripol run.\n"
 .discord_pipe_message_end:
 
-.section .text.discord_pipe_io,"ax"
+.section .text.discord_pipe_io_linux,"ax"
+.pipe_syscall:
  mov eax,r8d
  syscall
  cmp rax,-4
- je discord_pipe_io
+ je .pipe_syscall
  test rax,rax
  jle gw_abort
  add rsi,rax
  sub rdx,rax
- jnz discord_pipe_io
+ jnz .pipe_syscall
+ ret
+
+.section .text.discord_pipe_prepare_linux,"ax"
+ lea rax,[rip+.discord_pipe_env]
+ call env_get
+ xor ecx,ecx
+ cmp byte ptr [rax],49
+ jne .pipe_no_env
+ cmp byte ptr [rax+1],0
+ jne .pipe_no_env
+ mov eax,3
+ mov ecx,4
+ ret
+.pipe_no_env:
+ xor eax,eax
+ ret
+.discord_pipe_env: .asciz "TRIPOL_DISCORD_PIPE"
+
+.section .text.gw_host_available,"ax"
+ call discord_pipe_prepare
+ test rax,rax
+ setnz al
+ movzx eax,al
+ ret
+
+.section .text.discord_pipe_prepare_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ sub rsp,16
+ lea rax,[rip+.pipe_write_env]
+ call discord_pipe_handle
+ mov [rbp-8],rax
+ test rax,rax
+ jz .pipe_prepared
+ lea rax,[rip+.pipe_read_env]
+ call discord_pipe_handle
+ mov rcx,rax
+ test rcx,rcx
+ jz .pipe_prepared
+ mov rax,[rbp-8]
+.pipe_prepared:
+ leave
+ ret
+.pipe_write_env: .asciz "TRIPOL_DISCORD_WRITE"
+.pipe_read_env: .asciz "TRIPOL_DISCORD_READ"
+
+.section .text.discord_pipe_handle,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,64
+ mov rcx,rax
+ lea rdx,[rsp+32]
+ mov r8d,17
+ call qword ptr [rip+iat65]
+ cmp eax,16
+ jne .pipe_bad_handle
+ xor eax,eax
+ xor ecx,ecx
+.pipe_hex:
+ movzx edx,byte ptr [rsp+32+rcx]
+ sub edx,48
+ cmp edx,9
+ jbe .pipe_digit
+ sub edx,39
+ cmp edx,10
+ jb .pipe_bad_handle
+ cmp edx,15
+ ja .pipe_bad_handle
+.pipe_digit:
+ shl rax,4
+ or rax,rdx
+ inc ecx
+ cmp ecx,16
+ jb .pipe_hex
+ leave
+ ret
+.pipe_bad_handle:
+ xor eax,eax
+ leave
+ ret
+
+.section .text.discord_pipe_io_windows,"ax"
+ push rbp
+ mov rbp,rsp
+ and rsp,-16
+ sub rsp,80
+ mov [rsp+48],rdi
+ mov [rsp+56],rsi
+ mov [rsp+64],edx
+ lea rax,[rip+iat3]
+ test r8d,r8d
+ jz .pipe_operation
+ lea rax,[rip+iat1]
+.pipe_operation:
+ mov [rsp+72],rax
+ mov qword ptr [rsp+32],0
+.pipe_transfer:
+ mov rcx,[rsp+48]
+ mov rdx,[rsp+56]
+ mov r8d,[rsp+64]
+ lea r9,[rsp+40]
+ mov rax,[rsp+72]
+ call qword ptr [rax]
+ test eax,eax
+ jz gw_abort
+ mov eax,[rsp+40]
+ test eax,eax
+ jz gw_abort
+ add [rsp+56],rax
+ sub [rsp+64],eax
+ jnz .pipe_transfer
+ leave
  ret
 
 .section .text.gw_host_start,"ax"

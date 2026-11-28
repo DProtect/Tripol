@@ -34,6 +34,16 @@ Run `tripol run examples/discord_new.tri` on Linux or Windows, or open the Disco
 
 Ejecuta `tripol run examples/discord_new.tri` en Linux o Windows, o abre los ejemplos de la biblioteca Discord en el Playground. Ambas operaciones funcionan sin credenciales. El prefijo inicial es vacío. Usa `bot.prefix("!")` para responder a `!hola`. Un comando repetido sustituye la respuesta anterior.
 
+## Permissions and decimal choices / Permisos y elecciones decimales
+
+Specify a permission name such as `"manage_messages"` when registering a command. Use `ctx.can("manage_messages")` in the callback to check the effective member permissions Discord supplied, including Administrator. Numeric bitsets still work for registration. This check does not inspect a target’s role hierarchy.
+
+Puedes indicar un permiso como `"manage_messages"` al registrar un comando. Usa `ctx.can("manage_messages")` en el callback para comprobar los permisos efectivos del miembro informados por Discord, incluido Administrador. El registro también admite máscaras numéricas. Para actuar sobre un objetivo, la jerarquía de sus roles se comprueba por separado.
+
+Build fixed decimal choices with `choices.number("Half", "0.5")`. The decimal text becomes a JSON number. `ctx.target_username()` and `ctx.target_content()` read the resolved selection in context menus. `server.move_role(role_id, position)` reorders a role above @everyone.
+
+Añade elecciones decimales con `choices.number("Mitad", "0.5")`. El texto decimal se convierte en un número JSON. `ctx.target_username()` y `ctx.target_content()` leen la selección de un menú contextual. `server.move_role(role_id, position)` reordena un rol por encima de @everyone.
+
 ## Connect / Conecta
 
 Set `DISCORD_TOKEN` before starting a bot in an authorized private server. For text commands and message callbacks, enable Message Content Intent. Use `tripol new MiBot --template discord` and `tripol run` on Windows or Linux x86-64.
@@ -44,9 +54,9 @@ On Linux x86-64, `tripol build` packages the native program together with the TR
 
 En Linux x86-64, `tripol build` empaqueta el programa nativo con el lanzador de TRIPOL si usa la red de Discord. El lanzador extrae el ELF a un directorio temporal privado y usa dos tuberías heredadas para el transporte. TLS usa los certificados de confianza del sistema. Un ELF generado desde Windows se ejecuta en Linux con `tripol discord-run FILE`. El paquete de Linux incluye el lanzador del compilador y ocupa más que el ELF interior.
 
-Linux TLS integration tests cover HTTPS reuse, HTTP 429, discovery, Resume, heartbeats and fatal Gateway close codes. Windows uses its WinHTTP backend. Live behavior against Discord and automatic recovery on Windows remain pending.
+On Windows x64, `tripol run` and `tripol discord-run FILE.exe` use the same TLS launcher as Linux. It negotiates zlib-stream, resumes sessions, checks heartbeat acknowledgements, reuses HTTPS connections and handles global and per-bucket rate limits. The directly launched PE uses the standalone WinHTTP fallback. See the [live validation guide](discord-validation.md).
 
-En Linux, las pruebas de integración TLS cubren reutilización HTTPS, HTTP 429, descubrimiento, Resume, heartbeats y cierres definitivos del Gateway. Windows usa WinHTTP. Quedan pendientes la validación contra Discord y la recuperación automática en Windows.
+En Windows x64, `tripol run` y `tripol discord-run FILE.exe` usan el mismo lanzador TLS que Linux. Negocia zlib-stream, reanuda sesiones, verifica las confirmaciones de heartbeat, reutiliza HTTPS y controla los límites globales y por bucket. El PE iniciado directamente usa WinHTTP. Consulta la [guía de validación conectada](discord-validation.md).
 
 ## Message callbacks / Callbacks de mensajes
 
@@ -221,13 +231,17 @@ show message.payload()
 
 The payload includes flag 32768 and disables mentions. The builder also has `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` and `gallery(urls)`. It validates the 40-component limit, duplicate button IDs, container nesting and field lengths. Text Display content can total 4,000 characters across the message. The encoded body must fit in the TRIPOL string capacity of 65,535 bytes. Use `message.send(channel_id)` on Windows or Linux. Use `discord.button_row()` to group up to five buttons. `discord.select(id, kind)` supports string, user, role, mentionable and channel menus. `discord.modal(id, title)` supports text inputs, selects, help text, file-upload inputs, radio groups, checkbox groups and individual checkboxes. The Linux launcher can send multipart attachments with `send_files`.
 
-El JSON incluye la bandera 32768 y desactiva las menciones. El constructor también ofrece `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` y `gallery(urls)`. Valida el límite de 40 componentes, los IDs de botones duplicados, el anidamiento y las longitudes de los campos. El contenido de Text Display admite 4.000 caracteres por mensaje. El JSON debe caber en la capacidad de cadena de TRIPOL de 65.535 bytes. Usa `message.send(channel_id)` en Windows o Linux. Usa `discord.button_row()` para agrupar hasta cinco botones. `discord.select(id, tipo)` admite texto, usuario, rol, mencionable y canal. `discord.modal(id, título)` admite texto, selectores, ayuda, campos de archivos, grupos de opción única, grupos de casillas y casillas individuales. El lanzador de Linux envía adjuntos multipart con `send_files`.
+El JSON incluye la bandera 32768 y desactiva las menciones. El constructor también ofrece `button(label, custom_id, style=1)`, `section(content, thumbnail_url, description="")` y `gallery(urls)`. Valida el límite de 40 componentes, los IDs de botones duplicados, el anidamiento y las longitudes de los campos. El contenido de Text Display admite 4.000 caracteres por mensaje. El JSON debe caber en la capacidad de cadena de TRIPOL de 65.535 bytes. Usa `message.send(channel_id)` en Windows o Linux. Usa `discord.button_row()` para agrupar hasta cinco botones. `discord.select(id, tipo)` admite texto, usuario, rol, mencionable y canal. `discord.modal(id, título)` admite texto, selectores, ayuda, campos de archivos, grupos de opción única, grupos de casillas y casillas individuales. Los lanzadores de Windows y Linux envían adjuntos multipart con `send_files`.
 
-For modal choices, create a String Select with the options and pass it to `form.radio(label, menu)` or `form.checkbox_group(label, menu)`. Use `form.checkbox(id, label)` for a single checkbox. Read a radio selection with `ctx.field(id)`, a group with `ctx.field_data(id)` and a checkbox with `ctx.checked(id)`.
+For modal choices, create a String Select with the options and pass it to `form.radio(label, menu)` or `form.checkbox_group(label, menu)`. Use `form.checkbox(id, label)` for a single checkbox. Read a radio selection with `ctx.field(id)`, a group or selector with `ctx.field_values(id)` and a checkbox with `ctx.checked(id)`.
 
-Para los campos de opciones, crea un selector de texto con las opciones y pásalo a `form.radio(etiqueta, selector)` o `form.checkbox_group(etiqueta, selector)`. Usa `form.checkbox(id, etiqueta)` para una casilla individual. Lee la selección única con `ctx.field(id)`, el grupo con `ctx.field_data(id)` y la casilla con `ctx.checked(id)`.
+Para los campos de opciones, crea un selector de texto con las opciones y pásalo a `form.radio(etiqueta, selector)` o `form.checkbox_group(etiqueta, selector)`. Usa `form.checkbox(id, etiqueta)` para una casilla individual. Lee la selección única con `ctx.field(id)`, el grupo o selector con `ctx.field_values(id)` y la casilla con `ctx.checked(id)`.
 
-### Button and select customization / Personalización de botones y selectores
+#Use `ctx.has_field(id)` to distinguish a submitted empty field from an absent one. `ctx.field_attachment(id, index=0)` returns the selected file’s `id`, `filename`, `url`, `size` and `content_type`. An unresolved file has an empty ID. The method reads the submission without opening or downloading the file.
+
+Usa `ctx.has_field(id)` para distinguir un campo enviado vacío de uno ausente. `ctx.field_attachment(id, index=0)` devuelve `id`, `filename`, `url`, `size` y `content_type`. Un archivo sin resolver tiene ID vacío. El método lee la respuesta del formulario sin abrir ni descargar el archivo.
+
+## Button and select customization / Personalización de botones y selectores
 
 `panel.button("Aceptar", "accept", "success", "✅")` combines text and emoji. Use an empty label for an emoji-only button. Add `true` after the emoji to disable it. For a row, the existing disabled argument comes first, as in `row.button("Aceptar", "accept", "success", false, "✅")`. `row.disable("accept")` disables that button before the row is added to a new layout, and `row.disable("accept", false)` enables it. To update a sent Components V2 message, build the new layout and use `ctx.update_components(panel)` or `room.edit_components(message_id, panel)`.
 
@@ -248,9 +262,9 @@ message_id = panel.send_files("123", list(["./report.txt"]))
 show message_id
 ```
 
-On Linux, `send_files` streams 1–10 local files into a multipart channel message and returns the message ID or an empty string on failure. `Embed` and `Embeds` provide the same method. Use `embed.image(discord.attachment_url("photo.png"))` for an embedded image. Names in the layout and the uploaded filenames must match. Use distinct names containing ASCII letters, digits, dots, underscores or hyphens. Windows uploads and multipart interaction responses remain pending.
+With the Linux or Windows launcher, `send_files` streams 1–10 local files into a multipart channel message and returns its ID or an empty string on failure. `ctx.reply_files(content, paths, true)` sends a private initial response immediately and returns whether it was accepted. It accepts text, an embed, a batch or Components V2. Use distinct ASCII filenames and use the exact basename in `discord.attachment_url("photo.png")` or `panel.file("report.txt")`. Follow-up uploads and replacement of existing attachments remain pending.
 
-En Linux, `send_files` adjunta entre 1 y 10 archivos locales en un mensaje multipart y devuelve el ID del mensaje o una cadena vacía si falla. `Embed` y `Embeds` ofrecen el mismo método. Usa `embed.image(discord.attachment_url("photo.png"))` para una imagen de embed. Los nombres del panel y los nombres de los archivos enviados deben coincidir. Usa nombres distintos con letras ASCII, dígitos, puntos, guiones o guiones bajos. Quedan pendientes los envíos en Windows y las respuestas multipart a interacciones.
+Con el lanzador de Linux o Windows, `send_files` adjunta entre 1 y 10 archivos locales a un canal y devuelve el ID o una cadena vacía si falla. `ctx.reply_files(contenido, rutas, true)` envía de inmediato la respuesta inicial privada e indica si se aceptó. Admite texto, un embed, un lote o Components V2. Usa nombres ASCII distintos y el nombre exacto del archivo en `discord.attachment_url("photo.png")` o `panel.file("report.txt")`. Quedan pendientes los adjuntos en seguimientos y la sustitución de archivos.
 
 For uploads submitted by users, call `form.file("files", "Upload", list(["image", ".pdf"]), 0, 2, false)`. Discord applies up to ten extension filters. Check the actual contents before trusting an upload.
 
@@ -288,9 +302,9 @@ Use `tripol new Welcome --template discord-welcome` to send a welcome to a chann
 
 Usa `tripol new Bienvenida --template discord-welcome` para enviar un saludo a un canal cuando se une una persona al servidor configurado. El README generado indica las variables de entorno, Server Members Intent y los permisos del canal. La plantilla omite bots y otros servidores y continúa recibiendo eventos si falla un envío.
 
-To start with a restricted moderation bot, run `tripol new Moderator --template discord-moderation`. Set `DISCORD_TOKEN`, `DISCORD_GUILD_ID` and `DISCORD_OPERATOR_ID`. The `/kick`, `/ban` and `/unban` commands use permission defaults and check the configured operator and guild before the REST call. The bot acknowledges an authorized request privately before applying the action.
+Create a restricted bot with `tripol new Moderator --template discord-moderation`. Set `DISCORD_TOKEN`, `DISCORD_GUILD_ID` and `DISCORD_OPERATOR_ID`. The `/kick`, `/ban`, `/unban`, `/timeout` and `/warn` commands check the operator, guild and effective permissions returned by Discord. Verified callers receive a private acknowledgment. `/warn` appends a JSON line to `discord-warnings.jsonl` or the path in `DISCORD_WARNINGS_PATH`. Keep it in a directory writable only by the bot account.
 
-Para iniciar un bot de moderación restringido, ejecuta `tripol new Moderador --template discord-moderation`. Configura `DISCORD_TOKEN`, `DISCORD_GUILD_ID` y `DISCORD_OPERATOR_ID`. Los comandos `/kick`, `/ban` y `/unban` usan permisos predeterminados y comprueban el operador y servidor configurados antes de llamar a REST. El bot confirma en privado una solicitud autorizada antes de actuar.
+Crea un bot restringido con `tripol new Moderador --template discord-moderation`. Configura `DISCORD_TOKEN`, `DISCORD_GUILD_ID` y `DISCORD_OPERATOR_ID`. Los comandos `/kick`, `/ban`, `/unban`, `/timeout` y `/warn` comprueban operador, servidor y permisos efectivos devueltos por Discord. Se confirma en privado a los usuarios autorizados. `/warn` guarda una línea JSON en `discord-warnings.jsonl` o en la ruta de `DISCORD_WARNINGS_PATH`. Usa un directorio donde solo pueda escribir la cuenta del bot.
 
 ## Channel moderation / Moderación de canales
 
@@ -383,7 +397,7 @@ The generated template does not need a channel ID. `login_env()` reads `DISCORD_
 
 Initial Hello (10), Identify (2), Dispatch (0), sequence tracking, periodic Heartbeat (1) with null before the first sequence, Heartbeat ACK (11), server heartbeat requests, READY and MESSAGE_CREATE are implemented. `connected()` reports local READY state; `ping()` reports last heartbeat round trip in milliseconds or -1 before ACK, not message latency. Both are primarily diagnostics while running; the simple `run` API blocks. `preview` and `gateway_reply` support offline matching tests. `identify_payload` is a protocol helper containing the secret; do not print or log it.
 
-The experimental Windows Gateway uses the official host and OS certificate validation. A single worker receives uncompressed text frames up to 65,535 bytes and dispatches callbacks in order. The JSON nesting limit is 32. Oversized or unsupported frames stop reception. Windows support for compression, sharding, Resume, and automatic reconnect is pending. Reconnect (7), Invalid Session (9) and failed receives stop the connection. A missed ACK, READY timeout or send failure stops the process to avoid closing a handle while a receive is pending. WinHTTP creates a separate session per REST request. Legacy authenticated requests stop the bot on failure. Member moderation, welcome messages and interaction requests return failures to their callers. Measured presence, round-trip latency and live execution against Discord on Windows are pending. Ctrl+C exits.
+The standalone Windows PE uses WinHTTP and the system certificate store. It accepts uncompressed text frames up to 65,535 bytes and dispatches callbacks in order. Use the TRIPOL launcher on Windows for Resume, transport compression, HTTPS reuse, rate-limit handling and multipart uploads.
 
 Explicit fallback: `discord.run_rest()` restores ECLIPSE's 2.5-second REST polling, which may miss messages. Legacy `listen`, `send`, `latest`, `matches`, `message_id`, `gateway` and token/URL helpers remain available. See `tripol docs discord` for the complete module, including the protocol helpers.
 

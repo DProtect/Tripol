@@ -16,7 +16,7 @@ import (
 )
 
 type Gateway struct {
-	events  chan []byte
+	events  chan gatewayEvent
 	done    chan struct{}
 	cancel  context.CancelFunc
 	err     error
@@ -24,11 +24,17 @@ type Gateway struct {
 	metrics *transportMetrics
 }
 
+type gatewayEvent struct {
+	raw              []byte
+	callbackDeadline time.Time
+}
+
 type gatewayOptions struct {
 	allowURL      func(*url.URL) bool
 	retryDelay    func(int) time.Duration
 	identifyDelay time.Duration
 	helloDeadline time.Duration
+	compress      bool
 }
 
 func discordGatewayURL(u *url.URL) bool {
@@ -45,7 +51,7 @@ func delayFor(attempt int) time.Duration {
 
 func (c *Client) StartGateway(parent context.Context, identify []byte) (*Gateway, error) {
 	return c.startGateway(parent, identify, gatewayOptions{
-		allowURL: discordGatewayURL, retryDelay: delayFor, identifyDelay: 5 * time.Second, helloDeadline: 15 * time.Second,
+		allowURL: discordGatewayURL, retryDelay: delayFor, identifyDelay: 5 * time.Second, helloDeadline: 15 * time.Second, compress: true,
 	})
 }
 
@@ -62,10 +68,11 @@ func (c *Client) startGateway(parent context.Context, identify []byte, opt gatew
 		return nil, errors.New("invalid Discord Identify payload")
 	}
 	ctx, cancel := context.WithCancel(parent)
-	g := &Gateway{events: make(chan []byte, 32), done: make(chan struct{}), cancel: cancel, metrics: &c.metrics}
+	identify = append([]byte(nil), identify...)
+	g := &Gateway{events: make(chan gatewayEvent, 32), done: make(chan struct{}), cancel: cancel, metrics: &c.metrics}
 	go func() {
 		defer close(g.done)
-		g.err = c.supervise(ctx, g.events, append([]byte(nil), identify...), hello.Data.Token, opt)
+		g.err = c.supervise(ctx, g.events, identify, hello.Data.Token, opt)
 		if g.err != nil && ctx.Err() == nil {
 			c.metrics.gatewayErrors.Add(1)
 		}
@@ -79,6 +86,11 @@ func (g *Gateway) Close() {
 }
 
 func (g *Gateway) Poll(ctx context.Context, timeout time.Duration) ([]byte, bool, error) {
+	event, done, err := g.poll(ctx, timeout)
+	return event.raw, done, err
+}
+
+func (g *Gateway) poll(ctx context.Context, timeout time.Duration) (gatewayEvent, bool, error) {
 	defer func() { g.metrics.queueDepth.Store(int64(len(g.events))) }()
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
@@ -90,12 +102,12 @@ func (g *Gateway) Poll(ctx context.Context, timeout time.Duration) ([]byte, bool
 		case event := <-g.events:
 			return event, false, nil
 		default:
-			return nil, true, g.err
+			return gatewayEvent{}, true, g.err
 		}
 	case <-timer.C:
-		return nil, false, nil
+		return gatewayEvent{}, false, nil
 	case <-ctx.Done():
-		return nil, true, ctx.Err()
+		return gatewayEvent{}, true, ctx.Err()
 	}
 }
 
@@ -112,7 +124,7 @@ type reconnect struct {
 	err                               error
 }
 
-func (c *Client) supervise(ctx context.Context, output chan<- []byte, identify []byte, token string, opt gatewayOptions) error {
+func (c *Client) supervise(ctx context.Context, output chan<- gatewayEvent, identify []byte, token string, opt gatewayOptions) error {
 	state := sessionState{}
 	var lastIdentify time.Time
 	failures := 0
@@ -178,6 +190,9 @@ func gatewayURL(raw string, opt gatewayOptions) (string, error) {
 		return "", errGatewayURL
 	}
 	u.RawQuery = "v=10&encoding=json"
+	if opt.compress {
+		u.RawQuery += "&compress=zlib-stream"
+	}
 	return u.String(), nil
 }
 
@@ -208,25 +223,37 @@ type gatewayMessage struct {
 	Type     string          `json:"t"`
 }
 type gatewayFrame struct {
-	message gatewayMessage
-	raw     []byte
-	err     error
+	message    gatewayMessage
+	raw        []byte
+	receivedAt time.Time
+	err        error
 }
 
-func readFrame(ctx context.Context, ws *websocket.Conn) gatewayFrame {
-	kind, raw, err := ws.Read(ctx)
-	if err != nil {
-		return gatewayFrame{err: err}
-	}
-	if kind != websocket.MessageText {
-		return gatewayFrame{err: errors.New("Discord Gateway sent a non-text message")}
+func readFrame(ctx context.Context, ws *websocket.Conn, inflater *gatewayInflater) gatewayFrame {
+	var raw []byte
+	for len(raw) == 0 {
+		kind, chunk, err := ws.Read(ctx)
+		if err != nil {
+			return gatewayFrame{err: err}
+		}
+		switch {
+		case kind == websocket.MessageText && inflater == nil:
+			raw = chunk
+		case kind == websocket.MessageBinary && inflater != nil:
+			raw, err = inflater.feed(chunk)
+			if err != nil {
+				return gatewayFrame{err: err}
+			}
+		default:
+			return gatewayFrame{err: errors.New("Discord Gateway sent an unexpected message type")}
+		}
 	}
 	var message gatewayMessage
 	message.Op = -1
 	if json.Unmarshal(raw, &message) != nil || message.Op < 0 {
 		return gatewayFrame{err: errors.New("Discord Gateway sent invalid JSON")}
 	}
-	return gatewayFrame{message: message, raw: raw}
+	return gatewayFrame{message: message, raw: raw, receivedAt: time.Now()}
 }
 
 func gatewayClose(err error) reconnect {
@@ -247,7 +274,7 @@ func sendGateway(ctx context.Context, ws *websocket.Conn, payload []byte) error 
 	return ws.Write(writeCtx, websocket.MessageText, payload)
 }
 
-func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identify []byte, token string, state *sessionState, lastIdentify *time.Time, output chan<- []byte, opt gatewayOptions) (result reconnect) {
+func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identify []byte, token string, state *sessionState, lastIdentify *time.Time, output chan<- gatewayEvent, opt gatewayOptions) (result reconnect) {
 	handshake, cancelOpen := context.WithTimeout(ctx, 12*time.Second)
 	ws, res, err := websocket.Dial(handshake, endpoint, &websocket.DialOptions{HTTPClient: c.http, HTTPHeader: http.Header{"User-Agent": {userAgent}}})
 	cancelOpen()
@@ -261,6 +288,11 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 	c.metrics.heartbeatMS.Store(-1)
 	defer c.metrics.connected.Store(false)
 	ws.SetReadLimit(maxMessage)
+	var inflater *gatewayInflater
+	if opt.compress {
+		inflater = &gatewayInflater{}
+		ws.SetReadLimit(maxCompressedMessage)
+	}
 	connection, cancelConnection := context.WithCancel(ctx)
 	var readerDone chan struct{}
 	defer func() {
@@ -272,7 +304,7 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 	}()
 
 	hello, cancelHello := context.WithTimeout(connection, opt.helloDeadline)
-	first := readFrame(hello, ws)
+	first := readFrame(hello, ws, inflater)
 	cancelHello()
 	if first.err != nil {
 		return gatewayClose(first.err)
@@ -310,7 +342,7 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 	go func() {
 		defer close(readerDone)
 		for {
-			record := readFrame(connection, ws)
+			record := readFrame(connection, ws, inflater)
 			select {
 			case frames <- record:
 			case <-connection.Done():
@@ -360,6 +392,9 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 				if message.Sequence == nil || *message.Sequence < 0 {
 					return result
 				}
+				if state.sequence != nil && *message.Sequence <= *state.sequence {
+					continue
+				}
 				if message.Type == "READY" {
 					var ready struct {
 						ID     string            `json:"session_id"`
@@ -384,15 +419,20 @@ func (c *Client) gatewayConnection(ctx context.Context, endpoint string, identif
 					}
 					deadline.Stop()
 				}
+				event := gatewayEvent{raw: record.raw}
+				if message.Type == "INTERACTION_CREATE" {
+					event.callbackDeadline = record.receivedAt.Add(3 * time.Second)
+				}
 				select {
-				case output <- record.raw:
+				case output <- event:
 					// Only acknowledge an event after admission to the bounded queue.
 					state.sequence = message.Sequence
 					c.metrics.dispatches.Add(1)
 					c.metrics.recordDispatch(message.Type, message.Data)
 					c.metrics.queueDepth.Store(int64(len(output)))
 				default:
-					return reconnect{terminal: true, err: errors.New("Discord Gateway event queue is full")}
+					// Keep the last admitted sequence so Resume can replay the event.
+					return result
 				}
 			case 1:
 				if beat() != nil {

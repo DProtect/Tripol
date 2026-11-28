@@ -1,6 +1,10 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
-- The discord-moderation template registers kick, ban and unban with Discord default permissions and a configured operator and guild.
+- The Windows launcher uses the same transport as Linux, including Resume, zlib-stream compression, HTTPS reuse and rate-limit handling. A PE run directly uses WinHTTP.
+- JSON property lookup validates the complete object in a single traversal.
+- Multipart replies can stream attachments in a private or public initial interaction response. Launched Windows and Linux programs can also upload files to channels.
+- Forms expose visible fields, typed lists and resolved attachments. Context menus expose the selected username or message content, and slash choices accept decimal values.
+- The moderation template checks effective permissions, adds timeouts and persists warning records. Guild role positions can be updated through `move_role`.
 
 - Discord Studio adds opt-in Linux counts by event type, interaction type and command name at Gateway queue admission.
 

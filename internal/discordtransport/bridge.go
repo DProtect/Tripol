@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -24,12 +25,14 @@ const (
 	OpRESTPatch
 	OpRESTDelete
 	OpRESTUpload
+	OpInteractionUpload
 )
 
 // Serve is the private, process-local protocol between a launcher and one
 // generated program. Command and reply ends are inherited, never published.
 func Serve(ctx context.Context, client *Client, input io.Reader, output io.Writer, diagnostics io.Writer) error {
 	var gateway *Gateway
+	var callbackDeadline time.Time
 	defer func() {
 		if gateway != nil {
 			gateway.Close()
@@ -61,8 +64,8 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 			if lengths != [3]int{} {
 				return errors.New("invalid Discord bridge command")
 			}
-		case OpInteraction, OpInteractionEdit:
-			if lengths[0] == 0 || lengths[0] > 1024 || lengths[1] != 0 || (op == OpInteraction && lengths[2] == 0) {
+		case OpInteraction, OpInteractionEdit, OpInteractionUpload:
+			if lengths[0] == 0 || lengths[0] > 1024 || lengths[1] != 0 || (op != OpInteractionEdit && lengths[2] == 0) {
 				return errors.New("invalid Discord bridge callback")
 			}
 		case OpREST, OpRESTGet, OpRESTPost, OpRESTPut, OpRESTPatch, OpRESTDelete, OpRESTUpload:
@@ -86,6 +89,7 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 		var err error
 		switch op {
 		case OpStart:
+			callbackDeadline = time.Time{}
 			if gateway != nil {
 				err = errors.New("Discord Gateway already running")
 			} else {
@@ -97,25 +101,39 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 				err = errors.New("Discord Gateway is closed")
 			} else {
 				var done bool
-				reply, done, err = gateway.Poll(ctx, 100*time.Millisecond)
+				var event gatewayEvent
+				event, done, err = gateway.poll(ctx, 100*time.Millisecond)
+				reply = event.raw
+				if len(reply) != 0 {
+					callbackDeadline = event.callbackDeadline
+				}
 				if done && err == nil {
 					reply = []byte("!")
 				}
 			}
 		case OpClose:
+			callbackDeadline = time.Time{}
 			if gateway != nil {
 				gateway.Close()
 				gateway = nil
 			}
 			reply = []byte("1")
-		case OpInteraction, OpInteractionEdit:
-			if op == OpInteractionEdit && len(args[2]) == 0 {
+		case OpInteraction, OpInteractionEdit, OpInteractionUpload:
+			requestCtx := ctx
+			cancel := func() {}
+			if !callbackDeadline.IsZero() && strings.HasPrefix(string(args[0]), "/api/v10/interactions/") {
+				requestCtx, cancel = context.WithDeadline(ctx, callbackDeadline)
+			}
+			if op == OpInteractionUpload {
+				reply, err = client.UploadInteraction(requestCtx, string(args[0]), args[2])
+			} else if op == OpInteractionEdit && len(args[2]) == 0 {
 				reply, err = client.DeleteInteractionFollowup(ctx, string(args[0]))
 			} else if op == OpInteractionEdit {
 				reply, err = client.EditInteraction(ctx, string(args[0]), args[2])
 			} else {
-				reply, err = client.Interaction(ctx, string(args[0]), args[2])
+				reply, err = client.Interaction(requestCtx, string(args[0]), args[2])
 			}
+			cancel()
 			if err != nil {
 				fmt.Fprintln(diagnostics, err)
 				reply, err = nil, nil

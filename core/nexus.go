@@ -244,24 +244,42 @@ bot.start_with_events(registry)
 		"discord-moderation": `import tripol.discord
 import tripol.env
 import tripol.json
+import tripol.files
 
 func moderate(ctx:discord.Interaction,action:string)->string {
     guild_id=env.get("DISCORD_GUILD_ID")
     if ctx.guild_id!=guild_id or ctx.user_id!=env.get("DISCORD_OPERATOR_ID") {
         return ctx.reply("Operación no autorizada.",true)
     }
+    permission="ban_members"
+    if action=="kick" {permission="kick_members"}
+    if action=="warn" or action=="timeout" {permission="moderate_members"}
+    if not ctx.can(permission) {return ctx.reply("Te falta el permiso requerido.",true)}
     target=ctx.option_text("miembro")
     if action=="unban" {target=ctx.option_text("usuario")}
-    if target=="" or discord.event_id(json.quote(target))!=target {
+    if target=="" or target==ctx.user_id or discord.event_id(json.quote(target))!=target {
         return ctx.reply("Indica un ID de usuario válido.",true)
     }
     if not ctx.respond(ctx.defer(true)) {return ""}
     member=discord.guild(guild_id).member(target)
     success=false
-    if action=="kick" {success=member.kick()}
-    else if action=="ban" {success=member.ban()}
-    else {success=member.unban()}
+    try {
+        if action=="kick" {success=member.kick()}
+        else if action=="ban" {success=member.ban()}
+        else if action=="unban" {success=member.unban()}
+        else if action=="timeout" {success=member.timeout(ctx.option_text("hasta"))}
+        else {
+            reason=ctx.option_text("motivo")
+            if reason!="" and len(reason)<=512 {
+                path=env.get("DISCORD_WARNINGS_PATH")
+                if path=="" {path="discord-warnings.jsonl"}
+                record="{\"interaction\":"+json.quote(ctx.id)+",\"guild\":"+json.quote(guild_id)+",\"moderator\":"+json.quote(ctx.user_id)+",\"target\":"+json.quote(target)+",\"reason\":"+json.quote(reason)+"}"
+                success=files.append_line(path,record)==len(record)+1
+            }
+        }
+    } catch code {success=false}
     if success {ctx.edit_reply("Operación aplicada.")}
+    else if action=="warn" {ctx.edit_reply("No se pudo guardar la advertencia.")}
     else {ctx.edit_reply("Discord no pudo aplicar la operación.")}
     return ""
 }
@@ -274,10 +292,18 @@ member_options=discord.slash_options()
 member_options.add("miembro","Miembro del servidor","user",true)
 user_options=discord.slash_options()
 user_options.add("usuario","ID del usuario baneado","string",true)
+warnings=discord.slash_options()
+warnings.add("miembro","Miembro del servidor","user",true)
+warnings.add("motivo","Motivo de la advertencia","string",true)
+timeouts=discord.slash_options()
+timeouts.add("miembro","Miembro del servidor","user",true)
+timeouts.add("hasta","Fecha límite ISO 8601 en UTC, por ejemplo 2026-01-01T12:00:00Z","string",true)
 bot=discord.bot()
-bot.slash_with_options("kick","Expulsa a un miembro",func(ctx) {moderate(ctx,"kick")},member_options,guild,"2")
-bot.slash_with_options("ban","Banea a un miembro",func(ctx) {moderate(ctx,"ban")},member_options,guild,"4")
-bot.slash_with_options("unban","Revoca un baneo",func(ctx) {moderate(ctx,"unban")},user_options,guild,"4")
+bot.slash_with_options("kick","Expulsa a un miembro",func(ctx) {moderate(ctx,"kick")},member_options,guild,"kick_members")
+bot.slash_with_options("ban","Banea a un miembro",func(ctx) {moderate(ctx,"ban")},member_options,guild,"ban_members")
+bot.slash_with_options("unban","Revoca un baneo",func(ctx) {moderate(ctx,"unban")},user_options,guild,"ban_members")
+bot.slash_with_options("warn","Guarda una advertencia",func(ctx) {moderate(ctx,"warn")},warnings,guild,"moderate_members")
+bot.slash_with_options("timeout","Aísla a un miembro",func(ctx) {moderate(ctx,"timeout")},timeouts,guild,"moderate_members")
 bot.start()
 `,
 		"ecosystem": `import tripol.sort
@@ -347,8 +373,8 @@ show "Saved:", read_text("profile.txt")
 	}
 	if template == "discord-moderation" {
 		guide := "# Discord moderation bot\n\n" +
-			"Set DISCORD_TOKEN, DISCORD_GUILD_ID and DISCORD_OPERATOR_ID. Install the bot in that guild with Kick Members and Ban Members. The commands /kick, /ban and /unban require the corresponding Discord default permissions and the handler checks the configured operator and guild. The bot defers privately before making the REST call. The bot’s role must rank above the target for applicable actions.\n\n" +
-			"Configura DISCORD_TOKEN, DISCORD_GUILD_ID y DISCORD_OPERATOR_ID. Instala el bot en ese servidor con permisos para expulsar y banear miembros. Los comandos /kick, /ban y /unban requieren los permisos predeterminados correspondientes de Discord y el callback comprueba el operador y servidor configurados. El bot confirma la interacción en privado antes de llamar a REST. El rol del bot debe estar por encima del objetivo en las operaciones donde se aplica la jerarquía.\n"
+			"Set DISCORD_TOKEN, DISCORD_GUILD_ID and DISCORD_OPERATOR_ID. Install the bot in that guild with Kick Members, Ban Members and Moderate Members. The commands /kick, /ban, /unban, /timeout and /warn check the configured operator, guild and effective permissions. /warn appends a JSON line to DISCORD_WARNINGS_PATH or discord-warnings.jsonl in the working directory. Keep that file in a directory writable only by the bot account. The bot defers privately before making the REST call. The bot’s role must rank above the target for applicable actions.\n\n" +
+			"Configura DISCORD_TOKEN, DISCORD_GUILD_ID y DISCORD_OPERATOR_ID. Instala el bot en ese servidor con permisos para expulsar, banear y aislar miembros. Los comandos /kick, /ban, /unban, /timeout y /warn comprueban el operador, el servidor y los permisos efectivos. /warn añade una línea JSON a DISCORD_WARNINGS_PATH o discord-warnings.jsonl en el directorio de trabajo. Guárdalo en un directorio donde solo pueda escribir la cuenta del bot. El bot confirma la interacción en privado antes de llamar a REST. El rol del bot debe estar por encima del objetivo en las operaciones donde se aplica la jerarquía.\n"
 		if err := os.WriteFile(filepath.Join(dir, "README.md"), []byte(guide), 0644); err != nil {
 			die("%v", err)
 		}

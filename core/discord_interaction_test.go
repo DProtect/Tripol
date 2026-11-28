@@ -332,3 +332,77 @@ show discord.slash_is_current("[{\"type\":2,\"name\":\"Perfil\",\"default_member
 show discord.slash_is_current("[{\"type\":2,\"name\":\"Perfil\",\"default_member_permissions\":null}]","{\"type\":2,\"name\":\"Perfil\",\"default_member_permissions\":null}")
 `, "12\n12\n12\nfalse\ntrue\n", false)
 }
+
+func TestDiscordTypedFormAnswersAndResolvedTargets(t *testing.T) {
+	const source = `import tripol.discord
+
+data="{\"type\":5,\"data\":{\"components\":[{\"type\":18,\"component\":{\"type\":4,\"custom_id\":\"empty\",\"value\":\"\"}},{\"type\":18,\"component\":{\"type\":6,\"custom_id\":\"roles\",\"values\":[\"101\",\"102\"]}},{\"type\":18,\"component\":{\"type\":19,\"custom_id\":\"files\",\"values\":[\"123\"]}}],\"resolved\":{\"attachments\":{\"123\":{\"id\":\"123\",\"filename\":\"report.pdf\",\"url\":\"https://cdn.example/report.pdf\",\"size\":42,\"content_type\":\"application/pdf\"}}}}}"
+ctx=discord.interaction_context(data,"mreport")
+roles=ctx.field_values("roles")
+report=ctx.field_attachment("files")
+missing=ctx.field_attachment("files",1)
+other=ctx.field_attachment("roles")
+no_values=ctx.field_values("missing")
+show ctx.has_field("empty"),ctx.has_field("missing"),len(ctx.field("empty")),no_values.size()
+show roles[0],roles[1]
+show report.id,report.filename,report.url,report.size,report.content_type
+show missing.id=="",other.id==""
+u=discord.interaction_context("{\"type\":2,\"guild_id\":\"321\",\"member\":{\"permissions\":\"18446744073709551624\"},\"data\":{\"type\":2,\"target_id\":\"4\",\"resolved\":{\"users\":{\"4\":{\"username\":\"Ada\"}}}}}","uProfile")
+m=discord.interaction_context("{\"type\":2,\"data\":{\"type\":3,\"target_id\":\"9\",\"resolved\":{\"messages\":{\"9\":{\"content\":\"Hola\"}}}}}","pQuote")
+show u.target_username(),m.target_content(),u.target_content()=="",m.target_username()==""
+show u.can("moderate_members"),u.can("unknown"),m.can("kick_members")
+`
+	runCase(t, source, "true false 0 0\n101 102\n123 report.pdf https://cdn.example/report.pdf 42 application/pdf\ntrue true\nAda Hola true true\ntrue false false\n", false)
+	if _, err := CompileWeb(source); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestDiscordFractionalChoicesAndSync(t *testing.T) {
+	const portable = `import tripol.discord
+choices=discord.command_choices()
+choices.number("Fraction","1.250")
+choices.number("Negative","-1.25e-1")
+o=discord.slash_options()
+o.choose("amount","Amount",choices,true)
+show o.payload()
+show discord.slash_number_signature("0.00123")==discord.slash_number_signature("123e-5")
+show discord.slash_number_signature("-0.0e-2")==discord.slash_number_signature("0")
+show discord.slash_number_signature("9007199254740992.00")!=""
+show discord.slash_number_signature("9007199254740992.01")==""
+show discord.slash_number_signature("1e+50")==""
+show discord.slash_number_signature("1.0,0")==""
+show discord.command_permission_payload("moderate_members")
+`
+	const expected = `[{"name":"amount","description":"Amount","type":10,"required":true,"choices":[{"name":"Fraction","value":1.250},{"name":"Negative","value":-1.25e-1}]}]
+true
+true
+true
+true
+true
+true
+,"default_member_permissions":"1099511627776"
+`
+	runCase(t, portable, expected, false)
+	if _, err := CompileWeb(portable); err != nil {
+		t.Fatal(err)
+	}
+	runCase(t, `import tripol.discord
+show discord.slash_number_signature("5e-324")!=""
+show discord.slash_number_signature("1e-325")==""
+c=discord.command_choices()
+try {c.number("Invalid","[1.2]")} catch code {show code}
+c.number("Real","1.5")
+try {c.integer("Mixed",3)} catch code {show code}
+`, "true\ntrue\n12\n12\n", false)
+}
+
+func TestDiscordJSONLookupValidatesEntireObject(t *testing.T) {
+	runCase(t, `import tripol.json
+show json.get_raw_large("  {\"id\":1,\"id\":2,\"other\":[true, {\"nested\":null}]}  ","id")
+show json.get_raw_large("{\"id\":1,\"other\":[true,]}","id")==""
+show json.get_raw_large("{\"id\":1,}","id")==""
+show json.get_raw_large("{\"id\":1} {}","id")==""
+show json.get_raw_large("{\"id\":1,\"other\":null}","missing")==""
+`, "1\ntrue\ntrue\ntrue\ntrue\n", false)
+}
