@@ -501,12 +501,11 @@ struct Bot {
  interaction_handlers:list[func(Interaction)->string]
  slash_definitions:string_list
  slash_guilds:string_list
- __policies:string_list
  __cooldowns_path:string=""
 }
 
 func bot()->Bot {
- return Bot("", "online", "", string_list(4), string_list(4), &ignore_message, false, string_list(), empty_interactions(), string_list(), string_list(), string_list())
+ return Bot("", "online", "", string_list(4), string_list(4), &ignore_message, false, string_list(), empty_interactions(), string_list(), string_list())
 }
 
 func Bot.prefix(self:Bot,value:string)->bool {
@@ -591,12 +590,13 @@ func Bot.start_with_events(self:Bot,registry:GatewayEvents)->int {
   assert gw_host_available(),"Persistent Discord cooldowns require tripol run or tripol discord-run"
   assert discord_rest(8,"load","",json.quote(self.__cooldowns_path))=="0","Could not open the Discord cooldown store"
  }
- policies=self.__policies
- if not gw_host_available() {
-  for i in range(policies.size()) {
-   policy=policies.get(i)
-   assert json.get_raw_large(policy,"seconds")=="0" or policy=="","Discord cooldowns require tripol run or tripol discord-run"
-  }
+ policies=string_list()
+ specs=self.slash_definitions
+ hosted=gw_host_available()
+ for i in range(specs.size()) {
+  policy=self.__policy_at(specs.get(i))
+  assert hosted or errors.int_or(json.get_raw_large(policy,"seconds"),0)==0,"Discord cooldowns require tripol run or tripol discord-run"
+  policies.add(policy)
  }
  // Registering a text command explicitly requests guild message content.
  sync_slash_commands(self.slash_definitions,self.slash_guilds)
@@ -1104,6 +1104,7 @@ struct Interaction {
  __interaction_token:string=""
  __response_state:int=0
  __member_permissions:string=""
+ __member_roles:string=""
  __app_permissions:string=""
  __cooldown_request:string=""
 }
@@ -1329,10 +1330,12 @@ func interaction_context(payload:string,key:string)->Interaction {
  app=event_id(json.get_raw_large(payload,"application_id"))
  guild=event_id(json.get_raw_large(payload,"guild_id"))
  channel_id=event_id(json.get_raw_large(payload,"channel_id"))
+ if channel_id=="" {channel_id=event_id(json.get_raw_large(json.get_raw_large(payload,"channel"),"id"))}
  user=event_id(json.get_raw_large(author,"id"))
  has_message=len(json.get_raw_large(payload,"message"))>0
  ctx=Interaction(kind,name,id,app,guild,channel_id,user,data,has_message)
  ctx.__member_permissions=json.unquote(json.get_raw_large(member,"permissions"))
+ ctx.__member_roles=json.get_raw_large(member,"roles")
  ctx.__app_permissions=json.unquote(json.get_raw_large(payload,"app_permissions"))
  return ctx
 }
@@ -1386,13 +1389,14 @@ func Bot.bind_interaction(self:Bot,key:string,handler:func(Interaction)->string,
  handlers=self.interaction_handlers
  specs=self.slash_definitions
  guilds=self.slash_guilds
- policies=self.__policies
- assert keys.size()==handlers.size() and keys.size()==specs.size() and keys.size()==guilds.size() and keys.size()==policies.size(),"Invalid Discord interaction registry"
+ assert keys.size()==handlers.size() and keys.size()==specs.size() and keys.size()==guilds.size(),"Invalid Discord interaction registry"
  for i in range(keys.size()) {
   if keys[i]==key {
    handlers.set(i,handler)
-   permission=json.unquote(json.get_raw_large(policies.get(i),"permission"))
-   if permission!="" {definition=self.__with_default_permission(definition,permission)}
+   policy=self.__policy_at(specs.get(i))
+   permission=json.unquote(json.get_raw_large(policy,"permission"))
+   if permission!="" and definition!="" {definition=self.__with_default_permission(definition,permission)}
+   if policy!="" and definition!="" {definition=self.__with_policy(definition,policy)}
    specs.set(i,definition)
    guilds.set(i,guild_id)
    return true
@@ -1402,7 +1406,6 @@ func Bot.bind_interaction(self:Bot,key:string,handler:func(Interaction)->string,
  handlers.add(handler)
  specs.add(definition)
  guilds.add(guild_id)
- policies.add("")
  return true
 }
 
@@ -1515,13 +1518,27 @@ func Bot.__slash_index(self:Bot,name:string,guild_id:string)->int {
  return -1
 }
 
-func Bot.__policy(self:Bot,i:int,permission:string,target:string,seconds:int,scope:string,message:string)->bool {
- policies=self.__policies
- policies.set(i,"{\"permission\":"+json.quote(permission)+",\"target\":"+json.quote(target)+",\"seconds\":"+text(seconds)+",\"scope\":"+json.quote(scope)+",\"message\":"+json.quote(message)+"}")
+func Bot.__policy_at(self:Bot,spec:string)->string {
+ return json.get_raw_large(spec,"__tripol_policy")
+}
+
+func Bot.__with_policy(self:Bot,spec:string,policy:string)->string {
+ at=find_bytes(spec,",\"__tripol_policy\":")
+ if at<0 {at=len(spec)-1}
+ return slice(spec,0,at)+",\"__tripol_policy\":"+policy+"}"
+}
+
+func Bot.__policy(self:Bot,i:int,permission:string,target:string,seconds:int,scope:string,message:string,filters:string)->bool {
+ specs=self.slash_definitions
+ if filters=="" {filters="{}"}
+ policy="{\"permission\":"+json.quote(permission)+",\"target\":"+json.quote(target)+",\"seconds\":"+text(seconds)+",\"scope\":"+json.quote(scope)+",\"message\":"+json.quote(message)+",\"filters\":"+filters+"}"
+ specs.set(i,self.__with_policy(specs.get(i),policy))
  return true
 }
 
 func Bot.__with_default_permission(self:Bot,definition:string,permission:string)->string {
+ policy=find_bytes(definition,",\"__tripol_policy\":")
+ if policy>=0 {definition=slice(definition,0,policy)+"}"}
  at=find_bytes(definition,",\"default_member_permissions\":")
  if at<0 {at=len(definition)-1}
  return slice(definition,0,at)+command_permission_payload(permission)+"}"
@@ -1556,10 +1573,9 @@ func Bot.permission(self:Bot,name:string,permission:string,target_option="",guil
  specs=self.slash_definitions
  definition=specs.get(i)
  if target_option=="" and (index==1 or index==2 or index==40) {target_option=self.__user_option(definition)}
+ old=self.__policy_at(definition)
  specs.set(i,self.__with_default_permission(definition,permission))
- policies=self.__policies
- old=policies.get(i)
- return self.__policy(i,permission,target_option,errors.int_or(json.get_raw_large(old,"seconds"),0),json.unquote(json.get_raw_large(old,"scope")),json.unquote(json.get_raw_large(old,"message")))
+ return self.__policy(i,permission,target_option,errors.int_or(json.get_raw_large(old,"seconds"),0),json.unquote(json.get_raw_large(old,"scope")),json.unquote(json.get_raw_large(old,"message")),json.get_raw_large(old,"filters"))
 }
 
 func Bot.cooldown(self:Bot,name:string,seconds:int,scope="user",message="",guild_id="")->bool {
@@ -1567,9 +1583,60 @@ func Bot.cooldown(self:Bot,name:string,seconds:int,scope="user",message="",guild
  assert scope=="user" or scope=="channel" or scope=="guild" or scope=="global","Choose user, channel, guild or global for the Discord cooldown"
  assert utf8.valid(message) and utf8.count(message)<=1960,"Discord cooldown message must fit in 1960 characters"
  i=self.__slash_index(name,guild_id)
- policies=self.__policies
- old=policies.get(i)
- return self.__policy(i,json.unquote(json.get_raw_large(old,"permission")),json.unquote(json.get_raw_large(old,"target")),seconds,scope,message)
+ specs=self.slash_definitions
+ old=self.__policy_at(specs.get(i))
+ return self.__policy(i,json.unquote(json.get_raw_large(old,"permission")),json.unquote(json.get_raw_large(old,"target")),seconds,scope,message,json.get_raw_large(old,"filters"))
+}
+
+func Bot.restrict(self:Bot,name:string,scope:string,id:string,guild_id="")->bool {
+ assert scope=="user" or scope=="channel" or scope=="guild" or scope=="role","Choose user, channel, guild or role for the slash restriction"
+ assert id!="" and id!="0" and event_id(json.quote(id))==id,"Provide a valid Discord ID for the slash restriction"
+ i=self.__slash_index(name,guild_id)
+ specs=self.slash_definitions
+ old=self.__policy_at(specs.get(i))
+ filters=json.get_raw_large(old,"filters")
+ scopes=list(["user","channel","guild","role"])
+ updated="{"
+ for j in range(scopes.size()) {
+  key=scopes.get(j)
+  raw=json.get_raw_large(filters,key)
+  if raw=="" {raw="[]"}
+  if key==scope {
+   values=interaction_values(raw)
+   if not values.contains(id) {
+    values_json=slice(raw,0,len(raw)-1)
+    if values.size()>0 {values_json+=","}
+    raw=values_json+json.quote(id)+"]"
+   }
+  }
+  if j>0 {updated+=","}
+  updated+=json.quote(key)+":"+raw
+ }
+ return self.__policy(i,json.unquote(json.get_raw_large(old,"permission")),json.unquote(json.get_raw_large(old,"target")),errors.int_or(json.get_raw_large(old,"seconds"),0),json.unquote(json.get_raw_large(old,"scope")),json.unquote(json.get_raw_large(old,"message")),updated+"}")
+}
+
+func Interaction.has_role(self:Interaction,id:string)->bool {
+ if id=="" or self.guild_id=="" {return false}
+ if id==self.guild_id and self.__member_roles!="" {return true}
+ roles=interaction_values(self.__member_roles)
+ return roles.contains(id)
+}
+
+func Interaction.__allows(self:Interaction,filters:string)->bool {
+ if filters=="" or filters=="{}" {return true}
+ for i in range(3) {
+  key="user";value=self.user_id
+  if i==1 {key="channel";value=self.channel_id}
+  if i==2 {key="guild";value=self.guild_id}
+  group=interaction_values(json.get_raw_large(filters,key))
+  if group.size()>0 and not group.contains(value) {return false}
+ }
+ roles=interaction_values(json.get_raw_large(filters,"role"))
+ if roles.size()==0 {return true}
+ for i in range(roles.size()) {
+  if self.has_role(roles.get(i)) {return true}
+ }
+ return false
 }
 
 func Bot.persist_cooldowns(self:Bot,path:string)->bool {
@@ -1579,6 +1646,7 @@ func Bot.persist_cooldowns(self:Bot,path:string)->bool {
 }
 
 func Interaction.__apply_policy(self:Interaction,key:string,policy:string)->string {
+ if not self.__allows(json.get_raw_large(policy,"filters")) {return self.reply("Este comando está restringido para este usuario, rol o canal.",true)}
  permission=json.unquote(json.get_raw_large(policy,"permission"))
  if permission!="" and not self.can(permission) {return self.reply("Te falta el permiso efectivo requerido.",true)}
  if permission!="" and not self.bot_can(permission) {return self.reply("El bot necesita el permiso requerido en este canal.",true)}
@@ -1809,7 +1877,12 @@ func sync_slash_commands(specs:string_list,guilds:string_list)->bool {
      for j in range(i,specs.size()) {
       spec=specs.get(j)
       if len(spec)>0 and guilds.get(j)==guild {
-       scratch {if not slash_is_current(current,spec) {discord_request(scope,secret,spec)}}
+       scratch {
+        policy=find_bytes(spec,",\"__tripol_policy\":")
+        definition=spec
+        if policy>=0 {definition=slice(definition,0,policy)+"}"}
+        if not slash_is_current(current,definition) {discord_request(scope,secret,definition)}
+       }
       }
      }
     }

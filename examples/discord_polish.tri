@@ -1,12 +1,13 @@
 import tripol.discord
 import tripol.env
 
-func operator(ctx:discord.Interaction)->bool {
-    return ctx.user_id==env.get("DISCORD_OPERATOR_ID") and ctx.channel_id==env.get("DISCORD_CHANNEL_ID")
+func protect(bot:discord.Bot,name:string,permission:string,guild:string) {
+    bot.permission(name,permission,"",guild)
+    bot.restrict(name,"user",env.get("DISCORD_OPERATOR_ID"),guild)
+    bot.restrict(name,"channel",env.get("DISCORD_CHANNEL_ID"),guild)
 }
 
 func manage_channel(ctx:discord.Interaction,action:string)->string {
-    if not operator(ctx) {return ctx.reply("Usa la cuenta y el canal de pruebas autorizados.",true)}
     if not ctx.respond(ctx.defer(true)) {return ""}
     room=discord.channel_ref(ctx.channel_id)
     if action=="invite" {
@@ -24,7 +25,6 @@ func manage_channel(ctx:discord.Interaction,action:string)->string {
 }
 
 func ban_test_member(ctx) {
-    if not operator(ctx) {return ctx.reply("Usa la cuenta y el canal de pruebas autorizados.",true)}
     if not ctx.respond(ctx.defer(true)) {return ""}
     member=discord.guild(ctx.guild_id).member(ctx.option_text("miembro"))
     if member.ban() {ctx.edit_reply("Miembro de prueba baneado.")}
@@ -36,13 +36,13 @@ guild=env.get("DISCORD_GUILD_ID")
 assert guild!="" and env.get("DISCORD_OPERATOR_ID")!="" and env.get("DISCORD_CHANNEL_ID")!="","Configura servidor, operador y canal de pruebas"
 b=discord.bot()
 b.slash("lock","Bloquea el envío para @everyone",func(ctx) {manage_channel(ctx,"lock")},guild)
-b.permission("lock","MANAGE_ROLES","",guild)
+protect(b,"lock","MANAGE_ROLES",guild)
 b.slash("unlock","Restaura el permiso guardado",func(ctx) {manage_channel(ctx,"unlock")},guild)
-b.permission("unlock","MANAGE_ROLES","",guild)
+protect(b,"unlock","MANAGE_ROLES",guild)
 b.slash("invite","Crea una invitación de prueba",func(ctx) {manage_channel(ctx,"invite")},guild)
-b.permission("invite","CREATE_INSTANT_INVITE","",guild)
+protect(b,"invite","CREATE_INSTANT_INVITE",guild)
 args=discord.slash_options()
 args.add("miembro","Cuenta de prueba autorizada","user",true)
 b.slash_with_options("ban-prueba","Banea una cuenta de prueba",ban_test_member,args,guild)
-b.permission("ban-prueba","BAN_MEMBERS","",guild)
+protect(b,"ban-prueba","BAN_MEMBERS",guild)
 b.start()

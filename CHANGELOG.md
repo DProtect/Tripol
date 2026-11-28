@@ -1,7 +1,7 @@
 # v0.28.0 DISCORD REVOLUTION (development)
 
 - Slash commands support scoped cooldowns, custom replies, resets and optional persistent reservations.
-- Protected slash callbacks check effective actor and bot permissions, role hierarchy and guild ownership before member moderation.
+- Slash allow lists support user, role, channel and guild restrictions. Protected callbacks check effective actor and bot permissions, role hierarchy and guild ownership before member moderation.
 - Added reversible channel locks, permission overwrites, private channels, channel positions, webhook management and delivery, invites, threads and forum labels.
 - Removed redundant UTF-8 scans in embed, button and V2 text builders and published offline SDK measurements.
 

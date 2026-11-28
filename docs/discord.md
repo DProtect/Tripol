@@ -433,6 +433,10 @@ The hierarchy check protects the owner, the operator and the bot itself. It veri
 
 La comprobación de jerarquía protege al propietario, al operador y al propio bot. Verifica los roles superiores del miembro, el objetivo y el bot, y rechaza el aislamiento de un administrador. `ctx.can()`, `ctx.bot_can()` y `ctx.can_moderate()` permiten comprobaciones explícitas. Los métodos REST de bajo nivel usan la autorización del bot en Discord. Usa un callback protegido para aceptar solicitudes administrativas de usuarios.
 
+Use `bot.restrict("ban","role",role_id)` to restrict a command to a role. Use `"user"`, `"channel"` or `"guild"` for those scopes. IDs within a scope are alternatives. A command that configures several scopes must satisfy each of them. `ctx.has_role(role_id)` supports an explicit role check. The launcher evaluates restrictions before reserving a cooldown or starting a hierarchy check.
+
+Usa `bot.restrict("ban","role",role_id)` para restringir un comando a un rol. Usa `"user"`, `"channel"` o `"guild"` para esos ámbitos. Los IDs de un mismo ámbito son alternativas. Un comando con varios ámbitos configurados debe satisfacer cada uno. `ctx.has_role(role_id)` permite comprobar un rol expresamente. El lanzador evalúa las restricciones antes de reservar el cooldown o verificar la jerarquía.
+
 ## Channel and resource management / Gestión de canales y recursos
 
 `channel.lock()` saves the @everyone overwrite and denies Send Messages for that role. Explicit user and role overrides continue to apply. `channel.unlock()` restores exactly the saved overwrite in the same launcher, or removes the temporary overwrite if the channel did not have one. If the overwrite has changed externally, the operation returns false and preserves the external edit. Use `overwrite(id, allow, deny, "user")` or `overwrite(id, allow, deny, "role")` for explicit changes, and `clear_overwrite(id)` to remove one. `guild.private_channel(name, user_id)` creates a text channel that grants that member access and denies viewing to @everyone. `guild.move_channel(id, position)` updates the channel order.

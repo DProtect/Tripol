@@ -156,6 +156,9 @@ func serveBridgeFixture(input io.Reader, output io.Writer, steps []bridgeStep) e
 			(step.contains == "" && args[2] != "") {
 			return fmt.Errorf("invalid operation arguments in step %d", index)
 		}
+		if step.op == discordtransport.OpREST && strings.Contains(args[2], "__tripol_policy") {
+			return fmt.Errorf("local policy metadata was sent to Discord")
+		}
 		var size [4]byte
 		binary.LittleEndian.PutUint32(size[:], uint32(len(step.reply)))
 		if _, err := output.Write(size[:]); err != nil {
@@ -184,6 +187,8 @@ opts.add("miembro","Miembro","user",true)
 b.slash_with_options("work","Trabajo",work,opts,"321")
 b.permission("work","KICK_MEMBERS","","321")
 b.cooldown("work",60,"channel","En espera","321")
+b.restrict("work","channel","444","321")
+b.restrict("work","role","222","321")
 b.persist_cooldowns("cooldowns.json")
 b.start()
 `
@@ -197,8 +202,8 @@ b.start()
 	cmd := exec.CommandContext(ctx, path)
 	cmd.Env = append(cmd.Environ(), "DISCORD_TOKEN=fixture-token")
 	cmd.Dir = dir
-	event := func(id, permissions, appPermissions string) string {
-		return fmt.Sprintf(`{"op":0,"t":"INTERACTION_CREATE","d":{"id":%q,"token":"callback","type":2,"application_id":"890","guild_id":"321","channel_id":"444","app_permissions":%q,"member":{"permissions":%q,"user":{"id":"555"}},"data":{"type":1,"guild_id":"321","name":"work","options":[{"name":"miembro","type":6,"value":"999"}]}}}`, id, appPermissions, permissions)
+	event := func(id, permissions, appPermissions, role string) string {
+		return fmt.Sprintf(`{"op":0,"t":"INTERACTION_CREATE","d":{"id":%q,"token":"callback","type":2,"application_id":"890","guild_id":"321","channel_id":"444","app_permissions":%q,"member":{"permissions":%q,"roles":[%q],"user":{"id":"555"}},"data":{"type":1,"guild_id":"321","name":"work","options":[{"name":"miembro","type":6,"value":"999"}]}}}`, id, appPermissions, permissions, role)
 	}
 	callback := func(id string) string { return "/api/v10/interactions/" + id + "/callback/callback" }
 	commands := "/api/v10/applications/890/guilds/321/commands"
@@ -210,18 +215,20 @@ b.start()
 		{discordtransport.OpREST, commands, "fixture-token", "", `[]`},
 		{discordtransport.OpREST, commands, "fixture-token", `"default_member_permissions":"2"`, `{"id":"31"}`},
 		{discordtransport.OpStart, "", "", `"intents":1`, "1"},
-		{discordtransport.OpPoll, "", "", "", event("70", "4", "2")},
+		{discordtransport.OpPoll, "", "", "", event("69", "2", "2", "333")},
+		{discordtransport.OpInteraction, callback("69"), "", "comando está restringido", "{}"},
+		{discordtransport.OpPoll, "", "", "", event("70", "4", "2", "222")},
 		{discordtransport.OpInteraction, callback("70"), "", "Te falta el permiso", "{}"},
-		{discordtransport.OpPoll, "", "", "", event("71", "2", "0")},
+		{discordtransport.OpPoll, "", "", "", event("71", "2", "0", "222")},
 		{discordtransport.OpInteraction, callback("71"), "", "El bot necesita el permiso", "{}"},
-		{discordtransport.OpPoll, "", "", "", event("72", "2", "2")},
+		{discordtransport.OpPoll, "", "", "", event("72", "2", "2", "222")},
 		{discordtransport.OpAuthorizeModeration, "", "fixture-token", moderation, "owner"},
 		{discordtransport.OpInteraction, callback("72"), "", "propietario", "{}"},
-		{discordtransport.OpPoll, "", "", "", event("73", "2", "2")},
+		{discordtransport.OpPoll, "", "", "", event("73", "2", "2", "222")},
 		{discordtransport.OpAuthorizeModeration, "", "fixture-token", moderation, "1"},
 		{discordtransport.OpCooldown, "use", "", cooldown, "6"},
 		{discordtransport.OpInteraction, callback("73"), "", "En espera 6 s.", "{}"},
-		{discordtransport.OpPoll, "", "", "", event("74", "2", "2")},
+		{discordtransport.OpPoll, "", "", "", event("74", "2", "2", "222")},
 		{discordtransport.OpAuthorizeModeration, "", "fixture-token", moderation, "1"},
 		{discordtransport.OpCooldown, "use", "", cooldown, "0"},
 		{discordtransport.OpCooldown, "remaining", "", cooldown, "60"},

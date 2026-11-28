@@ -2,7 +2,7 @@
 
 ## Reproducción / Reproduction
 
-Linux x86-64, AMD EPYC 7763 con tres CPU visibles, kernel 6.18.57 y glibc 2.41. TRIPOL 0.28 de esta rama compilado con Go 1.23.12 y perfil `turbo`. Discord.py 2.6.4 con CPython 3.12.14, Discord.js 14.25.1 con Node 24.22.3 y Serenity 0.12.5 con Rust 1.85.0 en modo release.
+Linux x86-64, AMD EPYC 7763 con tres CPU visibles, kernel 6.18.57 y glibc 2.41. TRIPOL 0.28 del commit `185f061` compilado con Go 1.23.12 y perfil `turbo`. Discord.py 2.6.4 con CPython 3.12.14, Discord.js 14.25.1 con Node 24.22.3 y Serenity 0.12.5 con Rust 1.85.0 en modo release.
 
 The recorded run used Linux x86-64 and an AMD EPYC 7763 with three visible CPUs. The pinned Python, npm and Cargo dependencies are included. Build the TRIPOL compiler from the checkout being evaluated, then run the commands below in this directory.
 
