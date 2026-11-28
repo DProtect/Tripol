@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 466,
-  "methods": 251,
+  "functions": 467,
+  "methods": 254,
   "summary": {
-    "native compiled": 717,
+    "native compiled": 721,
     "web executed": 539,
-    "web native-only": 178
+    "web native-only": 182
   },
   "rows": [
     {
@@ -1433,7 +1433,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "3226\n"
+      "output": "3472\n"
     },
     {
       "name": "time.elapsed",
@@ -1456,7 +1456,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "3255177925\n"
+      "output": "3492399067\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2553,6 +2553,11 @@
       "web": "native-only"
     },
     {
+      "name": "http.group",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
       "name": "https.get",
       "native": "compiled",
       "web": "native-only"
@@ -2634,7 +2639,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n62076\n"
+      "output": "4950\n37386\n"
     },
     {
       "name": "simd.equal",
@@ -4131,6 +4136,21 @@
     },
     {
       "name": "http.Client.metrics",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.TaskGroup.add",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.TaskGroup.cancel",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "http.TaskGroup.await",
       "native": "compiled",
       "web": "native-only"
     }
@@ -6090,6 +6110,17 @@
       "name": "Decode a typed report",
       "web": "executed",
       "output": "Temperatura 20 21\n"
+    },
+    {
+      "index": 327,
+      "name": "SIMPLE R3 Final Polish",
+      "web": "executed",
+      "output": "Alex 100 1.500000\n0\n{\"name\":\"Lina\",\"health\":100,\"speed\":2.75,\"points\":7}\n10\n"
+    },
+    {
+      "index": 328,
+      "name": "Asynchronous HTTP group",
+      "web": "native-only"
     }
   ]
 }
