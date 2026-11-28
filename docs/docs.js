@@ -5,7 +5,7 @@ let lang='en';try{if(localStorage.getItem('tripol-language')==='es')lang='es'}ca
 const chosen=new URLSearchParams(location.search).get('lang');if(chosen==='en'||chosen==='es')lang=chosen;
 const root=document.body.dataset.docRoot||'./';
 // A freshly loaded script must also load its matching stylesheet.
-for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='library-categories-r2'){u.searchParams.set('v','library-categories-r2');link.href=u.href}}
+for(const link of document.querySelectorAll('link[rel="stylesheet"]')){const u=new URL(link.href,location.href);if(u.pathname.endsWith('/docs/docs.css')&&u.searchParams.get('v')!=='library-categories-r3'){u.searchParams.set('v','library-categories-r3');link.href=u.href}}
 function localLinks(){for(const a of $$('a[href]')){const raw=a.getAttribute('href');if(!raw||raw.startsWith('#')||/^(https?:|mailto:)/i.test(raw)&&a.origin!==location.origin)continue;const u=new URL(raw,location.href);if(!u.pathname.endsWith('.html'))continue;u.searchParams.set('lang',lang);a.href=u.href;}}
 // Shared navigation and current release label on all reference pages.
 const side=document.querySelector('#doc-side');
@@ -75,12 +75,54 @@ function installLibraryCategories(){
   add('Overview / all functions','Introducción / todas las funciones');
   if(name==='discord')add('Bot guide','Guía de bots','',new URL(root+'discord.html',location.href).href);
   for(const category of sections)add(category.en,category.es,category.id);
-  group.append(list);group.open=location.pathname===url.pathname;
+  group.append(list);group.open=[...list.querySelectorAll('a')].some(a=>new URL(a.href,location.href).pathname===location.pathname);
   if(group.open)summary.classList.add('current-library');
   original.replaceWith(group);
  }
 }
 installLibraryCategories();
+
+/* Keep the current category visible in the shared sidebar without changing the URL on scroll. */
+function installLibraryCategoryTracking(){
+ const group=[...libs.querySelectorAll('.side-library-group')].find(g=>[...g.querySelectorAll('.side-library-categories a')].some(a=>new URL(a.href,location.href).pathname===location.pathname));
+ if(!group)return;
+ const links=[...group.querySelectorAll('.side-library-categories a')].filter(a=>new URL(a.href,location.href).pathname===location.pathname);
+ const overview=links.find(a=>!new URL(a.href,location.href).hash);
+ const sections=links.map(a=>({a,id:new URL(a.href,location.href).hash.slice(1)})).filter(x=>x.id).map(x=>({...x,heading:document.getElementById(x.id)})).filter(x=>x.heading);
+ if(!overview||!sections.length)return;
+ let selected=null,scheduled=false;
+ function mark(link){
+  if(!link)return;
+  if(selected===link&&link.hasAttribute('aria-current'))return;
+  for(const a of links){a.removeAttribute('aria-current');a.classList.remove('category-active')}
+  link.setAttribute('aria-current',link===overview?'page':'location');link.classList.add('category-active');
+  selected=link;
+ }
+ function markHash(){
+  const id=location.hash.slice(1);
+  let target=document.getElementById(id);
+  if(!target&&id){try{target=document.getElementById(decodeURIComponent(id))}catch{}}
+  const category=target?.closest('.library-api-category')?.querySelector('h2[id]')?.id||target?.id;
+  mark(sections.find(x=>x.id===category)?.a||overview);
+ }
+ function track(){
+  scheduled=false;
+  const header=document.querySelector('.docs-header');
+  const offset=(header?.getBoundingClientRect().bottom||0)+64;
+  let current=overview;
+  for(const x of sections){if(x.heading.getBoundingClientRect().top<=offset)current=x.a;else break}
+  if(window.scrollY>0&&window.scrollY+window.innerHeight>=document.documentElement.scrollHeight-4)current=sections.at(-1).a;
+  mark(current);
+ }
+ function schedule(){if(!scheduled){scheduled=true;window.requestAnimationFrame(track)}}
+ for(const x of sections)x.a.addEventListener('click',()=>mark(x.a));
+ window.addEventListener('hashchange',()=>{markHash();schedule()});
+ window.addEventListener('scroll',schedule,{passive:true});
+ window.addEventListener('resize',schedule,{passive:true});
+ window.addEventListener('pageshow',schedule);
+ markHash();schedule();
+}
+
 function filterLibraryNavigation(q){
  const query=normalizeSearch(q);
  for(const el of libs.querySelectorAll(':scope > a,:scope > .side-library-group')){
@@ -345,7 +387,7 @@ function installAIReference(){
 }
 installAIReference();
 
-installAllLive();registerLabels();apply();$('#doc-lang').addEventListener('click',()=>{lang=lang==='en'?'es':'en';apply()});
+installAllLive();registerLabels();apply();installLibraryCategoryTracking();$('#doc-lang').addEventListener('click',()=>{lang=lang==='en'?'es':'en';apply()});
 $('#doc-menu').addEventListener('click',()=>{$('#doc-menu').setAttribute('aria-expanded',String(side.classList.toggle('open')))});
 $('#side-filter').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();filterLibraryNavigation(q)});
 const lf=$('#library-filter');if(lf)lf.addEventListener('input',()=>{let n=0;const q=lf.value.trim().toLowerCase();$$('.library-card').forEach(a=>{a.hidden=!a.dataset.filter.toLowerCase().includes(q);if(!a.hidden)n++});$('#library-empty').hidden=!!n;refreshLevelHeadings($('#library-grid'))});

@@ -245,3 +245,9 @@
 .library-api-category h2,#methods{scroll-margin-top:112px}
 .library-api-category .function-index{margin-bottom:16px}
 @media(max-width:600px){.docs-page .docs-article nav.library-category-index{grid-template-columns:1fr}.docs-page .docs-article nav.library-category-index a:not(.reference-card):not(.button){min-height:50px}}
+
+/* Active library category, shared with future categorized modules. */
+.docs-page .docs-sidebar nav .side-library-categories a[aria-current="location"],
+.docs-page .docs-sidebar nav .side-library-categories a.category-active{
+ color:#fff;background:#202020;box-shadow:inset 2px 0 #efefef;font-weight:500;
+}
