@@ -125,6 +125,13 @@ Use `tripol new Moderator --template discord-moderation` for a bot restricted to
 
 Usa `tripol new Moderador --template discord-moderation` para un bot restringido a `DISCORD_GUILD_ID` y `DISCORD_OPERATOR_ID`. Registra /kick, /ban y /unban con los permisos de Discord.
 
+
+Use `bot.cooldown(name, seconds, scope="user", message="", guild_id="")` after registering a slash command. Persistent cooldowns use `bot.persist_cooldowns(path)`, and a specific record can be inspected or reset with `discord.cooldown_bucket`. Use `bot.permission(name, permission, target_option="", guild_id="")` for effective member and bot permissions and optional role hierarchy. For kick, ban and timeout, a single top-level user option is inferred. `channel.lock()` and `channel.unlock()` preserve the @everyone overwrite within the same launcher.
+
+Registra primero el comando slash y usa `bot.cooldown(name, seconds, scope="user", message="", guild_id="")`. Para persistencia usa `bot.persist_cooldowns(path)`. Consulta y restablece un registro con `discord.cooldown_bucket`. `bot.permission(name, permission, target_option="", guild_id="")` comprueba permisos efectivos del miembro y del bot y admite verificación de jerarquía. Para expulsar, banear y aislar se infiere una única opción de usuario de primer nivel. `channel.lock()` y `channel.unlock()` conservan el permiso de @everyone en el mismo lanzador.
+
+Manage invitations using `channel.invite`, webhooks with `channel.create_webhook`, threads with `channel.thread` and forums with `channel.post` and `discord.forum_tags`. These APIs are verified with local fixtures. See the [bilingual live validation guide](https://github.com/Tripollas/Tripol/blob/main/docs/discord-validation.md) for real authorized tests.
+
 ## Cómo usar este archivo / How to use this file
 
 Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».
