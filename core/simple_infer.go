@@ -40,10 +40,10 @@ func resolveSimpleProgram(fs []fn, main []stmt) {
 	}
 	for i := range fs {
 		f := &fs[i]
-		if _, exists := r.functions[f.name]; exists {
-			if _, _, method := splitMethodName(f.name); method {
+		if previous := r.functions[f.name]; previous != nil {
+			if !previous.record && !f.record {
 				if len(r.overloads[f.name]) == 0 {
-					r.overloads[f.name] = []*fn{r.functions[f.name]}
+					r.overloads[f.name] = []*fn{previous}
 				}
 				r.overloads[f.name] = append(r.overloads[f.name], f)
 			}
@@ -70,22 +70,29 @@ func resolveSimpleProgram(fs []fn, main []stmt) {
 		if r.overloadMembers == nil {
 			r.overloadMembers = make(map[string]bool)
 		}
-		_, member, _ := splitMethodName(key)
-		r.overloadMembers[member] = true
+		_, member, method := splitMethodName(key)
+		offset := 0
+		if method {
+			offset = 1
+			r.overloadMembers[member] = true
+		}
 		delete(r.functions, key)
 		signatures := map[string]bool{}
 		for i, f := range group {
-			types := make([]string, 0, len(f.args)-1)
-			for _, arg := range f.args[1:] {
+			types := make([]string, 0, len(f.args)-offset)
+			for _, arg := range f.args[offset:] {
 				if arg.typ == "" {
-					r.failure(simpleScope{function: f}, nil, "Overloaded methods need explicit parameter types.")
+					r.failure(simpleScope{function: f}, nil, "Overloads need explicit parameter types.")
 				}
 				types = append(types, arg.typ)
 			}
 			signature := strings.Join(types, ",")
 			if signatures[signature] {
-				receiver, member, _ := splitMethodName(key)
-				r.failure(simpleScope{function: f}, nil, "Duplicate overload for "+receiver+"."+member+"("+signature+").")
+				label := key
+				if receiver, member, method := splitMethodName(key); method {
+					label = receiver + "." + member
+				}
+				r.failure(simpleScope{function: f}, nil, "Duplicate overload for "+label+"("+signature+").")
 			}
 			signatures[signature] = true
 			f.name = fmt.Sprintf("%s$%d", key, i+1)
@@ -160,6 +167,9 @@ func (r *simpleResolver) contextualExpression(e *expr) bool {
 			return true
 		}
 	case "call":
+		if len(r.overloads[e.s]) > 0 {
+			return true
+		}
 		if _, member, ok := strings.Cut(e.s, "."); ok && r.overloadMembers[member] {
 			return true
 		}
@@ -505,7 +515,15 @@ func (r *simpleResolver) expression(e *expr, want string, scope simpleScope) str
 			r.expression(arg, "", scope)
 		}
 		return "string"
-	case "array", "list", "dictionary":
+	case "dictionary":
+		if want == "json.Object" {
+			return r.jsonObject(e, scope)
+		}
+		for _, arg := range e.args {
+			r.expression(arg, "", scope)
+		}
+		return ""
+	case "array", "list":
 		for _, arg := range e.args {
 			r.expression(arg, "", scope)
 		}
@@ -519,6 +537,16 @@ func (r *simpleResolver) expression(e *expr, want string, scope simpleScope) str
 func (r *simpleResolver) call(e *expr, want string, scope simpleScope) string {
 	if f := r.functions[e.s]; f != nil {
 		return r.arguments(f, e.args, 0, scope)
+	}
+	if group := r.overloads[e.s]; len(group) != 0 {
+		selected := r.selectOverload(e, e.s, e.args, group, 0, scope)
+		if selected == nil {
+			return ""
+		}
+		if r.final {
+			e.s = selected.name
+		}
+		return r.arguments(selected, e.args, 0, scope)
 	}
 	name := strings.TrimPrefix(e.s, "@builtin:")
 	if receiver, member, ok := strings.Cut(name, "."); ok {
@@ -610,6 +638,23 @@ func (r *simpleResolver) method(e *expr, receiver, member string, offset int, sc
 		return ""
 	}
 	args := e.args[offset:]
+	selected := r.selectOverload(e, receiver+"."+member, args, group, 1, scope)
+	if selected == nil {
+		return ""
+	}
+	if r.final {
+		_, resolved, _ := splitMethodName(selected.name)
+		if e.op == "method" {
+			e.s = resolved
+		} else {
+			root, _, _ := strings.Cut(e.s, ".")
+			e.s = root + "." + resolved
+		}
+	}
+	return r.arguments(selected, args, 1, scope)
+}
+
+func (r *simpleResolver) selectOverload(e *expr, label string, args []*expr, group []*fn, paramOffset int, scope simpleScope) *fn {
 	types := make([]string, len(args))
 	for i, arg := range args {
 		types[i] = r.expression(arg, "", scope)
@@ -618,14 +663,16 @@ func (r *simpleResolver) method(e *expr, receiver, member string, offset int, sc
 	count := 0
 	var signatures []string
 	for _, f := range group {
-		params := f.args[1:]
+		params := f.args[paramOffset:]
 		matches := len(args) <= len(params)
 		for i, arg := range params {
 			if i < len(args) {
-				if types[i] != "" && types[i] != arg.typ {
+				if args[i].op == "dictionary" && arg.typ != "json.Object" {
+					matches = false
+				} else if types[i] != "" && types[i] != arg.typ {
 					matches = false
 				}
-			} else if i+1 >= len(f.defaults) || f.defaults[i+1] == nil {
+			} else if i+paramOffset >= len(f.defaults) || f.defaults[i+paramOffset] == nil {
 				matches = false
 			}
 		}
@@ -647,18 +694,28 @@ func (r *simpleResolver) method(e *expr, receiver, member string, offset int, sc
 			if count > 1 {
 				reason = "Ambiguous overload for"
 			}
-			r.failure(scope, e, fmt.Sprintf("%s %s.%s(%s). Available signatures: %s.", reason, receiver, member, strings.Join(types, ", "), strings.Join(signatures, " or ")))
+			r.failure(scope, e, fmt.Sprintf("%s %s(%s). Available signatures: %s.", reason, label, strings.Join(types, ", "), strings.Join(signatures, " or ")))
+		}
+		return nil
+	}
+	return selected
+}
+
+func (r *simpleResolver) jsonObject(e *expr, scope simpleScope) string {
+	if r.functions["json.object"] == nil {
+		if r.final {
+			r.failure(scope, e, "Import tripol.json to use this JSON object.")
 		}
 		return ""
 	}
-	if r.final {
-		_, resolved, _ := splitMethodName(selected.name)
-		if e.op == "method" {
-			e.s = resolved
-		} else {
-			root, _, _ := strings.Cut(e.s, ".")
-			e.s = root + "." + resolved
-		}
+	value := &expr{op: "call", s: "json.object", line: e.line, col: e.col}
+	for i := 0; i < len(e.args); i += 2 {
+		item := e.args[i+1]
+		value = &expr{op: "method", s: "with", args: []*expr{value, e.args[i], item}, line: e.line, col: e.col}
 	}
-	return r.arguments(selected, args, 1, scope)
+	r.expression(value, "json.Object", scope)
+	if r.final {
+		*e = *value
+	}
+	return "json.Object"
 }

@@ -87,7 +87,7 @@ func (c *compiler) omegaBuiltin(e *expr) (string, bool) {
 		c.require(c.expression(e.args[0]), "string")
 		a.call("env_get")
 		return "string", true
-	case "discord_callback", "discord_edit":
+	case "discord_callback", "discord_edit", "http_exchange":
 		if len(e.args) != 2 {
 			c.err(e.s + " expects path and body")
 		}

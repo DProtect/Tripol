@@ -54,6 +54,9 @@ func inheritDiscordPipes(cmd *exec.Cmd, write, read *os.File) {
 //go:embed discord-websocket-LICENSE.txt
 var discordWebSocketLicense string
 
+//go:embed http-dependencies-LICENSE.txt
+var httpDependenciesLicense string
+
 const bundleMarker = "\x00TRIPOL-DISCORD-ELF-V1\x00"
 const maxBundleProgram = 32 << 20
 
@@ -73,6 +76,7 @@ func packageDiscordExecutable(program []byte, target string) []byte {
 		die("%v", err)
 	}
 	launcher = append(launcher, discordWebSocketLicense...)
+	launcher = append(launcher, httpDependenciesLicense...)
 	launcher = append(launcher, program...)
 	launcher = binary.LittleEndian.AppendUint64(launcher, uint64(len(program)))
 	return append(launcher, bundleMarker...)
@@ -115,14 +119,14 @@ func runBundledDiscord() bool {
 
 func runDiscordExecutable(args []string) {
 	if len(args) != 1 {
-		die("usage: tripol discord-run FILE")
+		die("usage: tripol net-run FILE")
 	}
 	path, err := filepath.Abs(args[0])
 	if err != nil {
 		die("%v", err)
 	}
 	if !needsDiscordLauncher(path) {
-		die("expected a generated Discord ELF with transport enabled")
+		die("expected a generated ELF with network transport enabled")
 	}
 	runNative(path, nil)
 }

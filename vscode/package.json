@@ -2,7 +2,7 @@
   "name": "tripol-language",
   "displayName": "TRIPOL Language",
   "description": "Official TRIPOL highlighting, snippets, completion and compiler diagnostics",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "publisher": "tripol",
   "engines": {
     "vscode": "^1.70.0"

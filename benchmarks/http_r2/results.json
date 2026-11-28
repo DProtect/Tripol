@@ -1,0 +1,77 @@
+{
+  "runs": 7,
+  "count": 400,
+  "bytes": 512,
+  "results": {
+    "TRIPOL": {
+      "startup_ms": 4.57,
+      "idle_rss_kib": 8536,
+      "peak_rss_kib": 13420,
+      "cpu_ms_with_startup": 122.486,
+      "mean_request_ms": 0.333,
+      "requests_per_second": 3001.017,
+      "bytes_per_second": 1536520.7,
+      "connections": 1
+    },
+    "Requests": {
+      "startup_ms": 95.946,
+      "idle_rss_kib": 20956,
+      "peak_rss_kib": 21168,
+      "cpu_ms_with_startup": 304.175,
+      "mean_request_ms": 0.547,
+      "requests_per_second": 1829.645,
+      "bytes_per_second": 936777.988,
+      "connections": 1
+    },
+    "HTTPX": {
+      "startup_ms": 121.848,
+      "idle_rss_kib": 22320,
+      "peak_rss_kib": 23040,
+      "cpu_ms_with_startup": 307.948,
+      "mean_request_ms": 0.444,
+      "requests_per_second": 2252.631,
+      "bytes_per_second": 1153347.28,
+      "connections": 1
+    },
+    "Fetch": {
+      "startup_ms": 34.239,
+      "idle_rss_kib": 27936,
+      "peak_rss_kib": 74384,
+      "cpu_ms_with_startup": 418.826,
+      "mean_request_ms": 0.737,
+      "requests_per_second": 1357.348,
+      "bytes_per_second": 694962.127,
+      "connections": 2
+    },
+    "Reqwest": {
+      "startup_ms": 1.854,
+      "idle_rss_kib": 3044,
+      "peak_rss_kib": 3396,
+      "cpu_ms_with_startup": 22.964,
+      "mean_request_ms": 0.104,
+      "requests_per_second": 9630.077,
+      "bytes_per_second": 4930599.168,
+      "connections": 1
+    },
+    "Go": {
+      "startup_ms": 2.274,
+      "idle_rss_kib": 5048,
+      "peak_rss_kib": 8360,
+      "cpu_ms_with_startup": 44.743,
+      "mean_request_ms": 0.144,
+      "requests_per_second": 6957.97,
+      "bytes_per_second": 3562480.56,
+      "connections": 1
+    },
+    "TRIPOL before": {
+      "startup_ms": 3.6,
+      "idle_rss_kib": 8568,
+      "peak_rss_kib": 13292,
+      "cpu_ms_with_startup": 261.358,
+      "mean_request_ms": 0.698,
+      "requests_per_second": 1433.051,
+      "bytes_per_second": 733722.182,
+      "connections": 1
+    }
+  }
+}

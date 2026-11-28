@@ -450,3 +450,9 @@ Usa `bot.restrict("ban","role",role_id)` para restringir un comando a un rol. Us
 Create a thread with `channel.thread(name)` or `channel.thread_from(message_id, name)`. Use `thread.thread_member(id)`, `thread.archive()` and `thread.lock_thread()`. For forums, use `guild.create_channel(name, "forum")`, `forum.post(title, text, tags)` and `post.apply_tags(tags)`. Use `discord.forum_tags()` to build the full set supplied to `forum.set_forum_tags(tags)`, including the IDs of existing labels that should stay. The [live validation guide](discord-validation.md) lists the required permissions and expected results.
 
 Crea un hilo con `channel.thread(name)` o `channel.thread_from(message_id, name)`. Usa `thread.thread_member(id)`, `thread.archive()` y `thread.lock_thread()`. Para foros, usa `guild.create_channel(name, "forum")`, `forum.post(title, text, tags)` y `post.apply_tags(tags)`. Usa `discord.forum_tags()` para construir el conjunto completo que recibe `forum.set_forum_tags(tags)), incluidos los IDs de las etiquetas que quieras conservar. La [guía de validación conectada](discord-validation.md) recoge los permisos y resultados esperados.
+
+## Deferred external HTTP / HTTP externo diferido
+
+Use `ctx.defer_http(request, "profile")` with an HTTP request and register `events.on_http("profile", handler)` before starting the bot. The result arrives in `event.http_response()`. Use `event.complete_http(text)` to edit the original deferred reply once. [Guide and sample](http.md#https-errores-y-discord--https-errors-and-discord)
+
+Llama a `ctx.defer_http(request, "profile")` y registra `events.on_http("profile", handler)` antes de iniciar el bot. Lee el resultado con `event.http_response()` y edita la respuesta diferida una vez con `event.complete_http(text)`. [Guía y ejemplo](http.md#https-errores-y-discord--https-errors-and-discord)

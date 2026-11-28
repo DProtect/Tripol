@@ -1,7 +1,7 @@
 name: QUANTUM X benchmarks
 on:
   push:
-    branches: [main]
+    branches: [main, v0.29-dipo-http-2]
   workflow_dispatch:
 permissions:
   contents: read

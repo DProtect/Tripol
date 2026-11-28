@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"tripol/internal/httptransport"
 )
 
 const (
@@ -31,12 +33,16 @@ const (
 	OpChannelLock
 	OpWebhook
 	OpWebhookUpload
+	OpHTTP
 )
 
 // Serve is the private, process-local protocol between a launcher and one
 // generated program. Command and reply ends are inherited, never published.
 func Serve(ctx context.Context, client *Client, input io.Reader, output io.Writer, diagnostics io.Writer) error {
 	var gateway *Gateway
+	var httpService httptransport.Service
+	continuations := make(httpContinuations)
+	defer httpService.Close()
 	var callbackDeadline time.Time
 	var cooldown cooldowns
 	var channelLock channelLocks
@@ -64,6 +70,10 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 			lengths[i] = int(length)
 		}
 		switch op {
+		case OpHTTP:
+			if lengths[0] == 0 || lengths[0] > 8 || lengths[1] != 0 || lengths[2] == 0 {
+				return errors.New("invalid HTTP bridge request")
+			}
 		case OpStart:
 			if lengths[0] == 0 || lengths[0] > 4096 || lengths[1] != 0 || lengths[2] != 0 {
 				return errors.New("invalid Discord bridge start")
@@ -112,6 +122,21 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 		var reply []byte
 		var err error
 		switch op {
+		case OpHTTP:
+			switch string(args[0]) {
+			case "route":
+				reply = []byte("0")
+				if continuations.attach(&httpService, args[2]) {
+					reply = []byte("1")
+				}
+			case "complete":
+				reply = []byte("0")
+				if continuations.complete(ctx, client, args[2]) {
+					reply = []byte("1")
+				}
+			default:
+				reply = httpService.Handle(ctx, string(args[0]), args[2])
+			}
 		case OpStart:
 			callbackDeadline = time.Time{}
 			if gateway != nil {
@@ -124,6 +149,9 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 			cooldown.prune(time.Now())
 			if gateway == nil {
 				err = errors.New("Discord Gateway is closed")
+			} else if event := continuations.event(&httpService); len(event) != 0 {
+				reply = event
+				callbackDeadline = time.Time{}
 			} else {
 				var done bool
 				var event gatewayEvent

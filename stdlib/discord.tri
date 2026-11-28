@@ -1,3 +1,4 @@
+import tripol.http
 import tripol.datetime
 import tripol.https
 import tripol.env
@@ -668,6 +669,15 @@ func GatewayEvents.on(self:GatewayEvents,name:string,handler:func(GatewayEvent)-
   assert bits.test(self.__intents,1),"Enable GUILD_MEMBERS before registering member callbacks"
  }
  if name=="PRESENCE_UPDATE" {assert bits.test(self.__intents,8),"Enable GUILD_PRESENCES before registering presence callbacks"}
+ return self.__bind(name,handler)
+}
+
+func GatewayEvents.on_http(self:GatewayEvents,name:string,handler:func(GatewayEvent)->bool)->bool {
+ assert slash_name(name),"Use a lowercase HTTP event name"
+ return self.__bind("TRIPOL_HTTP:"+name,handler)
+}
+
+func GatewayEvents.__bind(self:GatewayEvents,name:string,handler:func(GatewayEvent)->bool)->bool {
  names=self.__names
  handlers=self.__handlers
  for i in range(names.size()) {
@@ -1161,6 +1171,33 @@ func Interaction.__respond_files(self:Interaction,body:string,paths:string_list)
  scratch {ok=len(discord_rest(7,path,"",envelope))>0}
  if ok {self.__response_state=2}
  return ok
+}
+
+func Interaction.defer_http(self:Interaction,request:http.Request,event:string,ephemeral=true)->bool {
+ assert slash_name(event),"Use a registered lowercase HTTP event name"
+ if not gw_host_available() or self.application_id=="" or self.kind!=2 and self.kind!=3 and self.kind!=5 {return false}
+ if not self.respond(self.defer(ephemeral)) {return false}
+ task=request.start()
+ if task.id()<=0 {self.edit_reply("No se pudo iniciar la petición HTTP.");return false}
+ path="/api/v10/webhooks/"+self.application_id+"/"+self.__interaction_token+"/messages/@original"
+ body="{\"id\":"+text(task.id())+",\"name\":"+json.quote(event)+",\"path\":"+json.quote(path)+"}"
+ if http_exchange("route",body)=="1" {return true}
+ task.cancel()
+ task.await()
+ self.edit_reply("No se pudo registrar la respuesta HTTP.")
+ return false
+}
+
+func GatewayEvent.http_response(self:GatewayEvent)->http.Response {
+ if not has_prefix(self.name,"TRIPOL_HTTP:") {return http.parse_response("{\"status\":0,\"error\":\"not_http_event\"}")}
+ return http.parse_response(json.get_raw_large(self.data_json,"result"))
+}
+
+func GatewayEvent.complete_http(self:GatewayEvent,message:string)->bool {
+ if not has_prefix(self.name,"TRIPOL_HTTP:") or not gw_host_available() {return false}
+ receipt=errors.int_or(json.get_raw_large(self.data_json,"receipt"),0)
+ if receipt<=0 {return false}
+ return http_exchange("complete","{\"id\":"+text(receipt)+",\"body\":"+interaction_message(message)+"}")=="1"
 }
 
 func Interaction.defer(self:Interaction,ephemeral=false)->string {

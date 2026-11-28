@@ -1,5 +1,9 @@
 <div align="center">
 
+## v0.29.0 DIPO HTTP 2 — development
+
+Typed HTTP requests, connection pooling, validated HTTPS, streamed files, background requests and deferred Discord replies. The development compiler builds for Windows and Linux x86-64. [HTTP guide](docs/http.md) · [Validation and status](docs/http-status.md)
+
 <img src="assets/tripol-emblem.png" alt="TRIPOL official logo" width="220" />
 
 # TRIPOL

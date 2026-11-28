@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,"../stdlib"),catalog={};
 for(const file of fs.readdirSync(root).filter(n=>n.endsWith(".tri")).sort()){
  const module=file.slice(0,-4);catalog[module]={};
  const source=fs.readFileSync(path.join(root,file),"utf8");
- for(const match of source.matchAll(/^\s*func\s+(\w+(?:\.\w+)?)\s*(\([^\n]*?\)\s*(?:->\s*(?:list\[[^\n\]]+\]|\w+))?)\s*\{/gm)){
+ for(const match of source.matchAll(/^\s*func\s+(\w+(?:\.\w+)?)\s*(\([^\n]*?\)\s*(?:->\s*(?:list\[[^\n\]]+\]|[\w.]+))?)\s*\{/gm)){
   const [receiver,method]=match[1].split(".");
   if(method){
    if(method.startsWith("__"))continue;
@@ -13,7 +13,9 @@ for(const file of fs.readdirSync(root).filter(n=>n.endsWith(".tri")).sort()){
    const signature=receiver+"."+method+match[2].replace(/^\(\s*\w+\s*:\s*\w+\s*,?\s*/,"(");
    entries[method]=entries[method]?entries[method]+"\n"+signature:signature;
   }else{
-   catalog[module][receiver]="func "+module+"."+receiver+match[2];
+   const signature="func "+module+"."+receiver+match[2];
+   const previous=catalog[module][receiver];
+   catalog[module][receiver]=previous?previous+"\n"+signature:signature;
   }
  }
 }

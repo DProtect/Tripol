@@ -1,4 +1,7 @@
 import tripol.network
+import tripol.json
+import tripol.errors
+import tripol.time
 // Minimal HTTP/1.0 request, no TLS, response headers/body returned together.
 func get_raw(address:int,port:int,host:string,path:string)->string {
  assert len(host)>0 and len(path)>0,"HTTP host and path required"
@@ -23,3 +26,454 @@ func body(response:string)->string {
  assert i>=0,"Missing HTTP header separator"
  return slice(response,i+4,len(response))
 }
+
+struct Response {
+ status:int
+ text:string
+ error:string
+ protocol:string
+ bytes:int
+ elapsed_ms:int
+ attempts:int
+ file:string
+ __headers:string=""
+ uploaded:int=0
+ upload_total:int=0
+}
+
+func Response.ok(self:Response)->bool {
+ return self.error=="" and self.status>=200 and self.status<300
+}
+
+func Response.json(self:Response)->string {
+ raw=self.text
+ end=json.value(raw,0,len(raw),0)
+ if end<0 or json.ws(raw,end,len(raw))!=len(raw) {return ""}
+ return raw
+}
+
+func Response.header(self:Response,name:string)->string {
+ lower=""
+ for i in range(len(name)) {
+  b=byte_at(name,i)
+  if b>=65 and b<=90 {b+=32}
+  lower+=utf8_char(b)
+ }
+ return json.unquote(json.get_raw_large(self.__headers,lower))
+}
+
+struct Request {
+ method:string
+ url:string
+ __headers:string_list
+ __query:string_list
+ __form:string_list
+ __files:string_list
+ __base:string=""
+ __session:int=0
+ __timeout:int=0
+ __redirect:string="none"
+ __retries:int=0
+ __bearer:string=""
+ __user:string=""
+ __password:string=""
+ __basic:bool=false
+ __key_name:string=""
+ __key_value:string=""
+ __encoding:string=""
+ __body:string=""
+ __secure:bool=false
+ __destination:string=""
+}
+
+func request(method:string,url:string)->Request {
+ return Request(method,url,string_list(),string_list(),string_list(),string_list())
+}
+
+func secure_request(method:string,url:string)->Request {
+ req=request(method,url)
+ req.__secure=true
+ return req
+}
+
+func Request.__pair(self:Request,name:string,value:string)->string {
+ return "{\"name\":"+json.quote(name)+",\"value\":"+json.quote(value)+"}"
+}
+
+func Request.header(self:Request,name:string,value:string)->bool {
+ entries=self.__headers
+ entries.add(self.__pair(name,value))
+ return true
+}
+
+func Request.query(self:Request,name:string,value:string)->bool {
+ entries=self.__query
+ entries.add(self.__pair(name,value))
+ return true
+}
+
+func Request.form(self:Request,name:string,value:string)->bool {
+ entries=self.__form
+ entries.add(self.__pair(name,value))
+ return true
+}
+
+func Request.file(self:Request,name:string,path:string)->bool {
+ entries=self.__files
+ entries.add("{\"name\":"+json.quote(name)+",\"path\":"+json.quote(path)+"}")
+ return true
+}
+
+func Request.bearer(self:Request,token:string)->bool {
+ self.__bearer=token
+ self.__basic=false
+ return true
+}
+
+func Request.basic(self:Request,user:string,password:string)->bool {
+ self.__user=user
+ self.__password=password
+ self.__basic=true
+ self.__bearer=""
+ return true
+}
+
+func Request.api_key(self:Request,name:string,value:string)->bool {
+ self.__key_name=name
+ self.__key_value=value
+ return true
+}
+
+func Request.timeout(self:Request,milliseconds:int)->bool {
+ self.__timeout=milliseconds
+ return true
+}
+
+func Request.redirects(self:Request,policy="same-origin")->bool {
+ self.__redirect=policy
+ return true
+}
+
+func Request.retries(self:Request,count=1)->bool {
+ self.__retries=count
+ return true
+}
+
+func Request.text(self:Request,value:string)->bool {
+ self.__body=value
+ self.__encoding="text"
+ return true
+}
+
+func Request.json(self:Request,value:string)->bool {
+ self.__body=value
+ self.__encoding="json"
+ return true
+}
+
+func Request.json(self:Request,value:json.Object)->bool {
+ return self.json(value.encode())
+}
+
+func Request.download_to(self:Request,path:string)->bool {
+ self.__destination=path
+ return true
+}
+
+func Request.__array(self:Request,entries:string_list)->string {
+ output="["
+ for i in range(entries.size()) {
+  entry=entries.get(i)
+  assert len(output)+len(entry)+2<=65535,"HTTP metadata exceeds the TRIPOL string capacity"
+  if i>0 {output+=","}
+  output+=entry
+ }
+ return output+"]"
+}
+
+func Request.__payload(self:Request)->string {
+ body="{\"method\":"+json.quote(self.method)+",\"url\":"+json.quote(self.url)+",\"base\":"+json.quote(self.__base)
+ body+=",\"headers\":"+self.__array(self.__headers)+",\"query\":"+self.__array(self.__query)
+ body+=",\"form\":"+self.__array(self.__form)+",\"files\":"+self.__array(self.__files)
+ body+=",\"bearer\":"+json.quote(self.__bearer)+",\"basic\":"+json.boolean(self.__basic)
+ body+=",\"user\":"+json.quote(self.__user)+",\"password\":"+json.quote(self.__password)
+ body+=",\"keyName\":"+json.quote(self.__key_name)+",\"keyValue\":"+json.quote(self.__key_value)
+ body+=",\"timeout\":"+text(self.__timeout)+",\"redirect\":"+json.quote(self.__redirect)+",\"retries\":"+text(self.__retries)
+ body+=",\"secure\":"+json.boolean(self.__secure)+",\"destination\":"+json.quote(self.__destination)
+ body+=",\"encoding\":"+json.quote(self.__encoding)+",\"body\":"+json.quote(self.__body)
+ return body+",\"session\":"+text(self.__session)+"}"
+}
+
+func Response.__read(self:Response,raw:string)->bool {
+ n=len(raw)
+ at=json.ws(raw,0,n)
+ if at>=n or byte_at(raw,at)!=123 {return false}
+ at=json.ws(raw,at+1,n)
+ while at<n {
+  if byte_at(raw,at)==125 {return json.ws(raw,at+1,n)==n}
+  key_end=json.quoted(raw,at,n)
+  if key_end<0 {return false}
+  key=json.unquote(slice(raw,at,key_end))
+  at=json.ws(raw,key_end,n)
+  if at>=n or byte_at(raw,at)!=58 {return false}
+  at=json.ws(raw,at+1,n)
+  end=json.value(raw,at,n,1)
+  if end<0 {return false}
+  value=slice(raw,at,end)
+  if key=="status" {self.status=errors.int_or(value,0)}
+  else if key=="text" {self.text=json.unquote(value)}
+  else if key=="error" {self.error=json.unquote(value)}
+  else if key=="protocol" {self.protocol=json.unquote(value)}
+  else if key=="bytes" {self.bytes=errors.int_or(value,0)}
+  else if key=="elapsed_ms" {self.elapsed_ms=errors.int_or(value,0)}
+  else if key=="attempts" {self.attempts=errors.int_or(value,0)}
+  else if key=="file" {self.file=json.unquote(value)}
+  else if key=="headers" {self.__headers=value}
+  else if key=="uploaded" {self.uploaded=errors.int_or(value,0)}
+  else if key=="upload_total" {self.upload_total=errors.int_or(value,0)}
+  at=json.ws(raw,end,n)
+  if at>=n {return false}
+  if byte_at(raw,at)==125 {return json.ws(raw,at+1,n)==n}
+  if byte_at(raw,at)!=44 {return false}
+  at=json.ws(raw,at+1,n)
+  if at>=n or byte_at(raw,at)==125 {return false}
+ }
+ return false
+}
+
+func parse_response(raw:string)->Response {
+ if raw=="" {return Response(0,"","launcher_required","",0,0,0,"")}
+ response=Response(0,"","","",0,0,0,"")
+ if not response.__read(raw) {return Response(0,"","invalid_response","",0,0,0,"")}
+ return response
+}
+
+func Request.send(self:Request)->Response {
+ if not gw_host_available() {return parse_response("")}
+ return parse_response(http_exchange("send",self.__payload()))
+}
+
+struct Task {
+ __id:int
+ __error:string=""
+}
+
+struct Progress {
+ bytes:int
+ total:int
+ percent:int
+ uploaded:int=0
+ upload_total:int=0
+}
+
+func Request.start(self:Request)->Task {
+ if not gw_host_available() {return Task(0,"launcher_required")}
+ raw=http_exchange("start",self.__payload())
+ id=errors.int_or(raw,0)
+ if id>0 {return Task(id)}
+ return Task(0,json.unquote(json.get_raw_large(raw,"error")))
+}
+
+func Task.poll(self:Task)->Response {
+ if self.__id<=0 {return Response(0,"",self.__error,"",0,0,0,"")}
+ raw=http_exchange("poll",text(self.__id))
+ if raw=="0" {return Response(0,"","pending","",0,0,0,"")}
+ self.__id=0
+ self.__error="unknown_task"
+ return parse_response(raw)
+}
+
+func Task.await(self:Task)->Response {
+ if self.__id<=0 {return Response(0,"",self.__error,"",0,0,0,"")}
+ raw=http_exchange("await",text(self.__id))
+ self.__id=0
+ self.__error="unknown_task"
+ return parse_response(raw)
+}
+
+func Task.cancel(self:Task)->bool {
+ return self.__id>0 and http_exchange("cancel",text(self.__id))=="1"
+}
+
+func Task.progress(self:Task)->Progress {
+ if self.__id<=0 {return Progress(0,-1,-1)}
+ raw=http_exchange("progress",text(self.__id))
+ done=errors.int_or(json.get_raw_large(raw,"bytes"),0)
+ total=errors.int_or(json.get_raw_large(raw,"total"),-1)
+ percent=-1
+ if total>0 {percent=done*100/total}
+ return Progress(done,total,percent,errors.int_or(json.get_raw_large(raw,"uploaded"),0),errors.int_or(json.get_raw_large(raw,"upload_total"),0))
+}
+
+struct Client {
+ __base:string=""
+ __id:int=0
+ __timeout:int=0
+ __cookies:bool=true
+ __bearer:string=""
+ __user:string=""
+ __password:string=""
+ __basic:bool=false
+ __key_name:string=""
+ __key_value:string=""
+ __secure:bool=false
+ __redirect:string="none"
+ __retries:int=0
+}
+
+func client()->Client {return Client()}
+
+func secure_client()->Client {
+ c=client()
+ c.__secure=true
+ return c
+}
+
+func Client.base_url(self:Client,url:string)->bool {
+ self.__base=url
+ return true
+}
+
+func Client.cookies(self:Client,enabled=true)->bool {
+ if self.__id!=0 {return false}
+ self.__cookies=enabled
+ return true
+}
+
+func Client.timeout(self:Client,milliseconds:int)->bool {
+ self.__timeout=milliseconds
+ return true
+}
+
+func Client.bearer(self:Client,token:string)->bool {
+ self.__bearer=token
+ self.__basic=false
+ return true
+}
+
+func Client.basic(self:Client,user:string,password:string)->bool {
+ self.__user=user
+ self.__password=password
+ self.__basic=true
+ self.__bearer=""
+ return true
+}
+
+func Client.api_key(self:Client,name:string,value:string)->bool {
+ self.__key_name=name
+ self.__key_value=value
+ return true
+}
+
+func Client.redirects(self:Client,policy="same-origin")->bool {
+ self.__redirect=policy
+ return true
+}
+
+func Client.retries(self:Client,count=1)->bool {
+ self.__retries=count
+ return true
+}
+
+func Client.request(self:Client,method:string,url:string)->Request {
+ if self.__id==0 and gw_host_available() {self.__id=errors.int_or(http_exchange("open",json.boolean(self.__cookies)),0)}
+ result=request(method,url)
+ result.__session=self.__id
+ if self.__id==0 {result.__session=-1}
+ result.__base=self.__base
+ result.__timeout=self.__timeout
+ result.__bearer=self.__bearer
+ result.__user=self.__user
+ result.__password=self.__password
+ result.__basic=self.__basic
+ result.__key_name=self.__key_name
+ result.__key_value=self.__key_value
+ result.__secure=self.__secure
+ result.__redirect=self.__redirect
+ result.__retries=self.__retries
+ return result
+}
+
+func Client.close(self:Client)->bool {
+ ok=true
+ if self.__id>0 {ok=http_exchange("close",text(self.__id))=="1"}
+ self.__id=-1
+ return ok
+}
+
+func Client.get(self:Client,url:string)->Response {return self.request("GET",url).send()}
+func Client.delete(self:Client,url:string)->Response {return self.request("DELETE",url).send()}
+func Client.head(self:Client,url:string)->Response {return self.request("HEAD",url).send()}
+func Client.options(self:Client,url:string)->Response {return self.request("OPTIONS",url).send()}
+func Client.post(self:Client,url:string,body:string)->Response {
+ r=self.request("POST",url)
+ r.json(body)
+ return r.send()
+}
+func Client.post(self:Client,url:string,body:json.Object)->Response {return self.post(url,body.encode())}
+func Client.put(self:Client,url:string,body:string)->Response {
+ r=self.request("PUT",url)
+ r.json(body)
+ return r.send()
+}
+func Client.patch(self:Client,url:string,body:string)->Response {
+ r=self.request("PATCH",url)
+ r.json(body)
+ return r.send()
+}
+
+func get(url:string)->Response {return request("GET",url).send()}
+func delete(url:string)->Response {return request("DELETE",url).send()}
+func head(url:string)->Response {return request("HEAD",url).send()}
+func options(url:string)->Response {return request("OPTIONS",url).send()}
+func post(url:string,body:string)->Response {
+ r=request("POST",url)
+ r.json(body)
+ return r.send()
+}
+func post(url:string,body:json.Object)->Response {return post(url,body.encode())}
+func put(url:string,body:string)->Response {
+ r=request("PUT",url)
+ r.json(body)
+ return r.send()
+}
+func patch(url:string,body:string)->Response {
+ r=request("PATCH",url)
+ r.json(body)
+ return r.send()
+}
+
+func download(url:string,path:string)->Response {
+ r=request("GET",url)
+ r.download_to(path)
+ return r.send()
+}
+
+func download(url:string,path:string,callback:func(Progress)->void)->Response {
+ r=request("GET",url)
+ r.download_to(path)
+ return r.send(callback)
+}
+
+func Request.send(self:Request,callback:func(Progress)->void)->Response {
+ task=self.start()
+ previous=-1
+ uploaded=-1
+ while true {
+  progress=task.progress()
+  response=task.poll()
+  if response.error!="pending" {
+   if response.ok() {callback(Progress(response.bytes,response.bytes,100,response.uploaded,response.upload_total))}
+   return response
+  }
+  if (progress.bytes!=previous or progress.uploaded!=uploaded) and progress.percent<100 {
+   callback(progress)
+   previous=progress.bytes
+   uploaded=progress.uploaded
+  }
+  time.sleep(50)
+ }
+ return parse_response("")
+}
+
+func Task.id(self:Task)->int {return self.__id}

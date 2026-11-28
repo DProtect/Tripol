@@ -158,3 +158,9 @@ An inferred function returns the value of its last expression when it reaches th
 TRIPOL infiere una firma por función en todo el proyecto. Las llamadas y los parámetros de callback tipados aportan contexto. En el ejemplo, `apply(twice)` aporta a `twice` la firma requerida por `apply`. El nombre de una función actúa como referencia si ninguna variable local lo oculta. `&twice` sigue siendo válido.
 
 Las funciones con retorno inferido devuelven el valor de la última expresión al llegar al final. Las ramas terminales de un `if/else` pueden aportar un valor cada una. También puedes escribir `return`. Una función anónima puede capturar un literal escalar declarado con `const`. El compilador copia ese valor a la función. Pasa como argumentos explícitos las variables mutables, los valores de ejecución y las estructuras. Las sobrecargas de un método se distinguen por los tipos de sus parámetros. El compilador elige una firma a partir de los argumentos y los valores predeterminados. Si hay conflicto, anota el tipo o escribe funciones separadas.
+
+## SIMPLE R3
+
+Functions and methods can overload explicit parameter types. Define callbacks with `->void` when their result is unused. Calls expecting a void callback can infer it for a returnless function literal. Nested structures use typed references. A dictionary literal passed directly where `json.Object` is expected becomes a typed JSON object with nested objects, strings, booleans and integers.
+
+Las funciones y métodos admiten sobrecargas con parámetros explícitos. Usa `->void` para callbacks sin resultado. El compilador puede inferirlo para una función anónima sin retorno cuando la firma esperada es void. Las estructuras anidadas conservan referencias tipadas. Un literal de diccionario usado directamente donde se espera `json.Object` se convierte en un objeto JSON tipado y admite objetos anidados, texto, booleanos y enteros.

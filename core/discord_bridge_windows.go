@@ -43,14 +43,14 @@ func runBundledDiscord() bool                                 { return false }
 
 func runDiscordExecutable(args []string) {
 	if len(args) != 1 {
-		die("usage: tripol discord-run FILE")
+		die("usage: tripol net-run FILE")
 	}
 	path, err := filepath.Abs(args[0])
 	if err != nil {
 		die("%v", err)
 	}
 	if !needsDiscordLauncher(path) {
-		die("expected a generated Discord PE with transport enabled")
+		die("expected a generated PE with network transport enabled")
 	}
 	runNative(path, nil)
 }

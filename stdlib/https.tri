@@ -1,3 +1,4 @@
+import tripol.http
 // Windows WinHTTP HTTPS GET. OS trust store, no redirects, 2xx text body only.
 func get(host:string,path:string)->string {
  assert len(host)>0 and len(host)<=253 and len(path)>0 and len(path)<=1024,"Invalid HTTPS host/path size"
@@ -6,3 +7,7 @@ func get(host:string,path:string)->string {
  for i in range(len(path)) {b=byte_at(path,i);assert b>32 and b<127,"Invalid HTTPS path"}
  return https_get(host,path)
 }
+
+func request(method:string,url:string)->http.Request {return http.secure_request(method,url)}
+func client()->http.Client {return http.secure_client()}
+func get(url:string)->http.Response {return request("GET",url).send()}

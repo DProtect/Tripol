@@ -231,3 +231,71 @@ func get_raw_large(s:string,key:string)->string {
  }
  return ""
 }
+
+// A JSON object builder shared by files, API requests and other consumers.
+struct Object {
+ __keys:string_list
+ __values:string_list
+}
+
+func object()->Object {
+ return Object(string_list(),string_list())
+}
+
+func Object.__put(self:Object,key:string,encoded:string)->bool {
+ keys=self.__keys
+ values=self.__values
+ for i in range(keys.size()) {
+  if keys.get(i)==key {values.set(i,encoded);return true}
+ }
+ keys.add(key)
+ values.add(encoded)
+ return true
+}
+
+func Object.set(self:Object,key:string,value:string)->bool {
+ return self.__put(key,quote(value))
+}
+
+func Object.set(self:Object,key:string,value:int)->bool {
+ return self.__put(key,text(value))
+}
+
+func Object.set(self:Object,key:string,value:bool)->bool {
+ return self.__put(key,boolean(value))
+}
+
+func Object.set(self:Object,key:string,value:Object)->bool {
+ return self.__put(key,value.encode())
+}
+
+func Object.encode(self:Object)->string {
+ keys=self.__keys
+ values=self.__values
+ output="{"
+ for i in range(keys.size()) {
+  name=quote(keys.get(i))
+  value=values.get(i)
+  assert len(output)+len(name)+len(value)+3<=65535,"JSON object exceeds the TRIPOL string capacity"
+  if i>0 {output+=","}
+  output+=name+":"+value
+ }
+ return output+"}"
+}
+
+func Object.with(self:Object,key:string,value:string)->Object {
+ self.set(key,value)
+ return self
+}
+func Object.with(self:Object,key:string,value:int)->Object {
+ self.set(key,value)
+ return self
+}
+func Object.with(self:Object,key:string,value:bool)->Object {
+ self.set(key,value)
+ return self
+}
+func Object.with(self:Object,key:string,value:Object)->Object {
+ self.set(key,value)
+ return self
+}

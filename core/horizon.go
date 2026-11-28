@@ -17,7 +17,7 @@ func (c *compiler) validType(t string) bool {
 				return false
 			}
 		}
-		return c.validType(result)
+		return result == "void" || c.validType(result)
 	}
 	switch t {
 	case "int", "float", "bool", "string", "ints", "list", "string_list", "bool_list", "float_list":
@@ -26,13 +26,14 @@ func (c *compiler) validType(t string) bool {
 	return c.isRecord(t)
 }
 func (c *compiler) validateTypes(fs []fn) {
+	c.validateRecordLayouts(fs)
 	for _, f := range fs {
 		c.source = f.source
 		c.line = f.line
 		if receiver, _, ok := splitMethodName(f.name); ok && (!c.isRecord(receiver) || len(f.args) == 0 || f.args[0].typ != receiver) {
 			c.err("method receiver must be a matching struct: " + receiver)
 		}
-		if !c.validType(f.ret) {
+		if f.ret != "void" && !c.validType(f.ret) {
 			c.err(fmt.Sprintf("unknown type %s in %s", f.ret, f.name))
 		}
 		if f.record && (len(f.args) == 0 || len(f.args) > 64) {
@@ -47,9 +48,34 @@ func (c *compiler) validateTypes(fs []fn) {
 			if !c.validType(p.typ) {
 				c.err(fmt.Sprintf("unknown type %s in %s", p.typ, f.name))
 			}
-			if f.record && c.isRecord(p.typ) {
-				die("nested struct fields are not supported yet: %s.%s", f.name, p.name)
+		}
+	}
+}
+
+// Nested record fields are typed references, but recursive declarations have
+// no finite literal construction without a nullable reference type.
+func (c *compiler) validateRecordLayouts(fs []fn) {
+	state := make(map[string]uint8)
+	var visit func(fn)
+	visit = func(record fn) {
+		switch state[record.name] {
+		case 1:
+			c.source, c.line = record.source, record.line
+			c.err("recursive struct requires a nullable reference: " + record.name)
+		case 2:
+			return
+		}
+		state[record.name] = 1
+		for _, field := range record.args {
+			if child, ok := c.fs[field.typ]; ok && child.record {
+				visit(child)
 			}
+		}
+		state[record.name] = 2
+	}
+	for _, f := range fs {
+		if f.record {
+			visit(f)
 		}
 	}
 }

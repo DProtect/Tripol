@@ -159,13 +159,13 @@ func listLibraries() {
 	fmt.Println("TRIPOL Core — built-in standard libraries")
 	for _, name := range standardNames {
 		_, fs, _ := parseUnit(standardSource(name))
-		count := 0
+		functions := make(map[string]struct{})
 		for _, f := range fs {
 			if !f.record && !strings.HasPrefix(f.name, methodPrefix) {
-				count++
+				functions[f.name] = struct{}{}
 			}
 		}
-		fmt.Printf("tripol.%s (%d functions)\n", name, count)
+		fmt.Printf("tripol.%s (%d functions)\n", name, len(functions))
 	}
 	fmt.Println("Example: import tripol.math\n         show math.square(7)\nDetails: tripol docs math")
 }

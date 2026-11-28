@@ -17,8 +17,8 @@ jobs:
         with:
           go-version: '1.23.x'
           cache: false
-      - run: go test -count=1 -v ./core ./tests ./internal/discordtransport
-      - run: go vet . ./core ./stdlib ./tests ./internal/discordtransport
+      - run: go test -count=1 -v ./core ./tests ./internal/discordtransport ./internal/httptransport
+      - run: go vet . ./core ./stdlib ./tests ./internal/discordtransport ./internal/httptransport
       - run: go build -trimpath .
       - if: runner.os == 'Linux'
         run: |

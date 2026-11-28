@@ -30,7 +30,7 @@ func (m *webModule) fields(t string)[]param{if f,ok:=m.records[t];ok{return f.ar
 func (m *webModule) field(t,n string)(int64,string){for i,f:=range m.fields(t){if f.name==n{return int64(i),f.typ}};webReject("unknown field %s on %s",n,t);return 0,""}
 func (m *webModule) declare(f fn)webFunction{
  if v,ok:=m.funcs[f.name];ok{return v}
- if f.record||!m.supported(f.ret){webReject("function %s requires a scalar return type",f.name)}
+ if f.record||(f.ret!="void"&&!m.supported(f.ret)){webReject("function %s requires a scalar return type",f.name)}
  args:=make([]byte,len(f.args));for i,a:=range f.args{if !m.supported(a.typ){webReject("parameter %s requires a supported type",a.name)};args[i]=0x7e}
  v:=webFunction{f:f,index:5+uint32(len(m.order)),typ:m.signature(args,[]byte{0x7e})};m.funcs[f.name]=v;m.order=append(m.order,v);return v
 }
@@ -142,7 +142,7 @@ func (e *webEmitter) expression(x *expr)string{
    }[name];if len(x.args)!=len(spec.args){webReject("invalid graphics arguments for %s",name)}
    z:=e.constant(0);v:=[3]uint32{z,z,z};for i,a:=range x.args{tmp,t:=e.save(a);if t!=spec.args[i]&&!(spec.args[i]=="ints"&&webElem(t)=="int"){webReject("invalid graphics argument for %s",name)};v[i]=tmp};e.val(spec.op,v[0],v[1],v[2]);return "bool"
   }
-  if name=="discord_request"||name=="discord_callback"||name=="discord_edit"||name=="discord_rest"||name=="gw_open"||strings.HasPrefix(name,"gw_host_")||name=="env_get"{
+  if name=="http_exchange"||name=="discord_request"||name=="discord_callback"||name=="discord_edit"||name=="discord_rest"||name=="gw_open"||strings.HasPrefix(name,"gw_host_")||name=="env_get"{
    webReject("%s requires a native target",name)
   }
   if name=="thread_sum"{webReject("native worker threads require a browser concurrency adapter")}
@@ -393,7 +393,7 @@ func CompileWeb(source string)(out []byte,err error){
   for _, a := range f.args { e.local(a.name,a.typ) }
   e.params=e.locals
   e.block(f.body,false)
-  e.code.raw(0x00)
+  if f.ret=="void" {e.code.i64(0)} else {e.code.raw(0x00)}
   m.bodies=append(m.bodies,e.body())
  }
  mainType:=m.signature(nil,nil)

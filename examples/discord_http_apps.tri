@@ -1,0 +1,98 @@
+import tripol.discord
+import tripol.https
+import tripol.json
+import tripol.env
+import tripol.path
+
+func profile(ctx) {
+    name=ctx.option_text("usuario")
+    if name=="" or len(name)>39 {return ctx.reply("Escribe un usuario válido de GitHub.",true)}
+    for i in range(len(name)) {
+        b=byte_at(name,i)
+        if not ((b>=48 and b<=57) or (b>=65 and b<=90) or (b>=97 and b<=122) or b==45) {
+            return ctx.reply("Usa letras, números o guiones.",true)
+        }
+    }
+    request=https.request("GET","https://api.github.com/users/"+name)
+    request.header("User-Agent","TRIPOL DIPO HTTP 2")
+    request.timeout(7000)
+    ctx.defer_http(request,"profile")
+    ""
+}
+
+func profile_result(event) {
+    response=event.http_response()
+    if not response.ok() {return event.complete_http("GitHub respondió con estado "+text(response.status)+".")}
+    name=json.unquote(json.get_raw_large(response.json(),"login"))
+    event.complete_http("Perfil de GitHub: https://github.com/"+name)
+}
+
+func weather(ctx) {
+    request=https.request("GET","https://api.open-meteo.com/v1/forecast")
+    request.query("latitude","4.711")
+    request.query("longitude","-74.072")
+    request.query("current","temperature_2m")
+    ctx.defer_http(request,"weather")
+    ""
+}
+
+func weather_result(event) {
+    response=event.http_response()
+    current=json.get_raw_large(response.json(),"current")
+    temperature=json.get_raw_large(current,"temperature_2m")
+    if not response.ok() or temperature=="" {return event.complete_http("El servicio meteorológico no devolvió la temperatura.")}
+    event.complete_http("Temperatura actual en Bogotá: "+temperature+" °C.")
+}
+
+func monitor(ctx) {
+    url=env.get("TRIPOL_MONITOR_URL")
+    if url=="" {return ctx.reply("Configura TRIPOL_MONITOR_URL.",true)}
+    request=https.request("HEAD",url)
+    request.timeout(5000)
+    ctx.defer_http(request,"monitor")
+    ""
+}
+
+func monitor_result(event) {
+    response=event.http_response()
+    if response.error!="" {return event.complete_http("Error de conexión: "+response.error)}
+    event.complete_http("Estado HTTP "+text(response.status)+" en "+text(response.elapsed_ms)+" ms.")
+}
+
+func report(ctx) {
+    url=env.get("TRIPOL_REPORT_URL")
+    channel=env.get("DISCORD_REPORT_CHANNEL_ID")
+    if url=="" or channel=="" or ctx.channel_id!=channel {return ctx.reply("Configura un origen y canal privado para los informes.",true)}
+    request=https.request("GET",url)
+    request.download_to("tripol-http-"+ctx.id+".dat")
+    request.timeout(10000)
+    ctx.defer_http(request,"report")
+    ""
+}
+
+func report_result(event) {
+    response=event.http_response()
+    channel=env.get("DISCORD_REPORT_CHANNEL_ID")
+    if not response.ok() or response.file=="" or channel=="" {return event.complete_http("No se pudo descargar el informe.")}
+    panel=discord.components()
+    panel.file(path.basename(response.file))
+    message=panel.send_files(channel,list([response.file]))
+    if message=="" {return event.complete_http("El archivo quedó en disco. Discord rechazó el adjunto.")}
+    event.complete_http("Informe enviado al canal privado configurado.")
+}
+
+guild=env.get("DISCORD_GUILD_ID")
+assert guild!="","Configura el servidor privado de validación"
+bot=discord.bot()
+opts=discord.slash_options()
+opts.add("usuario","Usuario de GitHub","string",true)
+bot.slash_with_options("perfil","Consulta un perfil de GitHub",profile,opts,guild)
+bot.slash("tiempo","Consulta la temperatura de Bogotá",weather,guild)
+bot.slash("estado","Comprueba un sitio configurado",monitor,guild)
+bot.slash("informe","Descarga y adjunta un archivo configurado",report,guild)
+events=discord.events()
+events.on_http("profile",profile_result)
+events.on_http("weather",weather_result)
+events.on_http("monitor",monitor_result)
+events.on_http("report",report_result)
+bot.start_with_events(events)

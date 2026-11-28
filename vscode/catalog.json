@@ -294,12 +294,15 @@
     "preview_interaction": "Bot.preview_interaction(event:string)->string"
   },
   "discord.GatewayEvent": {
-    "field": "GatewayEvent.field(name:string)->string"
+    "field": "GatewayEvent.field(name:string)->string",
+    "http_response": "GatewayEvent.http_response()->http.Response",
+    "complete_http": "GatewayEvent.complete_http(message:string)->bool"
   },
   "discord.GatewayEvents": {
     "intent": "GatewayEvents.intent(name:string)->bool",
     "intent_mask": "GatewayEvents.intent_mask()->int",
     "on": "GatewayEvents.on(name:string,handler:func(GatewayEvent)->bool)->bool",
+    "on_http": "GatewayEvents.on_http(name:string,handler:func(GatewayEvent)->bool)->bool",
     "preview": "GatewayEvents.preview(event:string)->bool"
   },
   "discord.Embed": {
@@ -341,6 +344,7 @@
   "discord.Interaction": {
     "reply": "Interaction.reply(content:string,ephemeral=false)->string\nInteraction.reply(embed:Embed,ephemeral=false)->string\nInteraction.reply(batch:Embeds,ephemeral=false)->string\nInteraction.reply(layout:Components,ephemeral=false)->string",
     "reply_files": "Interaction.reply_files(content:string,paths:string_list,ephemeral=false)->bool\nInteraction.reply_files(embed:Embed,paths:string_list,ephemeral=false)->bool\nInteraction.reply_files(batch:Embeds,paths:string_list,ephemeral=false)->bool\nInteraction.reply_files(layout:Components,paths:string_list,ephemeral=false)->bool",
+    "defer_http": "Interaction.defer_http(request:http.Request,event:string,ephemeral=true)->bool",
     "defer": "Interaction.defer(ephemeral=false)->string",
     "ack": "Interaction.ack()->string",
     "reply_components": "Interaction.reply_components(layout:Components,ephemeral=false)->string",
@@ -569,10 +573,73 @@
   "http": {
     "get_raw": "func http.get_raw(address:int,port:int,host:string,path:string)->string",
     "status": "func http.status(response:string)->int",
-    "body": "func http.body(response:string)->string"
+    "body": "func http.body(response:string)->string",
+    "request": "func http.request(method:string,url:string)->Request",
+    "secure_request": "func http.secure_request(method:string,url:string)->Request",
+    "parse_response": "func http.parse_response(raw:string)->Response",
+    "client": "func http.client()->Client",
+    "secure_client": "func http.secure_client()->Client",
+    "get": "func http.get(url:string)->Response",
+    "delete": "func http.delete(url:string)->Response",
+    "head": "func http.head(url:string)->Response",
+    "options": "func http.options(url:string)->Response",
+    "post": "func http.post(url:string,body:string)->Response\nfunc http.post(url:string,body:json.Object)->Response",
+    "put": "func http.put(url:string,body:string)->Response",
+    "patch": "func http.patch(url:string,body:string)->Response",
+    "download": "func http.download(url:string,path:string)->Response\nfunc http.download(url:string,path:string,callback:func(Progress)->void)->Response"
+  },
+  "http.Response": {
+    "ok": "Response.ok()->bool",
+    "json": "Response.json()->string",
+    "header": "Response.header(name:string)->string"
+  },
+  "http.Request": {
+    "header": "Request.header(name:string,value:string)->bool",
+    "query": "Request.query(name:string,value:string)->bool",
+    "form": "Request.form(name:string,value:string)->bool",
+    "file": "Request.file(name:string,path:string)->bool",
+    "bearer": "Request.bearer(token:string)->bool",
+    "basic": "Request.basic(user:string,password:string)->bool",
+    "api_key": "Request.api_key(name:string,value:string)->bool",
+    "timeout": "Request.timeout(milliseconds:int)->bool",
+    "redirects": "Request.redirects(policy=\"same-origin\")->bool",
+    "retries": "Request.retries(count=1)->bool",
+    "text": "Request.text(value:string)->bool",
+    "json": "Request.json(value:string)->bool\nRequest.json(value:json.Object)->bool",
+    "download_to": "Request.download_to(path:string)->bool",
+    "send": "Request.send()->Response\nRequest.send(callback:func(Progress)->void)->Response",
+    "start": "Request.start()->Task"
+  },
+  "http.Task": {
+    "poll": "Task.poll()->Response",
+    "await": "Task.await()->Response",
+    "cancel": "Task.cancel()->bool",
+    "progress": "Task.progress()->Progress",
+    "id": "Task.id()->int"
+  },
+  "http.Client": {
+    "base_url": "Client.base_url(url:string)->bool",
+    "cookies": "Client.cookies(enabled=true)->bool",
+    "timeout": "Client.timeout(milliseconds:int)->bool",
+    "bearer": "Client.bearer(token:string)->bool",
+    "basic": "Client.basic(user:string,password:string)->bool",
+    "api_key": "Client.api_key(name:string,value:string)->bool",
+    "redirects": "Client.redirects(policy=\"same-origin\")->bool",
+    "retries": "Client.retries(count=1)->bool",
+    "request": "Client.request(method:string,url:string)->Request",
+    "close": "Client.close()->bool",
+    "get": "Client.get(url:string)->Response",
+    "delete": "Client.delete(url:string)->Response",
+    "head": "Client.head(url:string)->Response",
+    "options": "Client.options(url:string)->Response",
+    "post": "Client.post(url:string,body:string)->Response\nClient.post(url:string,body:json.Object)->Response",
+    "put": "Client.put(url:string,body:string)->Response",
+    "patch": "Client.patch(url:string,body:string)->Response"
   },
   "https": {
-    "get": "func https.get(host:string,path:string)->string"
+    "get": "func https.get(host:string,path:string)->string\nfunc https.get(url:string)->http.Response",
+    "request": "func https.request(method:string,url:string)->http.Request",
+    "client": "func https.client()->http.Client"
   },
   "image": {
     "flip_x": "func image.flip_x(pixels:ints,w:int,h:int)->ints",
@@ -603,7 +670,13 @@
     "value": "func json.value(s:string,i:int,n:int,depth:int)->int",
     "valid": "func json.valid(s:string)->bool",
     "get_raw": "func json.get_raw(s:string,key:string)->string",
-    "get_raw_large": "func json.get_raw_large(s:string,key:string)->string"
+    "get_raw_large": "func json.get_raw_large(s:string,key:string)->string",
+    "object": "func json.object()->Object"
+  },
+  "json.Object": {
+    "set": "Object.set(key:string,value:string)->bool\nObject.set(key:string,value:int)->bool\nObject.set(key:string,value:bool)->bool\nObject.set(key:string,value:Object)->bool",
+    "encode": "Object.encode()->string",
+    "with": "Object.with(key:string,value:string)->Object\nObject.with(key:string,value:int)->Object\nObject.with(key:string,value:bool)->Object\nObject.with(key:string,value:Object)->Object"
   },
   "math": {
     "square": "func math.square(n:int) -> int",

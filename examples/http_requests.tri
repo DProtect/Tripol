@@ -1,0 +1,22 @@
+import tripol.http
+import tripol.env
+
+url=env.get("TRIPOL_HTTP_DEMO_URL")
+if url=="" {url="http://127.0.0.1:8765"}
+response=http.get(url+"/health")
+show response.status
+show response.json()
+
+response=http.post(url+"/echo", {
+    "name":"Alex",
+    "active":true
+})
+show response.status
+show response.text
+
+client=http.client()
+client.base_url(url)
+client.timeout(5000)
+response=client.get("/health")
+show response.header("Content-Type")
+client.close()

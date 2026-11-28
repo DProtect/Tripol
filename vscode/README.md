@@ -1,4 +1,4 @@
-# TRIPOL Language 0.28.0 — DISCORD REVOLUTION
+# TRIPOL Language 0.29.0 — DIPO HTTP 2
 
 Syntax highlighting, snippets, keyword/module completion, catalog-based member completion and hover, local function definition lookup, and explicit Check/Build/Run commands. The VSIX release workflow generates the full catalog from actual stdlib signatures. Set `tripol.compilerPath` if the compiler is not on PATH. Compiler commands require a trusted workspace and saved files; optional check-on-save is off by default. Run invokes the compiler explicitly, not automatically. This is not a full LSP, debugger or formatter. Run `node generate-catalog.js` in the extension folder for a current local catalog.
 

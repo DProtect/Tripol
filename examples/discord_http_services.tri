@@ -1,0 +1,114 @@
+import tripol.discord
+import tripol.https
+import tripol.json
+import tripol.env
+
+func first(items:string)->string {
+    n=len(items)
+    if n<2 or byte_at(items,0)!=91 {return ""}
+    start=json.ws(items,1,n)
+    finish=json.value(items,start,n,0)
+    if finish<0 {return ""}
+    return slice(items,start,finish)
+}
+
+func input_options(label:string)->discord.SlashOptions {
+    options=discord.slash_options()
+    options.add("valor",label,"string",true)
+    return options
+}
+
+func ai(ctx) {
+    key=env.get("TRIPOL_OPENAI_API_KEY")
+    model=env.get("TRIPOL_AI_MODEL")
+    if key=="" or model=="" {return ctx.reply("Configura las credenciales y el modelo de IA del bot.",true)}
+    request=https.request("POST","https://api.openai.com/v1/responses")
+    request.bearer(key)
+    request.json({"model":model,"input":ctx.option_text("valor"),"max_output_tokens":200})
+    ctx.defer_http(request,"ai")
+    ""
+}
+
+func ai_result(event) {
+    response=event.http_response()
+    message=first(json.get_raw_large(response.json(),"output"))
+    content=first(json.get_raw_large(message,"content"))
+    answer=json.unquote(json.get_raw_large(content,"text"))
+    if not response.ok() or answer=="" or len(answer)>1800 {return event.complete_http("La API de IA no devolvió una respuesta breve.")}
+    event.complete_http(answer)
+}
+
+func translate(ctx) {
+    url=env.get("TRIPOL_TRANSLATION_URL")
+    if url=="" {return ctx.reply("Configura la URL de LibreTranslate.",true)}
+    request=https.request("POST",url)
+    request.json({"q":ctx.option_text("valor"),"source":"auto","target":"en","format":"text","api_key":env.get("TRIPOL_TRANSLATION_KEY")})
+    ctx.defer_http(request,"translation")
+    ""
+}
+
+func translation_result(event) {
+    response=event.http_response()
+    answer=json.unquote(json.get_raw_large(response.json(),"translatedText"))
+    if not response.ok() or answer=="" or len(answer)>1800 {return event.complete_http("La traducción no está disponible.")}
+    event.complete_http(answer)
+}
+
+func news(ctx) {
+    key=env.get("TRIPOL_GNEWS_KEY")
+    if key=="" {return ctx.reply("Configura la clave de GNews.",true)}
+    request=https.request("GET","https://gnews.io/api/v4/top-headlines")
+    request.query("apikey",key)
+    request.query("lang","es")
+    request.query("max","1")
+    ctx.defer_http(request,"news")
+    ""
+}
+
+func news_result(event) {
+    response=event.http_response()
+    article=first(json.get_raw_large(response.json(),"articles"))
+    title=json.unquote(json.get_raw_large(article,"title"))
+    url=json.unquote(json.get_raw_large(article,"url"))
+    if not response.ok() or title=="" or len(title)+len(url)>1800 {return event.complete_http("No se pudo leer el titular.")}
+    event.complete_http(title+"\n"+url)
+}
+
+func game(ctx) {
+    key=env.get("TRIPOL_STEAM_KEY")
+    id=ctx.option_text("valor")
+    if key=="" or len(id)!=17 {return ctx.reply("Indica un SteamID64 válido y configura la clave del bot.",true)}
+    for i in range(len(id)) {
+        if not json.digit(byte_at(id,i)) {return ctx.reply("El SteamID64 debe ser numérico.",true)}
+    }
+    request=https.request("GET","https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/")
+    request.query("key",key)
+    request.query("steamids",id)
+    ctx.defer_http(request,"game")
+    ""
+}
+
+func game_result(event) {
+    response=event.http_response()
+    result=json.get_raw_large(response.json(),"response")
+    player=first(json.get_raw_large(result,"players"))
+    name=json.unquote(json.get_raw_large(player,"personaname"))
+    if not response.ok() or name=="" {return event.complete_http("Steam no devolvió un perfil visible.")}
+    title=json.unquote(json.get_raw_large(player,"gameextrainfo"))
+    if title=="" {title="sin juego activo"}
+    event.complete_http(name+" · "+title)
+}
+
+guild=env.get("DISCORD_GUILD_ID")
+assert guild!="","Configura un servidor privado de validación"
+bot=discord.bot()
+bot.slash_with_options("ia","Consulta un modelo autorizado",ai,input_options("Mensaje"),guild)
+bot.slash_with_options("traducir","Traduce un mensaje al inglés",translate,input_options("Texto"),guild)
+bot.slash("titular","Consulta un titular en español",news,guild)
+bot.slash_with_options("jugador","Consulta un perfil de Steam",game,input_options("SteamID64"),guild)
+events=discord.events()
+events.on_http("ai",ai_result)
+events.on_http("translation",translation_result)
+events.on_http("news",news_result)
+events.on_http("game",game_result)
+bot.start_with_events(events)

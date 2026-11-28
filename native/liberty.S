@@ -3101,6 +3101,13 @@ discord_delete: .short 68,69,76,69,84,69,0
  leave
  ret
 
+.section .text.http_exchange,"ax"
+ mov r8,rax
+ xor r9d,r9d
+ mov r10,rdx
+ mov eax,19 # HTTP launcher operation, distinct from authenticated Discord REST.
+ jmp discord_pipe
+
 .section .text.gw_host_start,"ax"
  mov r8,rax
  xor r9d,r9d

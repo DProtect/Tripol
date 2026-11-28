@@ -1,12 +1,12 @@
 name: Public ecosystem
 on:
   push:
-    branches: [main]
+    branches: [main, v0.29-dipo-http-2]
   pull_request:
   workflow_dispatch:
     inputs:
       create_draft:
-        description: Prepare the experimental v0.28.0 draft release
+        description: Prepare the experimental v0.29.0 draft release
         type: boolean
         default: false
 permissions:
@@ -36,8 +36,8 @@ jobs:
           node-version: '22'
       - name: Build and test
         run: |
-          go test -count=1 ./core ./tests ./internal/discordtransport
-          go vet . ./core ./stdlib ./tests ./internal/discordtransport
+          go test -count=1 ./core ./tests ./internal/discordtransport ./internal/httptransport
+          go vet . ./core ./stdlib ./tests ./internal/discordtransport ./internal/httptransport
           mkdir -p dist
           CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o tripol .
           ./tripol --version
@@ -47,14 +47,14 @@ jobs:
           ./tripol build examples/projects/notes.tri --target linux -o /tmp/tripol-notes
           scratch=$(mktemp -d)
           (cd "$scratch"; printf 'Test note\n' | /tmp/tripol-notes; grep -q 'Test note' notes.txt)
-          tar -czf dist/TRIPOL-v0.28-Linux-x64.tar.gz tripol LICENSE -C core discord-websocket-LICENSE.txt
+          tar -czf dist/TRIPOL-v0.29-Linux-x64.tar.gz tripol LICENSE -C core discord-websocket-LICENSE.txt http-dependencies-LICENSE.txt
       - name: Package editor extension
         run: |
           cp LICENSE vscode/LICENSE
           cd vscode
           node generate-catalog.js
           node --check extension.js
-          npx --yes @vscode/vsce@3 package --no-dependencies --out ../dist/tripol-language-0.28.0.vsix
+          npx --yes @vscode/vsce@3 package --no-dependencies --out ../dist/tripol-language-0.29.0.vsix
       - uses: actions/upload-artifact@v4
         with:
           name: linux-and-editor
@@ -73,9 +73,9 @@ jobs:
       - name: Build and test unsigned installer
         shell: pwsh
         run: |
-          go test -count=1 ./core ./tests ./internal/discordtransport
+          go test -count=1 ./core ./tests ./internal/discordtransport ./internal/httptransport
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          go vet . ./core ./stdlib ./tests ./internal/discordtransport
+          go vet . ./core ./stdlib ./tests ./internal/discordtransport ./internal/httptransport
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force installer/payload, dist | Out-Null
           Copy-Item examples/hello.tri installer/payload/hello.tri
@@ -83,10 +83,10 @@ jobs:
           $env:GOARCH = 'amd64'
           go build -trimpath -ldflags '-s -w' -o installer/payload/tripol.exe .
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          Copy-Item installer/payload/tripol.exe dist/TRIPOL-v0.28-Windows-x64.exe
-          go build -trimpath -ldflags '-s -w' -o dist/TRIPOL-v0.28-Setup-x64.exe ./installer
+          Copy-Item installer/payload/tripol.exe dist/TRIPOL-v0.29-Windows-x64.exe
+          go build -trimpath -ldflags '-s -w' -o dist/TRIPOL-v0.29-Setup-x64.exe ./installer
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          & ./dist/TRIPOL-v0.28-Setup-x64.exe --quiet
+          & ./dist/TRIPOL-v0.29-Setup-x64.exe --quiet
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           $compiler = Join-Path $env:LOCALAPPDATA 'Programs/TRIPOL/tripol.exe'
           & $compiler --version
@@ -103,11 +103,11 @@ jobs:
           if ($LASTEXITCODE -or $preview.Count -ne 2) { throw 'Discord offline example failed' }
           $payload = $preview[1] | ConvertFrom-Json
           if ($payload.embeds[0].color -ne 41215 -or $payload.embeds[0].fields[0].value -ne '0.28.0') { throw 'Discord embed payload mismatch' }
-          & ./tests/manual/test-v027.ps1 -Compiler $compiler -ExpectedVersion 0.28.0
+          & ./tests/manual/test-v027.ps1 -Compiler $compiler -ExpectedVersion 0.29.0
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          & ./dist/TRIPOL-v0.28-Setup-x64.exe --quiet --uninstall
+          & ./dist/TRIPOL-v0.29-Setup-x64.exe --quiet --uninstall
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          Compress-Archive -Path dist/TRIPOL-v0.28-Setup-x64.exe, LICENSE -DestinationPath dist/TRIPOL-v0.28-Installer.zip
+          Compress-Archive -Path dist/TRIPOL-v0.29-Setup-x64.exe, LICENSE, core/discord-websocket-LICENSE.txt, core/http-dependencies-LICENSE.txt -DestinationPath dist/TRIPOL-v0.29-Installer.zip
       - uses: actions/upload-artifact@v4
         with:
           name: windows
@@ -130,7 +130,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         working-directory: dist
         run: |
-          artifacts=(TRIPOL-v0.28-Windows-x64.exe TRIPOL-v0.28-Setup-x64.exe TRIPOL-v0.28-Installer.zip TRIPOL-v0.28-Linux-x64.tar.gz tripol-language-0.28.0.vsix)
+          artifacts=(TRIPOL-v0.29-Windows-x64.exe TRIPOL-v0.29-Setup-x64.exe TRIPOL-v0.29-Installer.zip TRIPOL-v0.29-Linux-x64.tar.gz tripol-language-0.29.0.vsix)
           sha256sum "${artifacts[@]}" > SHA256SUMS.txt
-          if gh release view v0.28.0 >/dev/null 2>&1; then echo 'Release or draft already exists'; exit 0; fi
-          gh release create v0.28.0 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.28.0 — DISCORD REVOLUTION" --notes "Experimental preview. Review the validation evidence and SHA256SUMS.txt before publishing. The Windows installer is unsigned." "${artifacts[@]}" SHA256SUMS.txt
+          if gh release view v0.29.0 >/dev/null 2>&1; then echo 'Release or draft already exists'; exit 0; fi
+          gh release create v0.29.0 --target "$GITHUB_SHA" --draft --prerelease --title "TRIPOL v0.29.0 — DIPO HTTP 2" --notes "Experimental preview. Review the validation evidence and SHA256SUMS.txt before publishing. The Windows installer is unsigned." "${artifacts[@]}" SHA256SUMS.txt

@@ -1,0 +1,16 @@
+import tripol.http
+import tripol.time
+show "READY"
+url=input("")
+n=input_int("")
+start=time.now_ns()
+count=0
+repeat n {
+    scratch {
+        reply=http.get(url)
+        assert reply.status==200 and reply.error=="" and len(reply.text)==512,"Unexpected HTTP benchmark response"
+        count+=len(reply.text)
+    }
+}
+show time.elapsed_ns(start),count
+input_int("")

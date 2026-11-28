@@ -2,7 +2,7 @@ name: TRIPOL Web Engine
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, v0.29-dipo-http-2]
     paths:
       - 'core/**'
       - 'stdlib/**'
@@ -12,8 +12,10 @@ permissions:
   contents: write
   pages: write
 concurrency:
-  group: tripol-web-engine
+  group: tripol-web-engine-${{ github.ref }}
   cancel-in-progress: false
+env:
+  DOCS_BRANCH: ${{ github.ref_name == 'v0.29-dipo-http-2' && 'v0.29-dipo-http-2-pages' || 'gh-pages' }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,9 +45,9 @@ jobs:
         id: docs_audit
         continue-on-error: true
         run: |
-          git fetch origin gh-pages
+          git fetch origin "refs/heads/$DOCS_BRANCH:refs/remotes/origin/$DOCS_BRANCH"
           cp cmd/tripol-web/audit-docs.cjs web-dist/audit-docs.cjs
-          node --experimental-global-webcrypto web-dist/audit-docs.cjs origin/gh-pages
+          node --experimental-global-webcrypto web-dist/audit-docs.cjs "origin/$DOCS_BRANCH"
           rm web-dist/audit-docs.cjs
       - name: Test real compiler and generated WebAssembly
         id: wasm_tests
@@ -53,11 +55,11 @@ jobs:
         run: |
           cp cmd/tripol-web/test-r3.cjs web-dist/test-r3.cjs
           go build -trimpath -o web-dist/tripol-native .
-          git fetch origin gh-pages
-          git show origin/gh-pages:playground/examples-r3.js > web-dist/examples-r3.js
+          git fetch origin "refs/heads/$DOCS_BRANCH:refs/remotes/origin/$DOCS_BRANCH"
+          git show "origin/$DOCS_BRANCH":playground/examples-r3.js > web-dist/examples-r3.js
           node --experimental-global-webcrypto web-dist/test-r3.cjs web-dist/examples-r3.js "$(pwd)/web-dist/tripol-native"
           cp cmd/tripol-web/verify-reference.cjs web-dist/verify-reference.cjs
-          git show origin/gh-pages:playground/library-catalog-r6.1.js > web-dist/library-catalog.js
+          git show "origin/$DOCS_BRANCH":playground/library-catalog-r6.1.js > web-dist/library-catalog.js
           node --experimental-global-webcrypto web-dist/verify-reference.cjs web-dist/library-catalog.js "$(pwd)/web-dist/tripol-native" web-dist/examples-r3.js
           rm web-dist/tripol-native web-dist/examples-r3.js web-dist/test-r3.cjs web-dist/library-catalog.js web-dist/verify-reference.cjs
       - name: Upload diagnostic reports even on failed tests
@@ -80,10 +82,11 @@ jobs:
         with:
           name: tripol-web-engine
           path: web-dist/
-      - name: Publish compiler assets to gh-pages
+      - name: Publish compiler assets to the documentation branch
+        if: github.ref_name == 'main' || github.ref_name == 'v0.29-dipo-http-2'
         run: |
-          git fetch origin gh-pages
-          git worktree add --detach /tmp/tripol-pages origin/gh-pages
+          git fetch origin "refs/heads/$DOCS_BRANCH:refs/remotes/origin/$DOCS_BRANCH"
+          git worktree add --detach /tmp/tripol-pages "origin/$DOCS_BRANCH"
           mkdir -p /tmp/tripol-pages/playground/engine-r3
           cp web-dist/* /tmp/tripol-pages/playground/engine-r3/
           cd /tmp/tripol-pages
@@ -92,9 +95,10 @@ jobs:
           git add playground/engine-r3
           if ! git diff --cached --quiet; then
             git commit -m "Publish verified TRIPOL Web Engine R3"
-            git push origin HEAD:gh-pages
+            git push origin "HEAD:refs/heads/$DOCS_BRANCH"
           fi
       - name: Request Pages rebuild
+        if: github.ref_name == 'main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api --method POST "repos/${{ github.repository }}/pages/builds" || echo "Pages rebuild must be requested manually if branch deployment is not triggered"

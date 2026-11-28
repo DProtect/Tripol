@@ -1,3 +1,9 @@
+# v0.29.0 DIPO HTTP 2 (development)
+
+- Added typed HTTP and HTTPS requests, sessions, pooled transport, streamed files, cancellable tasks and structured errors.
+- Added module-level overloads, nested records, void callbacks and JSON object literals in typed contexts.
+- Added deferred HTTP continuation events for Discord interactions.
+
 # v0.28.0 DISCORD REVOLUTION (development)
 
 - Slash commands support scoped cooldowns, custom replies, resets and optional persistent reservations.

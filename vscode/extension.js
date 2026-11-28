@@ -16,8 +16,8 @@ function activate(context) {
    if(binding[1]!==name)continue;
    const [, , receiver, factory]=binding;
    const owner=catalog[receiver]?receiver:recordType(source.slice(0,binding.index),receiver);
-   const result=catalog[owner]?.[factory]?.match(/->\s*(\w+)$/)?.[1];
-   if(result)return owner.split(".")[0]+"."+result;
+   const result=catalog[owner]?.[factory]?.match(/->\s*([\w.]+)$/)?.[1];
+   if(result)return result.includes(".")?result:owner.split(".")[0]+"."+result;
   }
  };
  const members=(doc,pos,name)=>catalog[name]||catalog[recordType(doc.getText(new vscode.Range(0,0,pos.line,pos.character)),name)];

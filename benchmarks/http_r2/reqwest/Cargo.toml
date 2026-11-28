@@ -1,0 +1,8 @@
+[package]
+name = "tripol-http-fixture"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+
+[dependencies]
+reqwest = {version="=0.12.28", default-features=false, features=["blocking", "rustls-tls"]}

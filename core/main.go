@@ -13,8 +13,8 @@ import (
 	"strings"
 )
 
-const version = "0.28.0"
-const releaseName = "DISCORD REVOLUTION"
+const version = "0.29.0"
+const releaseName = "DIPO HTTP 2"
 
 type token struct {
 	s, k      string
@@ -129,7 +129,7 @@ func (p *parser) typ() string {
 }
 func (p *parser) typeName() string {
 	switch p.t().s {
-	case "int", "bool", "string", "float", "ints", "list", "string_list", "bool_list", "float_list":
+	case "void", "int", "bool", "string", "float", "ints", "list", "string_list", "bool_list", "float_list":
 		return p.take().s
 	}
 	if p.t().k == "id" {
@@ -1110,6 +1110,7 @@ func (c *compiler) block(ss []stmt, nested bool) {
 				continue
 			}
 			t := c.expression(s.e)
+			if t == "void" { c.err("a void callback has no assignable result") }
 			v, ok := c.lookup(s.name)
 			if s.op == "decl" && ok {
 				c.err("duplicate or shadowed variable " + s.name)
@@ -1169,6 +1170,7 @@ func (c *compiler) block(ss []stmt, nested bool) {
 			if c.ret == "" {
 				c.err("return outside function")
 			}
+			if c.ret == "void" { c.err("a void function cannot return a value") }
 			// Direct self tail calls reuse the frame even in debug, unless
 			// tracing asks for real call frames.
 			if !a.trace && s.e.op == "call" && s.e.s == c.current.name && len(s.e.args) == len(c.current.args) {
@@ -1258,7 +1260,7 @@ func (c *compiler) function(f fn, main bool) {
 		c.scopes[0][p.name] = variable{p.typ, 16 + 8*(len(f.args)-1-i), true}
 	}
 	a.label("fn:" + f.name)
-	if !main {
+	if !main && f.ret != "void" {
 		if c.emitNativeSSA(f){return}
 		if r, ok := c.recurrence(f); ok {
 			a.emitRecurrence(f, r)
@@ -1293,6 +1295,10 @@ func (c *compiler) function(f fn, main bool) {
 	if main {
 		a.imm(0)
 		a.jmp("exit")
+	} else if f.ret == "void" {
+		a.imm(0)
+		if a.trace { a.emit(0x4d, 0x8b, 0x3f) }
+		a.emit(0xc9, 0xc3)
 	} else if !returns(f.body) {
 		c.err(fmt.Sprintf("function %s may finish without return", f.name))
 	}
@@ -1749,7 +1755,7 @@ func cli() {
 		}
 		if len(args)<2 { die("usage: tripol discord studio FILE.tri [--metrics FILE.jsonl]") }
 	}
-	if len(args) > 0 && args[0] == "discord-run" {
+	if len(args) > 0 && (args[0] == "net-run" || args[0] == "discord-run") {
 		runDiscordExecutable(args[1:])
 		return
 	}
@@ -1773,7 +1779,7 @@ func cli() {
 		return
 	}
 	if len(args) == 0 || args[0] == "--help" {
-		fmt.Println("TRIPOL " + version + " — " + releaseName + "\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord|discord-embeds|discord-components|discord-slash|discord-welcome|discord-moderation]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol discord-run FILE (Linux or Windows)\ntripol discord studio FILE.tri [--metrics FILE.jsonl] (Linux)\ntripol pgo-train FILE.tri -o PROFILE.json\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache|--pgo PROFILE.json]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
+		fmt.Println("TRIPOL " + version + " — " + releaseName + "\ntripol new NAME [--template basic|calculator|files|records|libraries|ecosystem|game|discord|discord-embeds|discord-components|discord-slash|discord-welcome|discord-moderation]\ntripol learn [es|en]\ntripol learn es|en list|LESSON\ntripol test [FILE.tri|DIRECTORY]\ntripol shell\ntripol doctor\ntripol explain CODE\ntripol ir [FILE.tri]\ntripol fmt [FILE.tri|--stdin]\ntripol lsp\ntripol genesis STAGE FILE -o OUTPUT\ntripol fix [FILE.tri]\ntripol libs\ntripol net-demo [PORT]\ntripol docs NAME\ntripol add NAME FILE.tri --version X.Y.Z\ntripol remove NAME\ntripol packages\ntripol verify\ntripol arena [--runs N] [--profile nano|balanced|turbo|debug] [--case all|division|registers|fibonacci|arrays|copy|search|copy-reuse] [--timeout SECONDS] [--tripol-only] [--json FILE]\ntripol compile-report [FILE.tri] [--profile nano|balanced|turbo|debug] [--target windows|linux] [--json]\ntripol bench-build [FILE.tri] [--runs N] [--profile nano|balanced|turbo|debug]\ntripol run [FILE.tri] [--profile nano|balanced|turbo|debug]\ntripol net-run FILE (Linux or Windows)\ntripol discord studio FILE.tri [--metrics FILE.jsonl] (Linux)\ntripol pgo-train FILE.tri -o PROFILE.json\ntripol build [FILE.tri] [-o OUTPUT] [--target windows|linux] [--profile nano|balanced|turbo|debug] [--cache|--pgo PROFILE.json]\ntripol check [FILE.tri]\ntripol bench [FILE.tri] [--runs 1..100] [--internal] [--profile nano|balanced|turbo|debug]\ntripol update [--check|--download-only|--install|--rollback|--history]\ntripol --version\nGlobal: --diagnostics=json | --lang=es | --trace")
 		return
 	}
 	if args[0] == "--version" {
