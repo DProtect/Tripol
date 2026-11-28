@@ -119,6 +119,10 @@ Linux Discord Studio can report event types, interaction types and names of comm
 
 Discord Studio en Linux registra los tipos de evento, los tipos de interacción y los nombres de comandos admitidos en la cola del Gateway. Usa los contadores para inspeccionar el tráfico.
 
+Use `tripol new Moderator --template discord-moderation` for a bot restricted to `DISCORD_GUILD_ID` and `DISCORD_OPERATOR_ID`. It registers /kick, /ban and /unban with Discord permissions.
+
+Usa `tripol new Moderador --template discord-moderation` para un bot restringido a `DISCORD_GUILD_ID` y `DISCORD_OPERATOR_ID`. Registra /kick, /ban y /unban con los permisos de Discord.
+
 ## Cómo usar este archivo / How to use this file
 
 Adjunta este archivo a tu IA y pídele: «Usa la referencia adjunta de TRIPOL v0.27.1 para escribir código válido, explicar cómo ejecutarlo y probarlo».
