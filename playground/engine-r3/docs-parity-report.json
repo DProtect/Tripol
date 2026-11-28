@@ -1,10 +1,10 @@
 {
-  "commit": "fda4c38e91941865d568052eed948893773e2df3",
+  "commit": "185f061c2dcf081b2cea9e43ffad5e380f1106d1",
   "pagesRef": "origin/gh-pages",
   "pages": 93,
-  "total": 154,
+  "total": 155,
   "counts": {
-    "executed": 135,
+    "executed": 136,
     "native-only": 19
   },
   "rows": [
@@ -110,6 +110,13 @@
     {
       "file": "docs/discord.html",
       "index": 16,
+      "source": "import tripol.discord\n\nbot=discord.bot()\nbot.slash(\"work\",\"Earn points\",func(ctx) {ctx.reply(\"Done\",true)})\nshow bot.cooldown(\"work\",60,\"user\",\"Try again in\")",
+      "status": "executed",
+      "output": "true\n"
+    },
+    {
+      "file": "docs/discord.html",
+      "index": 17,
       "source": "import tripol.discord\n\ndiscord.login_env()\ndiscord.activity(\"Programming in TRIPOL\")\ndiscord.reply(\"!hello\", \"Hello, friend!\")\ndiscord.reply(\"!ping\", \"Pong!\")\ndiscord.run()\n",
       "status": "native-only"
     },
@@ -1038,7 +1045,7 @@
       "index": 1,
       "source": "import tripol.time\n\nstart = time.now_ns()\nshow time.elapsed_ns(start)",
       "status": "executed",
-      "output": "6993\n"
+      "output": "7688\n"
     },
     {
       "file": "docs/libraries/ui.html",

@@ -1,11 +1,11 @@
 {
   "modules": 64,
-  "functions": 442,
-  "methods": 159,
+  "functions": 449,
+  "methods": 194,
   "summary": {
-    "native compiled": 601,
-    "web executed": 489,
-    "web native-only": 112
+    "native compiled": 643,
+    "web executed": 500,
+    "web native-only": 143
   },
   "rows": [
     {
@@ -1427,7 +1427,7 @@
       "name": "time.now_ms",
       "native": "compiled",
       "web": "executed",
-      "output": "2922\n"
+      "output": "2303\n"
     },
     {
       "name": "time.elapsed",
@@ -1450,7 +1450,7 @@
       "name": "time.now_ns",
       "native": "compiled",
       "web": "executed",
-      "output": "2951049636\n"
+      "output": "2325578960\n"
     },
     {
       "name": "time.elapsed_ns",
@@ -2270,6 +2270,45 @@
       "output": "true\n"
     },
     {
+      "name": "discord.cooldown_bucket",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.invite_path",
+      "native": "compiled",
+      "web": "executed",
+      "output": "/api/v10/invites/sample\n"
+    },
+    {
+      "name": "discord.invite_info",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.revoke_invite",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.archive_minutes",
+      "native": "compiled",
+      "web": "executed",
+      "output": "1440\n"
+    },
+    {
+      "name": "discord.forum_tags",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[{\"name\":\"Ideas\",\"moderated\":false,\"emoji_name\":\"✅\"}]\n"
+    },
+    {
+      "name": "discord.webhook_ref",
+      "native": "compiled",
+      "web": "executed",
+      "output": "901\n"
+    },
+    {
       "name": "encoding.hex_digit",
       "native": "compiled",
       "web": "executed",
@@ -2504,7 +2543,7 @@
       "name": "profiler.elapsed",
       "native": "compiled",
       "web": "executed",
-      "output": "4950\n36307\n"
+      "output": "4950\n36755\n"
     },
     {
       "name": "simd.equal",
@@ -3501,6 +3540,188 @@
     },
     {
       "name": "discord.Interaction.reply_files",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Bot.cooldown",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.persist_cooldowns",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Bot.permission",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.bot_can",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.Interaction.can_moderate",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.cooldown_remaining",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Interaction.reset_cooldown",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.CooldownBucket.remaining",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.CooldownBucket.reset",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Guild.move_channel",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Guild.private_channel",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Guild.invites",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.lock",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.unlock",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.overwrite",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.clear_overwrite",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.create_webhook",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.invite",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.invites",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.thread",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.thread_from",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.archive",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.lock_thread",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.thread_member",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.post",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Channel.apply_tags",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.ForumTags.tag",
+      "native": "compiled",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "name": "discord.ForumTags.payload",
+      "native": "compiled",
+      "web": "executed",
+      "output": "[{\"name\":\"Ideas\",\"moderated\":false,\"emoji_name\":\"✅\"}]\n"
+    },
+    {
+      "name": "discord.Channel.set_forum_tags",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Webhook.id",
+      "native": "compiled",
+      "web": "executed",
+      "output": "901\n"
+    },
+    {
+      "name": "discord.Webhook.read",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Webhook.edit",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Webhook.delete",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Webhook.send",
+      "native": "compiled",
+      "web": "native-only"
+    },
+    {
+      "name": "discord.Webhook.send_files",
       "native": "compiled",
       "web": "native-only"
     }
@@ -5405,6 +5626,33 @@
     {
       "index": 316,
       "name": "Discord stability bot (native)",
+      "web": "native-only"
+    },
+    {
+      "index": 317,
+      "name": "Discord slash cooldown setup",
+      "web": "executed",
+      "output": "true\n"
+    },
+    {
+      "index": 318,
+      "name": "Discord forum labels",
+      "web": "executed",
+      "output": "[{\"name\":\"Ideas\",\"moderated\":false,\"emoji_name\":\"✅\"}]\n"
+    },
+    {
+      "index": 319,
+      "name": "Discord daily points",
+      "web": "native-only"
+    },
+    {
+      "index": 320,
+      "name": "Discord channel moderation",
+      "web": "native-only"
+    },
+    {
+      "index": 321,
+      "name": "Discord resource management",
       "web": "native-only"
     }
   ]
