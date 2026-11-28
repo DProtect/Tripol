@@ -1057,7 +1057,210 @@ show ctx.bot_can(&quot;MANAGE_MESSAGES&quot;)</code></pre>
 bot=discord.bot()
 bot.slash(&quot;check&quot;,&quot;Verify role order&quot;,func(ctx) {ctx.reply(text_status(ctx.can_moderate(&quot;456&quot;,&quot;BAN_MEMBERS&quot;)),true)})
 func text_status(allowed:bool)-&gt;string {if allowed {return &quot;Allowed&quot;};return &quot;Denied&quot;}
-bot.start()</code></pre></section>
+bot.start()</code></pre>
+</section>
+<section class="function-card" id="Interaction.cooldown_remaining"><h3>discord.Interaction.cooldown_remaining <a aria-label="Permalink" href="#Interaction.cooldown_remaining">#</a></h3><p><span data-es="Devuelve los segundos restantes de la reserva actual.">Return the remaining time for the reserved bucket in seconds.</span></p>
+<pre class="signature"><code>func discord.Interaction.cooldown_remaining() -&gt; int</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+bot=discord.bot()
+bot.slash(&quot;work&quot;,&quot;Earn points&quot;,func(ctx) {ctx.reply(text(ctx.cooldown_remaining()))})
+bot.cooldown(&quot;work&quot;,60)
+bot.start()</code></pre>
+</section>
+<section class="function-card" id="Interaction.reset_cooldown"><h3>discord.Interaction.reset_cooldown <a aria-label="Permalink" href="#Interaction.reset_cooldown">#</a></h3><p><span data-es="Restablece el cooldown de la interacción actual.">Reset the current interaction’s cooldown bucket.</span></p>
+<pre class="signature"><code>func discord.Interaction.reset_cooldown() -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+bot=discord.bot()
+bot.slash(&quot;work&quot;,&quot;Earn points&quot;,func(ctx) {show ctx.reset_cooldown();ctx.reply(&quot;Done&quot;)})
+bot.cooldown(&quot;work&quot;,60)
+bot.start()</code></pre>
+</section>
+<section class="function-card" id="CooldownBucket.remaining"><h3>discord.CooldownBucket.remaining <a aria-label="Permalink" href="#CooldownBucket.remaining">#</a></h3><p><span data-es="Consulta los segundos restantes para un cooldown específico.">Query the seconds remaining for a specific cooldown bucket.</span></p>
+<pre class="signature"><code>func discord.CooldownBucket.remaining() -&gt; int</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+bucket=discord.cooldown_bucket(&quot;work&quot;,&quot;user&quot;,&quot;456&quot;)
+show bucket.remaining()</code></pre>
+</section>
+<section class="function-card" id="CooldownBucket.reset"><h3>discord.CooldownBucket.reset <a aria-label="Permalink" href="#CooldownBucket.reset">#</a></h3><p><span data-es="Restablece un cooldown para un ámbito y sujeto específicos.">Reset a cooldown for a specific scope and subject.</span></p>
+<pre class="signature"><code>func discord.CooldownBucket.reset() -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+bucket=discord.cooldown_bucket(&quot;work&quot;,&quot;user&quot;,&quot;456&quot;)
+show bucket.reset()</code></pre>
+</section>
+<section class="function-card" id="Guild.move_channel"><h3>discord.Guild.move_channel <a aria-label="Permalink" href="#Guild.move_channel">#</a></h3><p><span data-es="Mueve un canal a una posición numérica del servidor.">Move a channel to a numeric position in the server.</span></p>
+<pre class="signature"><code>func discord.Guild.move_channel(channel_id:string,position:int) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+server=discord.guild(&quot;321&quot;)
+show server.move_channel(&quot;123&quot;,2)</code></pre>
+</section>
+<section class="function-card" id="Guild.private_channel"><h3>discord.Guild.private_channel <a aria-label="Permalink" href="#Guild.private_channel">#</a></h3><p><span data-es="Crea un canal de texto para un miembro y deniega la vista a @everyone.">Create a text channel for a member with @everyone denied view access.</span></p>
+<pre class="signature"><code>func discord.Guild.private_channel(name:string,user_id:string,parent_id=&quot;&quot;) -&gt; string</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+server=discord.guild(&quot;321&quot;)
+show server.private_channel(&quot;support&quot;,&quot;456&quot;)</code></pre>
+</section>
+<section class="function-card" id="Guild.invites"><h3>discord.Guild.invites <a aria-label="Permalink" href="#Guild.invites">#</a></h3><p><span data-es="Enumera las invitaciones de un servidor.">List the invitations in a server.</span></p>
+<pre class="signature"><code>func discord.Guild.invites() -&gt; string</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+server=discord.guild(&quot;321&quot;)
+show server.invites()</code></pre>
+</section>
+<section class="function-card" id="Channel.lock"><h3>discord.Channel.lock <a aria-label="Permalink" href="#Channel.lock">#</a></h3><p><span data-es="Guarda el permiso de @everyone y deniega Enviar mensajes.">Save the @everyone overwrite and deny Send Messages.</span></p>
+<pre class="signature"><code>func discord.Channel.lock() -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.lock()
+show room.unlock()</code></pre>
+</section>
+<section class="function-card" id="Channel.unlock"><h3>discord.Channel.unlock <a aria-label="Permalink" href="#Channel.unlock">#</a></h3><p><span data-es="Restaura el permiso guardado en el mismo lanzador.">Restore the saved overwrite in the same launcher.</span></p>
+<pre class="signature"><code>func discord.Channel.unlock() -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.lock()
+show room.unlock()</code></pre>
+</section>
+<section class="function-card" id="Channel.overwrite"><h3>discord.Channel.overwrite <a aria-label="Permalink" href="#Channel.overwrite">#</a></h3><p><span data-es="Establece las máscaras de permisos permitidos y denegados para un usuario o rol.">Set allow and deny permission masks for a user or role.</span></p>
+<pre class="signature"><code>func discord.Channel.overwrite(id:string,allow=&quot;0&quot;,deny=&quot;0&quot;,kind=&quot;role&quot;) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.overwrite(&quot;456&quot;,&quot;1024&quot;,&quot;0&quot;,&quot;user&quot;)</code></pre>
+</section>
+<section class="function-card" id="Channel.clear_overwrite"><h3>discord.Channel.clear_overwrite <a aria-label="Permalink" href="#Channel.clear_overwrite">#</a></h3><p><span data-es="Elimina el permiso explícito de un usuario o rol.">Remove a user or role permission overwrite.</span></p>
+<pre class="signature"><code>func discord.Channel.clear_overwrite(id:string) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.clear_overwrite(&quot;456&quot;)</code></pre>
+</section>
+<section class="function-card" id="Channel.create_webhook"><h3>discord.Channel.create_webhook <a aria-label="Permalink" href="#Channel.create_webhook">#</a></h3><p><span data-es="Crea un acceso webhook entrante tipado en un canal.">Create a typed incoming webhook in a channel.</span></p>
+<pre class="signature"><code>func discord.Channel.create_webhook(name:string) -&gt; Webhook</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+hook=room.create_webhook(&quot;Updates&quot;)
+show hook.id()</code></pre>
+</section>
+<section class="function-card" id="Channel.invite"><h3>discord.Channel.invite <a aria-label="Permalink" href="#Channel.invite">#</a></h3><p><span data-es="Crea una invitación con caducidad y límite de usos opcional.">Create an invitation with an expiration and optional use limit.</span></p>
+<pre class="signature"><code>func discord.Channel.invite(max_age=86400,max_uses=0,temporary=false,unique=true) -&gt; string</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.invite(600,1)</code></pre>
+</section>
+<section class="function-card" id="Channel.invites"><h3>discord.Channel.invites <a aria-label="Permalink" href="#Channel.invites">#</a></h3><p><span data-es="Enumera las invitaciones de un canal.">List the invitations in a channel.</span></p>
+<pre class="signature"><code>func discord.Channel.invites() -&gt; string</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.invites()</code></pre>
+</section>
+<section class="function-card" id="Channel.thread"><h3>discord.Channel.thread <a aria-label="Permalink" href="#Channel.thread">#</a></h3><p><span data-es="Inicia un hilo público o privado con un periodo de archivado por nombre.">Start a public or private thread with a named archive period.</span></p>
+<pre class="signature"><code>func discord.Channel.thread(name:string,archive=&quot;day&quot;,private=false) -&gt; string</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.thread(&quot;Planning&quot;,&quot;hour&quot;,true)</code></pre>
+</section>
+<section class="function-card" id="Channel.thread_from"><h3>discord.Channel.thread_from <a aria-label="Permalink" href="#Channel.thread_from">#</a></h3><p><span data-es="Inicia un hilo a partir de un mensaje existente.">Start a thread under an existing message.</span></p>
+<pre class="signature"><code>func discord.Channel.thread_from(message_id:string,name:string,archive=&quot;day&quot;) -&gt; string</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.thread_from(&quot;456&quot;,&quot;Planning&quot;)</code></pre>
+</section>
+<section class="function-card" id="Channel.archive"><h3>discord.Channel.archive <a aria-label="Permalink" href="#Channel.archive">#</a></h3><p><span data-es="Archiva o desarchiva un hilo o publicación de foro.">Archive or unarchive a thread or forum publication.</span></p>
+<pre class="signature"><code>func discord.Channel.archive(enabled=true) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.archive()</code></pre>
+</section>
+<section class="function-card" id="Channel.lock_thread"><h3>discord.Channel.lock_thread <a aria-label="Permalink" href="#Channel.lock_thread">#</a></h3><p><span data-es="Cambia el estado de bloqueo de un hilo o publicación de foro.">Change the locked state of a thread or forum publication.</span></p>
+<pre class="signature"><code>func discord.Channel.lock_thread(enabled=true) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.lock_thread()</code></pre>
+</section>
+<section class="function-card" id="Channel.thread_member"><h3>discord.Channel.thread_member <a aria-label="Permalink" href="#Channel.thread_member">#</a></h3><p><span data-es="Añade o retira un miembro o entra y sal como bot.">Add or remove a member, or join or leave as the bot.</span></p>
+<pre class="signature"><code>func discord.Channel.thread_member(user_id=&quot;@me&quot;,enabled=true) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.thread_member()</code></pre>
+</section>
+<section class="function-card" id="Channel.post"><h3>discord.Channel.post <a aria-label="Permalink" href="#Channel.post">#</a></h3><p><span data-es="Crea una publicación de foro con IDs de etiquetas y archivado opcionales.">Create a forum post with optional tag IDs and archive period.</span></p>
+<pre class="signature"><code>func discord.Channel.post(title:string,content:string,archive=&quot;day&quot;) -&gt; string
+func discord.Channel.post(title:string,content:string,tags:string_list,archive=&quot;day&quot;) -&gt; string</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.post(&quot;Planning&quot;,&quot;First post&quot;,list([&quot;456&quot;]))</code></pre>
+</section>
+<section class="function-card" id="Channel.apply_tags"><h3>discord.Channel.apply_tags <a aria-label="Permalink" href="#Channel.apply_tags">#</a></h3><p><span data-es="Aplica hasta cinco IDs de etiquetas a una publicación de foro.">Set up to five tag IDs on a forum publication.</span></p>
+<pre class="signature"><code>func discord.Channel.apply_tags(tags:string_list) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+show room.apply_tags(list([&quot;456&quot;]))</code></pre>
+</section>
+<section class="function-card" id="ForumTags.tag"><h3>discord.ForumTags.tag <a aria-label="Permalink" href="#ForumTags.tag">#</a></h3><p><span data-es="Añade una etiqueta nueva o existente y un emoji opcional al conjunto.">Add a new or existing label and optional emoji to the set.</span></p>
+<pre class="signature"><code>func discord.ForumTags.tag(name:string,id=&quot;&quot;,moderated=false,emoji=&quot;&quot;) -&gt; bool</code></pre><pre><code class="language-tripol">import tripol.discord
+
+tags=discord.forum_tags()
+show tags.tag(&quot;Ideas&quot;,&quot;&quot;,false,&quot;✅&quot;)</code></pre>
+</section>
+<section class="function-card" id="ForumTags.payload"><h3>discord.ForumTags.payload <a aria-label="Permalink" href="#ForumTags.payload">#</a></h3><p><span data-es="Serializa el conjunto configurado de etiquetas del foro.">Serialize the configured set of forum tags.</span></p>
+<pre class="signature"><code>func discord.ForumTags.payload() -&gt; string</code></pre><pre><code class="language-tripol">import tripol.discord
+
+tags=discord.forum_tags()
+tags.tag(&quot;Ideas&quot;,&quot;&quot;,false,&quot;✅&quot;)
+show tags.payload()</code></pre>
+</section>
+<section class="function-card" id="Channel.set_forum_tags"><h3>discord.Channel.set_forum_tags <a aria-label="Permalink" href="#Channel.set_forum_tags">#</a></h3><p><span data-es="Sustituye el conjunto completo de etiquetas disponibles en el foro.">Replace the full set of available forum labels.</span></p>
+<pre class="signature"><code>func discord.Channel.set_forum_tags(tags:ForumTags) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+room=discord.channel_ref(&quot;123&quot;)
+tags=discord.forum_tags()
+tags.tag(&quot;Ideas&quot;,&quot;&quot;,false,&quot;✅&quot;)
+show room.set_forum_tags(tags)</code></pre>
+</section>
+<section class="function-card" id="Webhook.id"><h3>discord.Webhook.id <a aria-label="Permalink" href="#Webhook.id">#</a></h3><p><span data-es="Devuelve el ID del webhook sin exponer sus credenciales.">Return the webhook identifier without exposing its credentials.</span></p>
+<pre class="signature"><code>func discord.Webhook.id() -&gt; string</code></pre><pre><code class="language-tripol">import tripol.discord
+
+hook=discord.webhook_ref(&quot;901&quot;)
+show hook.id()</code></pre>
+</section>
+<section class="function-card" id="Webhook.read"><h3>discord.Webhook.read <a aria-label="Permalink" href="#Webhook.read">#</a></h3><p><span data-es="Consulta los metadatos del webhook y omite sus credenciales.">Fetch webhook metadata while omitting the credential.</span></p>
+<pre class="signature"><code>func discord.Webhook.read() -&gt; WebhookInfo</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+hook=discord.webhook_ref(&quot;901&quot;)
+info=hook.read()
+show info.name</code></pre>
+</section>
+<section class="function-card" id="Webhook.edit"><h3>discord.Webhook.edit <a aria-label="Permalink" href="#Webhook.edit">#</a></h3><p><span data-es="Actualiza el nombre de un webhook y, opcionalmente, su canal.">Update the name of a webhook and optionally its channel.</span></p>
+<pre class="signature"><code>func discord.Webhook.edit(name:string,channel_id=&quot;&quot;) -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+hook=discord.webhook_ref(&quot;901&quot;)
+show hook.edit(&quot;News&quot;)</code></pre>
+</section>
+<section class="function-card" id="Webhook.delete"><h3>discord.Webhook.delete <a aria-label="Permalink" href="#Webhook.delete">#</a></h3><p><span data-es="Elimina un webhook entrante con autorización del bot.">Delete an incoming webhook with bot authorization.</span></p>
+<pre class="signature"><code>func discord.Webhook.delete() -&gt; bool</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+hook=discord.webhook_ref(&quot;901&quot;)
+show hook.delete()</code></pre>
+</section>
+<section class="function-card" id="Webhook.send"><h3>discord.Webhook.send <a aria-label="Permalink" href="#Webhook.send">#</a></h3><p><span data-es="Envía texto, un embed, un lote de embeds o un diseño compatible de Components V2.">Send text, an embed, an embed batch or a supported Components V2 layout.</span></p>
+<pre class="signature"><code>func discord.Webhook.send(content:string) -&gt; string
+func discord.Webhook.send(embed:Embed) -&gt; string
+func discord.Webhook.send(batch:Embeds) -&gt; string
+func discord.Webhook.send(layout:Components) -&gt; string</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+hook=discord.channel_ref(&quot;123&quot;).create_webhook(&quot;Updates&quot;)
+show hook.send(&quot;Release notes&quot;)</code></pre>
+</section>
+<section class="function-card" id="Webhook.send_files"><h3>discord.Webhook.send_files <a aria-label="Permalink" href="#Webhook.send_files">#</a></h3><p><span data-es="Envía un mensaje con archivos locales mediante el lanzador nativo.">Send a message with local attachments through the native launcher.</span></p>
+<pre class="signature"><code>func discord.Webhook.send_files(layout:Components,paths:string_list) -&gt; string
+func discord.Webhook.send_files(embed:Embed,paths:string_list) -&gt; string
+func discord.Webhook.send_files(content:string,paths:string_list) -&gt; string</code></pre><pre data-native-only><code class="language-tripol">import tripol.discord
+
+hook=discord.channel_ref(&quot;123&quot;).create_webhook(&quot;Updates&quot;)
+show hook.send_files(&quot;Report&quot;,list([&quot;report.txt&quot;]))</code></pre>
+</section>
+<section class="function-card" id="Bot.restrict"><h3>discord.Bot.restrict <a aria-label="Permalink" href="#Bot.restrict">#</a></h3><p><span data-es="Permite que ciertos usuarios, roles, canales o servidores invoquen un comando slash registrado.">Allow specific users, roles, channels or guilds to invoke a registered slash command.</span></p><pre class="signature"><code>func discord.Bot.restrict(name:string,scope:string,id:string,guild_id=&quot;&quot;) -&gt; bool</code></pre><pre><code class="language-tripol">import tripol.discord
+
+bot=discord.bot()
+bot.slash(&quot;work&quot;,&quot;Earn points&quot;,func(ctx) {ctx.reply(&quot;Done&quot;)})
+show bot.restrict(&quot;work&quot;,&quot;channel&quot;,&quot;456&quot;)</code></pre></section>
 <section class="function-card" id="Interaction.has_role"><h3>discord.Interaction.has_role <a aria-label="Permalink" href="#Interaction.has_role">#</a></h3><p><span data-es="Comprueba si el miembro que invoca tiene un rol determinado.">Check whether the invoking member has a specified role.</span></p><pre class="signature"><code>func discord.Interaction.has_role(id:string) -&gt; bool</code></pre><pre><code class="language-tripol">import tripol.discord
 
 ctx=discord.interaction_context(&quot;{\&quot;type\&quot;:2,\&quot;guild_id\&quot;:\&quot;321\&quot;,\&quot;member\&quot;:{\&quot;roles\&quot;:[\&quot;456\&quot;]}}&quot;,&quot;swork/&quot;)
