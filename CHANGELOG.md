@@ -2,7 +2,9 @@
 
 - Added typed HTTP and HTTPS requests, sessions, pooled transport, streamed files, cancellable tasks and structured errors.
 - Added module-level overloads, nested records, void callbacks and JSON object literals in typed contexts.
-- Added deferred HTTP continuation events for Discord interactions.
+- Added cancellable HTTP continuation events, deferred panel updates and queued reply edits for Discord interactions.
+- Added origin-bound disk cookies and per-client transport metrics.
+- Added lists of structures, nested lists and compile-time typed JSON decoding.
 - Added reproducible sequential, concurrent and streamed-download HTTP comparisons against Requests, HTTPX, Fetch, Reqwest and Go net/http.
 
 # v0.28.0 DISCORD REVOLUTION (development)

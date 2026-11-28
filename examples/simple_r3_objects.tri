@@ -1,0 +1,17 @@
+import tripol.json
+
+struct Row {
+    title:string
+    values:list[int]
+}
+
+struct Report {
+    ready:bool
+    rows:list[Row]
+}
+
+report=json.decode(Report, "{\"ready\":true,\"rows\":[{\"title\":\"Temperatura\",\"values\":[20,21]}]}")
+rows=report.rows
+for row in rows {
+    show row.title,row.values.get(0),row.values.get(1)
+}

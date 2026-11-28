@@ -38,6 +38,13 @@ func TestHTTPNativeClientAndSimpleR3(t *testing.T) {
 			w.WriteHeader(201)
 		case "/download":
 			fmt.Fprint(w, "text copied")
+		case "/cookie":
+			if cookie, err := r.Cookie("test"); err == nil {
+				fmt.Fprint(w, cookie.Value)
+			} else {
+				http.SetCookie(w, &http.Cookie{Name: "test", Value: "saved", Path: "/", MaxAge: 60})
+				fmt.Fprint(w, "new")
+			}
 		default:
 			w.WriteHeader(404)
 		}
@@ -45,6 +52,7 @@ func TestHTTPNativeClientAndSimpleR3(t *testing.T) {
 	defer server.Close()
 	path := filepath.Join(t.TempDir(), "native.exe")
 	dest := filepath.Join(t.TempDir(), "file.txt")
+	cookieFile := filepath.Join(t.TempDir(), "cookies.json")
 	source := fmt.Sprintf(`import tripol.http
 import tripol.https
 import tripol.json
@@ -67,7 +75,20 @@ r2 = http.download(url+"/download", %q, func(progress) {
 })
 show r2.ok()
 show client.close()
-`, server.URL, dest)
+first=http.client()
+first.base_url(url)
+first.cookie_file(%q)
+from_first=first.get("/cookie")
+metrics=first.metrics()
+show from_first.text,metrics.completed,metrics.connections
+show first.close()
+second=http.client()
+second.base_url(url)
+second.cookie_file(%q)
+from_second=second.get("/cookie")
+show from_second.text
+show second.close()
+`, server.URL, dest, cookieFile, cookieFile)
 	if err := os.WriteFile(path, compileProfile(source, runtime.GOOS, "turbo"), 0700); err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +103,7 @@ show client.close()
 	if err := runNativeCommand(cmd, nil); err != nil {
 		t.Fatalf("native program %v: %s", err, out.String())
 	}
-	want := "200 normal {\"ok\":true}\n201\ninvalid_url\nSucceeded: 11\ntrue\ntrue\n"
+	want := "200 normal {\"ok\":true}\n201\ninvalid_url\nSucceeded: 11\ntrue\ntrue\nnew 1 1\ntrue\nsaved\ntrue\n"
 	if output := strings.ReplaceAll(out.String(), "\r\n", "\n"); output != want {
 		t.Fatalf("got %q want %q", output, want)
 	}

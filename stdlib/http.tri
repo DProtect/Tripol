@@ -84,6 +84,7 @@ struct Request {
  __body:string=""
  __secure:bool=false
  __destination:string=""
+ __open_error:string=""
 }
 
 func request(method:string,url:string)->Request {
@@ -192,16 +193,27 @@ func Request.__array(self:Request,entries:string_list)->string {
 }
 
 func Request.__payload(self:Request)->string {
- body="{\"method\":"+json.quote(self.method)+",\"url\":"+json.quote(self.url)+",\"base\":"+json.quote(self.__base)
- body+=",\"headers\":"+self.__array(self.__headers)+",\"query\":"+self.__array(self.__query)
- body+=",\"form\":"+self.__array(self.__form)+",\"files\":"+self.__array(self.__files)
- body+=",\"bearer\":"+json.quote(self.__bearer)+",\"basic\":"+json.boolean(self.__basic)
- body+=",\"user\":"+json.quote(self.__user)+",\"password\":"+json.quote(self.__password)
- body+=",\"keyName\":"+json.quote(self.__key_name)+",\"keyValue\":"+json.quote(self.__key_value)
- body+=",\"timeout\":"+text(self.__timeout)+",\"redirect\":"+json.quote(self.__redirect)+",\"retries\":"+text(self.__retries)
- body+=",\"secure\":"+json.boolean(self.__secure)+",\"destination\":"+json.quote(self.__destination)
- body+=",\"encoding\":"+json.quote(self.__encoding)+",\"body\":"+json.quote(self.__body)
- return body+",\"session\":"+text(self.__session)+"}"
+ body="{\"method\":"+json.quote(self.method)+",\"url\":"+json.quote(self.url)
+ if self.__base!="" {body+=",\"base\":"+json.quote(self.__base)}
+ if self.__session!=0 {body+=",\"session\":"+text(self.__session)}
+ headers=self.__headers
+ if headers.size()>0 {body+=",\"headers\":"+self.__array(self.__headers)}
+ query=self.__query
+ if query.size()>0 {body+=",\"query\":"+self.__array(self.__query)}
+ form=self.__form
+ if form.size()>0 {body+=",\"form\":"+self.__array(self.__form)}
+ files=self.__files
+ if files.size()>0 {body+=",\"files\":"+self.__array(self.__files)}
+ if self.__bearer!="" {body+=",\"bearer\":"+json.quote(self.__bearer)}
+ if self.__basic {body+=",\"basic\":true,\"user\":"+json.quote(self.__user)+",\"password\":"+json.quote(self.__password)}
+ if self.__key_name!="" {body+=",\"keyName\":"+json.quote(self.__key_name)+",\"keyValue\":"+json.quote(self.__key_value)}
+ if self.__timeout!=0 {body+=",\"timeout\":"+text(self.__timeout)}
+ if self.__redirect!="none" {body+=",\"redirect\":"+json.quote(self.__redirect)}
+ if self.__retries!=0 {body+=",\"retries\":"+text(self.__retries)}
+ if self.__secure {body+=",\"secure\":true"}
+ if self.__destination!="" {body+=",\"destination\":"+json.quote(self.__destination)}
+ if self.__encoding!="" or self.__body!="" {body+=",\"encoding\":"+json.quote(self.__encoding)+",\"body\":"+json.quote(self.__body)}
+ return body+"}"
 }
 
 func Response.__read(self:Response,raw:string)->bool {
@@ -250,6 +262,7 @@ func parse_response(raw:string)->Response {
 
 func Request.send(self:Request)->Response {
  if not gw_host_available() {return parse_response("")}
+ if self.__open_error!="" {return Response(0,"",self.__open_error,"",0,0,0,"")}
  return parse_response(http_exchange("send",self.__payload()))
 }
 
@@ -268,6 +281,7 @@ struct Progress {
 
 func Request.start(self:Request)->Task {
  if not gw_host_available() {return Task(0,"launcher_required")}
+ if self.__open_error!="" {return Task(0,self.__open_error)}
  raw=http_exchange("start",self.__payload())
  id=errors.int_or(raw,0)
  if id>0 {return Task(id)}
@@ -310,6 +324,7 @@ struct Client {
  __id:int=0
  __timeout:int=0
  __cookies:bool=true
+ __cookie_path:string=""
  __bearer:string=""
  __user:string=""
  __password:string=""
@@ -337,6 +352,14 @@ func Client.base_url(self:Client,url:string)->bool {
 func Client.cookies(self:Client,enabled=true)->bool {
  if self.__id!=0 {return false}
  self.__cookies=enabled
+ if not enabled {self.__cookie_path=""}
+ return true
+}
+
+func Client.cookie_file(self:Client,path:string)->bool {
+ if self.__id!=0 {return false}
+ self.__cookie_path=path
+ self.__cookies=true
  return true
 }
 
@@ -375,11 +398,59 @@ func Client.retries(self:Client,count=1)->bool {
  return true
 }
 
+func Client.__open(self:Client)->string {
+ if self.__id>0 {return ""}
+ if self.__id<0 {return "client_closed"}
+ if not gw_host_available() {return "launcher_required"}
+ payload=json.boolean(self.__cookies)
+ if self.__cookie_path!="" {
+  payload="{\"cookies\":true,\"path\":"+json.quote(self.__cookie_path)+",\"base\":"+json.quote(self.__base)+"}"
+ }
+ raw=http_exchange("open",payload)
+ self.__id=errors.int_or(raw,0)
+ if self.__id>0 {return ""}
+ problem=json.unquote(json.get_raw_large(raw,"error"))
+ if problem=="" {return "client_open"}
+ return problem
+}
+
+struct ClientMetrics {
+ in_flight:int=0
+ completed:int=0
+ failed:int=0
+ canceled:int=0
+ attempts:int=0
+ connections:int=0
+ reused:int=0
+ downloaded:int=0
+ uploaded:int=0
+ elapsed_us:int=0
+ error:string=""
+}
+
+func Client.metrics(self:Client)->ClientMetrics {
+ result=ClientMetrics()
+ result.error=self.__open()
+ if result.error!="" {return result}
+ raw=http_exchange("metrics",text(self.__id))
+ result.in_flight=errors.int_or(json.get_raw_large(raw,"in_flight"),0)
+ result.completed=errors.int_or(json.get_raw_large(raw,"completed"),0)
+ result.failed=errors.int_or(json.get_raw_large(raw,"failed"),0)
+ result.canceled=errors.int_or(json.get_raw_large(raw,"canceled"),0)
+ result.attempts=errors.int_or(json.get_raw_large(raw,"attempts"),0)
+ result.connections=errors.int_or(json.get_raw_large(raw,"connections"),0)
+ result.reused=errors.int_or(json.get_raw_large(raw,"reused"),0)
+ result.downloaded=errors.int_or(json.get_raw_large(raw,"downloaded"),0)
+ result.uploaded=errors.int_or(json.get_raw_large(raw,"uploaded"),0)
+ result.elapsed_us=errors.int_or(json.get_raw_large(raw,"elapsed_us"),0)
+ result.error=json.unquote(json.get_raw_large(raw,"error"))
+ return result
+}
+
 func Client.request(self:Client,method:string,url:string)->Request {
- if self.__id==0 and gw_host_available() {self.__id=errors.int_or(http_exchange("open",json.boolean(self.__cookies)),0)}
  result=request(method,url)
+ result.__open_error=self.__open()
  result.__session=self.__id
- if self.__id==0 {result.__session=-1}
  result.__base=self.__base
  result.__timeout=self.__timeout
  result.__bearer=self.__bearer

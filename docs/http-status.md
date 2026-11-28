@@ -2,14 +2,14 @@
 
 | Área | Estado | Evidencia |
 | --- | --- | --- |
-| HTTP R2 | Siete verbos, cliente, petición, respuesta, autenticación, formularios, cookies de sesión y conexión reutilizada | [Transporte local](../internal/httptransport/http_test.go), [programa nativo](../core/http_transport_test.go) |
-| HTTPS R2 | Certificados válidos e inválidos, HTTP/2 sobre TLS, Gzip, Brotli, Zstd, redirects y reintentos | [Servidor TLS y compresión local](../internal/httptransport/http_test.go) |
-| Archivos | Multipart y descargas binarias, archivos interrumpidos y eventos de progreso de descarga y subida | [Pruebas de archivos y descarga nativa](../internal/httptransport/http_test.go) |
-| Concurrencia | Tareas HTTP en el lanzador, cancelación y recolección de resultados | [Dos peticiones simultáneas y cancelación independiente](../internal/httptransport/http_test.go) |
-| Discord | Respuestas diferidas desde callbacks tipados sin bloquear el trabajo HTTP en el ciclo de eventos | [Continuación TLS local](../internal/discordtransport/http_continuation_test.go), [bot de ejemplo](../examples/discord_http_apps.tri) |
-| SIMPLE R3 | Sobrecargas de funciones, registros anidados, callbacks sin resultado y literales con contexto JSON | [Casos nativo y WebAssembly](../core/simple_r3_test.go) |
-| Rendimiento | GET secuencial y concurrente, descarga a disco, RAM, CPU, transferencia y reutilización de conexiones en seis clientes | [Medición, scripts y resultados](../benchmarks/http_r2/) |
-| Estabilidad local | 16,000 GET concurrentes y 96 descargas de 4 MiB con verificación SHA-256. Pendientes mediciones prolongadas y rendimiento en Windows | [Evidencia local](../benchmarks/http_r2/results-stress.json) |
-| Pendiente | Colecciones generales de objetos, deserialización a tipos del usuario, captura dinámica y concurrencia de callbacks del lenguaje | [Referencia](language.md) |
-| Pendiente | Cookies en disco y telemetría de recursos por cliente | [Guía](http.md) |
-| Pendiente | Validación conectada en Discord y proveedores de ejemplo con credenciales autorizadas | [Integración HTTP y Discord](http.md) |
+| HTTP y HTTPS | Verificados siete verbos, autenticación, encabezados, JSON, formularios, certificados inválidos, HTTP/2 y compresión Gzip, Brotli y Zstd | [Transporte local](../internal/httptransport/http_test.go), [ejemplo nativo](../core/http_transport_test.go) |
+| Persistencia de cookies | Verificada en la reapertura, con aislamiento, bloqueo, dominio, ruta, caducidad y eliminación de valores de sesión | [Pruebas de cookies y métricas](../internal/httptransport/cookies_test.go), [guía bilingüe](http.md#persistencia-y-telemetría--persistence-and-telemetry) |
+| Telemetría de cliente | Peticiones, errores, cancelaciones, intentos, reutilización, bytes y latencia acumulada. CPU y RAM se miden para el proceso completo en el benchmark | [Métricas](../internal/httptransport/metrics.go) |
+| Archivos y tareas HTTP | Verificadas carga multipart y descarga incremental, cancelación, destino intacto en fallos y recolección de trabajos | [Pruebas de transferencia y cancelación](../internal/httptransport/http_test.go) |
+| Continuaciones de Discord | Verificadas localmente la cancelación y la edición única, encolada, de un panel. Validación conectada pendiente | [Prueba TLS local](../internal/discordtransport/http_continuation_test.go), [reconexión y Resume simulados](../internal/discordtransport/transport_test.go), [guía](discord.md#http-diferido-con-paneles--deferred-http-panels) |
+| Diez comandos de ejemplo | Código verificado por el compilador. Pendientes las respuestas de proveedores y las interacciones reales en Discord | [Aplicaciones](../examples/discord_http_apps.tri), [servicios](../examples/discord_http_services.tri), [pruebas manuales](http.md#pruebas-manuales-de-discord--manual-discord-checks) |
+| Colecciones de SIMPLE R3 | Verificadas listas de objetos, listas anidadas, alias tipados, comprobación de tipos y protección de la arena temporal | [Pruebas nativas y WebAssembly](../core/object_lists_test.go), [guía del lenguaje](language.md#simple-r3-collection-and-json-types--colecciones-y-tipos-json) |
+| Decodificación tipada | Verificados structs, listas, cadenas, booleanos, enteros, claves duplicadas y entradas malformadas. Pendientes decimales y valores nulos | [Pruebas](../core/object_lists_test.go), [ejemplo](../examples/simple_r3_objects.tri) |
+| Callbacks generales | Continúan disponibles inferencia y referencias estáticas. Pendientes capturas dinámicas con cierre y ejecución concurrente general de callbacks TRIPOL | [Guía del lenguaje](language.md) |
+| Rendimiento y estabilidad | Mediciones locales de seis clientes y la base 08063b3. Prueba sostenida de 150.000 peticiones. Medición Windows y Linux en GitHub Actions | [Metodología y datos](../benchmarks/http_r2/) |
+| Validación conectada | Pendiente con acceso autorizado a Discord y proveedores. Las pruebas con servidores locales cubren fallos controlados | [Pasos de validación](http.md#pruebas-manuales-de-discord--manual-discord-checks) |

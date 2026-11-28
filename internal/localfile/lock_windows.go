@@ -1,4 +1,4 @@
-package discordtransport
+package localfile
 
 import (
 	"os"
@@ -8,7 +8,7 @@ import (
 
 var lockFileEx = syscall.NewLazyDLL("kernel32.dll").NewProc("LockFileEx")
 
-func lockCooldownFile(path string) (*os.File, error) {
+func Lock(path string) (*os.File, error) {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err

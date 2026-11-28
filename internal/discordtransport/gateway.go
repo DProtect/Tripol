@@ -90,6 +90,16 @@ func (g *Gateway) Poll(ctx context.Context, timeout time.Duration) ([]byte, bool
 	return event.raw, done, err
 }
 
+func (g *Gateway) queued() (gatewayEvent, bool) {
+	select {
+	case event := <-g.events:
+		g.metrics.queueDepth.Store(int64(len(g.events)))
+		return event, true
+	default:
+		return gatewayEvent{}, false
+	}
+}
+
 func (g *Gateway) poll(ctx context.Context, timeout time.Duration) (gatewayEvent, bool, error) {
 	defer func() { g.metrics.queueDepth.Store(int64(len(g.events))) }()
 	timer := time.NewTimer(timeout)

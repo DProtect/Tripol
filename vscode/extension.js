@@ -3,6 +3,7 @@ const vscode = require("vscode");
 const cp = require("child_process");
 const path = require("path");
 const catalog = require("./catalog.json");
+catalog.json.decode = "json.decode(YourStruct, jsonText) -> YourStruct";
 const gatewayChoices = require("./discord-gateway.json");
 function activate(context) {
  const output = vscode.window.createOutputChannel("TRIPOL");

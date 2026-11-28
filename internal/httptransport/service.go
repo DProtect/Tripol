@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"sync"
+	"sync/atomic"
 )
 
 const maxSessions = 32
@@ -25,6 +26,7 @@ type Service struct {
 	tasks     map[int]*pending
 	next      int
 	workers   sync.WaitGroup
+	active    atomic.Int64
 }
 
 func (s *Service) Close() {
@@ -33,7 +35,7 @@ func (s *Service) Close() {
 	}
 	s.workers.Wait()
 	for _, client := range s.sessions {
-		client.client.CloseIdleConnections()
+		client.close()
 	}
 	if s.anonymous != nil {
 		s.anonymous.client.CloseIdleConnections()
@@ -44,18 +46,42 @@ func (s *Service) Handle(ctx context.Context, action string, data []byte) []byte
 	switch action {
 	case "open":
 		if len(s.sessions) >= maxSessions {
-			return []byte("0")
+			return encode(result{Error: "client_limit"})
 		}
-		var cookies bool
-		if json.Unmarshal(data, &cookies) != nil {
-			return []byte("0")
+		var settings struct {
+			Cookies bool
+			Path    string
+			Base    string
+		}
+		if json.Unmarshal(data, &settings) != nil && json.Unmarshal(data, &settings.Cookies) != nil {
+			return encode(result{Error: "invalid_client"})
+		}
+		client := newSession(settings.Cookies && settings.Path == "")
+		client.stats = &clientMetrics{}
+		if settings.Path != "" {
+			store, err := openDiskJar(settings.Path, settings.Base)
+			if err != nil {
+				return encode(result{Error: err.Error()})
+			}
+			client.store, client.client.Jar = store, store
 		}
 		if s.sessions == nil {
 			s.sessions = make(map[int]*session)
 		}
 		s.next++
-		s.sessions[s.next] = newSession(cookies)
+		s.sessions[s.next] = client
 		return strconv.AppendInt(nil, int64(s.next), 10)
+	case "metrics":
+		id, err := strconv.Atoi(string(data))
+		client := s.sessions[id]
+		if err != nil || client == nil {
+			return encode(result{Error: "client_closed"})
+		}
+		return client.stats.snapshot()
+	case "abandon":
+		id, _ := strconv.Atoi(string(data))
+		s.Discard(id)
+		return []byte("1")
 	case "close":
 		id, err := strconv.Atoi(string(data))
 		client := s.sessions[id]
@@ -68,8 +94,10 @@ func (s *Service) Handle(ctx context.Context, action string, data []byte) []byte
 			}
 		}
 		delete(s.sessions, id)
-		client.client.CloseIdleConnections()
-		return []byte("1")
+		if client.close() {
+			return []byte("1")
+		}
+		return []byte("0")
 	case "send", "start":
 		var request spec
 		if json.Unmarshal(data, &request) != nil {
@@ -88,7 +116,7 @@ func (s *Service) Handle(ctx context.Context, action string, data []byte) []byte
 		if action == "send" {
 			return encode(client.send(ctx, request, &transfer{}))
 		}
-		if len(s.tasks) >= maxTasks {
+		if len(s.tasks) >= maxTasks || s.active.Load() >= maxTasks {
 			return encode(result{Error: "task_limit"})
 		}
 		if s.tasks == nil {
@@ -100,10 +128,13 @@ func (s *Service) Handle(ctx context.Context, action string, data []byte) []byte
 		s.next++
 		s.tasks[s.next] = task
 		s.workers.Add(1)
+		s.active.Add(1)
 		go func() {
 			defer s.workers.Done()
 			defer cancel()
-			task.done <- client.send(child, request, &task.progress)
+			response := client.send(child, request, &task.progress)
+			s.active.Add(-1)
+			task.done <- response
 		}()
 		return strconv.AppendInt(nil, int64(s.next), 10)
 	case "poll", "await", "progress", "cancel":
@@ -148,6 +179,23 @@ func (s *Service) Handle(ctx context.Context, action string, data []byte) []byte
 
 // Pending reports whether a job is owned by this launcher and still collectible.
 func (s *Service) Pending(id int) bool { return s.tasks[id] != nil }
+
+// Cancel requests cancellation while leaving the result available for collection.
+func (s *Service) Cancel(id int) bool {
+	task := s.tasks[id]
+	if task == nil {
+		return false
+	}
+	task.cancel()
+	return true
+}
+
+// Discard cancels a job and relinquishes its slot after its owner closes.
+func (s *Service) Discard(id int) {
+	if s.Cancel(id) {
+		delete(s.tasks, id)
+	}
+}
 
 // TakeReady collects a completed job without blocking the bridge.
 func (s *Service) TakeReady(id int) []byte {

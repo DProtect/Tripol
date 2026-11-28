@@ -10,7 +10,7 @@ Usa TRIPOL v0.29.0 de desarrollo. Prioriza SIMPLE R3, la guía de Discord de est
 
 Use development TRIPOL v0.29.0. Prefer the SIMPLE R3 section, the current Discord guide and exact catalog signatures over historical descriptions. Do not invent modules, syntax, methods, overloads or capabilities. Prefer readable code; add annotations when inference is insufficient. Distinguish native, browser and offline execution from connected validation. Test with the actual compiler before claiming that a program works.
 
-**Current catalog / Catálogo actual:** 64 libraries, 465 functions and 243 methods (708 entries).
+**Current catalog / Catálogo actual:** 64 libraries, 466 functions and 251 methods (717 entries).
 
 **Version precedence / Prioridad de versión:** SIMPLE R2 extends older SIMPLE R1, Infinity and Quantum rules: contextual monomorphic inference, implicit final-expression returns, named and inline callbacks, scalar literal constant captures and static overloads are supported in their documented scope. Dynamic captures, general polymorphism and arbitrary named arguments are not established. Earlier limitations in historical sections describe earlier versions.
 
@@ -18,12 +18,24 @@ Use development TRIPOL v0.29.0. Prefer the SIMPLE R3 section, the current Discor
 
 Sources: release source `e635e7d26e6b347cb216e1476bffc193179c6236` (language, library and Discord guides); public README `9390b7f360bbff820878fb1836a6216595a452a1`; web catalog and categories `de3b2448bad3bcefd718ea8e1a786937bc6b0b18`. Remaining guide excerpts and 14 lessons retain their earlier snapshot from `ad41ca60704675fb68a100dfa79e2a2e8210c5be` and `279b0e2b4c4e5ab7c002a3ef79f21c082031a8d4`. Older version-specific instructions are historical, not current release requirements.
 
+## SIMPLE R3 collections and typed decoding / Colecciones y decodificación
+
+
+Use `list([Point(1), Point(2)])` to infer a homogeneous list of records. Declare an empty typed list with `let points:list[Point]=list()`. A nested type such as `list[list[Point]]` keeps the element type at each level. Use `rows.get(0).get(1)` to read a nested element and bind the inner list to a local variable before mutating it. Lists share a checked handle when assigned to another variable. They are allocated in the program arena. A `scratch` scope cannot extract an aggregate element from an outer list since it could let temporary storage escape. Search and sorting on object lists require an explicit field selection.
+
+Usa `list([Point(1), Point(2)])` para inferir una lista homogénea de estructuras. Declara una lista vacía con `let points:list[Point]=list()`. Un tipo como `list[list[Point]]` conserva el tipo de cada nivel. Lee un elemento con `rows.get(0).get(1)` y asigna la lista interna a una variable local si vas a modificarla. Los alias comparten un identificador verificado. Las listas se asignan en la arena del programa. Un bloque `scratch` restringe el acceso a elementos compuestos de listas exteriores para que la memoria temporal no salga del bloque.
+
+`json.decode(Report, raw)` uses the struct declaration at compile time. It handles user structs, nested structs, typed lists, text, booleans and signed 64-bit integers. It raises an assertion on malformed JSON, missing required fields, duplicate keys or incompatible values. Unknown fields are accepted. Fractional fields, null, omitted fields with defaults and function references need another schema. Use the same source on native targets and in the Playground. [Runnable example](../examples/simple_r3_objects.tri)
+
+`json.decode(Report, raw)` usa la estructura en tiempo de compilación. Admite estructuras anidadas, listas tipadas, cadenas, booleanos y enteros de 64 bits. Genera un error de aserción ante JSON inválido, campos requeridos ausentes, claves duplicadas o valores incompatibles. Admite campos adicionales. Los decimales, valores nulos, campos omitidos con valor por defecto y referencias a funciones requieren otro esquema. [Ejemplo ejecutable](../examples/simple_r3_objects.tri)
+
+
 ## Index / Índice
 
 - Project overview and downloads
 - Native language and toolchain guides (including SIMPLE R2)
 - Discord Revolution guide
-- Complete standard library catalog (645 entries)
+- Complete standard library catalog (717 entries)
 - Additional official guides and 14 lessons
 
 ---
@@ -8957,7 +8969,7 @@ ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
 
 ---
 
-## tripol.discord — 98 functions + 200 methods
+## tripol.discord — 99 functions + 206 methods
 
 Import: `import tripol.discord`
 
@@ -16158,6 +16170,9 @@ Edit the deferred reply once with the result. / Edita una vez la respuesta difer
 
 ```tripol
 func discord.GatewayEvent.complete_http(message:string) -> bool
+func discord.GatewayEvent.complete_http(embed:Embed) -> bool
+func discord.GatewayEvent.complete_http(batch:Embeds) -> bool
+func discord.GatewayEvent.complete_http(layout:Components) -> bool
 ```
 
 ```tripol
@@ -16182,6 +16197,150 @@ bot.start_with_events(events)
 ```
 
 Requires an authorized private Discord server and the native launcher. / Requiere un servidor privado autorizado y el lanzador nativo.
+
+### discord.cancel_http
+
+Cancel an upstream request owned by a deferred Discord reply. / Cancela la petición de una respuesta diferida de Discord.
+
+```text
+func discord.cancel_http(receipt:int) -> bool
+```
+
+```tripol
+import tripol.discord
+
+show discord.cancel_http(0)
+```
+
+Use the native launcher for a real receipt. Calling with 0 returns false.
+
+Usa el lanzador nativo para un recibo real. Con 0 devuelve false.
+
+### discord.GatewayEvent.http_receipt
+
+Read the receipt for an HTTP result or delivery status. / Lee el recibo del resultado HTTP o de su entrega.
+
+```text
+func discord.GatewayEvent.http_receipt() -> int
+```
+
+```tripol
+import tripol.discord
+
+ev=discord.GatewayEvent("TRIPOL_HTTP:status",0,"","","","{\"receipt\":7}")
+show ev.http_receipt()
+```
+
+Run offline.
+
+Funciona sin conexión.
+
+### discord.GatewayEvent.http_delivered
+
+Check whether a queued Discord edit succeeded. / Comprueba si se completó una edición de Discord.
+
+```text
+func discord.GatewayEvent.http_delivered() -> bool
+```
+
+```tripol
+import tripol.discord
+
+ev=discord.GatewayEvent("TRIPOL_HTTP_DELIVERY:status",0,"","","","{\"receipt\":7,\"ok\":true}")
+show ev.http_delivered()
+```
+
+Run offline.
+
+Funciona sin conexión.
+
+### discord.GatewayEvent.queue_http
+
+Queue a single edit with text, an embed or Components V2. / Encola una sola edición con texto, un embed o Components V2.
+
+```text
+func discord.GatewayEvent.queue_http(message:string) -> bool
+func discord.GatewayEvent.queue_http(embed:Embed) -> bool
+func discord.GatewayEvent.queue_http(layout:Components) -> bool
+```
+
+```tripol
+import tripol.discord
+
+func result(event:discord.GatewayEvent)->bool {
+ panel=discord.components()
+ panel.text("# Status")
+ return event.queue_http(panel)
+}
+```
+
+Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.
+
+Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.
+
+### discord.GatewayEvents.on_http_delivery
+
+Register a status callback for a queued edit. / Registra un callback para el estado de una edición encolada.
+
+```text
+func discord.GatewayEvents.on_http_delivery(name:string,handler:func(GatewayEvent)->bool) -> bool
+```
+
+```tripol
+import tripol.discord
+
+func delivered(event) {event.http_delivered()}
+events=discord.events()
+show events.on_http_delivery("status",delivered)
+```
+
+Run offline.
+
+Funciona sin conexión.
+
+### discord.Interaction.defer_http_task
+
+Start a cancelable request after deferring a reply. / Inicia una petición cancelable tras diferir la respuesta.
+
+```text
+func discord.Interaction.defer_http_task(request:http.Request,event:string,ephemeral=true) -> int
+```
+
+```tripol
+import tripol.discord
+
+import tripol.http
+func load(ctx:discord.Interaction)->int {
+ r=http.request("GET","https://example.com/")
+ return ctx.defer_http_task(r,"status")
+}
+```
+
+Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.
+
+Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.
+
+### discord.Interaction.defer_http_update
+
+Start a cancelable request to update the original component message. / Inicia una petición cancelable para editar el mensaje original del componente.
+
+```text
+func discord.Interaction.defer_http_update(request:http.Request,event:string) -> int
+```
+
+```tripol
+import tripol.discord
+
+import tripol.http
+func load(ctx:discord.Interaction)->int {
+ r=http.request("GET","https://example.com/")
+ return ctx.defer_http_update(r,"status")
+}
+```
+
+Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.
+
+Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.
 
 ## tripol.encoding — 4 functions
 
@@ -16815,7 +16974,7 @@ game.close()
 
 ---
 
-## tripol.http — 16 functions + 40 methods
+## tripol.http — 16 functions + 42 methods
 
 ### http.get_raw
 
@@ -18006,6 +18165,48 @@ show c.close()
 ```
 
 Run with the Windows or Linux launcher. Examples using 127.0.0.1 use the local fixture described in the guide. / Ejecuta con el lanzador en Windows o Linux. Los ejemplos con 127.0.0.1 usan el servidor local descrito en la guía.
+
+### http.Client.cookie_file
+
+Save expiring cookies in an isolated file for the base origin. / Guarda cookies con caducidad en un archivo aislado para el origen base.
+
+```text
+func http.Client.cookie_file(path:string) -> bool
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+c.base_url("https://example.com")
+show c.cookie_file("private-cookies.json")
+```
+
+Configure before opening the client. Use a private directory and select a separate file for each client.
+
+Configura antes de abrir el cliente. Usa un directorio privado y un archivo por cliente.
+
+### http.Client.metrics
+
+Read request, error, connection, transfer and elapsed time counters for this client. / Consulta contadores de peticiones, errores, conexiones, transferencia y latencia para este cliente.
+
+```text
+func http.Client.metrics() -> ClientMetrics
+```
+
+```tripol
+import tripol.http
+
+c=http.client()
+r=c.get("http://127.0.0.1:8765/health")
+stats=c.metrics()
+show stats.completed,stats.connections
+c.close()
+```
+
+Requires the Windows or Linux launcher. Follow the authorized Discord validation guide or use the local HTTP fixture.
+
+Requiere el lanzador de Windows o Linux. Usa la guía de validación autorizada de Discord o el servidor HTTP local.
 
 ## tripol.https — 3 functions
 

@@ -456,3 +456,13 @@ Crea un hilo con `channel.thread(name)` o `channel.thread_from(message_id, name)
 Use `ctx.defer_http(request, "profile")` with an HTTP request and register `events.on_http("profile", handler)` before starting the bot. The result arrives in `event.http_response()`. Use `event.complete_http(text)` to edit the original deferred reply once. [Guide and sample](http.md#https-errores-y-discord--https-errors-and-discord)
 
 Llama a `ctx.defer_http(request, "profile")` y registra `events.on_http("profile", handler)` antes de iniciar el bot. Lee el resultado con `event.http_response()` y edita la respuesta diferida una vez con `event.complete_http(text)`. [Guía y ejemplo](http.md#https-errores-y-discord--https-errors-and-discord)
+
+## HTTP diferido con paneles / Deferred HTTP panels
+
+`ctx.defer_http_task(request,"weather")` devuelve un recibo. `discord.cancel_http(receipt)` solicita la cancelación y deja que el callback reciba `response.error == "canceled"`. En un botón o formulario con mensaje asociado, `ctx.defer_http_update(request,"weather")` reconoce la interacción y permite editar ese mismo mensaje.
+
+`ctx.defer_http_task(request,"weather")` returns a receipt. Call `discord.cancel_http(receipt)` to cancel the upstream request and collect a canceled result. Use `ctx.defer_http_update` from a component or modal interaction that has an original message to refresh.
+
+Registra `events.on_http("weather", handler)` para tratar el resultado. `event.queue_http(panel)` pone la edición en cola y permite seguir recibiendo eventos mientras Discord responde. Admite una cadena, un embed o Components V2. `events.on_http_delivery("weather", delivered)` recibe el estado de la entrega y el mismo recibo. Usa `event.http_delivered()` para comprobarlo. `event.complete_http` permite esperar el resultado de la edición de forma síncrona.
+
+Use `events.on_http` for the upstream result and `event.queue_http` to enqueue the original reply edit. The optional `events.on_http_delivery` handler receives its delivery status and the same receipt. `event.complete_http` waits for the edit. The launcher expires continuations and cancels their outstanding work when a bot explicitly closes its Gateway. [Executable examples and authorized validation](http.md)

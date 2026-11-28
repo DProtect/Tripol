@@ -65,19 +65,14 @@ func (l *stdLoader) qualify(name string, fs []fn) {
 	}
 	var qualifyType func(string) string
 	qualifyType = func(typ string) string {
-		if element := callbackListElement(typ); element != "" {
+		if element := typedListElement(typ); element != "" {
 			return listType(qualifyType(element))
 		}
 		if args, ret, ok := callbackParts(typ); ok {
 			for i, arg := range args {
-				if qualified, found := records[arg]; found {
-					args[i] = qualified
-				}
+				args[i] = qualifyType(arg)
 			}
-			if qualified, found := records[ret]; found {
-				ret = qualified
-			}
-			return callbackType(args, ret)
+			return callbackType(args, qualifyType(ret))
 		}
 		if qualified, ok := records[typ]; ok {
 			return qualified
@@ -161,7 +156,7 @@ func listLibraries() {
 		_, fs, _ := parseUnit(standardSource(name))
 		functions := make(map[string]struct{})
 		for _, f := range fs {
-			if !f.record && !strings.HasPrefix(f.name, methodPrefix) {
+			if !f.record && !strings.HasPrefix(f.name, methodPrefix) && !strings.HasPrefix(f.name, "__") {
 				functions[f.name] = struct{}{}
 			}
 		}

@@ -44,7 +44,7 @@ func (m *webModule) stringID(s string)int64{
  if id,ok:=m.stringIDs[s];ok{return id}
  id:=int64(len(m.strings));m.strings=append(m.strings,s);m.stringIDs[s]=id;return id
 }
-func webKind(t string)int64{switch t{case "int":return 0;case "bool":return 1;case "string":return 2;case "float":return 3};if t=="ints"||strings.HasPrefix(t,"array:"){return 4};if callbackListElement(t)!=""{return 5};if isList(t){return 5+webKind(listElement(t))};webReject("unsupported value type %s",t);return 0}
+func webKind(t string)int64{switch t{case "int":return 0;case "bool":return 1;case "string":return 2;case "float":return 3};if t=="ints"||strings.HasPrefix(t,"array:"){return 4};if typedListElement(t)!=""{return 5};if isList(t){return 5+webKind(listElement(t))};webReject("unsupported value type %s",t);return 0}
 func webElem(t string)string{if t=="ints"||strings.HasPrefix(t,"array:"){return "int"};return listElement(t)}
 func (e *webEmitter) temp()uint32{v:=e.locals;e.locals++;return v}
 func (e *webEmitter) save(x *expr)(uint32,string){t:=e.expression(x);v:=e.temp();e.code.inst(0x21,v);return v,t}
@@ -52,7 +52,7 @@ func (e *webEmitter) val(op int64,a,b,c uint32){e.code.i32(op);e.code.inst(0x20,
 func (e *webEmitter) constant(n int64)uint32{v:=e.temp();e.code.i64(n);e.code.inst(0x21,v);return v}
 func (e *webEmitter) arrayLiteral(x *expr,list bool,requested string)string{
  zero:=e.constant(0);size:=e.constant(int64(len(x.args)));kind:=int64(4);typ:="array:"+fmt.Sprint(len(x.args))
- if list{typ=requested;if len(x.args)>0&&requested=="list"{v,t:=e.save(x.args[0]);typ=listType(t);if typ==""{webReject("list requires scalar elements or matching callbacks")};kind=webKind(typ);k:=e.constant(kind);e.val(10,size,k,zero);handle:=e.temp();e.code.inst(0x21,handle);e.val(14,handle,v,zero);e.code.raw(0x1a);for _,item:=range x.args[1:]{v,t:=e.save(item);if t!=listElement(typ){webReject("mixed list")};e.val(14,handle,v,zero);e.code.raw(0x1a)};e.code.inst(0x20,handle);return typ};kind=webKind(typ)}
+ if list{typ=requested;if len(x.args)>0&&requested=="list"{v,t:=e.save(x.args[0]);typ=listType(t);if typ==""{webReject("list requires matching concrete element types")};kind=webKind(typ);k:=e.constant(kind);e.val(10,size,k,zero);handle:=e.temp();e.code.inst(0x21,handle);e.val(14,handle,v,zero);e.code.raw(0x1a);for _,item:=range x.args[1:]{v,t:=e.save(item);if t!=listElement(typ){webReject("mixed list")};e.val(14,handle,v,zero);e.code.raw(0x1a)};e.code.inst(0x20,handle);return typ};kind=webKind(typ)}
  k:=e.constant(kind);e.val(10,size,k,zero);handle:=e.temp();e.code.inst(0x21,handle)
  for i,item:=range x.args{v,t:=e.save(item);elem:=webElem(typ);if t!=elem{webReject("invalid collection element")};if list{e.val(14,handle,v,zero)}else{idx:=e.constant(int64(i));e.val(12,handle,idx,v)};e.code.raw(0x1a)}
  e.code.inst(0x20,handle);return typ
@@ -214,10 +214,7 @@ func (e *webEmitter) expression(x *expr)string{
    e.val(10,n,e.constant(webKind(name)),e.constant(0));return name
   }
   if receiver,method,ok:=strings.Cut(name,".");ok{if v,exists:=e.get(receiver);exists&&isList(v.typ){
-   elem:=listElement(v.typ);zero:=e.constant(0);a,b:=zero,zero
-   if len(x.args)>0{a,_=e.save(x.args[0])};if len(x.args)>1{b,_=e.save(x.args[1])}
-   op,known:=map[string]int64{"get":11,"set":12,"size":13,"add":14,"remove_at":15,"clear":16,"capacity":17,"contains":18,"remove":19,"sort":23}[method];if !known{webReject("unsupported list method")}
-   e.val(op,v.index,a,b);if method=="get"||method=="set"||method=="remove_at"{return elem};if method=="contains"||method=="remove"{return "bool"};return "int"
+   return e.listMethod(v.index,v.typ,method,x.args)
   }}
   if f,ok:=e.module.records[x.s];ok{
    if len(x.args)>len(f.args){webReject("wrong record argument count")};values:=make([]*expr,len(f.args));for i:=range values{if i<len(x.args){values[i]=x.args[i]}else if i<len(f.defaults){values[i]=f.defaults[i]};if values[i]==nil{webReject("missing field value")}}
@@ -243,7 +240,23 @@ func (e *webEmitter) expression(x *expr)string{
  }
  webReject("unsupported expression %s (%s) at line %d",x.op,x.s,e.line);return ""
 }
+func (e *webEmitter) listMethod(receiver uint32, typ, member string, args []*expr) string {
+	ops := map[string]int64{"get":11,"set":12,"size":13,"add":14,"remove_at":15,"clear":16,"capacity":17,"contains":18,"remove":19,"sort":23}
+	op, ok := ops[member]
+	if !ok { webReject("unsupported list method %s", member) }
+	z:=e.constant(0)
+	a,b:=z,z
+	if len(args)>0 { a,_=e.save(args[0]) }
+	if len(args)>1 { b,_=e.save(args[1]) }
+	e.val(op,receiver,a,b)
+	switch member {
+	case "get","set","remove_at":return listElement(typ)
+	case "contains","remove":return "bool"
+	default:return "int"
+	}
+}
 func (e *webEmitter) method(receiver uint32, typ, member string, args []*expr) string {
+	if isList(typ) { return e.listMethod(receiver,typ,member,args) }
 	f, ok := e.module.definitions[methodName(typ, member)]
 	if !ok {
 		webReject("unknown method %s.%s", typ, member)
@@ -371,7 +384,7 @@ func CompileWeb(source string)(out []byte,err error){
  }()
  if len(source)>32768{return nil,fmt.Errorf("Web Engine: 32 KiB source limit")}
  imports,fs,ss:=parseUnit(source);for _,n:=range imports{switch n{case "@std:discord","@std:math","@std:arrays","@std:collections","@std:datetime","@std:bits","@std:bitset","@std:binary","@std:buffer","@std:checksum","@std:colors","@std:compression","@std:console","@std:convert","@std:dictionary","@std:encoding","@std:geometry","@std:json","@std:matrix","@std:path","@std:physics","@std:random","@std:search","@std:sequences","@std:simd","@std:sort","@std:stats","@std:text","@std:validate","@std:vector","@std:stack","@std:queue","@std:animation","@std:camera","@std:particles","@std:canvas","@std:sprite","@std:testing","@std:errors","@std:network","@std:http","@std:image","@std:time","@std:profiler","@std:heap","@std:utf8","@std:csv","@std:stream","@std:regex","@std:cli","@std:crypto","@std:files","@std:io","@std:atomic","@std:memory","@std:system","@std:audio","@std:process","@std:thread","@std:game","@std:events":default:webReject("library %s requires a browser adapter or native target",n)}}
- fs = withStandardImports(imports, fs);resolveSimpleProgram(fs,ss);validateCode(fs,ss,"linux")
+ fs = withStandardImports(imports, fs);fs=resolveSimpleProgram(fs,ss);validateCode(fs,ss,"linux")
  m:=&webModule{definitions:map[string]fn{},funcs:map[string]webFunction{},strings:[]string{},stringIDs:map[string]int64{},records:map[string]fn{},dictionaries:map[string][]param{},callbackSlots:map[uint32]uint32{},indirectTypes:map[int]uint32{}}
  m.signature([]byte{0x7f},nil) // tick(line)
  m.signature([]byte{0x7f,0x7e,0x7e,0x7f},[]byte{0x7e}) // checked arithmetic

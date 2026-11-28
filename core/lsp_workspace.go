@@ -71,7 +71,7 @@ func editorProject(root lspDocument,docs map[string]lspDocument)([]fn,[]stmt,str
  }
  visit(root,true)
  fs=append(libs.functions,fs...)
- if warning==""{resolveSimpleProgram(fs,main)}
+ if warning==""{fs=resolveSimpleProgram(fs,main)}
  return fs,main,warning
 }
 func editorDefinitions(doc lspDocument,docs map[string]lspDocument,word string)[]map[string]any{

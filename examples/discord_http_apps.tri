@@ -1,5 +1,6 @@
 import tripol.discord
 import tripol.https
+import tripol.http
 import tripol.json
 import tripol.env
 import tripol.path
@@ -24,7 +25,11 @@ func profile_result(event) {
     response=event.http_response()
     if not response.ok() {return event.complete_http("GitHub respondió con estado "+text(response.status)+".")}
     name=json.unquote(json.get_raw_large(response.json(),"login"))
-    event.complete_http("Perfil de GitHub: https://github.com/"+name)
+    embed=discord.embed()
+    embed.title("GitHub · "+name)
+    embed.url("https://github.com/"+name)
+    embed.description("Perfil público consultado desde TRIPOL.")
+    event.queue_http(embed)
 }
 
 func weather(ctx) {
@@ -81,13 +86,70 @@ func report_result(event) {
     event.complete_http("Informe enviado al canal privado configurado.")
 }
 
+func pokemon_request(name:string)->http.Request {
+    return https.request("GET","https://pokeapi.co/api/v2/pokemon/"+name)
+}
+
+func pokemon(ctx) {
+    name=ctx.option_text("nombre")
+    if name=="" or len(name)>35 {return ctx.reply("Usa un nombre o ID de Pokémon.",true)}
+    for i in range(len(name)) {
+        b=byte_at(name,i)
+        if not ((b>=48 and b<=57) or (b>=97 and b<=122) or b==45) {return ctx.reply("Usa letras minúsculas, números o guiones.",true)}
+    }
+    ctx.defer_http(pokemon_request(name),"pokemon")
+    ""
+}
+
+func pokemon_refresh(ctx) {
+    ctx.defer_http_update(pokemon_request("pikachu"),"pokemon")
+    ""
+}
+
+func pokemon_result(event) {
+    response=event.http_response()
+    name=json.unquote(json.get_raw_large(response.json(),"name"))
+    id=json.get_raw_large(response.json(),"id")
+    panel=discord.components()
+    if response.ok() and name!="" and id!="" {
+        panel.text("# "+name)
+        panel.text("Pokédex #"+id)
+    } else {
+        panel.text("No se pudo consultar ese Pokémon.")
+    }
+    panel.button("Consultar Pikachu","pokemon-refresh","primary")
+    event.queue_http(panel)
+}
+
+func pokemon_delivery(event) {
+    if not event.http_delivered() {show "Discord no pudo editar el panel de la Pokédex."}
+    true
+}
+
+func server(ctx) {
+    if ctx.guild_id=="" {return ctx.reply("Ejecuta este comando en el servidor de pruebas.",true)}
+    embed=discord.embed()
+    embed.title("Servidor de validación")
+    embed.field("Servidor",ctx.guild_id)
+    embed.field("Canal",ctx.channel_id)
+    ctx.reply(embed,true)
+}
+
 guild=env.get("DISCORD_GUILD_ID")
 assert guild!="","Configura el servidor privado de validación"
 bot=discord.bot()
 opts=discord.slash_options()
 opts.add("usuario","Usuario de GitHub","string",true)
 bot.slash_with_options("perfil","Consulta un perfil de GitHub",profile,opts,guild)
+bot.slash_with_options("github","Consulta un perfil de GitHub",profile,opts,guild)
 bot.slash("tiempo","Consulta la temperatura de Bogotá",weather,guild)
+bot.slash("clima","Consulta la temperatura de Bogotá",weather,guild)
+pokemon_options=discord.slash_options()
+pokemon_options.add("nombre","Nombre en minúsculas o ID","string",true)
+bot.slash_with_options("pokemon","Consulta la Pokédex",pokemon,pokemon_options,guild)
+bot.cooldown("pokemon",3,"user","Espera un momento antes de consultar de nuevo.",guild)
+bot.on_button("pokemon-refresh",pokemon_refresh)
+bot.slash("servidor","Muestra el servidor y canal de validación",server,guild)
 bot.slash("estado","Comprueba un sitio configurado",monitor,guild)
 bot.slash("informe","Descarga y adjunta un archivo configurado",report,guild)
 events=discord.events()
@@ -95,4 +157,6 @@ events.on_http("profile",profile_result)
 events.on_http("weather",weather_result)
 events.on_http("monitor",monitor_result)
 events.on_http("report",report_result)
+events.on_http("pokemon",pokemon_result)
+events.on_http_delivery("pokemon",pokemon_delivery)
 bot.start_with_events(events)

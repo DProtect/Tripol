@@ -39,6 +39,9 @@ func (a *asm) dropStack(args int) {
 // RAX already holds the checked receiver. Use the ordinary stack ABI so
 // a method and its callers agree even across different optimization passes.
 func (c *compiler) emitMethodCall(receiver, member string, explicit []*expr) string {
+	if isList(receiver) {
+		return c.emitListMethod(receiver, member, explicit, false)
+	}
 	f, ok := c.fs[methodName(receiver, member)]
 	if !ok || !c.isRecord(receiver) {
 		c.err("unknown method " + receiver + "." + member)

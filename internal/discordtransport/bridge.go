@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -42,7 +43,9 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 	var gateway *Gateway
 	var httpService httptransport.Service
 	continuations := make(httpContinuations)
+	var servedHTTP bool
 	defer httpService.Close()
+	defer continuations.close(&httpService)
 	var callbackDeadline time.Time
 	var cooldown cooldowns
 	var channelLock channelLocks
@@ -134,6 +137,17 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 				if continuations.complete(ctx, client, args[2]) {
 					reply = []byte("1")
 				}
+			case "queue":
+				reply = []byte("0")
+				if continuations.edit(ctx, client, args[2], true) {
+					reply = []byte("1")
+				}
+			case "cancelcb":
+				id, _ := strconv.Atoi(string(args[2]))
+				reply = []byte("0")
+				if continuations.cancel(&httpService, id) {
+					reply = []byte("1")
+				}
 			default:
 				reply = httpService.Handle(ctx, string(args[0]), args[2])
 			}
@@ -149,10 +163,22 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 			cooldown.prune(time.Now())
 			if gateway == nil {
 				err = errors.New("Discord Gateway is closed")
-			} else if event := continuations.event(&httpService); len(event) != 0 {
-				reply = event
-				callbackDeadline = time.Time{}
 			} else {
+				if servedHTTP {
+					if event, ready := gateway.queued(); ready {
+						reply = event.raw
+						callbackDeadline = event.callbackDeadline
+						servedHTTP = false
+						break
+					}
+				}
+				if continuation := continuations.event(&httpService); len(continuation) != 0 {
+					reply = continuation
+					callbackDeadline = time.Time{}
+					servedHTTP = true
+					break
+				}
+				servedHTTP = false
 				var done bool
 				var event gatewayEvent
 				event, done, err = gateway.poll(ctx, 100*time.Millisecond)
@@ -166,6 +192,8 @@ func Serve(ctx context.Context, client *Client, input io.Reader, output io.Write
 			}
 		case OpClose:
 			callbackDeadline = time.Time{}
+			servedHTTP = false
+			continuations.close(&httpService)
 			if gateway != nil {
 				gateway.Close()
 				gateway = nil

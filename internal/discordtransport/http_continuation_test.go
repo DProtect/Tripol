@@ -83,3 +83,83 @@ func TestHTTPContinuationDoesNotBlockAndCanCompleteOnce(t *testing.T) {
 		t.Fatal("a deferred interaction must be edited only once")
 	}
 }
+
+func TestHTTPContinuationCancelAndQueuedComponentEdit(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	started, editing, finishEdit := make(chan struct{}), make(chan struct{}), make(chan struct{})
+	fixture := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(started)
+		<-r.Context().Done()
+	}))
+	defer fixture.Close()
+	discord := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Flags      int
+			Components []json.RawMessage
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Flags != 32768 || len(body.Components) != 1 ||
+			r.Method != http.MethodPatch || r.Header.Get("Authorization") != "" {
+			t.Error("unexpected component edit", err)
+		}
+		close(editing)
+		select {
+		case <-finishEdit:
+			w.WriteHeader(http.StatusNoContent)
+		case <-ctx.Done():
+		}
+	}))
+	defer discord.Close()
+	client := newClient(discord.Client(), discord.URL)
+	defer client.Close()
+	var service httptransport.Service
+	defer service.Close()
+	pending := make(httpContinuations)
+	defer pending.close(&service)
+	job := service.Handle(ctx, "start", []byte(fmt.Sprintf(`{"method":"GET","url":%q}`, fixture.URL)))
+	id, err := strconv.Atoi(string(job))
+	if err != nil || !pending.attach(&service, []byte(fmt.Sprintf(`{"id":%d,"name":"cancel","path":"/api/v10/webhooks/123/callback-fixture/messages/@original"}`, id))) {
+		t.Fatal(string(job), err)
+	}
+	select {
+	case <-started:
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+	if !pending.cancel(&service, id) {
+		t.Fatal("owned task did not accept cancellation")
+	}
+	waitEvent := func() string {
+		t.Helper()
+		for {
+			if frame := pending.event(&service); frame != nil {
+				return string(frame)
+			}
+			select {
+			case <-ctx.Done():
+				t.Fatal(ctx.Err())
+			case <-time.After(time.Millisecond):
+			}
+		}
+	}
+	if frame := waitEvent(); !strings.Contains(frame, `"error":"canceled"`) || strings.Contains(frame, "callback-fixture") {
+		t.Fatal(frame)
+	}
+	body := []byte(fmt.Sprintf(`{"id":%d,"body":{"flags":32768,"components":[{"type":10,"content":"Canceled"}]}}`, id))
+	if !pending.edit(ctx, client, body, true) || pending.edit(ctx, client, body, true) {
+		t.Fatal("queue must reserve the edit only once")
+	}
+	select {
+	case <-editing:
+	case <-ctx.Done():
+		t.Fatal(ctx.Err())
+	}
+	if pending.event(&service) != nil {
+		t.Fatal("delivery was reported before the HTTP exchange finished")
+	}
+	close(finishEdit)
+	if frame := waitEvent(); !strings.Contains(frame, "TRIPOL_HTTP_DELIVERY:cancel") ||
+		!strings.Contains(frame, `"ok":true`) || strings.Contains(frame, "callback-fixture") {
+		t.Fatal(frame)
+	}
+}

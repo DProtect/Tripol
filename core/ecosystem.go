@@ -32,6 +32,7 @@ func (c *compiler) showValue(e *expr, newline bool) {
     if strings.HasPrefix(t,callbackPrefix) || callbackListElement(t)!="" {
 		c.err("callback references cannot be printed")
 	}
+	if typedListElement(t)!="" { c.err("print individual fields or elements of aggregate lists") }
 	if isList(t) { elem=listElement(t);a.emit(0x48,0x8b,0x40,0x08); t = "ints" }
 	if t != "ints" {
 		if c.isRecord(t) {

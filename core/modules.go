@@ -88,6 +88,6 @@ func loadProjectCached(source string, cache *moduleCache) ([]fn, []stmt, []strin
 	}
 	visit(abs, true, 0)
 	fs = append(libs.functions, fs...)
-	resolveSimpleProgram(fs, main)
+	fs = resolveSimpleProgram(fs, main)
 	return fs, main, append(inputs, packages.inputs...)
 }

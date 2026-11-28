@@ -14,10 +14,12 @@ size=input_int("")
 directory=input("")
 show "READY"
 input_int("")
+samples=ints(n/width)
 start=time.now_ns()
 count=0
 if width==4 {
-    repeat n/4 {
+    for batch in range(n/4) {
+        began=time.now_ns()
         scratch {
             request=http.request("GET",url)
             first=request.start()
@@ -29,9 +31,11 @@ if width==4 {
             count+=received(third.await(),size)
             count+=received(fourth.await(),size)
         }
+        samples[batch]=time.elapsed_ns(began)
     }
 } else {
     for index in range(n) {
+        began=time.now_ns()
         scratch {
             if mode=="stream" {
                 reply=http.download(url,f"{directory}/{index}.bin")
@@ -41,7 +45,10 @@ if width==4 {
                 count+=received(http.get(url),size)
             }
         }
+        samples[index]=time.elapsed_ns(began)
     }
 }
 show time.elapsed_ns(start),count
+for sample in samples {show sample}
+show "END"
 input_int("")

@@ -30,9 +30,10 @@ type simpleResolver struct {
 	final, changed  bool
 }
 
-func resolveSimpleProgram(fs []fn, main []stmt) {
+func resolveSimpleProgram(fs []fn, main []stmt) []fn {
+	fs = lowerJSONDecoders(fs, main)
 	if len(fs) == 0 {
-		return
+		return fs
 	}
 	r := simpleResolver{
 		functions: make(map[string]*fn, len(fs)),
@@ -141,6 +142,7 @@ func resolveSimpleProgram(fs []fn, main []stmt) {
 	}
 	r.final = true
 	r.walkProgram(fs, main, standardBodies)
+	return fs
 }
 
 func (r *simpleResolver) needsResolution(body []stmt) bool {
@@ -509,7 +511,11 @@ func (r *simpleResolver) expression(e *expr, want string, scope simpleScope) str
 	case "call":
 		return r.call(e, want, scope)
 	case "method":
-		return r.method(e, r.expression(e.args[0], "", scope), e.s, 1, scope)
+		receiver := r.expression(e.args[0], "", scope)
+		if isList(receiver) {
+			return r.listMethod(receiver, e.s, e.args[1:], scope)
+		}
+		return r.method(e, receiver, e.s, 1, scope)
 	case "format":
 		for _, arg := range e.args {
 			r.expression(arg, "", scope)
@@ -552,17 +558,7 @@ func (r *simpleResolver) call(e *expr, want string, scope simpleScope) string {
 	if receiver, member, ok := strings.Cut(name, "."); ok {
 		if typ, found := r.binding(e, receiver, "", scope); found {
 			if isList(typ) {
-				for _, arg := range e.args {
-					r.expression(arg, "", scope)
-				}
-				switch member {
-				case "get", "set", "remove_at":
-					return listElement(typ)
-				case "contains", "remove":
-					return "bool"
-				default:
-					return "int"
-				}
+				return r.listMethod(typ, member, e.args, scope)
 			}
 			return r.method(e, typ, member, 0, scope)
 		}
@@ -591,6 +587,15 @@ func (r *simpleResolver) call(e *expr, want string, scope simpleScope) string {
 		}
 		return result
 	}
+	if name == "list" && isList(want) && want != "list" {
+		if r.final {
+			e.s = strings.TrimSuffix(e.s, "list") + want
+		}
+		for _, arg := range e.args {
+			r.expression(arg, "int", scope)
+		}
+		return want
+	}
 	for _, arg := range e.args {
 		r.expression(arg, "", scope)
 	}
@@ -610,6 +615,25 @@ func (r *simpleResolver) call(e *expr, want string, scope simpleScope) string {
 		return "ints"
 	}
 	return ""
+}
+
+func (r *simpleResolver) listMethod(typ, member string, args []*expr, scope simpleScope) string {
+	element := listElement(typ)
+	for i, arg := range args {
+		want := "int"
+		if member == "add" || member == "contains" || member == "remove" || member == "set" && i == 1 {
+			want = element
+		}
+		r.expression(arg, want, scope)
+	}
+	switch member {
+	case "get", "set", "remove_at":
+		return element
+	case "contains", "remove":
+		return "bool"
+	default:
+		return "int"
+	}
 }
 
 func (r *simpleResolver) arguments(f *fn, args []*expr, offset int, scope simpleScope) string {

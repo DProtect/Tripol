@@ -11,6 +11,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"tripol/internal/localfile"
 )
 
 const (
@@ -56,7 +58,7 @@ func (s *cooldowns) load(path string, now time.Time) error {
 	if s.fileLock != nil || len(s.entries) != 0 {
 		return errors.New("cooldown storage cannot be changed after use")
 	}
-	lock, err := lockCooldownFile(absolute + ".lock")
+	lock, err := localfile.Lock(absolute + ".lock")
 	if err != nil {
 		return errors.New("Discord cooldown store is already in use or cannot be locked")
 	}

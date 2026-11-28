@@ -53,3 +53,23 @@ The concurrent profile sends 400 requests in batches of four, waiting for the fu
 Una prueba local adicional de TRIPOL procesó 16,000 peticiones con cuatro conexiones y un pico de 15,232 KiB de RSS. Otra descargó y validó 96 archivos de 4 MiB con un pico de 12,792 KiB. Son ejecuciones acotadas. Queda por medir el comportamiento durante sesiones prolongadas, en Windows y contra Discord.
 
 An additional local TRIPOL run processed 16,000 requests on four connections and peaked at 15,232 KiB RSS. Another downloaded and verified 96 files of 4 MiB with a 12,792 KiB peak. These are bounded runs. Long-duration, Windows performance and live Discord workloads still need separate measurements. [Concurrent results](results-concurrent.json) · [Download results](results-stream.json) · [Local stress results](results-stress.json)
+
+## Final Revolution — latencia y carga sostenida / Latency and sustained load
+
+Repetimos los tres perfiles con el mismo arnés para el compilador actualizado y la base `08063b3`. Construye un worker de referencia a partir de esta misma versión de `tripol.tri`, usando el compilador de `08063b3`, y pásalo con `--reference` para intercalar las mediciones. Usa el Python del entorno virtual para ejecutar `run.py`. En Windows, compila el worker como PE y añade `--launcher ruta/al/tripol.exe --tripol ruta/al/worker.exe`.
+
+Each latency sample measures one request for the sequential and stream profiles, and one whole four-request batch for the concurrent profile. Percentiles use nearest rank within each run followed by a median across runs. RSS sums both native TRIPOL processes. CPU is sampled from both processes before the finish signal, with the precision provided by the host OS. The Linux run used the same AMD EPYC 9V74, client versions and fixture described above. GitHub Actions also runs all three profiles on Windows and Linux and publishes each runner's output separately.
+
+| Cliente / Client | GET/s ×4 | p50 / p95 / p99 de una tanda (ms) | Pico RSS KiB | Descarga MiB/s |
+| --- | ---: | ---: | ---: | ---: |
+| TRIPOL | 3,766 | 0.943 / 1.426 / 2.100 | 13,652 | 742.8 |
+| Requests | 1,475 | 2.655 / 3.153 / 3.331 | 21,764 | 427.0 |
+| HTTPX | 1,525 | 2.485 / 3.058 / 4.650 | 23,652 | 490.6 |
+| Fetch | 1,625 | 1.699 / 4.189 / 7.374 | 73,180 | 162.1 |
+| Reqwest | 9,164 | 0.403 / 0.548 / 0.676 | 3,416 | 821.9 |
+| Go | 6,296 | 0.648 / 0.811 / 0.973 | 8,844 | 712.9 |
+| TRIPOL reference | 3,473 | 1.055 / 1.396 / 1.833 | 13,628 | 663.3 |
+
+[Secuencial](results-final-sequential-linux.json) · [Concurrente](results-final-concurrent-linux.json) · [Transferencia](results-final-stream-linux.json) · [Estrés de 150.000 peticiones](results-final-stress-linux.json)
+
+En una única prueba sostenida, TRIPOL completó 150.000 peticiones en unas 45,5 s con cuatro conexiones y 15.772 KiB de RSS máximo combinado. El p95 de la tanda pasó de 1,396 a 1,426 ms en la comparación de siete muestras. Ese incremento coexistió con mayor rendimiento agregado. Las cifras de transferencia incluyen sincronización de cada archivo y verificación posterior de SHA-256. Las pruebas conectadas a un servidor de Discord requieren acceso autorizado.

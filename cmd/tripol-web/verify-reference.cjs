@@ -63,7 +63,8 @@ async function main() {
       assert.equal(lib.functions.length, expectedCounts.get(lib.name), lib.name);
       const module = native(['docs', lib.name], dir);
       assert.equal(module.status, 0, error(module));
-      const names = [...new Set([...module.stdout.matchAll(/^func\s+(\w+)\s*\(/gm)].map(m => m[1]))].sort();
+      const names = [...new Set([...module.stdout.matchAll(/^func\s+(\w+)\s*\(/gm)]
+        .map(m => m[1]).filter(name => !name.startsWith('__')))].sort();
       assert.equal(JSON.stringify(lib.functions.map(f => f.name).sort()), JSON.stringify(names), lib.name);
       const methodNames = [...new Set([...module.stdout.matchAll(/^func\s+(\w+)\.(\w+)\s*\(/gm)]
         .filter(m => !m[2].startsWith('__')).map(m => m[1] + '.' + m[2]))].sort();
@@ -81,6 +82,7 @@ async function main() {
         const built = native(['build', source, '--target', target, '-o', output], caseDir);
         row.native = built.status === 0 ? 'compiled' : 'compile-error';
         if (built.status !== 0) row.nativeDiagnostic = error(built);
+        fs.rmSync(caseDir, { recursive: true, force: true });
         if (f.native) row.web = 'native-only';
         else web(row, f.source, f.input, f.expected);
         (f.receiver ? methods : rows).push(row);

@@ -1,0 +1,101 @@
+{
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "mode": "sequential",
+  "runs": 7,
+  "count": 400,
+  "width": 1,
+  "bytes": 512,
+  "results": {
+    "TRIPOL": {
+      "startup_ms": 3.912,
+      "idle_rss_kib": 8448,
+      "peak_rss_kib": 13376,
+      "cpu_ms_with_startup": 90.0,
+      "batch_ms_per_request": 0.358,
+      "requests_per_second": 2790.059,
+      "bytes_per_second": 1428510.167,
+      "p50_ms": 0.272,
+      "p95_ms": 0.552,
+      "p99_ms": 1.74,
+      "connections": 1
+    },
+    "Requests": {
+      "startup_ms": 115.793,
+      "idle_rss_kib": 21248,
+      "peak_rss_kib": 21496,
+      "cpu_ms_with_startup": 290.0,
+      "batch_ms_per_request": 0.682,
+      "requests_per_second": 1465.511,
+      "bytes_per_second": 750341.456,
+      "p50_ms": 0.559,
+      "p95_ms": 1.079,
+      "p99_ms": 2.522,
+      "connections": 1
+    },
+    "HTTPX": {
+      "startup_ms": 123.191,
+      "idle_rss_kib": 22708,
+      "peak_rss_kib": 23340,
+      "cpu_ms_with_startup": 260.0,
+      "batch_ms_per_request": 0.478,
+      "requests_per_second": 2092.47,
+      "bytes_per_second": 1071344.531,
+      "p50_ms": 0.43,
+      "p95_ms": 0.789,
+      "p99_ms": 1.188,
+      "connections": 1
+    },
+    "Fetch": {
+      "startup_ms": 37.211,
+      "idle_rss_kib": 28504,
+      "peak_rss_kib": 72712,
+      "cpu_ms_with_startup": 410.0,
+      "batch_ms_per_request": 0.884,
+      "requests_per_second": 1131.219,
+      "bytes_per_second": 579184.164,
+      "p50_ms": 0.536,
+      "p95_ms": 1.426,
+      "p99_ms": 6.661,
+      "connections": 2
+    },
+    "Reqwest": {
+      "startup_ms": 2.135,
+      "idle_rss_kib": 2884,
+      "peak_rss_kib": 3252,
+      "cpu_ms_with_startup": 10.0,
+      "batch_ms_per_request": 0.091,
+      "requests_per_second": 11023.315,
+      "bytes_per_second": 5643937.28,
+      "p50_ms": 0.07,
+      "p95_ms": 0.176,
+      "p99_ms": 0.371,
+      "connections": 1
+    },
+    "Go": {
+      "startup_ms": 2.347,
+      "idle_rss_kib": 5124,
+      "peak_rss_kib": 8432,
+      "cpu_ms_with_startup": 40.0,
+      "batch_ms_per_request": 0.19,
+      "requests_per_second": 5273.915,
+      "bytes_per_second": 2700244.595,
+      "p50_ms": 0.146,
+      "p95_ms": 0.268,
+      "p99_ms": 1.368,
+      "connections": 1
+    },
+    "TRIPOL reference": {
+      "startup_ms": 4.068,
+      "idle_rss_kib": 8404,
+      "peak_rss_kib": 13324,
+      "cpu_ms_with_startup": 90.0,
+      "batch_ms_per_request": 0.365,
+      "requests_per_second": 2738.568,
+      "bytes_per_second": 1402146.839,
+      "p50_ms": 0.313,
+      "p95_ms": 0.479,
+      "p99_ms": 1.996,
+      "connections": 1
+    }
+  }
+}

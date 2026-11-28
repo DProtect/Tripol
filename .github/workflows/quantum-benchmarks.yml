@@ -64,7 +64,11 @@ jobs:
           name: quantum-x-measurements
           path: benchmark-results/
   http:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     env:
       TRIPOL_NO_UPDATE: '1'
@@ -83,22 +87,42 @@ jobs:
         with:
           node-version: '24'
       - name: Build six HTTP benchmark clients
+        shell: bash
         run: |
-          go build -trimpath -o "$RUNNER_TEMP/tripol" .
+          go build -trimpath -o tripol-bench.exe .
           cd benchmarks/http_r2
           python -m venv .venv
-          .venv/bin/python -m pip install -r requirements.txt
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            worker_python=.venv/Scripts/python.exe
+            target=windows
+          else
+            worker_python=.venv/bin/python
+            target=linux
+          fi
+          "$worker_python" -m pip install -r requirements.txt
           cargo build --manifest-path reqwest/Cargo.toml --release --locked
-          "$RUNNER_TEMP/tripol" build tripol.tri --target linux --profile turbo -o tripol-http
-          go build -trimpath -ldflags='-s -w' -o go-http net_http.go
+          ../../tripol-bench.exe build tripol.tri --target "$target" --profile turbo -o tripol-http.exe
+          go build -trimpath -ldflags='-s -w' -o go-http.exe net_http.go
       - name: Exercise sequential, concurrent and streaming profiles
         working-directory: benchmarks/http_r2
+        shell: bash
         run: |
           mkdir -p "$RUNNER_TEMP/http-results"
+          launcher=()
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            worker_python=.venv/Scripts/python.exe
+            rust=reqwest/target/release/tripol-http-fixture.exe
+            launcher=(--launcher ../../tripol-bench.exe)
+          else
+            worker_python=.venv/bin/python
+            rust=reqwest/target/release/tripol-http-fixture
+          fi
           for mode in sequential concurrent stream; do
-            python run.py --mode "$mode" --runs 2 > "$RUNNER_TEMP/http-results/$mode.json"
+            "$worker_python" run.py --mode "$mode" --runs 7 --python "$worker_python" \
+              --tripol ./tripol-http.exe --go ./go-http.exe --rust "$rust" "${launcher[@]}" \
+              > "$RUNNER_TEMP/http-results/$mode.json"
           done
       - uses: actions/upload-artifact@v4
         with:
-          name: dipo-http-2-measurements
+          name: dipo-http-2-measurements-${{ runner.os }}
           path: ${{ runner.temp }}/http-results/

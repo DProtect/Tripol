@@ -44,23 +44,32 @@ fn main() {
     println!("READY");
     io::stdout().flush().unwrap();
     line();
+    let mut samples = Vec::with_capacity(count / width);
     let start = Instant::now();
     let total: usize = runtime.block_on(async {
         let mut total = 0;
         if mode == "concurrent" {
             for _ in (0..count).step_by(width) {
+                let began = Instant::now();
                 let batch = join_all((0..width).map(|_| receive(&client, &url, size, None))).await;
                 total += batch.into_iter().sum::<usize>();
+                samples.push(began.elapsed().as_nanos());
             }
         } else {
             for index in 0..count {
                 let path = (mode == "stream").then(|| directory.join(format!("{index}.bin")));
+                let began = Instant::now();
                 total += receive(&client, &url, size, path.as_deref()).await;
+                samples.push(began.elapsed().as_nanos());
             }
         }
         total
     });
     println!("{} {}", start.elapsed().as_nanos(), total);
+    for sample in samples {
+        println!("{sample}");
+    }
+    println!("END");
     io::stdout().flush().unwrap();
     line();
 }

@@ -43,16 +43,23 @@ def main():
         input()
         start = time.perf_counter_ns()
         total = 0
+        samples = []
         if mode == "concurrent":
             with ThreadPoolExecutor(max_workers=width) as executor:
                 for _ in range(0, count, width):
+                    began = time.perf_counter_ns()
                     batch = [executor.submit(receive, client, url, size) for client in clients]
                     total += sum(job.result() for job in batch)
+                    samples.append(time.perf_counter_ns() - began)
         else:
             for index in range(count):
                 destination = directory / f"{index}.bin" if mode == "stream" else None
+                began = time.perf_counter_ns()
                 total += receive(clients[0], url, size, destination)
-        print(time.perf_counter_ns() - start, total, flush=True)
+                samples.append(time.perf_counter_ns() - began)
+        print(time.perf_counter_ns() - start, total)
+        print(*samples)
+        print("END", flush=True)
         input()
     finally:
         for client in set(clients):

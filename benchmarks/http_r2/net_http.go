@@ -64,16 +64,19 @@ func main() {
 	fmt.Println("READY")
 	line()
 	total := 0
+	samples := make([]int64, 0, count/width)
 	start := time.Now()
 	if mode == "concurrent" {
 		done := make(chan int, width)
-		for start := 0; start < count; start += width {
+		for step := 0; step < count; step += width {
+			began := time.Now()
 			for i := 0; i < width; i++ {
 				go func() { done <- receive(client, url, size, "") }()
 			}
 			for i := 0; i < width; i++ {
 				total += <-done
 			}
+			samples = append(samples, time.Since(began).Nanoseconds())
 		}
 	} else {
 		for i := 0; i < count; i++ {
@@ -81,9 +84,15 @@ func main() {
 			if mode == "stream" {
 				path = filepath.Join(directory, fmt.Sprintf("%d.bin", i))
 			}
+			began := time.Now()
 			total += receive(client, url, size, path)
+			samples = append(samples, time.Since(began).Nanoseconds())
 		}
 	}
 	fmt.Println(time.Since(start).Nanoseconds(), total)
+	for _, sample := range samples {
+		fmt.Println(sample)
+	}
+	fmt.Println("END")
 	input.Scan()
 }

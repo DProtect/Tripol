@@ -1,4 +1,5 @@
 import tripol.utf8
+import tripol.errors
 // Small JSON writer; input strings must be valid UTF-8. No general parser yet.
 func quote(s:string) -> string {return json_quote(s)}
 func integer(n:int) -> string {return text(n)}
@@ -298,4 +299,73 @@ func Object.with(self:Object,key:string,value:bool)->Object {
 func Object.with(self:Object,key:string,value:Object)->Object {
  self.set(key,value)
  return self
+}
+
+// These readers are the shared implementations used by the typed decoder.
+func __decode_string(raw:string)->string {
+ assert len(raw)>=2 and byte_at(raw,0)==34,"Expected a JSON string"
+ out=unquote(raw)
+ assert out!="" or raw=="\"\"","JSON string contains an unsupported character or Unicode escape"
+ return out
+}
+
+func __decode_int(raw:string)->int {
+ assert errors.is_int(raw),"Expected a JSON integer in the signed 64-bit range"
+ return parse_int(raw)
+}
+
+func __decode_bool(raw:string)->bool {
+ assert raw=="true" or raw=="false","Expected a JSON boolean"
+ return raw=="true"
+}
+
+func __decode_object(raw:string)->Object {
+ n=len(raw)
+ i=ws(raw,0,n)
+ assert i<n and byte_at(raw,i)==123,"Expected a JSON object"
+ stop=value(raw,i,n,0)
+ assert stop>=0 and ws(raw,stop,n)==n,"Invalid JSON object"
+ result=object()
+ keys=result.__keys
+ values=result.__values
+ i=ws(raw,i+1,n)
+ while byte_at(raw,i)!=125 {
+  end=quoted(raw,i,n)
+  name=__decode_string(slice(raw,i,end))
+  assert not keys.contains(name),"Duplicate key in JSON object"
+  i=ws(raw,ws(raw,end,n)+1,n)
+  end=value(raw,i,n,1)
+  keys.add(name)
+  values.add(slice(raw,i,end))
+  i=ws(raw,end,n)
+  if byte_at(raw,i)==44 {i=ws(raw,i+1,n)}
+ }
+ return result
+}
+
+func __decode_field(object_value:Object,name:string)->string {
+ keys=object_value.__keys
+ values=object_value.__values
+ for i in range(keys.size()) {
+  if keys.get(i)==name {return values.get(i)}
+ }
+ assert false,"Required JSON field is missing"
+ return ""
+}
+
+func __decode_array(raw:string)->string_list {
+ n=len(raw)
+ i=ws(raw,0,n)
+ assert i<n and byte_at(raw,i)==91,"Expected a JSON array"
+ stop=value(raw,i,n,0)
+ assert stop>=0 and ws(raw,stop,n)==n,"Invalid JSON array"
+ values=string_list()
+ i=ws(raw,i+1,n)
+ while byte_at(raw,i)!=93 {
+  end=value(raw,i,n,1)
+  values.add(slice(raw,i,end))
+  i=ws(raw,end,n)
+  if byte_at(raw,i)==44 {i=ws(raw,i+1,n)}
+ }
+ return values
 }

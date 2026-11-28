@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/cookiejar"
+	"net/http/httptrace"
 	"net/url"
 	"strconv"
 	"strings"
@@ -82,6 +83,8 @@ type transfer struct {
 
 type session struct {
 	client *http.Client
+	store  *diskJar
+	stats  *clientMetrics
 }
 
 func newSession(cookies bool) *session {
@@ -100,6 +103,11 @@ func newSession(cookies bool) *session {
 		c.Jar = jar
 	}
 	return &session{client: c}
+}
+
+func (s *session) close() bool {
+	s.client.CloseIdleConnections()
+	return s.store == nil || s.store.close()
 }
 
 func origin(u *url.URL) string {
@@ -236,7 +244,25 @@ func (s *session) send(parent context.Context, q spec, progress *transfer) (out 
 		out.Elapsed = time.Since(start).Milliseconds()
 		out.Uploaded = progress.uploaded.Load()
 		out.UploadTotal = progress.uploadTotal.Load()
+		if out.Error == "" && s.store != nil && s.store.failure() {
+			out.Error = "cookie_store_write"
+		}
+		if s.stats != nil {
+			s.stats.record(out, time.Since(start))
+		}
 	}()
+	if m := s.stats; m != nil {
+		m.inflight.Add(1)
+		parent = httptrace.WithClientTrace(parent, &httptrace.ClientTrace{
+			GotConn: func(info httptrace.GotConnInfo) {
+				if info.Reused {
+					m.reused.Add(1)
+				} else {
+					m.connections.Add(1)
+				}
+			},
+		})
+	}
 	if err := q.validate(); err != nil {
 		out.Error = err.Error()
 		return
@@ -244,6 +270,10 @@ func (s *session) send(parent context.Context, q spec, progress *transfer) (out 
 	target, err := q.target()
 	if err != nil {
 		out.Error = err.Error()
+		return
+	}
+	if s.store != nil && origin(target) != s.store.data.Origin {
+		out.Error = "cookie_store_origin"
 		return
 	}
 	timeout := defaultTimeout

@@ -30,14 +30,19 @@ const { pipeline } = require('node:stream/promises');
     await input.next();
     const start = process.hrtime.bigint();
     let total = 0;
+    const samples = [];
     for (let i = 0; i < count; i += width) {
+        const began = process.hrtime.bigint();
         if (width === 1) {
             total += await receive(i);
         } else {
             const batch = await Promise.all(Array.from({ length: width }, (_, offset) => receive(i + offset)));
             total += batch.reduce((sum, bytes) => sum + bytes, 0);
         }
+        samples.push(process.hrtime.bigint() - began);
     }
     console.log(String(process.hrtime.bigint() - start) + ' ' + total);
+    console.log(samples.join(' '));
+    console.log('END');
     await input.next();
 })().catch(error => { console.error(error); process.exitCode = 1; });

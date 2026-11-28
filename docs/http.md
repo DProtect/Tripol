@@ -70,3 +70,19 @@ Run the applications example on Windows and Linux with an authorized bot token a
 Ejecuta `tripol run examples/discord_http_services.tri`. Configura `TRIPOL_OPENAI_API_KEY` y `TRIPOL_AI_MODEL` para `/ia`, `TRIPOL_TRANSLATION_URL` y la clave opcional `TRIPOL_TRANSLATION_KEY` para `/traducir`, `TRIPOL_GNEWS_KEY` para `/titular` y `TRIPOL_STEAM_KEY` para `/jugador`. Usa cuentas de prueba y verifica la respuesta privada contra el endpoint correspondiente.
 
 The services example reads the explicit provider variables above. Supply only authorized credentials and verify each private reply with its provider. Keep tokens, API keys and private endpoints out of logs.
+
+## Persistencia y telemetría / Persistence and telemetry
+
+Configura `client.base_url(url)` y `client.cookie_file(path)` antes de la primera petición. Usa un archivo distinto para cada cliente y un directorio local privado. El archivo guarda únicamente cookies con caducidad, conserva dominio y ruta y está ligado al esquema, host y puerto. El bloqueo impide abrirlo a la vez en dos clientes. En Linux usa permisos privados del usuario. En Windows el directorio debe heredar una ACL privada. Los datos se guardan en texto plano, así que protege el archivo como una credencial. `response.error` indica los errores de apertura y de escritura.
+
+Set `client.base_url(url)` and `client.cookie_file(path)` before the first request. Give each client its own file in a private local directory. The locked file saves cookies with an explicit expiry, preserves domain and path, and is tied to the base scheme, host and port. On Windows choose a directory with a private ACL. Treat the file as a credential because it stores cookie values in plaintext.
+
+`client.metrics()` devuelve peticiones activas y terminadas, errores, cancelaciones, intentos, conexiones nuevas y reutilizadas, bytes de respuesta, bytes de archivos multipart y latencia acumulada en microsegundos. Las conexiones cuentan asignaciones del transporte, incluidas las reutilizaciones HTTP/2. Los contadores consultados durante peticiones activas pueden avanzar entre campos.
+
+`client.metrics()` reports in-flight and completed requests, HTTP or transport failures, cancellations, attempts, new and reused connections, downloaded bytes, multipart file bytes and cumulative elapsed microseconds. Connection counts come from transport assignments. A snapshot during active requests can contain counters observed at slightly different times.
+
+## Pruebas manuales de Discord / Manual Discord checks
+
+Usa una aplicación y un servidor privado autorizados. Configura las variables de la sección de integración y ejecuta ambos ejemplos con el lanzador en Windows y Linux. En `discord_http_apps.tri`, verifica `/github usuario:Tripollas`, `/pokemon nombre:ditto`, `/clima`, `/estado`, `/servidor` y `/informe`. Comprueba que el botón **Consultar Pikachu** modifica el panel existente y que el informe solo se envía al canal privado configurado. En `discord_http_services.tri`, verifica `/ia`, `/traducir`, `/noticias` y `/steam` con las claves correspondientes. Durante una API lenta, invoca `/servidor` y provoca una desconexión temporal en un entorno controlado. Comprueba que vuelve a recibir comandos, que la respuesta diferida se entrega como máximo una vez y que el registro no incluye tokens.
+
+On both Windows and Linux, run the two example bots in an authorized private guild. Exercise the commands listed above, run a second command during a slow upstream request, and check the Pokémon refresh button edits the same message. Simulate a brief Gateway interruption and reconnect, then verify that dispatch resumes and the deferred response is edited at most once. Supply provider and Discord credentials through the environment. Keep tokens and cookie files out of logs.

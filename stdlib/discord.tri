@@ -635,6 +635,10 @@ func events()->GatewayEvents {
 
 func gateway_intent(name:string)->int {
  if name=="" {return -1}
+ if name=="members" {name="GUILD_MEMBERS"}
+ else if name=="messages" {name="GUILD_MESSAGES"}
+ else if name=="presences" {name="GUILD_PRESENCES"}
+ name=gateway_event_name(name)
  names=list(["GUILDS","GUILD_MEMBERS","GUILD_MODERATION","GUILD_EXPRESSIONS","GUILD_INTEGRATIONS","GUILD_WEBHOOKS","GUILD_INVITES","GUILD_VOICE_STATES","GUILD_PRESENCES","GUILD_MESSAGES","GUILD_MESSAGE_REACTIONS","GUILD_MESSAGE_TYPING","DIRECT_MESSAGES","DIRECT_MESSAGE_REACTIONS","DIRECT_MESSAGE_TYPING","MESSAGE_CONTENT","GUILD_SCHEDULED_EVENTS","","","","AUTO_MODERATION_CONFIGURATION","AUTO_MODERATION_EXECUTION","","","GUILD_MESSAGE_POLLS","DIRECT_MESSAGE_POLLS"])
  for i in range(names.size()) {if names[i]==name {return i}}
  return -1
@@ -653,11 +657,14 @@ func gateway_event_name(name:string)->string {
  if name=="member_join" {return "GUILD_MEMBER_ADD"}
  if name=="member_leave" {return "GUILD_MEMBER_REMOVE"}
  if name=="member_update" {return "GUILD_MEMBER_UPDATE"}
+ result=""
  for i in range(len(name)) {
   ch=byte_at(name,i)
+  if ch>=97 and ch<=122 {ch-=32}
   if not ((ch>=65 and ch<=90) or (ch>=48 and ch<=57) or ch==95) {return ""}
+  result+=utf8_char(ch)
  }
- return name
+ return result
 }
 
 func GatewayEvents.on(self:GatewayEvents,name:string,handler:func(GatewayEvent)->bool)->bool {
@@ -675,6 +682,11 @@ func GatewayEvents.on(self:GatewayEvents,name:string,handler:func(GatewayEvent)-
 func GatewayEvents.on_http(self:GatewayEvents,name:string,handler:func(GatewayEvent)->bool)->bool {
  assert slash_name(name),"Use a lowercase HTTP event name"
  return self.__bind("TRIPOL_HTTP:"+name,handler)
+}
+
+func GatewayEvents.on_http_delivery(self:GatewayEvents,name:string,handler:func(GatewayEvent)->bool)->bool {
+ assert slash_name(name),"Use a lowercase HTTP event name"
+ return self.__bind("TRIPOL_HTTP_DELIVERY:"+name,handler)
 }
 
 func GatewayEvents.__bind(self:GatewayEvents,name:string,handler:func(GatewayEvent)->bool)->bool {
@@ -1174,18 +1186,36 @@ func Interaction.__respond_files(self:Interaction,body:string,paths:string_list)
 }
 
 func Interaction.defer_http(self:Interaction,request:http.Request,event:string,ephemeral=true)->bool {
+ return self.defer_http_task(request,event,ephemeral)>0
+}
+
+func Interaction.defer_http_task(self:Interaction,request:http.Request,event:string,ephemeral=true)->int {
+ return self.__defer_http(request,event,ephemeral,false)
+}
+
+func Interaction.defer_http_update(self:Interaction,request:http.Request,event:string)->int {
+ if not self.has_message or (self.kind!=3 and self.kind!=5) {return 0}
+ return self.__defer_http(request,event,false,true)
+}
+
+func Interaction.__defer_http(self:Interaction,request:http.Request,event:string,ephemeral:bool,update:bool)->int {
  assert slash_name(event),"Use a registered lowercase HTTP event name"
- if not gw_host_available() or self.application_id=="" or self.kind!=2 and self.kind!=3 and self.kind!=5 {return false}
- if not self.respond(self.defer(ephemeral)) {return false}
+ if not gw_host_available() or self.application_id=="" or self.kind!=2 and self.kind!=3 and self.kind!=5 {return 0}
+ acknowledgement=self.defer(ephemeral)
+ if update {acknowledgement=self.ack()}
+ if not self.respond(acknowledgement) {return 0}
  task=request.start()
- if task.id()<=0 {self.edit_reply("No se pudo iniciar la petición HTTP.");return false}
+ if task.id()<=0 {self.edit_reply("No se pudo iniciar la petición HTTP.");return 0}
  path="/api/v10/webhooks/"+self.application_id+"/"+self.__interaction_token+"/messages/@original"
  body="{\"id\":"+text(task.id())+",\"name\":"+json.quote(event)+",\"path\":"+json.quote(path)+"}"
- if http_exchange("route",body)=="1" {return true}
- task.cancel()
- task.await()
+ if http_exchange("route",body)=="1" {return task.id()}
+ http_exchange("abandon",text(task.id()))
  self.edit_reply("No se pudo registrar la respuesta HTTP.")
- return false
+ return 0
+}
+
+func cancel_http(receipt:int)->bool {
+ return receipt>0 and gw_host_available() and http_exchange("cancelcb",text(receipt))=="1"
 }
 
 func GatewayEvent.http_response(self:GatewayEvent)->http.Response {
@@ -1193,11 +1223,48 @@ func GatewayEvent.http_response(self:GatewayEvent)->http.Response {
  return http.parse_response(json.get_raw_large(self.data_json,"result"))
 }
 
-func GatewayEvent.complete_http(self:GatewayEvent,message:string)->bool {
- if not has_prefix(self.name,"TRIPOL_HTTP:") or not gw_host_available() {return false}
- receipt=errors.int_or(json.get_raw_large(self.data_json,"receipt"),0)
+func GatewayEvent.http_receipt(self:GatewayEvent)->int {
+ if not has_prefix(self.name,"TRIPOL_HTTP:") and not has_prefix(self.name,"TRIPOL_HTTP_DELIVERY:") {return 0}
+ return errors.int_or(json.get_raw_large(self.data_json,"receipt"),0)
+}
+
+func GatewayEvent.__complete_http(self:GatewayEvent,body:string,action="complete")->bool {
+ if not gw_host_available() or not has_prefix(self.name,"TRIPOL_HTTP:") {return false}
+ receipt=self.http_receipt()
  if receipt<=0 {return false}
- return http_exchange("complete","{\"id\":"+text(receipt)+",\"body\":"+interaction_message(message)+"}")=="1"
+ return http_exchange(action,"{\"id\":"+text(receipt)+",\"body\":"+body+"}")=="1"
+}
+
+func GatewayEvent.complete_http(self:GatewayEvent,message:string)->bool {
+ return self.__complete_http(interaction_message(message))
+}
+
+func GatewayEvent.complete_http(self:GatewayEvent,embed:Embed)->bool {
+ return self.__complete_http(embed.payload())
+}
+
+func GatewayEvent.complete_http(self:GatewayEvent,batch:Embeds)->bool {
+ return self.__complete_http(batch.payload())
+}
+
+func GatewayEvent.complete_http(self:GatewayEvent,layout:Components)->bool {
+ return self.__complete_http(layout.payload())
+}
+
+func GatewayEvent.queue_http(self:GatewayEvent,message:string)->bool {
+ return self.__complete_http(interaction_message(message),"queue")
+}
+
+func GatewayEvent.queue_http(self:GatewayEvent,embed:Embed)->bool {
+ return self.__complete_http(embed.payload(),"queue")
+}
+
+func GatewayEvent.queue_http(self:GatewayEvent,layout:Components)->bool {
+ return self.__complete_http(layout.payload(),"queue")
+}
+
+func GatewayEvent.http_delivered(self:GatewayEvent)->bool {
+ return has_prefix(self.name,"TRIPOL_HTTP_DELIVERY:") and json.get_raw_large(self.data_json,"ok")=="true"
 }
 
 func Interaction.defer(self:Interaction,ephemeral=false)->string {

@@ -105,10 +105,11 @@ func (p *parser) name() string {
 func (p *parser) typ() string {
 	if p.eat("list") {
 		if !p.eat("[") { return "list" }
-		if p.t().s != "func" { p.err("expected callback type in list") }
 		element := p.typ()
 		p.need("]")
-		return listType(element)
+		typ := listType(element)
+		if typ == "" { p.err("list elements must have a concrete value type") }
+		return typ
 	}
 	if !p.eat("func") {
 		return p.typeName()
@@ -117,7 +118,7 @@ func (p *parser) typ() string {
 	var args []string
 	if !p.eat(")") {
 		for {
-			args = append(args, p.typeName())
+			if p.t().s == "list" { args = append(args, p.typ()) } else { args = append(args, p.typeName()) }
 			if p.eat(")") {
 				break
 			}
@@ -125,6 +126,7 @@ func (p *parser) typ() string {
 		}
 	}
 	p.need("->")
+	if p.t().s == "list" { return callbackType(args, p.typ()) }
 	return callbackType(args, p.typeName())
 }
 func (p *parser) typeName() string {
@@ -575,7 +577,7 @@ func parseUnit(s string) ([]string, []fn, []stmt) {
 func parse(s string) ([]fn, []stmt) {
 	imports, fs, ss := parseUnit(s)
 	fs = withStandardImports(imports, fs)
-	resolveSimpleProgram(fs, ss)
+	fs = resolveSimpleProgram(fs, ss)
 	return fs, ss
 }
 

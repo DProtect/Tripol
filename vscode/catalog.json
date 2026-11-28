@@ -221,6 +221,7 @@
     "components": "func discord.components()->Components",
     "container": "func discord.container(color=\"#FFFFFF\")->Components",
     "interaction_message": "func discord.interaction_message(content:string,ephemeral=false)->string",
+    "cancel_http": "func discord.cancel_http(receipt:int)->bool",
     "interaction_option": "func discord.interaction_option(data:string,name:string,focused=false)->string",
     "first_command_option": "func discord.first_command_option(data:string)->string",
     "ignore_interaction": "func discord.ignore_interaction(context:Interaction)->string",
@@ -296,13 +297,17 @@
   "discord.GatewayEvent": {
     "field": "GatewayEvent.field(name:string)->string",
     "http_response": "GatewayEvent.http_response()->http.Response",
-    "complete_http": "GatewayEvent.complete_http(message:string)->bool"
+    "http_receipt": "GatewayEvent.http_receipt()->int",
+    "complete_http": "GatewayEvent.complete_http(message:string)->bool\nGatewayEvent.complete_http(embed:Embed)->bool\nGatewayEvent.complete_http(batch:Embeds)->bool\nGatewayEvent.complete_http(layout:Components)->bool",
+    "queue_http": "GatewayEvent.queue_http(message:string)->bool\nGatewayEvent.queue_http(embed:Embed)->bool\nGatewayEvent.queue_http(layout:Components)->bool",
+    "http_delivered": "GatewayEvent.http_delivered()->bool"
   },
   "discord.GatewayEvents": {
     "intent": "GatewayEvents.intent(name:string)->bool",
     "intent_mask": "GatewayEvents.intent_mask()->int",
     "on": "GatewayEvents.on(name:string,handler:func(GatewayEvent)->bool)->bool",
     "on_http": "GatewayEvents.on_http(name:string,handler:func(GatewayEvent)->bool)->bool",
+    "on_http_delivery": "GatewayEvents.on_http_delivery(name:string,handler:func(GatewayEvent)->bool)->bool",
     "preview": "GatewayEvents.preview(event:string)->bool"
   },
   "discord.Embed": {
@@ -345,6 +350,8 @@
     "reply": "Interaction.reply(content:string,ephemeral=false)->string\nInteraction.reply(embed:Embed,ephemeral=false)->string\nInteraction.reply(batch:Embeds,ephemeral=false)->string\nInteraction.reply(layout:Components,ephemeral=false)->string",
     "reply_files": "Interaction.reply_files(content:string,paths:string_list,ephemeral=false)->bool\nInteraction.reply_files(embed:Embed,paths:string_list,ephemeral=false)->bool\nInteraction.reply_files(batch:Embeds,paths:string_list,ephemeral=false)->bool\nInteraction.reply_files(layout:Components,paths:string_list,ephemeral=false)->bool",
     "defer_http": "Interaction.defer_http(request:http.Request,event:string,ephemeral=true)->bool",
+    "defer_http_task": "Interaction.defer_http_task(request:http.Request,event:string,ephemeral=true)->int",
+    "defer_http_update": "Interaction.defer_http_update(request:http.Request,event:string)->int",
     "defer": "Interaction.defer(ephemeral=false)->string",
     "ack": "Interaction.ack()->string",
     "reply_components": "Interaction.reply_components(layout:Components,ephemeral=false)->string",
@@ -620,12 +627,14 @@
   "http.Client": {
     "base_url": "Client.base_url(url:string)->bool",
     "cookies": "Client.cookies(enabled=true)->bool",
+    "cookie_file": "Client.cookie_file(path:string)->bool",
     "timeout": "Client.timeout(milliseconds:int)->bool",
     "bearer": "Client.bearer(token:string)->bool",
     "basic": "Client.basic(user:string,password:string)->bool",
     "api_key": "Client.api_key(name:string,value:string)->bool",
     "redirects": "Client.redirects(policy=\"same-origin\")->bool",
     "retries": "Client.retries(count=1)->bool",
+    "metrics": "Client.metrics()->ClientMetrics",
     "request": "Client.request(method:string,url:string)->Request",
     "close": "Client.close()->bool",
     "get": "Client.get(url:string)->Response",
